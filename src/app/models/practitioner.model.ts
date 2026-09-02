@@ -248,3 +248,15 @@ export interface UserSubscriptionFilter {
 }
 
 
+export interface BookingState {
+  providerId: number;
+  providerName: string;
+  providerSpecialty: string;
+  providerImage?: string | null;
+  clinicName?: string | null;
+  clinicAddress?: string | null;
+  consultationFee: number;
+  selectedDay?: string;
+  selectedTime?: string;
+  bookingId?: string;
+}

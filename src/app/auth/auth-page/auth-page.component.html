@@ -1,0 +1,47 @@
+<div class="auth-page-wrapper">
+  <!-- Minimalist Brand Header -->
+  <header class="auth-top-bar">
+    <a routerLink="/" class="brand-link" aria-label="PhysiosMate Home">
+      <span class="brand-dot"></span>
+      <span class="brand-name">physios<span class="brand-accent">mate</span></span>
+      <span class="brand-dot"></span>
+    </a>
+    <a routerLink="/" class="back-home-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Back to Home</span>
+    </a>
+  </header>
+
+  <!-- Centered Content -->
+  <main class="auth-main-content">
+    <div class="auth-card-frame">
+      <app-auth-form 
+        [mode]="authMode" 
+        [bookingContext]="false"
+        (authSuccess)="onAuthSuccess()"
+        (modeChange)="onModeChange($event)">
+      </app-auth-form>
+    </div>
+
+    <!-- Trust Badges Footer -->
+    <div class="trust-footer">
+      <div class="trust-item">
+        <span class="trust-icon">🛡️</span>
+        <span>256-Bit SSL Encrypted</span>
+      </div>
+      <div class="trust-divider">•</div>
+      <div class="trust-item">
+        <span class="trust-icon">🩺</span>
+        <span>Verified Practitioners</span>
+      </div>
+      <div class="trust-divider">•</div>
+      <div class="trust-item">
+        <span class="trust-icon">⭐</span>
+        <span>Patient-First Care</span>
+      </div>
+    </div>
+  </main>
+</div>

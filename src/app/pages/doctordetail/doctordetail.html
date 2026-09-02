@@ -208,8 +208,8 @@
                 </div>
               </div>
 
-              <button type="button" class="btn-book-instant" (click)="bookAppointment()">
-                <span class="bolt-icon">⚡</span> Book Appointment
+              <button type="button" class="btn-book-instant" (click)="bookConsultancy()">
+                <span class="bolt-icon">⚡</span> Book Consultancy
                 <small class="instant-tag">Instant Pay Available</small>
               </button>
             </div>
@@ -555,14 +555,78 @@
   </div>
 </div>
 
-<!-- Booking Feedback Toast / Modal -->
+<!-- Booking Confirmed Popup Modal -->
 @if (bookingSuccess()) {
 <div class="booking-modal-overlay" (click)="closeBookingSuccess()">
   <div class="booking-modal-card" (click)="$event.stopPropagation()">
-    <div class="modal-success-icon">✔</div>
-    <h3 class="modal-title">Action Confirmed</h3>
-    <p class="modal-desc">{{ bookingMessage() }}</p>
-    <button type="button" class="modal-btn-close" (click)="closeBookingSuccess()">Got it, Thanks!</button>
+    <!-- Animated Checkmark Icon -->
+    <div class="modal-success-circle">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+
+    <h3 class="modal-title">Consultation Confirmed!</h3>
+    <p class="modal-desc">
+      Your in-clinic consultation has been successfully booked with 
+      <strong>{{ bookingConfirmationDetails()?.doctorName || practitioner.name }}</strong>.
+    </p>
+
+    <!-- Reference ID Badge -->
+    @if (bookingConfirmationDetails()?.bookingRefId) {
+    <div class="modal-ref-pill">
+      <span class="ref-label">Booking ID:</span>
+      <strong class="ref-code">{{ bookingConfirmationDetails()?.bookingRefId }}</strong>
+    </div>
+    }
+
+    <!-- Appointment Summary Box -->
+    <div class="modal-summary-panel">
+      <div class="summary-item-row">
+        <span class="si-icon">📅</span>
+        <div class="si-content">
+          <span class="si-label">Date &amp; Time</span>
+          <strong class="si-val">{{ bookingConfirmationDetails()?.day }} at {{ bookingConfirmationDetails()?.time }}</strong>
+        </div>
+      </div>
+
+      <div class="summary-item-row">
+        <span class="si-icon">🏥</span>
+        <div class="si-content">
+          <span class="si-label">Clinic</span>
+          <strong class="si-val">{{ bookingConfirmationDetails()?.clinicName || practitioner.clinicName }}</strong>
+          <small class="si-sub">{{ bookingConfirmationDetails()?.clinicAddress || practitioner.clinicAddress }}</small>
+        </div>
+      </div>
+
+      <div class="summary-item-row fee-highlight">
+        <span class="si-icon">💰</span>
+        <div class="si-content">
+          <span class="si-label">Consultation Fee</span>
+          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.fee || practitioner.consultationFee }} (Pay at Clinic)</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assurance Note -->
+    <div class="modal-notice">
+      <span>✔ Free cancellation up to 2 hours before the visit. Confirmation details sent via SMS &amp; WhatsApp.</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modal-actions-row">
+      <button type="button" class="modal-btn-print" (click)="printReceipt()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Download Receipt</span>
+      </button>
+      <button type="button" class="modal-btn-close" (click)="closeBookingSuccess()">
+        <span>Done</span>
+      </button>
+    </div>
   </div>
 </div>
 }

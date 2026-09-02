@@ -1,0 +1,127 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--page-ambient-gradient);
+  font-family: var(--font-body);
+}
+
+.auth-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Minimalist Top Bar */
+.auth-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text-main);
+}
+
+.brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-color);
+}
+
+.brand-name {
+  letter-spacing: -0.02em;
+}
+
+.brand-accent {
+  color: var(--primary-color);
+}
+
+.back-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-body);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.back-home-link:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background: var(--primary-subtle);
+}
+
+/* Main Content */
+.auth-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+.auth-card-frame {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Trust Badges */
+.trust-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 32px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trust-divider {
+  color: var(--border-muted);
+}
+
+@media (max-width: 640px) {
+  .auth-top-bar {
+    padding: 16px 20px;
+  }
+  
+  .auth-main-content {
+    padding: 24px 16px;
+  }
+
+  .trust-footer {
+    font-size: 12px;
+    gap: 8px;
+  }
+}

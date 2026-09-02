@@ -1,0 +1,53 @@
+<div class="booking-flow-page">
+  <!-- Minimalist Top Navigation -->
+  <header class="booking-top-bar">
+    <div class="top-bar-left">
+      <a [routerLink]="['/doctor-detail', providerId]" class="back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Doctor Profile</span>
+      </a>
+
+      <div class="brand-divider"></div>
+
+      <a routerLink="/" class="brand-link" aria-label="PhysiosMate Home">
+        <span class="brand-dot"></span>
+        <span class="brand-name">physios<span class="brand-accent">mate</span></span>
+      </a>
+    </div>
+
+    <!-- Security Trust Pill -->
+    <div class="secure-auth-badge">
+      <span class="lock-icon">🔒</span>
+      <span>Instant Booking Sign In</span>
+    </div>
+  </header>
+
+  <!-- Main Two-Column Layout -->
+  <main class="booking-main-body">
+    <div class="booking-grid">
+      <!-- Left Column: Doctor / Clinic Summary -->
+      <aside class="booking-left-col">
+        <app-provider-summary 
+          [provider]="provider" 
+          [loading]="loadingProvider">
+        </app-provider-summary>
+      </aside>
+
+      <!-- Right Column: Reusable AuthFormComponent -->
+      <section class="booking-right-col">
+        <div class="auth-panel-card">
+          <app-auth-form 
+            [mode]="authMode" 
+            [bookingContext]="true"
+            [providerName]="provider?.fullName || provider?.name"
+            (authSuccess)="onAuthSuccess()"
+            (modeChange)="onModeChange($event)">
+          </app-auth-form>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

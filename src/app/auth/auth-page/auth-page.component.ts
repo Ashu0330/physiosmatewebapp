@@ -1,0 +1,43 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthFormComponent } from '../auth-form/auth-form.component';
+
+@Component({
+  selector: 'app-auth-page',
+  standalone: true,
+  imports: [CommonModule, RouterLink, AuthFormComponent],
+  templateUrl: './auth-page.component.html',
+  styleUrl: './auth-page.component.css'
+})
+export class AuthPageComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  authMode: 'login' | 'signup' = 'login';
+  returnUrl: string = '/';
+
+  ngOnInit(): void {
+    // Detect mode from route path
+    const url = this.router.url;
+    if (url.includes('/signup')) {
+      this.authMode = 'signup';
+    } else {
+      this.authMode = 'login';
+    }
+
+    // Check for returnUrl
+    const paramReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (paramReturnUrl) {
+      this.returnUrl = paramReturnUrl;
+    }
+  }
+
+  onModeChange(mode: 'login' | 'signup'): void {
+    this.authMode = mode;
+  }
+
+  onAuthSuccess(): void {
+    this.router.navigateByUrl(this.returnUrl);
+  }
+}

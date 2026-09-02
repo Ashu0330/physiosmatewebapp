@@ -1,7 +1,10 @@
-import { Component, signal, computed, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, signal, computed, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { Authservice } from '../../services/authservice';
+import { ExploreService } from '../../services/explore.service';
+import { BookingService } from '../../booking/booking.service';
 
 export interface PlanBenefit {
   id: number;
@@ -83,6 +86,24 @@ export interface TreatmentItem {
   styleUrl: './doctordetail.css',
 })
 export class Doctordetail implements OnInit, OnDestroy {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private authService = inject(Authservice);
+  private bookingService = inject(BookingService);
+
+  readonly bookingConfirmationDetails = signal<{
+    doctorName: string;
+    doctorSpecialty: string;
+    doctorPhoto: string;
+    clinicName: string;
+    clinicAddress: string;
+    day: string;
+    time: string;
+    fee: number;
+    bookingRefId: string;
+    patientName: string;
+  } | null>(null);
+
   // Search bar context (matching doctors/home pages)
   readonly selectedCity = signal<string>('Jaipur');
   readonly searchQuery = signal<string>('Physiotherapist');
@@ -313,6 +334,28 @@ export class Doctordetail implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       this.updateActiveSectionFromScroll();
     }
+
+    // Check if redirected from booking auth with confirmed status
+    this.route.queryParams.subscribe(params => {
+      if (params['bookingConfirmed'] === 'true') {
+        const pending = this.bookingService.getPendingSlot();
+        const dayLabel = pending?.selectedDay || `${this.dayList[1].label} (${this.dayList[1].dateStr})`;
+        const slotTime = pending?.selectedTime || this.selectedSlotTime();
+
+        this.confirmAppointmentDirectly(
+          { label: dayLabel, dateStr: '' },
+          slotTime,
+          pending?.bookingId
+        );
+
+        // Clear query parameters cleanly from URL without reloading
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void { }
@@ -365,10 +408,62 @@ export class Doctordetail implements OnInit, OnDestroy {
     this.selectedSlotTime.set(time);
   }
 
-  bookAppointment(): void {
-    const day = this.dayList[this.selectedDayIndex()];
-    this.bookingMessage.set(`Appointment booked with ${this.practitioner.name} for ${day.label} (${day.dateStr}) at ${this.selectedSlotTime()}!`);
+  confirmAppointmentDirectly(day: { label: string; dateStr: string }, slotTime: string, existingRef?: string): void {
+    const user = this.authService.getCurrentUser();
+    const ref = existingRef || `PHY-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    this.bookingConfirmationDetails.set({
+      doctorName: this.practitioner.name,
+      doctorSpecialty: this.practitioner.specializations || 'Physiotherapist',
+      doctorPhoto: this.practitioner.photoUrl,
+      clinicName: this.practitioner.clinicName,
+      clinicAddress: this.practitioner.clinicAddress,
+      day: day.dateStr ? `${day.label} (${day.dateStr})` : day.label,
+      time: slotTime,
+      fee: this.practitioner.consultationFee,
+      bookingRefId: ref,
+      patientName: user?.fullName || this.authService.getUserName() || 'Patient'
+    });
+
+    this.bookingMessage.set(`Appointment confirmed with ${this.practitioner.name} for ${day.label} at ${slotTime}!`);
     this.bookingSuccess.set(true);
+    this.bookingService.clearPendingSlot();
+  }
+
+  bookConsultancy(): void {
+    const day = this.dayList[this.selectedDayIndex()];
+    const paramId = this.route.snapshot.paramMap.get('id') || '1';
+    const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitioner.id || 1;
+
+    if (this.authService.isLoggedIn()) {
+      // User is already logged in -> show confirmation popup directly on this page!
+      this.confirmAppointmentDirectly(day, this.selectedSlotTime());
+    } else {
+      // Save pending slot selection and navigate to login/signup
+      this.bookingService.savePendingSlot({
+        providerId: Number(providerId) || 1,
+        providerName: this.practitioner.name,
+        providerSpecialty: this.practitioner.specializations || 'Physiotherapist',
+        providerImage: this.practitioner.photoUrl,
+        clinicName: this.practitioner.clinicName,
+        clinicAddress: this.practitioner.clinicAddress,
+        consultationFee: this.practitioner.consultationFee,
+        selectedDay: `${day.label} (${day.dateStr})`,
+        selectedTime: this.selectedSlotTime()
+      });
+
+      this.router.navigate(['/booking/consultancy', providerId]);
+    }
+  }
+
+  bookAppointment(): void {
+    this.bookConsultancy();
+  }
+
+  printReceipt(): void {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   }
 
   closeBookingSuccess(): void {
@@ -376,8 +471,27 @@ export class Doctordetail implements OnInit, OnDestroy {
   }
 
   buyPlan(plan: RehabPlan): void {
-    this.bookingMessage.set(`Successfully selected "${plan.planName}" (₹${plan.price} for ${plan.totalSessions} sessions). Redirecting to payment...`);
-    this.bookingSuccess.set(true);
+    if (!this.authService.isLoggedIn()) {
+      const paramId = this.route.snapshot.paramMap.get('id') || '1';
+      const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitioner.id || 1;
+      this.bookingService.savePendingSlot({
+        providerId: Number(providerId) || 1,
+        providerName: this.practitioner.name,
+        providerSpecialty: `Rehab Plan: ${plan.planName}`,
+        providerImage: this.practitioner.photoUrl,
+        clinicName: this.practitioner.clinicName,
+        clinicAddress: this.practitioner.clinicAddress,
+        consultationFee: plan.price,
+        selectedDay: `${plan.totalSessions} Sessions Plan`,
+        selectedTime: `${plan.validityDays} Days Validity`
+      });
+      this.router.navigate(['/booking/consultancy', providerId]);
+      return;
+    }
+    this.confirmAppointmentDirectly(
+      { label: `Plan: ${plan.planName}`, dateStr: `${plan.totalSessions} Sessions` },
+      `₹${plan.price}`
+    );
   }
 
   toggleCity(): void {

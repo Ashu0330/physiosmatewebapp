@@ -3,8 +3,11 @@ import { Layoutwithheaderfooter } from './pages/layout/layoutwithheaderfooter/la
 import { Home } from './pages/home/home';
 import { Doctors } from './pages/doctors/doctors';
 import { Doctordetail } from './pages/doctordetail/doctordetail';
+import { AuthPageComponent } from './auth/auth-page/auth-page.component';
+import { BookingAuthComponent } from './booking/booking-auth/booking-auth.component';
 
 export const routes: Routes = [
+  // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
   {
     path: '',
     component: Layoutwithheaderfooter,
@@ -37,6 +40,32 @@ export const routes: Routes = [
         path: 'doctor/:id',
         component: Doctordetail,
       },
+      {
+        path: 'providers/:id',
+        component: Doctordetail,
+      },
     ],
+  },
+
+  // ─── Standalone Authentication Routes ────────────────────────────────────
+  {
+    path: 'login',
+    component: AuthPageComponent,
+  },
+  {
+    path: 'signup',
+    component: AuthPageComponent,
+  },
+
+  // ─── Booking Authentication Route ────────────────────────────────────────
+  {
+    path: 'booking/consultancy/:providerId',
+    component: BookingAuthComponent,
+  },
+
+  // ─── Fallback ────────────────────────────────────────────────────────────
+  {
+    path: '**',
+    redirectTo: '',
   },
 ];

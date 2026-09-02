@@ -1,0 +1,100 @@
+<div class="provider-summary-card">
+  <!-- Top badge -->
+  <div class="step-tag">
+    <span class="step-bullet"></span>
+    <span>BOOK CONSULTANCY</span>
+  </div>
+
+  @if (loading) {
+    <div class="loading-skeleton">
+      <div class="sk-avatar"></div>
+      <div class="sk-line sk-title"></div>
+      <div class="sk-line sk-sub"></div>
+      <div class="sk-box"></div>
+    </div>
+  } @else {
+    <!-- Doctor Profile Box -->
+    <div class="doctor-profile-header">
+      <div class="avatar-wrap">
+        @if (provider?.profileImage || provider?.photoUrl) {
+          <img 
+            [src]="provider?.profileImage || provider?.photoUrl" 
+            [alt]="provider?.fullName || provider?.name"
+            class="doctor-avatar-img"
+          />
+        } @else {
+          <div class="doctor-avatar-fallback">
+            {{ (provider?.fullName || provider?.name || 'Dr').charAt(0) }}
+          </div>
+        }
+        <span class="verified-badge" title="Verified Practitioner">✔</span>
+      </div>
+
+      <div class="doctor-info">
+        <h3 class="doctor-name">{{ provider?.fullName || provider?.name || 'Dr. Rahul Sharma' }}</h3>
+        <p class="doctor-spec">{{ provider?.specialization || provider?.specialtyTitle || 'Senior Physiotherapist' }}</p>
+        
+        <div class="doctor-rating-pill">
+          <span class="star">⭐</span>
+          <span class="rating-num">{{ provider?.avgRating || 4.8 }}</span>
+          <span class="reviews-count">({{ provider?.totalReviews || 46 }} reviews)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinic & Location Card -->
+    <div class="clinic-meta-box">
+      <div class="meta-row">
+        <span class="meta-icon">🏥</span>
+        <div class="meta-text">
+          <strong>{{ provider?.clinicName || 'PhysiosMate Clinical Care' }}</strong>
+          <small>{{ provider?.clinicAddress || provider?.city || 'Jaipur' }}</small>
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <span class="meta-icon">📍</span>
+        <div class="meta-text">
+          <span>In-Clinic &amp; Guided Therapy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consultation Fee Banner -->
+    <div class="fee-banner">
+      <div class="fee-left">
+        <span class="fee-label">Consultation Fee</span>
+        <span class="fee-amount">₹{{ provider?.consultationFee || 500 }}</span>
+      </div>
+      <div class="fee-badge">
+        <span>📅 Consultancy</span>
+      </div>
+    </div>
+
+    <!-- What's included checklist -->
+    <div class="benefits-list">
+      <div class="benefit-item">
+        <span class="check-icon">✔</span>
+        <span>Detailed physical examination &amp; pain diagnosis</span>
+      </div>
+      <div class="benefit-item">
+        <span class="check-icon">✔</span>
+        <span>Personalized exercise chart &amp; rehab protocol</span>
+      </div>
+      <div class="benefit-item">
+        <span class="check-icon">✔</span>
+        <span>Zero waiting time at clinic with pre-booking</span>
+      </div>
+      <div class="benefit-item">
+        <span class="check-icon">✔</span>
+        <span>100% digital health record &amp; prescription</span>
+      </div>
+    </div>
+
+    <!-- Assurance footnote -->
+    <div class="assurance-note">
+      <span class="shield-icon">🛡️</span>
+      <span>PhysiosMate Safety &amp; Quality Guarantee</span>
+    </div>
+  }
+</div>

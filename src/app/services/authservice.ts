@@ -83,4 +83,41 @@ export class Authservice {
     return null;
   }
 
+  isLoggedIn(): boolean {
+    if (typeof localStorage === 'undefined') return false;
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return !!(token || user);
+  }
+
+  getToken(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem('token');
+  }
+
+  getCurrentUser(): any {
+    if (typeof localStorage === 'undefined') return null;
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  saveUserSession(userData: any, token?: string): void {
+    if (typeof localStorage === 'undefined') return;
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
+    if (token) {
+      localStorage.setItem('token', token);
+    } else if (userData?.token) {
+      localStorage.setItem('token', userData.token);
+    }
+  }
+
+  logout(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('pendingVerification');
+    }
+  }
 }
