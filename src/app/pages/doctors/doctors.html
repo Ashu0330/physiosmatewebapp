@@ -1,0 +1,351 @@
+<!-- 0. Top City & Search Filter with Prime Callout (Exact to Reference Screenshot) -->
+<div class="physios-search-bar-strip">
+  <div class="physios-search-bar-container">
+    <!-- Dual Search Input (Left Aligned with Content) -->
+    <div class="physios-search-wrapper doctors-search-bar">
+      <!-- City Filter -->
+      <div class="physios-city-box">
+        <button type="button" class="physios-city-btn" (click)="toggleCity()">
+          <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span class="physios-city-text">{{ selectedCity() }}</span>
+        </button>
+
+        @if (isCityOpen()) {
+        <div class="physios-city-dropdown">
+          @for (c of popularCities; track c) {
+          <button type="button" class="physios-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
+            {{ c }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Divider -->
+      <div class="physios-search-divider"></div>
+
+      <!-- Search Input -->
+      <div class="physios-input-box">
+        <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="physios-search-field" placeholder="Search doctors, clinics, hospitals, etc."
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+      </div>
+    </div>
+
+    <!-- Right Side: Prime Callout -->
+    <!-- <div class="physios-search-prime-callout">
+      <span class="prime-wait-text">Fed up of endless wait?</span>
+      <span class="prime-badge-text">
+        Look for clinic with <strong class="prime-highlight">Prime <span class="prime-check">✔</span></strong>
+      </span>
+    </div> -->
+  </div>
+</div>
+
+<!-- 1. Top Filters Ribbon -->
+<div class="physios-filter-ribbon">
+  <div class="physios-filter-container">
+    <div class="physios-filter-left">
+      <!-- Gender Filter -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('gender')">
+          <span>Gender</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        @if (activeDropdown() === 'gender') {
+        <div class="physios-filter-menu">
+          <button type="button" class="physios-filter-option" [class.selected]="selectedGender() === 'all'"
+            (click)="setGenderFilter('all')">All</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedGender() === 'male'"
+            (click)="setGenderFilter('male')">Male Doctor</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedGender() === 'female'"
+            (click)="setGenderFilter('female')">Female Doctor</button>
+        </div>
+        }
+      </div>
+
+      <!-- Patient Stories Filter -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('stories')">
+          <span>Patient Stories</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        @if (activeDropdown() === 'stories') {
+        <div class="physios-filter-menu">
+          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('all')">All Stories</button>
+          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('15')">15+ Patient
+            Stories</button>
+          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('30')">30+ Patient
+            Stories</button>
+        </div>
+        }
+      </div>
+
+      <!-- Experience Filter -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('exp')">
+          <span>Experience</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        @if (activeDropdown() === 'exp') {
+        <div class="physios-filter-menu">
+          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('all')">Any
+            Experience</button>
+          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('5')">5+ Years
+            Experience</button>
+          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('10')">10+ Years
+            Experience</button>
+          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('15')">15+ Years
+            Experience</button>
+        </div>
+        }
+      </div>
+
+      <!-- All Filters -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('all')">
+          <span>All Filters</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tooltip Badge -->
+
+
+      <!-- Right: Sort By -->
+      <div class="physios-filter-right">
+        <div class="physios-filter-dropdown-wrapper">
+          <button type="button" class="physios-filter-btn sort-btn" (click)="toggleDropdown('sort')">
+            <span class="sort-label">Sort By</span>
+            <span class="sort-val">Relevance</span>
+            <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+              <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+          @if (activeDropdown() === 'sort') {
+          <div class="physios-filter-menu right-aligned">
+            <button type="button" class="physios-filter-option" (click)="setSortBy('relevance')">Relevance</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('popularity')">Popularity</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('rating')">Rating (High to
+              Low)</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('experience')">Experience (High to
+              Low)</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('fee')">Consultation Fee (Low to
+              High)</button>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Main Page Content Layout -->
+  <div class="physios-doctors-container">
+    <div class="physios-doctors-layout">
+
+      <!-- Left Column: Doctor Listing -->
+      <main class="physios-doctors-main">
+        <!-- Results Header -->
+        <div class="physios-results-header">
+          <h1 class="physios-results-title">29 {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
+          <div class="physios-verified-subtext">
+            <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="9 12 12 15 16 10"></polyline>
+            </svg>
+            <span>Book appointments with minimum wait-time & verified doctor details</span>
+          </div>
+        </div>
+
+        <!-- Doctor Cards List -->
+        <div class="physios-doctor-cards-list">
+          @for (doc of doctorsList(); track doc.id) {
+          <article class="physios-doc-card">
+            <!-- Col 1: Avatar Column with View Profile Link Below -->
+            <div class="physios-doc-avatar-col">
+              <div class="physios-doc-avatar-wrapper">
+                <img [src]="doc.photo" [alt]="doc.name" class="physios-doc-img" />
+              </div>
+              <a [routerLink]="['/doctor-detail', doc.id]" class="physios-avatar-view-profile">
+                View Profile
+              </a>
+            </div>
+
+            <!-- Col 2: Info & Details Column -->
+            <div class="physios-doc-info-col">
+              <h2 class="physios-doc-name">
+                <a [routerLink]="['/doctor-detail', doc.id]">{{ doc.name }}</a>
+              </h2>
+              <div class="physios-doc-spec">{{ doc.specialist }}</div>
+              <div class="physios-doc-exp">{{ doc.experienceYears }} years experience overall</div>
+
+              <div class="physios-doc-clinic-row">
+                <span class="physios-doc-location">{{ doc.location }}</span>
+                <span class="physios-doc-bullet">•</span>
+                <span class="physios-doc-clinic">{{ doc.clinicName }}</span>
+              </div>
+
+              <div class="physios-doc-fee-row">
+                <span class="physios-doc-fee">₹{{ doc.fee }} Consultation fee at clinic</span>
+                <svg class="physios-info-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </div>
+
+              <!-- Rating & Patient Stories -->
+              <div class="physios-doc-metrics-row">
+                <span class="physios-rating-pill">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
+                    </path>
+                  </svg>
+                  <span>{{ doc.ratingPercent }}%</span>
+                </span>
+                <a [routerLink]="['/doctor-detail', doc.id]" class="physios-stories-link">
+                  {{ doc.patientStoriesCount }} Patient Stories
+                </a>
+              </div>
+            </div>
+
+            <!-- Col 3: Actions Column (Contact Clinic + View Profile) -->
+            <div class="physios-doc-action-col">
+              <!-- Contact Clinic Primary Button -->
+              <button type="button" class="physios-btn-contact-clinic-solid" (click)="openBooking(doc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                  </path>
+                </svg>
+                <span>Contact Clinic</span>
+              </button>
+
+              <!-- View Profile Outline Button -->
+              <a [routerLink]="['/doctor-detail', doc.id]" class="physios-btn-view-profile-outline">
+                View Profile
+              </a>
+            </div>
+          </article>
+          }
+        </div>
+      </main>
+
+      <!-- Right Column: Sidebar Widgets -->
+      <aside class="physios-doctors-sidebar">
+        <!-- 1. Quick Links -->
+        <div class="physios-sidebar-links-card">
+          <a routerLink="/bluebook" class="physios-sidebar-link">Physiosmate Blue Book</a>
+          <a routerLink="/safety" class="physios-sidebar-link">Safety of your data</a>
+
+          <div class="physios-sidebar-divider"></div>
+
+          <div class="physios-sidebar-heading">Health Articles</div>
+          <a routerLink="/articles/root-canal" class="physios-sidebar-sublink">Root Canal</a>
+          <a routerLink="/articles/tooth-extraction" class="physios-sidebar-sublink">Tooth Extraction</a>
+        </div>
+
+        <!-- 2. Get Free App Widget -->
+        <div class="physios-sidebar-app-card">
+          <h3 class="physios-app-title">Get the free Physiosmate App</h3>
+          <div class="physios-app-form">
+            <input type="tel" class="physios-app-input" placeholder="Enter your mobile number"
+              [ngModel]="mobileNumber()" (ngModelChange)="mobileNumber.set($event)" />
+            <button type="button" class="physios-btn-send-link" (click)="sendAppLink()">
+              Send App Link
+            </button>
+          </div>
+          @if (appLinkSent()) {
+          <div class="physios-app-success">Link sent successfully!</div>
+          }
+        </div>
+
+        <!-- 3. Brand Trust Widget -->
+        <div class="physios-sidebar-trust-card">
+          <div class="physios-trust-header">
+            <div class="physios-trust-icon">★</div>
+            <div class="physios-trust-title">
+              <span class="physios-brand-text">Physiosmate</span>
+              <span class="physios-brand-sub">India's #1 healthcare platform</span>
+            </div>
+          </div>
+
+          <ul class="physios-trust-stats">
+            <li><strong>2 lakh+</strong> Doctors</li>
+            <li><strong>50 lakh+</strong> Users</li>
+            <li><strong>50000+</strong> Clinics & Hospitals</li>
+            <li><strong>30 lakh+</strong> Appointments and counting</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- 3. Interactive Booking Modal -->
+  @if (bookingDoctor(); as doc) {
+  <div class="physios-modal-overlay" (click)="closeBooking()">
+    <div class="physios-modal-box" (click)="$event.stopPropagation()">
+      <div class="physios-modal-header">
+        <div>
+          <h3 class="physios-modal-title">Contact Clinic / Book Visit</h3>
+          <p class="physios-modal-doc">{{ doc.name }} • {{ doc.clinicName }}</p>
+        </div>
+        <button type="button" class="physios-modal-close" (click)="closeBooking()">✕</button>
+      </div>
+
+      <div class="physios-modal-body">
+        @if (!bookingSuccess()) {
+        <div class="physios-modal-fee-alert">
+          <span>Consultation Fee: <strong>₹{{ doc.fee }}</strong> (Pay at Clinic, No Booking Fee)</span>
+        </div>
+
+        <div class="physios-modal-section-title">Select Appointment Slot</div>
+        <div class="physios-slot-grid">
+          @for (slot of ['09:30 AM', '10:00 AM', '11:15 AM', '02:30 PM', '04:00 PM', '06:00 PM']; track slot) {
+          <button type="button" class="physios-slot-btn" [class.active]="selectedSlot() === slot"
+            (click)="selectedSlot.set(slot)">
+            {{ slot }}
+          </button>
+          }
+        </div>
+
+        <button type="button" class="physios-btn-confirm-booking" (click)="confirmBooking()">
+          Confirm Appointment for {{ selectedSlot() }}
+        </button>
+        } @else {
+        <div class="physios-booking-success-state">
+          <div class="physios-success-check">✓</div>
+          <h4>Appointment Confirmed!</h4>
+          <p>Your visit with {{ doc.name }} has been scheduled for {{ selectedSlot() }}.</p>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }

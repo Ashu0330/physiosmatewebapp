@@ -1,0 +1,126 @@
+<header class="physios-header">
+  <input type="checkbox" id="physios-mobile-menu-toggle" class="physios-mobile-menu-input" />
+
+  <div class="physios-header-inner">
+    <!-- Left: Logo & Primary Nav -->
+    <div class="physios-nav-left">
+      <!-- Brand Logo - Physiosmate -->
+      <a routerLink="/" class="physios-brand-link" aria-label="Physiosmate Home">
+        <span class="brand-dot"></span>
+        <span class="brand-name">physios<span class="brand-accent">mate</span></span>
+        <span class="brand-dot"></span>
+      </a>
+
+      <!-- Primary Navigation Links -->
+      <nav class="physios-main-nav">
+        <a routerLink="/find-doctors" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+          class="physios-nav-link active">
+          Find Doctors
+        </a>
+        <a routerLink="/video-consult" routerLinkActive="active" class="physios-nav-link">
+          Video Consult
+        </a>
+        <a routerLink="/surgeries" routerLinkActive="active" class="physios-nav-link">
+          Surgeries
+        </a>
+      </nav>
+    </div>
+
+    <!-- Right: Utility Links & Auth Button -->
+    <div class="physios-nav-right">
+      <!-- For Corporates Dropdown -->
+      <div class="physios-dropdown-wrapper">
+        <button type="button" class="physios-dropdown-trigger">
+          <span class="physios-badge-new">NEW</span>
+          <span>For Corporates</span>
+          <svg class="physios-chevron-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="physios-dropdown-menu">
+          <a routerLink="/corporate/wellness" class="physios-dropdown-item">Corporate Wellness</a>
+          <a routerLink="/corporate/ergonomics" class="physios-dropdown-item">Desk Ergonomics</a>
+        </div>
+      </div>
+
+      <!-- For Providers Dropdown -->
+      <div class="physios-dropdown-wrapper">
+        <button type="button" class="physios-dropdown-trigger">
+          <span>For Providers</span>
+          <svg class="physios-chevron-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="physios-dropdown-menu">
+          <a routerLink="/providers/join" class="physios-dropdown-item">Practitioner Portal</a>
+          <a routerLink="/providers/clinics" class="physios-dropdown-item">List Your Clinic</a>
+        </div>
+      </div>
+
+      <!-- Security & Help Dropdown -->
+      <div class="physios-dropdown-wrapper">
+        <button type="button" class="physios-dropdown-trigger">
+          <span>Security & help</span>
+          <svg class="physios-chevron-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="physios-dropdown-menu">
+          <a routerLink="/help/security" class="physios-dropdown-item">Data Security</a>
+          <a routerLink="/help/support" class="physios-dropdown-item">Help Center & FAQs</a>
+          <a routerLink="/help/contact" class="physios-dropdown-item">Contact Us</a>
+        </div>
+      </div>
+
+      <!-- Login / Signup Button -->
+      <a routerLink="/login" class="physios-btn-auth">
+        Login / Signup
+      </a>
+    </div>
+
+    <!-- Mobile Hamburger Toggle -->
+    <label for="physios-mobile-menu-toggle" class="physios-mobile-toggle" aria-label="Toggle navigation menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </label>
+  </div>
+
+  <!-- Mobile Collapsible Drawer -->
+  <div class="physios-mobile-drawer">
+    <nav class="physios-mobile-nav">
+      <a routerLink="/find-doctors" class="physios-mobile-link">
+        <span>Find Doctors</span>
+      </a>
+      <a routerLink="/video-consult" class="physios-mobile-link">
+        <span>Video Consult</span>
+      </a>
+      <a routerLink="/surgeries" class="physios-mobile-link">
+        <span>Surgeries</span>
+      </a>
+
+      <div class="physios-mobile-divider"></div>
+
+      <a routerLink="/corporate/wellness" class="physios-mobile-link">
+        <span>For Corporates</span>
+        <span class="physios-badge-new">NEW</span>
+      </a>
+      <a routerLink="/providers/join" class="physios-mobile-link">
+        <span>For Providers</span>
+      </a>
+      <a routerLink="/help/support" class="physios-mobile-link">
+        <span>Security & Help</span>
+      </a>
+
+      <a routerLink="/login" class="physios-mobile-auth-btn">
+        Login / Signup
+      </a>
+    </nav>
+  </div>
+</header>

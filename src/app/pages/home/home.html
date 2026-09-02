@@ -1,0 +1,180 @@
+<div class="physios-home-container">
+  <!-- 1. Search Bar (City Filter + Search Input) -->
+  <div class="physios-search-wrapper">
+    <!-- City Filter -->
+    <div class="physios-city-box">
+      <button type="button" class="physios-city-btn" (click)="toggleCity()">
+        <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="physios-city-text">{{ selectedCity() }}</span>
+      </button>
+
+      @if (isCityOpen()) {
+        <div class="physios-city-dropdown">
+          @for (c of popularCities; track c) {
+            <button type="button" class="physios-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
+              {{ c }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Divider -->
+    <div class="physios-search-divider"></div>
+
+    <!-- Search Input -->
+    <div class="physios-input-box">
+      <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input 
+        type="text" 
+        class="physios-search-field" 
+        placeholder="Search doctors, clinics, hospitals, etc." 
+        [ngModel]="searchQuery()" 
+        (ngModelChange)="searchQuery.set($event)" 
+      />
+    </div>
+  </div>
+
+  <!-- 2. Row of 4 Cards -->
+  <div class="physios-cards-row">
+    @for (card of cards; track card.title) {
+      <a [routerLink]="card.route" class="physios-card">
+        <div class="physios-card-banner" [style.background-color]="card.bgColor">
+          <img [src]="card.image" [alt]="card.title" class="physios-card-img" />
+        </div>
+        <div class="physios-card-info">
+          <div class="physios-card-title">{{ card.title }}</div>
+          <div class="physios-card-sub">{{ card.subtitle }}</div>
+        </div>
+      </a>
+    }
+  </div>
+
+  <!-- 3. Consult top doctors online for any health concern -->
+  <div class="physios-consult-section">
+    <div class="physios-section-header">
+      <div class="physios-header-titles">
+        <h2 class="physios-main-heading">Consult top doctors online for any health concern</h2>
+        <p class="physios-sub-heading">Private online consultations with verified doctors in all specialists</p>
+      </div>
+      <a routerLink="/specialties" class="physios-btn-view-all">
+        View All Specialities
+      </a>
+    </div>
+
+    <!-- 6 Circular Condition Icons -->
+    <div class="physios-circles-row">
+      @for (cond of conditions; track cond.name) {
+        <div class="physios-circle-item">
+          <div class="physios-circle-avatar" [style.background-color]="cond.bgColor">
+            @if (cond.icon === 'neck') {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4c0 2-1 3-2 4v2a2 2 0 0 0 2 2h2a2 2 0 0 1 2 2v4H4v-4a2 2 0 0 1 2-2h2a2 2 0 0 0 2-2v-2c-1-1-2-2-2-4a4 4 0 0 1 4-4z"></path>
+              </svg>
+            } @else if (cond.icon === 'back') {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="4" r="2"></circle>
+                <circle cx="12" cy="9" r="2"></circle>
+                <circle cx="12" cy="14" r="2"></circle>
+                <circle cx="12" cy="19" r="2"></circle>
+                <path d="M8 9h8M8 14h8"></path>
+              </svg>
+            } @else if (cond.icon === 'lower') {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v18"></path>
+                <circle cx="12" cy="6" r="3"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+                <circle cx="12" cy="18" r="3"></circle>
+              </svg>
+            } @else if (cond.icon === 'knee') {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="12" rx="6" ry="9"></ellipse>
+                <path d="M6 12h12M12 3v18"></path>
+              </svg>
+            } @else if (cond.icon === 'shoulder') {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M5 21v-2a7 7 0 0 1 14 0v2"></path>
+              </svg>
+            } @else {
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" [attr.stroke]="cond.iconColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            }
+          </div>
+          <div class="physios-circle-title">{{ cond.name }}</div>
+          <a routerLink="/consult" class="physios-consult-link">CONSULT NOW</a>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- 4. Book an appointment for an in-clinic consultation -->
+  <div class="physios-inclinic-section">
+    <div class="physios-section-header">
+      <div class="physios-header-titles">
+        <h2 class="physios-main-heading">Book an appointment for an in-clinic consultation</h2>
+        <p class="physios-sub-heading">Find experienced doctors across all specialties</p>
+      </div>
+    </div>
+
+    <!-- In-Clinic Cards Row with Carousel Next Button -->
+    <div class="physios-inclinic-cards-wrapper">
+      <div class="physios-inclinic-cards-row">
+        @for (item of inClinicConsultations; track item.title) {
+          <a [routerLink]="item.route" class="physios-inclinic-card">
+            <div class="physios-inclinic-img-box">
+              <img [src]="item.image" [alt]="item.title" class="physios-inclinic-img" loading="lazy" />
+            </div>
+            <div class="physios-inclinic-title">{{ item.title }}</div>
+            <div class="physios-inclinic-sub">{{ item.subtitle }}</div>
+          </a>
+        }
+      </div>
+
+      <!-- Carousel Right Arrow -->
+      <button type="button" class="physios-carousel-next" aria-label="Next items">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Section Divider -->
+  <hr class="physios-divider" />
+
+  <!-- 5. Read top articles from health experts -->
+  <div class="physios-articles-section">
+    <!-- Left Column: Heading, Subtitle, CTA Button -->
+    <div class="physios-articles-left">
+      <h2 class="physios-articles-title">Read top articles from health experts</h2>
+      <p class="physios-articles-sub">
+        Health articles that keep you informed about good health practices and achieve your goals.
+      </p>
+      <a routerLink="/articles" class="physios-btn-articles">
+        See all articles
+      </a>
+    </div>
+
+    <!-- Right Columns: Article Cards -->
+    <div class="physios-articles-cards">
+      @for (art of articles; track art.title) {
+        <a [routerLink]="art.route" class="physios-article-card">
+          <div class="physios-article-img-wrap">
+            <img [src]="art.image" [alt]="art.title" class="physios-article-img" loading="lazy" />
+          </div>
+          <div class="physios-article-category">{{ art.category }}</div>
+          <div class="physios-article-headline">{{ art.title }}</div>
+          <div class="physios-article-author">{{ art.author }}</div>
+        </a>
+      }
+    </div>
+  </div>
+</div>

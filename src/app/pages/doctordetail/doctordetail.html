@@ -1,0 +1,568 @@
+<!-- Top Search Bar Strip (Matching Physiosmate Search Standard) -->
+<div class="physios-search-bar-strip">
+  <div class="physios-search-bar-container">
+    <div class="physios-search-wrapper doctordetail-search-bar">
+      <!-- City Filter -->
+      <div class="physios-city-box">
+        <button type="button" class="physios-city-btn" (click)="toggleCity()">
+          <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span class="physios-city-text">{{ selectedCity() }}</span>
+        </button>
+
+        @if (isCityOpen()) {
+        <div class="physios-city-dropdown">
+          @for (c of popularCities; track c) {
+          <button type="button" class="physios-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
+            {{ c }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Divider -->
+      <div class="physios-search-divider"></div>
+
+      <!-- Search Input -->
+      <div class="physios-input-box">
+        <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="physios-search-field" placeholder="Search doctors, clinics, hospitals, etc."
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+      </div>
+    </div>
+
+    <!-- Prime Callout (Right Side) -->
+    <div class="physios-search-prime-callout">
+      <span class="prime-wait-text">Fed up of endless wait?</span>
+      <span class="prime-badge-text">
+        Look for clinic with <strong class="prime-highlight">Prime <span class="prime-check">✔</span></strong>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Breadcrumb Strip -->
+<div class="physios-breadcrumb-strip">
+  <div class="physios-detail-container">
+    <nav class="physios-breadcrumbs" aria-label="Breadcrumb">
+      <a routerLink="/" class="breadcrumb-link">Home</a>
+      <span class="breadcrumb-separator">&gt;</span>
+      <a routerLink="/doctors" class="breadcrumb-link">{{ selectedCity() }}</a>
+      <span class="breadcrumb-separator">&gt;</span>
+      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">Physiotherapist</a>
+      <span class="breadcrumb-separator">&gt;</span>
+      <span class="breadcrumb-link">Mansarovar</span>
+      <span class="breadcrumb-separator">&gt;</span>
+      <span class="breadcrumb-current">{{ practitioner.name }}</span>
+    </nav>
+  </div>
+</div>
+
+<!-- Main Doctor Detail 2-Column Layout -->
+<div class="physios-detail-container main-layout-wrap">
+  <div class="physios-detail-grid">
+
+    <!-- LEFT MAIN COLUMN -->
+    <div class="physios-detail-left-col">
+
+      <!-- 1. Doctor Profile Hero Card -->
+      <section class="physios-doctor-hero-card">
+        <div class="hero-card-inner">
+          <!-- Doctor Photo -->
+          <div class="doctor-photo-wrap">
+            <img [src]="practitioner.photoUrl" [alt]="practitioner.name" class="doctor-photo" />
+            <span class="doctor-brand-watermark">• physiosmate •</span>
+          </div>
+
+          <!-- Doctor Meta Info -->
+          <div class="doctor-meta-block">
+            <div class="doctor-title-row">
+              <h1 class="doctor-name">
+                {{ practitioner.name }} <span class="doctor-spec-title">{{ practitioner.specialtyTitle }}</span>
+              </h1>
+              <a href="javascript:void(0)" class="claim-profile-link">Claim this profile</a>
+            </div>
+
+            <p class="doctor-degree">{{ practitioner.degree }}</p>
+
+            <div class="doctor-badge-row">
+              <span class="doctor-role-tag">{{ practitioner.roleBadge }}</span>
+            </div>
+
+            <p class="doctor-specialization">{{ practitioner.specializations }}</p>
+            <p class="doctor-experience">
+              {{ practitioner.experienceOverall }} Years Experience Overall ({{ practitioner.experienceSpecialist }}
+              years as specialist)
+            </p>
+
+            <!-- Thumbs up rating badge -->
+            <div class="doctor-rating-pill">
+              <span class="thumbs-icon">👍</span>
+              <span class="rating-pct">{{ practitioner.ratingScorePercent }}%</span>
+              <span class="patients-count">({{ practitioner.patientStoriesCount }} patients)</span>
+            </div>
+
+            <!-- Doctor Intro Headline -->
+            <h2 class="doctor-headline">{{ practitioner.headline }}</h2>
+
+            <!-- Detailed Doctor Bio Paragraphs -->
+            <div class="doctor-bio-content">
+              @for (p of practitioner.bioParagraphs; track p) {
+              <p>{{ p }}</p>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy) -->
+      <nav class="physios-scroll-nav-sticky">
+        <ul class="scroll-nav-list">
+          @for (tab of navTabs; track tab.id) {
+          <li class="scroll-nav-item">
+            <button type="button" class="scroll-nav-btn" [class.active]="activeSection() === tab.id"
+              (click)="scrollToSection(tab.id)">
+              {{ tab.label }}
+            </button>
+          </li>
+          }
+        </ul>
+      </nav>
+
+      <!-- 3. Section: Info (#info) -->
+      <section id="info" class="physios-detail-section">
+        <div class="section-card clinic-info-card">
+          <div class="clinic-location-header">
+            <span class="clinic-area-title">{{ practitioner.clinicAddress.split(',').pop()?.trim() || 'Mansarovar,
+              Jaipur' }}</span>
+          </div>
+
+          <div class="clinic-info-body">
+            <!-- Left Info Block -->
+            <div class="clinic-main-details">
+              <h3 class="clinic-name">{{ practitioner.clinicName }}</h3>
+
+              <!-- Ratings -->
+              <div class="clinic-rating-row">
+                <div class="clinic-stars">
+                  <span class="star-score">{{ practitioner.clinicRating }}</span>
+                  <span class="star-icon">★★★★★</span>
+                </div>
+                <div class="clinic-excellence-badge">
+                  <span class="diamond-icon">◆</span>
+                  <span>{{ practitioner.clinicExcellenceScore }} (Clinic Excellence Rating)</span>
+                </div>
+              </div>
+
+              <!-- Address & Landmark -->
+              <div class="clinic-address-block">
+                <p class="address-text">{{ practitioner.clinicAddress }}</p>
+                <a href="https://maps.google.com" target="_blank" class="directions-link">Get Directions</a>
+              </div>
+
+              <!-- Clinic Photo Gallery Thumbnails -->
+              <div class="clinic-gallery-row">
+                <h4 class="gallery-title">Clinic Photos &amp; Videos</h4>
+                <div class="gallery-thumbs-list">
+                  @for (photo of clinicPhotos; track photo.url; let i = $index) {
+                  <div class="gallery-thumb-item">
+                    <img [src]="photo.url" [alt]="photo.caption" class="gallery-img" />
+                  </div>
+                  }
+                  <div class="gallery-thumb-more" (click)="scrollToSection('photos')">
+                    <span>+6</span>
+                  </div>
+                </div>
+                <a href="javascript:void(0)" class="view-media-link" (click)="scrollToSection('photos')">View All
+                  Media</a>
+              </div>
+            </div>
+
+            <!-- Right Timings & Fee Block -->
+            <div class="clinic-timing-fee-box">
+              <div class="timing-rows-wrap">
+                <div class="timing-item">
+                  <span class="timing-days">Mon - Sat</span>
+                  <span class="timing-hours">09:00 AM - 01:00 PM<br />02:00 PM - 06:00 PM</span>
+                </div>
+                <div class="timing-item">
+                  <span class="timing-days">Sun</span>
+                  <span class="timing-hours">10:00 AM - 02:00 PM</span>
+                </div>
+              </div>
+
+              <div class="fee-display-box">
+                <span class="fee-currency">₹{{ practitioner.consultationFee }}</span>
+                <div class="prime-verify-pill">
+                  <span class="prime-badge-bold">Prime</span>
+                  <span class="prime-check-mark">✔</span>
+                  <span class="prime-details-text">Verified details</span>
+                </div>
+              </div>
+
+              <button type="button" class="btn-book-instant" (click)="bookAppointment()">
+                <span class="bolt-icon">⚡</span> Book Appointment
+                <small class="instant-tag">Instant Pay Available</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Section: Stories / Patient Reviews (#stories) -->
+      <section id="stories" class="physios-detail-section">
+        <div class="section-card reviews-card">
+          <h3 class="section-header-title">
+            {{ reviews().length }} Patient Stories for {{ practitioner.name }} {{ practitioner.specialtyTitle }}
+          </h3>
+
+          <div class="reviews-list">
+            @for (rev of reviews(); track rev.id) {
+            <div class="review-item">
+              <div class="review-header">
+                <div class="reviewer-avatar">
+                  {{ rev.userName.charAt(0) }}
+                </div>
+                <div class="reviewer-info">
+                  <span class="reviewer-name">{{ rev.userName }} (Verified)</span>
+                  <span class="review-time">{{ rev.timeAgo }}</span>
+                </div>
+              </div>
+
+              @if (rev.visitedFor) {
+              <p class="review-visited-for">
+                <strong>Visited For</strong> {{ rev.visitedFor }}
+              </p>
+              }
+
+              <div class="review-recommend">
+                <span class="thumbs-up">👍</span>
+                <span>I recommend the doctor</span>
+              </div>
+
+              @if (rev.tags && rev.tags.length > 0) {
+              <div class="review-tags-wrap">
+                <span class="happy-with-label">Happy with:</span>
+                <div class="tag-pills">
+                  @for (t of rev.tags; track t) {
+                  <span class="tag-pill">{{ t }}</span>
+                  }
+                </div>
+              </div>
+              }
+
+              <p class="review-text">"{{ rev.review }}"</p>
+
+              @if (rev.clinicReply) {
+              <div class="clinic-reply-bubble">
+                <span class="reply-arrow">↳</span>
+                <div class="reply-content">
+                  <strong class="reply-author">{{ practitioner.clinicName }} replied:</strong>
+                  <p class="reply-text">{{ rev.clinicReply }}</p>
+                </div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Section: Rehab Plans & Packages (#plans) -->
+      <section id="plans" class="physios-detail-section">
+        <div class="section-card plans-card">
+          <div class="plans-header-row">
+            <div>
+              <h3 class="section-header-title">Rehab Plans &amp; Session Packages</h3>
+              <p class="section-sub-title">Save more with specialized rehabilitation packages</p>
+            </div>
+            <span class="popular-badge-pill">Recommended</span>
+          </div>
+
+          <!-- Active User Subscription Card (from JSON) -->
+          @if (activeSubscription()) {
+          <div class="user-active-subscription-card">
+            <div class="sub-header-line">
+              <div class="sub-title-group">
+                <span class="sub-badge-active">ACTIVE SUBSCRIPTION</span>
+                <h4 class="sub-plan-name">10-Session Rehab Plan (Plan #{{ activeSubscription()?.planId }})</h4>
+              </div>
+              <div class="sub-payment-status">
+                <span class="paid-badge">✔ {{ activeSubscription()?.paymentStatus }}</span>
+                <span class="sub-price">₹{{ activeSubscription()?.amount }}</span>
+              </div>
+            </div>
+
+            <div class="sub-progress-block">
+              <div class="sub-progress-labels">
+                <span>Sessions Completed: <strong>{{ activeSubscription()?.usedSessions }} / {{
+                    activeSubscription()?.totalSessions }}</strong></span>
+                <span class="remaining-highlight"><strong>{{ activeSubscription()?.remainingSessions }} Sessions
+                    Remaining</strong></span>
+              </div>
+              <div class="sub-progress-bar-bg">
+                <div class="sub-progress-bar-fill"
+                  [style.width.%]="(activeSubscription()!.usedSessions / activeSubscription()!.totalSessions) * 100">
+                </div>
+              </div>
+            </div>
+
+            <div class="sub-meta-footer">
+              <span>Valid: <strong>15 Aug 2026 – 14 Oct 2026</strong></span>
+              <span>Patient ID: <strong>#{{ activeSubscription()?.patientId }}</strong></span>
+            </div>
+          </div>
+          }
+
+          <!-- Available Plans Grid -->
+          <div class="plans-grid">
+            @for (plan of rehabPlans(); track plan.id) {
+            <div class="rehab-plan-item" [class.popular-card]="plan.isPopular">
+              @if (plan.isPopular) {
+              <div class="popular-tag">MOST POPULAR</div>
+              }
+              <div class="plan-header">
+                <h4 class="plan-title">{{ plan.planName }}</h4>
+                <div class="plan-price-row">
+                  <span class="plan-price">₹{{ plan.price }}</span>
+                  <span class="plan-sessions-tag">/ {{ plan.totalSessions }} Sessions</span>
+                </div>
+                <span class="plan-validity-text">Validity: {{ plan.validityDays }} Days (₹{{ (plan.price /
+                  plan.totalSessions).toFixed(0) }} per session)</span>
+              </div>
+
+              <div class="plan-benefits-list">
+                <span class="benefits-heading">Included Benefits:</span>
+                <ul>
+                  @for (b of plan.benefits; track b.id) {
+                  <li>
+                    <span class="check-icon">✔</span>
+                    <span>{{ b.benefitText }}</span>
+                  </li>
+                  }
+                  <li>
+                    <span class="check-icon">✔</span>
+                    <span>Priority Slot Booking on App</span>
+                  </li>
+                  <li>
+                    <span class="check-icon">✔</span>
+                    <span>Physiotherapist Direct Support</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button type="button" class="btn-buy-plan" (click)="buyPlan(plan)">
+                Buy Rehab Plan
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Section: Surgeries & Treatments (#treatments) -->
+      <section id="treatments" class="physios-detail-section">
+        <div class="section-card treatments-card">
+          <div class="treatments-header-row">
+            <h3 class="section-header-title">{{ treatmentsList().length }} Surgeries &amp; Treatments</h3>
+
+            <div class="treatments-search-box">
+              <svg class="search-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" placeholder="Search surgeries &amp; treatments" [ngModel]="treatmentSearchQuery()"
+                (ngModelChange)="treatmentSearchQuery.set($event)" class="treatment-input" />
+            </div>
+          </div>
+
+          <div class="treatments-grid">
+            @for (t of filteredTreatments(); track t.id) {
+            <div class="treatment-item-card">
+              <div class="treatment-icon-circle">
+                <!-- Stethoscope SVG -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3">
+                  </path>
+                  <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"></path>
+                  <circle cx="20" cy="10" r="2"></circle>
+                </svg>
+              </div>
+              <span class="treatment-name">{{ t.name }}</span>
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Section: Photos & Videos (#photos) -->
+      <section id="photos" class="physios-detail-section">
+        <div class="section-card photos-card">
+          <h3 class="section-header-title">Clinic Photos &amp; Facility Videos</h3>
+          <div class="full-gallery-grid">
+            @for (photo of clinicPhotos; track photo.url) {
+            <div class="gallery-photo-card">
+              <img [src]="photo.url" [alt]="photo.caption" class="gallery-big-img" />
+              <span class="gallery-caption">{{ photo.caption }}</span>
+            </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Section: Consult Q&A (#qa) -->
+      <section id="qa" class="physios-detail-section">
+        <div class="section-card qa-card">
+          <h3 class="section-header-title">Frequently Asked Questions &amp; Consult Q&amp;A</h3>
+          <div class="faq-list">
+            <div class="faq-item">
+              <h4 class="faq-question">What conditions does Dr. Sneha Sharma treat?</h4>
+              <p class="faq-answer">
+                Dr. Sneha Sharma specializes in sports injuries, knee pain, chronic back pain, cervical spondylosis,
+                post-operative joint rehabilitation, and musculoskeletal disorders.
+              </p>
+            </div>
+            <div class="faq-item">
+              <h4 class="faq-question">How can I book a 10-Session Rehab Plan?</h4>
+              <p class="faq-answer">
+                You can select the 10-Session Rehab Plan above to save on multi-session care. Your session chart and
+                weekly progress assessments will be managed directly with Dr. Sharma.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT STICKY COLUMN (Pick A Time Slot) -->
+    <div class="physios-detail-right-col">
+      <div class="sticky-booking-widget">
+        <h3 class="widget-title">Pick a time slot</h3>
+
+        <div class="booking-card">
+          <!-- Card Header Strip -->
+          <div class="booking-card-header">
+            <div class="appointment-type">
+              <span class="home-icon-badge">🏠</span>
+              <span class="type-text">Clinic Appointment</span>
+            </div>
+            <span class="appointment-fee">₹{{ practitioner.consultationFee }} fee</span>
+          </div>
+
+          <!-- Clinic Mini Details -->
+          <div class="booking-clinic-meta">
+            <h4 class="booking-clinic-name">{{ practitioner.clinicName }}</h4>
+            <div class="meta-sub-line">
+              <span class="star-rating">{{ practitioner.clinicRating }} ★</span>
+              <span class="fee-text">₹{{ practitioner.consultationFee }}</span>
+              <span class="verified-link">Verified details</span>
+            </div>
+            <span class="clinic-loc">Mansarovar</span>
+          </div>
+
+          <!-- Day Navigation Carousel Strip -->
+          <div class="day-carousel-strip">
+            <button type="button" class="day-nav-arrow"
+              (click)="selectedDayIndex.set(selectedDayIndex() > 0 ? selectedDayIndex() - 1 : 0)"
+              aria-label="Previous Day">
+              &lt;
+            </button>
+            <div class="day-tabs-slider">
+              @for (d of dayList; track d.label; let i = $index) {
+              <button type="button" class="day-tab-btn" [class.active]="selectedDayIndex() === i"
+                (click)="selectDay(i)">
+                <span class="day-title">{{ d.label }}</span>
+                <span class="day-slots-avail" [class.no-slots]="!d.hasSlots">{{ d.subLabel }}</span>
+              </button>
+              }
+            </div>
+            <button type="button" class="day-nav-arrow"
+              (click)="selectedDayIndex.set(selectedDayIndex() < dayList.length - 1 ? selectedDayIndex() + 1 : selectedDayIndex())"
+              aria-label="Next Day">
+              &gt;
+            </button>
+          </div>
+
+          <!-- Slot Content Display -->
+          <div class="slot-content-body">
+            @if (!dayList[selectedDayIndex()].hasSlots) {
+            <div class="no-slots-alert">
+              <div class="calendar-alert-icon">📅</div>
+              <p class="no-slots-msg">No slots available for today</p>
+              <button type="button" class="btn-next-avail" (click)="selectDay(1)">
+                Next availability on Wed, 2 Sep
+              </button>
+            </div>
+            } @else {
+            <!-- Morning Slots -->
+            <div class="slots-group">
+              <span class="slots-group-title">Morning Slots</span>
+              <div class="slots-chips-grid">
+                @for (slot of morningSlots; track slot) {
+                <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
+                  (click)="selectSlot(slot)">
+                  {{ slot }}
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- Afternoon / Evening Slots -->
+            <div class="slots-group">
+              <span class="slots-group-title">Afternoon / Evening Slots</span>
+              <div class="slots-chips-grid">
+                @for (slot of afternoonSlots; track slot) {
+                <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
+                  (click)="selectSlot(slot)">
+                  {{ slot }}
+                </button>
+                }
+              </div>
+            </div>
+
+            <button type="button" class="btn-confirm-slot" (click)="bookAppointment()">
+              Book Appointment for {{ selectedSlotTime() }}
+            </button>
+            }
+
+            <!-- Call Now Action Button -->
+            <a href="tel:+911412345678" class="btn-call-now">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                </path>
+              </svg>
+              Call Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Booking Feedback Toast / Modal -->
+@if (bookingSuccess()) {
+<div class="booking-modal-overlay" (click)="closeBookingSuccess()">
+  <div class="booking-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-success-icon">✔</div>
+    <h3 class="modal-title">Action Confirmed</h3>
+    <p class="modal-desc">{{ bookingMessage() }}</p>
+    <button type="button" class="modal-btn-close" (click)="closeBookingSuccess()">Got it, Thanks!</button>
+  </div>
+</div>
+}

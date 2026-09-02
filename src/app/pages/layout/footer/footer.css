@@ -1,0 +1,185 @@
+/* =========================================================
+ * Footer Styles - Physiosmate Premium Design
+ * Built with design tokens from variable.css
+ * ========================================================= */
+
+.physios-site-footer {
+  width: 100%;
+  background-color: var(--footer-bg);
+  color: var(--footer-link);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 4.5rem 1.5rem 3.5rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.physios-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* =========================================================
+ * 6-Column Navigation Grid
+ * ========================================================= */
+.physios-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2.5rem 1.75rem;
+  align-items: start;
+}
+
+.physios-footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.physios-footer-heading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--footer-heading, #ffffff);
+  margin: 0 0 1.15rem 0;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.physios-sub-heading-group {
+  margin-top: 2rem;
+}
+
+.physios-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.physios-footer-links li {
+  margin: 0;
+  padding: 0;
+}
+
+.physios-footer-links li a {
+  color: var(--footer-link, #d8e2ed);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.45;
+  transition: color 0.18s ease, transform 0.18s ease;
+  display: inline-block;
+}
+
+.physios-footer-links li a:hover {
+  color: var(--footer-link-hover, #5CCFCB);
+  transform: translateX(2px);
+}
+
+/* =========================================================
+ * Bottom Centered Logo & Copyright
+ * ========================================================= */
+.physios-footer-bottom {
+  margin-top: 5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  text-align: center;
+}
+
+.physios-footer-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  user-select: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.physios-footer-brand-logo:hover {
+  opacity: 0.92;
+  transform: scale(1.02);
+}
+
+.physios-footer-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--footer-dot, #5CCFCB);
+}
+
+.physios-footer-brand-text {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.physios-footer-brand-accent {
+  color: var(--footer-dot, #5CCFCB);
+}
+
+.physios-footer-copyright {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--footer-subtext, #9cb0c6);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* =========================================================
+ * Responsive Breakpoints
+ * ========================================================= */
+@media (max-width: 1024px) {
+  .physios-footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 1.75rem;
+  }
+
+  .physios-footer-bottom {
+    margin-top: 3.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .physios-site-footer {
+    padding: 3.5rem 1rem 2.5rem;
+  }
+
+  .physios-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 1.25rem;
+  }
+
+  .physios-footer-brand-text {
+    font-size: 1.95rem;
+  }
+
+  .physios-footer-bottom {
+    margin-top: 3rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .physios-footer-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .physios-footer-col {
+    align-items: center;
+  }
+
+  .physios-footer-links li a:hover {
+    transform: none;
+  }
+}
