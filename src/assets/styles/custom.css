@@ -2,6 +2,9 @@
  * Professional Header Styles - Physios Premium Design
  * Built with design tokens from variable.css
  * ========================================================= */
+a {
+  text-decoration: none;
+}
 
 .physios-header {
   width: 100%;
@@ -46,15 +49,6 @@
   color: #1a202c;
   line-height: 1;
   user-select: none;
-}
-
-.brand-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--primary-color, #10A896);
-  margin: 0 1px;
 }
 
 .brand-name {
@@ -472,16 +466,15 @@
   overflow: hidden;
   background: #ffffff;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
-.physios-card:hover {
+/* .physios-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
-}
+} */
 
 /* Banner: 195px height, Centered Doctor Cutout resting on baseline */
 .physios-card-banner {
@@ -508,15 +501,13 @@
   transition: transform 0.25s ease;
 }
 
-.physios-card:hover .physios-card-img {
-  transform: scale(1.03);
-}
 
 .physios-card-info {
   padding: 16px 18px 22px;
   background: #ffffff;
   border-radius: 0 0 24px 24px;
   flex: 1;
+  border: 1px solid #ddd;
 }
 
 .physios-card-title {
@@ -610,10 +601,7 @@
   justify-content: center;
   margin-bottom: 12px;
   transition: transform 0.2s ease;
-}
-
-.physios-circle-item:hover .physios-circle-avatar {
-  transform: scale(1.06);
+  border: 1px solid transparent;
 }
 
 .physios-circle-title {
