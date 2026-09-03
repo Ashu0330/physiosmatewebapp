@@ -13,6 +13,7 @@ export class Authservice {
   constructor(private http: HttpClient) { }
 
   login(model: any) {
+    debugger
     return this.http.post<apiresponse<authmodel>>(environment.baseUrl + 'Auth/Login', model);
   }
 

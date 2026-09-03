@@ -6,6 +6,8 @@ import { Doctordetail } from './pages/doctordetail/doctordetail';
 import { AuthPageComponent } from './auth/auth-page/auth-page.component';
 import { BookingAuthComponent } from './booking/booking-auth/booking-auth.component';
 
+import { UserDashboard } from './pages/user-dashboard/user-dashboard';
+
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
   {
@@ -43,6 +45,22 @@ export const routes: Routes = [
       {
         path: 'providers/:id',
         component: Doctordetail,
+      },
+      {
+        path: 'appointments',
+        component: UserDashboard,
+      },
+      {
+        path: 'dashboard',
+        component: UserDashboard,
+      },
+      {
+        path: 'medical-records',
+        component: UserDashboard,
+      },
+      {
+        path: 'online-consultations',
+        component: UserDashboard,
       },
     ],
   },
