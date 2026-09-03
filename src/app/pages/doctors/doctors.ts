@@ -18,6 +18,7 @@ export interface Doctor {
   photo: string;
   gender: 'male' | 'female';
   prime: boolean;
+  isVerified: boolean;
 }
 
 @Component({
@@ -73,7 +74,8 @@ export class Doctors {
       availableText: 'Available Tomorrow',
       photo: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80',
       gender: 'male',
-      prime: true
+      prime: true,
+      isVerified: true,
     },
     {
       id: 'doc-2',
@@ -89,7 +91,9 @@ export class Doctors {
       availableText: 'Available Today',
       photo: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=400&q=80',
       gender: 'male',
-      prime: false
+      prime: false,      
+      isVerified: true,
+
     },
     {
       id: 'doc-3',
@@ -105,7 +109,9 @@ export class Doctors {
       availableText: 'Available Tomorrow',
       photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
       gender: 'female',
-      prime: true
+      prime: true,
+      isVerified: false,
+
     },
     {
       id: 'doc-4',
@@ -121,7 +127,8 @@ export class Doctors {
       availableText: 'Available Today',
       photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80',
       gender: 'male',
-      prime: true
+      prime: true,
+      isVerified: false,
     }
   ]);
 

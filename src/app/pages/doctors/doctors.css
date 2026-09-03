@@ -292,7 +292,7 @@
 
 /* Avatar Column */
 .physios-doc-avatar-col {
-  flex: 0 0 170px;
+  flex: 0 0 150px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -332,14 +332,17 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .physios-doc-name {
   font-family: var(--font-heading);
   font-size: 19px;
   font-weight: 700;
-  margin: 0 0 5px;
-  line-height: 1.25;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .physios-doc-name a {
@@ -354,21 +357,22 @@
 }
 
 .physios-doc-spec {
-  font-size: 13.5px;
+  font-size: 13px;
   color: #64748b;
-  margin-bottom: 3px;
 }
 
 .physios-doc-exp {
   font-size: 13px;
   color: #64748b;
-  margin-bottom: 14px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .physios-doc-clinic-row {
-  font-size: 13.5px;
+  font-size: 13px;
   color: #334155;
-  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -380,36 +384,25 @@
   color: #1e293b;
 }
 
-.physios-doc-bullet {
-  color: #64748b;
-  margin: 0 2px;
-}
-
 .physios-doc-clinic {
   color: #475569;
 }
 
+.physios-doc-footer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 /* Consultation Fee with Dotted Underline */
 .physios-doc-fee-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
+  gap: 5px;
+  font-size: 13px;
   color: #334155;
-  padding-bottom: 14px;
-  margin-bottom: 18px;
-  border-bottom: 1px dotted #cbd5e1;
-  width: fit-content;
 }
 
-.physios-doc-fee {
-  font-weight: 500;
-}
-
-.physios-info-svg {
-  color: #94a3b8;
-  cursor: pointer;
-}
 
 /* Metrics Row (Rating Pill + Patient Stories) */
 .physios-doc-metrics-row {
@@ -434,18 +427,12 @@
   font-size: 13px;
   font-weight: 700;
   color: #1e293b;
-  text-decoration: underline;
   transition: color 0.15s ease;
-}
-
-.physios-stories-link:hover {
-  color: var(--primary-dark, #087F76);
+  margin: 0;
 }
 
 /* Right Action Column */
 .physios-doc-action-col {
-  /* flex: 0 0 175px;
-  margin-left: auto; */
   display: flex;
   justify-content: center;
   align-self: center;
@@ -454,7 +441,6 @@
   align-self: center;
   gap: 12px;
   width: 100%;
-  margin-top: 10px;
 }
 
 .physios-btn-contact-clinic-solid {
