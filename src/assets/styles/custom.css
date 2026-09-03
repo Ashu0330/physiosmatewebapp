@@ -247,6 +247,207 @@
 }
 
 /* =========================================================
+ * User Profile Avatar & Dropdown
+ * ========================================================= */
+.physios-profile-wrapper {
+  position: relative;
+}
+
+/* Circular avatar button */
+.physios-profile-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color, #10A896);
+  background: var(--primary-light, #E8F8F5);
+  cursor: pointer;
+  padding: 0;
+  overflow: visible;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.physios-profile-avatar:hover {
+  border-color: var(--primary-dark, #087F76);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.15);
+}
+
+.physios-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.physios-avatar-initials {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-dark, #087F76);
+  line-height: 1;
+  user-select: none;
+}
+
+/* Green online dot */
+.physios-avatar-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  border: 2px solid #ffffff;
+}
+
+/* Dropdown panel */
+.physios-profile-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 240px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 9999;
+  overflow: hidden;
+  transform: translateY(-6px);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.physios-profile-dropdown.open {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* User info header in dropdown */
+.physios-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem 0.9rem;
+  background: linear-gradient(135deg, var(--primary-light, #E8F8F5) 0%, #f0fdfb 100%);
+}
+
+.physios-profile-avatar-lg {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color, #10A896);
+  background: var(--primary-light, #E8F8F5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.physios-avatar-img-lg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.physios-avatar-initials-lg {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-dark, #087F76);
+  user-select: none;
+}
+
+.physios-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.physios-profile-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.physios-profile-contact {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.physios-profile-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 0;
+}
+
+/* Each menu row */
+.physios-profile-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #334155;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.13s ease, color 0.13s ease;
+  font-family: var(--font-body), sans-serif;
+}
+
+.physios-profile-item svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.13s ease;
+}
+
+.physios-profile-item:hover {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+}
+
+.physios-profile-item:hover svg {
+  opacity: 1;
+}
+
+/* Logout button — red tint */
+.physios-logout-btn {
+  color: #dc2626;
+}
+
+.physios-logout-btn:hover {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Mobile logout button */
+.physios-mobile-logout {
+  background-color: #fef2f2;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca;
+}
+
+.physios-mobile-logout:hover {
+  background-color: #fee2e2;
+}
+
+/* =========================================================
  * Mobile Hamburger Toggle & Drawer
  * ========================================================= */
 .physios-mobile-toggle {

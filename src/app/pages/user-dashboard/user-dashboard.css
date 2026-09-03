@@ -1,0 +1,934 @@
+/* ==========================================================================
+   Physios Minimalistic User Dashboard ("Your Drive")
+   Clean flat surfaces, minimal colors, no gradients, compact font sizing
+   ========================================================================== */
+
+.physios-drive-page {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  background-color: var(--bg-page, #F4F5F8);
+  padding: 24px 16px 40px 16px;
+  font-family: var(--font-body, 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  color: var(--text-body, #414146);
+}
+
+.physios-drive-box {
+  /* max-width: 1140px; */
+  background-color: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  min-height: 580px;
+}
+
+/* --------------------------------------------------------------------------
+   Top Header Row: Left "Your Drive", Right User Info
+   -------------------------------------------------------------------------- */
+.physios-drive-topbar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light, #EAEAEA);
+  background-color: var(--bg-card, #FFFFFF);
+}
+
+.topbar-left {
+  width: 220px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.drive-heading {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #1F2937);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.topbar-right {
+  flex: 1;
+  padding: 12px 24px;
+  border-left: 1px solid var(--border-light, #EAEAEA);
+  box-sizing: border-box;
+}
+
+.user-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar-box {
+  width: 38px;
+  height: 38px;
+  background-color: #ECEFF1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-icon-svg {
+  display: block;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main, #1F2937);
+}
+
+.user-phone {
+  font-size: 12px;
+  color: var(--text-muted, #787887);
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Main 2-Column Body: Left Sidebar + Right Content
+   -------------------------------------------------------------------------- */
+.physios-drive-body {
+  display: flex;
+  min-height: 520px;
+}
+
+/* Left Sidebar Menu */
+.physios-sidebar {
+  width: 220px;
+  border-right: 1px solid var(--border-light, #EAEAEA);
+  background-color: var(--bg-card, #FFFFFF);
+  flex-shrink: 0;
+}
+
+.physios-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.physios-nav-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #F0F0F0;
+  padding: 13px 20px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-body, #414146);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.physios-nav-btn:hover {
+  background-color: #F8FAFC;
+  color: var(--text-main, #1F2937);
+}
+
+.physios-nav-btn.active {
+  border-left-color: var(--primary-color, #10A896);
+  background-color: #F6FCFA;
+  font-weight: 600;
+  color: var(--primary-dark, #087F76);
+}
+
+/* Right Content Area */
+.physios-content {
+  flex: 1;
+  padding: 20px 24px;
+  background-color: var(--bg-card, #FFFFFF);
+  overflow-x: hidden;
+}
+
+.physios-tab-panel {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Sub-tabs Bar (Horizontal clean tabs with underline)
+   -------------------------------------------------------------------------- */
+.physios-subtabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-bottom: 1px solid var(--border-light, #EAEAEA);
+  margin-bottom: 20px;
+}
+
+.subtab-item {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 0 10px 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted, #787887);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.subtab-item:hover {
+  color: var(--text-main, #1F2937);
+}
+
+.subtab-item.active {
+  color: var(--primary-color, #10A896);
+  border-bottom-color: var(--primary-color, #10A896);
+  font-weight: 600;
+}
+
+.subtabs-right-action {
+  margin-left: auto;
+}
+
+/* --------------------------------------------------------------------------
+   1. Appointments: Empty State
+   -------------------------------------------------------------------------- */
+.physios-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px 80px 20px;
+}
+
+.empty-folder-svg-wrap {
+  margin-bottom: 16px;
+}
+
+.physios-empty-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #414146;
+  margin: 0 0 12px 0;
+}
+
+.physios-link-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color, #10A896);
+  text-decoration: none;
+  transition: text-decoration 0.15s ease;
+}
+
+.physios-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   2. Payments: Physios HealthCash Card
+   -------------------------------------------------------------------------- */
+.physios-cash-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 4px;
+  padding: 12px 18px;
+  background-color: #FFFFFF;
+  margin-bottom: 24px;
+}
+
+.cash-brand-logo {
+  width: 32px;
+  height: 24px;
+  border: 1px solid #D8D8D8;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: var(--font-heading, sans-serif);
+  font-weight: 700;
+  font-size: 14px;
+  color: #10A896;
+  background-color: #FFFFFF;
+}
+
+.p-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: #10A896;
+}
+
+.p-letter {
+  font-weight: 800;
+  color: #10A896;
+  margin-top: -2px;
+}
+
+.cash-balance-text {
+  font-size: 13px;
+  color: #333333;
+}
+
+.cash-balance-text strong {
+  color: #1F2937;
+}
+
+.minimal-invoices-section {
+  margin-top: 10px;
+}
+
+.sub-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333333;
+  margin: 0 0 12px 0;
+}
+
+.minimal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  border: 1px solid #EAEAEA;
+}
+
+.minimal-table th {
+  background-color: #F8FAFC;
+  text-align: left;
+  padding: 9px 14px;
+  font-weight: 600;
+  color: #64748B;
+  border-bottom: 1px solid #EAEAEA;
+  font-size: 12px;
+}
+
+.minimal-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #F0F0F0;
+  color: #333333;
+}
+
+.minimal-table tr:hover td {
+  background-color: #FBFDFD;
+}
+
+.txt-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: #64748B;
+}
+
+.txt-main {
+  display: block;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+.txt-muted-sm {
+  display: block;
+  font-size: 11px;
+  color: #787887;
+  margin-top: 2px;
+}
+
+.txt-muted {
+  font-size: 12px;
+  color: #787887;
+}
+
+.txt-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #F1F5F9;
+  color: #475569;
+}
+
+.txt-status.success {
+  background-color: #ECFDF5;
+  color: #059669;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   3. Minimal Lists & Items (Subscriptions, Medical Records, Consultations)
+   -------------------------------------------------------------------------- */
+.minimal-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #EAEAEA;
+  border-radius: 4px;
+}
+
+.minimal-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #F0F0F0;
+  background-color: #FFFFFF;
+}
+
+.minimal-list-item:last-child {
+  border-bottom: none;
+}
+
+.minimal-list-item:hover {
+  background-color: #FAFCFB;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.item-date-square {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  background-color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.d-day {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1;
+}
+
+.d-month {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--primary-color, #10A896);
+  text-transform: uppercase;
+}
+
+.doc-icon-square {
+  width: 34px;
+  height: 34px;
+  border-radius: 3px;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+}
+
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-sub {
+  font-size: 12px;
+  color: #787887;
+  margin: 2px 0 0 0;
+}
+
+.item-time {
+  font-size: 11px;
+  color: #64748B;
+  margin: 2px 0 0 0;
+}
+
+.item-notes {
+  font-size: 12px;
+  color: #475569;
+  margin: 4px 0 0 0;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #F1F5F9;
+  color: #475569;
+}
+
+.status-pill.upcoming {
+  background-color: #EFF6FF;
+  color: #2563EB;
+}
+
+/* Action Links & Buttons (Flat, minimalistic) */
+.link-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color, #10A896);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-action:hover {
+  text-decoration: underline;
+}
+
+.link-action-bold {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-color, #10A896);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-action-bold:hover {
+  text-decoration: underline;
+}
+
+.link-btn-sm {
+  background: transparent;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--primary-dark, #087F76);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.link-btn-sm:hover {
+  background-color: #F8FAFC;
+}
+
+.physios-action-btn {
+  background-color: var(--primary-color, #10A896);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.physios-action-btn:hover {
+  background-color: var(--primary-hover, #0e9282);
+}
+
+/* Subscriptions Box */
+.minimal-plan-box {
+  border: 1px solid #EAEAEA;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #FFFFFF;
+}
+
+.plan-row-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.plan-name-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+}
+
+.plan-price-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.plan-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #787887;
+  margin-bottom: 6px;
+}
+
+.mini-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #E2E8F0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background-color: var(--primary-color, #10A896);
+}
+
+.plan-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Manage Weekly Plan (Minimal strip & clean list)
+   -------------------------------------------------------------------------- */
+.minimal-days-strip {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.day-btn {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: inherit;
+  min-width: 54px;
+}
+
+.day-btn:hover {
+  background-color: #F8FAFC;
+}
+
+.day-btn.active {
+  border-color: var(--primary-color, #10A896);
+  background-color: #F0FDFA;
+}
+
+.day-abbr {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333333;
+}
+
+.day-btn.active .day-abbr {
+  color: var(--primary-dark, #087F76);
+}
+
+.day-index {
+  font-size: 10px;
+  color: #787887;
+  margin-top: 2px;
+}
+
+.day-content-box {
+  border: 1px solid #EAEAEA;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.day-meta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.day-title-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+}
+
+.completion-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-dark, #087F76);
+  background-color: #E6FFFA;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.minimal-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.checklist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 3px;
+  border: 1px solid #F0F0F0;
+  background-color: #FFFFFF;
+}
+
+.checklist-row:hover {
+  background-color: #FBFDFD;
+}
+
+.checklist-row.done {
+  background-color: #F9FAFB;
+}
+
+.checklist-row.done .ex-name {
+  text-decoration: line-through;
+  color: #94A3B8;
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333333;
+  cursor: pointer;
+}
+
+.check-label input[type="checkbox"] {
+  accent-color: var(--primary-color, #10A896);
+  cursor: pointer;
+}
+
+.ex-volume {
+  font-size: 11px;
+  color: #787887;
+}
+
+.minimal-pain-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #F0F0F0;
+}
+
+.mini-slider {
+  width: 140px;
+  accent-color: var(--primary-color, #10A896);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Minimal Modals
+   -------------------------------------------------------------------------- */
+.minimal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.minimal-modal-box {
+  background: #FFFFFF;
+  border-radius: 4px;
+  border: 1px solid #D1D5DB;
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #EAEAEA;
+}
+
+.modal-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 0;
+}
+
+.close-x {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: #64748B;
+  cursor: pointer;
+}
+
+.modal-content {
+  padding: 16px;
+  font-size: 13px;
+  color: #333333;
+}
+
+.field-box {
+  margin-bottom: 12px;
+}
+
+.field-lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 4px;
+}
+
+.field-inp {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #D1D5DB;
+  border-radius: 3px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.field-inp:focus {
+  border-color: var(--primary-color, #10A896);
+}
+
+.modal-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #F8FAFC;
+  border-top: 1px solid #EAEAEA;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid #D1D5DB;
+  border-radius: 3px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inv-summary p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive (Mobile view)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .physios-drive-page {
+    padding: 12px 8px;
+  }
+
+  .physios-drive-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-left {
+    width: 100%;
+    border-bottom: 1px solid #EAEAEA;
+    padding: 12px 16px;
+  }
+
+  .topbar-right {
+    border-left: none;
+    padding: 12px 16px;
+  }
+
+  .physios-drive-body {
+    flex-direction: column;
+  }
+
+  .physios-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #EAEAEA;
+  }
+
+  .physios-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .physios-nav-btn {
+    width: auto;
+    white-space: nowrap;
+    border-bottom: none;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .physios-nav-btn.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--primary-color, #10A896);
+  }
+
+  .physios-content {
+    padding: 16px;
+  }
+
+  .minimal-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
