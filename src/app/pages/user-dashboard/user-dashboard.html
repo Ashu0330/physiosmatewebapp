@@ -348,25 +348,251 @@
           </div>
 
           <div class="tab-body-wrap">
-            <div class="minimal-list">
+            <div class="consultancy-accordion-list">
               @for (c of consultancies; track c.id) {
-              <div class="minimal-list-item">
-                <div class="item-left">
-                  <div class="item-info">
-                    <div class="title-with-badge">
-                      <h3 class="item-title">{{ c.doctorName }}</h3>
-                      <span class="status-pill" [class.upcoming]="c.status === 'Upcoming'">{{ c.status }}</span>
+              <div class="consultancy-card" [class.is-open]="c.isExpanded">
+                <!-- ================= ACCORDION HEADER ================= -->
+                <div class="consultancy-card-header" (click)="toggleConsultancyAccordion(c)">
+                  <div class="header-left">
+                    <!-- Doctor Avatar Icon -->
+                    <div class="consultancy-avatar">
+                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/>
+                        <path d="M10 14.5v1.5a2 2 0 0 0 4 0v-1.5"/>
+                        <circle cx="12" cy="18" r="1" fill="#16a34a"/>
+                      </svg>
                     </div>
-                    <p class="item-sub">{{ c.specialization }} • {{ c.mode }} • {{ c.date }} at {{ c.time }}</p>
-                    <p class="item-notes"><strong>Diagnosis:</strong> {{ c.diagnosis }}</p>
+
+                    <!-- Header Text Details -->
+                    <div class="consultancy-header-info">
+                      <span class="booking-tag">Booking #{{ c.bookingId || c.slotId || 9 }}</span>
+                      <h3 class="consultancy-doctor-title">{{ c.assignedPractitionerName || c.doctorName }}</h3>
+
+                      <div class="consultancy-meta-row">
+                        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <span class="meta-label">Assigned Practitioner:</span>
+                        <span class="meta-value-doctor">{{ c.assignedPractitionerName || c.doctorName }}</span>
+                      </div>
+
+                      <div class="consultancy-meta-row">
+                        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span class="meta-label">Assignment Status:</span>
+                        <span class="badge-assigned">{{ c.assignmentStatus || 'Assigned' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Header Right Actions: Status Badge & Chevron -->
+                  <div class="header-right">
+                    <div class="status-pill-scheduled" [class.upcoming]="c.status === 'Upcoming'" [class.completed]="c.status === 'Completed'">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <path d="m9 16 2 2 4-4"></path>
+                      </svg>
+                      <span>{{ c.status || 'Scheduled' }}</span>
+                    </div>
+
+                    <button type="button" class="accordion-trigger-btn" [attr.aria-label]="c.isExpanded ? 'Collapse' : 'Expand'" (click)="$event.stopPropagation(); toggleConsultancyAccordion(c)">
+                      <svg class="chevron-arrow" [class.rotated]="c.isExpanded" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <div class="item-right">
-                  <button type="button" class="link-action" (click)="openConsultancyDetails(c)">View Summary</button>
-                  @if (c.status === 'Upcoming') {
-                  <a routerLink="/video-consult" class="physios-action-btn">Join Call</a>
-                  }
+
+                <!-- ================= ACCORDION EXPANDED BODY ================= -->
+                @if (c.isExpanded) {
+                <div class="consultancy-card-body">
+                  <!-- Section 1: Slot Date & Time cards -->
+                  <div class="highlight-cards-row">
+                    <!-- Slot Date Card -->
+                    <div class="highlight-card">
+                      <div class="highlight-icon-wrap">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                          <circle cx="8" cy="14" r="1" fill="#047857"></circle>
+                          <circle cx="12" cy="14" r="1" fill="#047857"></circle>
+                          <circle cx="16" cy="14" r="1" fill="#047857"></circle>
+                        </svg>
+                      </div>
+                      <div class="highlight-text">
+                        <span class="highlight-label">Slot Date</span>
+                        <span class="highlight-main">{{ c.slotDate || c.date }}</span>
+                        <span class="highlight-sub">{{ c.dayOfWeek || 'Friday' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Time Card -->
+                    <div class="highlight-card">
+                      <div class="highlight-icon-wrap">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                      <div class="highlight-text">
+                        <span class="highlight-label">Time</span>
+                        <span class="highlight-main">{{ c.time || (c.startTime + ' - ' + c.endTime) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 2: 2x3 Grid Container -->
+                  <div class="info-grid-box">
+                    <!-- Cell 1: Visit Type -->
+                    <div class="grid-cell cell-border-right cell-border-bottom">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 21h18"></path>
+                          <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                          <path d="M9 9h1"></path>
+                          <path d="M9 13h1"></path>
+                          <path d="M9 17h1"></path>
+                          <path d="M14 9h1"></path>
+                          <path d="M14 13h1"></path>
+                          <path d="M14 17h1"></path>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Visit Type</span>
+                        <span class="cell-val">{{ c.visitType || c.mode || 'Clinic' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cell 2: Slot ID -->
+                    <div class="grid-cell cell-border-bottom">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="4" y1="9" x2="20" y2="9"></line>
+                          <line x1="4" y1="15" x2="20" y2="15"></line>
+                          <line x1="10" y1="3" x2="8" y2="21"></line>
+                          <line x1="16" y1="3" x2="14" y2="21"></line>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Slot ID</span>
+                        <span class="cell-val">{{ c.slotId || c.bookingId || 9 }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cell 3: Clinic Name -->
+                    <div class="grid-cell cell-border-right cell-border-bottom">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"></path>
+                          <line x1="12" y1="8" x2="12" y2="16"></line>
+                          <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Clinic Name</span>
+                        <span class="cell-val">{{ c.clinicName || 'Not specified' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cell 4: Clinic Address -->
+                    <div class="grid-cell cell-border-bottom">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Clinic Address</span>
+                        <span class="cell-val">{{ c.clinicAddress || 'Not specified' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cell 5: Assigned Practitioner -->
+                    <div class="grid-cell cell-border-right">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Assigned Practitioner</span>
+                        <span class="cell-val">{{ c.assignedPractitionerName || c.doctorName }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cell 6: Assignment Status -->
+                    <div class="grid-cell">
+                      <div class="cell-icon-circle">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                      </div>
+                      <div class="cell-info">
+                        <span class="cell-label">Assignment Status</span>
+                        <span class="badge-assigned">{{ c.assignmentStatus || 'Assigned' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 3: Notes Container -->
+                  <div class="notes-container">
+                    <div class="notes-icon-box">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                        <line x1="8" y1="7" x2="16" y2="7"></line>
+                        <line x1="8" y1="11" x2="16" y2="11"></line>
+                        <line x1="8" y1="15" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <div class="notes-content">
+                      <span class="notes-title">Notes</span>
+                      <p class="notes-body">{{ c.notes || 'joint pain' }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Section 4: Booked At Container -->
+                  <div class="booked-at-container">
+                    <div class="cell-icon-circle">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div class="booked-at-content">
+                      <span class="booked-label">Booked At</span>
+                      <span class="booked-val">{{ c.bookedAt || '31 Aug 2026, 06:59 PM' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Section 5: Action Footer -->
+                  <div class="consultancy-card-footer">
+                    <button type="button" class="btn-summary-link" (click)="openConsultancyDetails(c)">
+                      View Summary
+                    </button>
+                    @if (c.status === 'Upcoming' || c.mode === 'Video Call' || c.visitType === 'Video Call') {
+                    <a routerLink="/video-consult" class="btn-join-call">
+                      Join Video Call
+                    </a>
+                    }
+                  </div>
                 </div>
+                }
               </div>
               }
             </div>

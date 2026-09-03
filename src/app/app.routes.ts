@@ -62,6 +62,14 @@ export const routes: Routes = [
         path: 'online-consultations',
         component: UserDashboard,
       },
+      {
+        path: 'consultations',
+        component: UserDashboard,
+      },
+      {
+        path: 'user-dashboard',
+        component: UserDashboard,
+      },
     ],
   },
 

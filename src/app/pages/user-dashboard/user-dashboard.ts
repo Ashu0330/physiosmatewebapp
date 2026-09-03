@@ -149,40 +149,79 @@ export class UserDashboard implements OnInit {
 
   consultancies: ConsultancyItem[] = [
     {
+      id: 'CNS-009',
+      bookingId: 9,
+      slotId: 9,
+      doctorName: 'Dr. Himanshu suman',
+      assignedPractitionerName: 'Dr. Himanshu suman',
+      assignmentStatus: 'Assigned',
+      specialization: 'Orthopedic & Joint Physiotherapy',
+      date: '04 Sep 2026',
+      slotDate: '04 Sep 2026',
+      dayOfWeek: 'Friday',
+      time: '09:30 AM - 12:30 PM',
+      startTime: '09:30 AM',
+      endTime: '12:30 PM',
+      mode: 'In-Clinic',
+      visitType: 'Clinic',
+      clinicName: 'Not specified',
+      clinicAddress: 'Not specified',
+      diagnosis: 'Lumbar radiculopathy & joint mobilization',
+      status: 'Scheduled',
+      prescriptionAvailable: true,
+      notes: 'joint pain',
+      bookedAt: '31 Aug 2026, 06:59 PM',
+      isExpanded: true
+    },
+    {
       id: 'CNS-301',
+      bookingId: 14,
+      slotId: 14,
       doctorName: 'Dr. Sarah Jenkins',
+      assignedPractitionerName: 'Dr. Sarah Jenkins',
+      assignmentStatus: 'Assigned',
       specialization: 'Orthopedic Physiotherapy & Spine Care',
       date: '08 Sep 2026',
+      slotDate: '08 Sep 2026',
+      dayOfWeek: 'Tuesday',
       time: '04:30 PM - 05:15 PM',
+      startTime: '04:30 PM',
+      endTime: '05:15 PM',
       mode: 'Video Call',
+      visitType: 'Video Call',
+      clinicName: 'Physiosmate Tele-Rehab Hub',
+      clinicAddress: 'Online Room #4',
       diagnosis: 'Lumbar radiculopathy management, core stabilizer engagement review',
       status: 'Upcoming',
       prescriptionAvailable: true,
-      notes: 'Please keep an exercise mat ready and ensure camera has full body visibility.'
+      notes: 'Please keep an exercise mat ready and ensure camera has full body visibility.',
+      bookedAt: '01 Sep 2026, 11:20 AM',
+      isExpanded: false
     },
     {
       id: 'CNS-302',
-      doctorName: 'Dr. Sarah Jenkins',
-      specialization: 'Orthopedic Physiotherapy & Spine Care',
-      date: '28 Aug 2026',
-      time: '11:00 AM - 11:45 AM',
-      mode: 'In-Clinic',
-      diagnosis: 'Acute lower back strain with mild left leg radiating pain (L4-L5)',
-      status: 'Completed',
-      prescriptionAvailable: true,
-      notes: 'Advised avoiding prolonged sitting beyond 35 mins. Prescribed heat pack & McKenzie extensions.'
-    },
-    {
-      id: 'CNS-303',
+      bookingId: 8,
+      slotId: 8,
       doctorName: 'Dr. Rajesh Mehta',
+      assignedPractitionerName: 'Dr. Rajesh Mehta',
+      assignmentStatus: 'Assigned',
       specialization: 'Sports Rehab & Ergonomics Specialist',
       date: '02 Aug 2026',
+      slotDate: '02 Aug 2026',
+      dayOfWeek: 'Sunday',
       time: '06:00 PM - 06:30 PM',
-      mode: 'Video Call',
+      startTime: '06:00 PM',
+      endTime: '06:30 PM',
+      mode: 'In-Clinic',
+      visitType: 'Clinic',
+      clinicName: 'Apex Physio & Wellness Clinic',
+      clinicAddress: 'Suite 204, Metro Plaza',
       diagnosis: 'Postural neck kyphosis & forward head syndrome',
       status: 'Completed',
       prescriptionAvailable: true,
-      notes: 'Ergonomic screen height adjusted. Chin tucks and scapular retractions recommended 3x daily.'
+      notes: 'Ergonomic screen height adjusted. Chin tucks and scapular retractions recommended 3x daily.',
+      bookedAt: '28 Jul 2026, 03:40 PM',
+      isExpanded: false
     }
   ];
 
@@ -458,6 +497,7 @@ export class UserDashboard implements OnInit {
         next: (res) => {
           if (res && res.data && res.data.length > 0) {
             this.bookings = res.data;
+            this.consultancies = this.mapBookingsToConsultancies(res.data);
           }
           this.isLoading = false;
         },
@@ -593,5 +633,52 @@ export class UserDashboard implements OnInit {
   closeConsultancyDetails(): void {
     this.showConsultancyModal = false;
     this.selectedConsultancy = null;
+  }
+
+  toggleConsultancyAccordion(item: ConsultancyItem): void {
+    item.isExpanded = !item.isExpanded;
+  }
+
+  mapBookingsToConsultancies(bookings: MyBooking[]): ConsultancyItem[] {
+    return bookings.map((b, index) => {
+      let dayOfWeek = 'Friday';
+      let formattedDate = b.slotDate || '';
+      if (b.slotDate) {
+        try {
+          const d = new Date(b.slotDate);
+          if (!isNaN(d.getTime())) {
+            dayOfWeek = d.toLocaleDateString('en-US', { weekday: 'long' });
+            formattedDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+          }
+        } catch { }
+      }
+      const practitioner = b.assignedPractitionerName || b.practitionerName || 'Dr. Himanshu suman';
+      const timeRange = b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : (b.startTime || '09:30 AM - 12:30 PM');
+      return {
+        id: 'CNS-' + (b.bookingId || index + 1),
+        bookingId: b.bookingId || b.slotId || (index + 1),
+        slotId: b.slotId || b.bookingId || (index + 1),
+        doctorName: practitioner,
+        assignedPractitionerName: practitioner,
+        assignmentStatus: b.assignmentStatus || 'Assigned',
+        specialization: 'Physiotherapy & Rehabilitation',
+        date: formattedDate,
+        slotDate: formattedDate,
+        dayOfWeek: dayOfWeek,
+        time: timeRange,
+        startTime: b.startTime || '09:30 AM',
+        endTime: b.endTime || '12:30 PM',
+        mode: (b.visitType as any) || 'In-Clinic',
+        visitType: b.visitType || 'Clinic',
+        clinicName: b.clinicName || 'Not specified',
+        clinicAddress: b.clinicAddress || 'Not specified',
+        diagnosis: b.notes || 'General Assessment & Therapy',
+        status: b.status || 'Scheduled',
+        prescriptionAvailable: true,
+        notes: b.notes || 'joint pain',
+        bookedAt: b.bookedAt || '31 Aug 2026, 06:59 PM',
+        isExpanded: index === 0
+      };
+    });
   }
 }

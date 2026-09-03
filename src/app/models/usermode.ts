@@ -69,15 +69,28 @@ export class MedicalReportItem {
 
 export class ConsultancyItem {
     id: string = '';
+    bookingId?: number = 0;
+    slotId?: number = 0;
     doctorName: string = '';
+    assignedPractitionerName?: string = '';
+    assignmentStatus?: string = 'Assigned';
     specialization: string = '';
     date: string = '';
+    slotDate?: string = '';
+    dayOfWeek?: string = '';
     time: string = '';
-    mode: 'Video Call' | 'In-Clinic' | 'Home Visit' = 'In-Clinic';
+    startTime?: string = '';
+    endTime?: string = '';
+    mode: 'Video Call' | 'In-Clinic' | 'Home Visit' | string = 'In-Clinic';
+    visitType?: string = 'Clinic';
+    clinicName?: string | null = 'Not specified';
+    clinicAddress?: string | null = 'Not specified';
     diagnosis: string = '';
-    status: 'Completed' | 'Upcoming' | 'Cancelled' = 'Upcoming';
+    status: 'Completed' | 'Upcoming' | 'Cancelled' | 'Scheduled' | string = 'Scheduled';
     prescriptionAvailable: boolean = false;
     notes: string = '';
+    bookedAt?: string = '';
+    isExpanded?: boolean = false;
 }
 
 export class DayExercise {

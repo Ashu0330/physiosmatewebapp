@@ -932,3 +932,461 @@
     overflow-x: auto;
   }
 }
+
+/* ==========================================================================
+   Consultancy Accordion Card Styles (Matching Provided Mockup)
+   ========================================================================== */
+
+.consultancy-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.consultancy-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.consultancy-card:hover {
+  border-color: #D1D5DB;
+}
+
+.consultancy-card.is-open {
+  border-color: #A7F3D0;
+  box-shadow: 0 4px 16px rgba(16, 168, 150, 0.08);
+}
+
+/* Header */
+.consultancy-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  cursor: pointer;
+  user-select: none;
+  background-color: #FFFFFF;
+  transition: background-color 0.15s ease;
+}
+
+.consultancy-card-header:hover {
+  background-color: #FAFCFB;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.consultancy-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.consultancy-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.booking-tag {
+  display: inline-block;
+  background-color: #DCFCE7;
+  color: #15803D;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+
+.consultancy-doctor-title {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #046338;
+  margin: 0 0 5px 0;
+  letter-spacing: -0.02em;
+  font-family: var(--font-heading, inherit);
+}
+
+.consultancy-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.meta-icon {
+  stroke: #64748B;
+  flex-shrink: 0;
+}
+
+.meta-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.meta-value-doctor {
+  color: #046338;
+  font-weight: 600;
+}
+
+.badge-assigned {
+  display: inline-flex;
+  align-items: center;
+  background-color: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Header Right */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-pill-scheduled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  border: 1.5px solid #22C55E;
+  background-color: #FFFFFF;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.status-pill-scheduled.upcoming {
+  border-color: #0EA5E9;
+  color: #0369A1;
+  background-color: #F0F9FF;
+}
+
+.status-pill-scheduled.completed {
+  border-color: #94A3B8;
+  color: #475569;
+  background-color: #F8FAFC;
+}
+
+.accordion-trigger-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #15803D;
+  transition: background-color 0.15s ease;
+}
+
+.accordion-trigger-btn:hover {
+  background-color: #F0FDF4;
+}
+
+.chevron-arrow {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevron-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Accordion Body */
+.consultancy-card-body {
+  padding: 4px 24px 24px 24px;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: consultancySlideDown 0.22s ease-out;
+}
+
+@keyframes consultancySlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Highlight Cards (Slot Date & Time) */
+.highlight-cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.highlight-card {
+  background-color: #F2FAF5;
+  border: 1px solid #D1FAE5;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.highlight-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.highlight-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.highlight-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.highlight-main {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-top: 3px;
+  letter-spacing: -0.01em;
+}
+
+.highlight-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* 2x3 Grid Container */
+.info-grid-box {
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+.grid-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+}
+
+.cell-border-right {
+  border-right: 1px solid #E5E7EB;
+}
+
+.cell-border-bottom {
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.cell-icon-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #ECFDF5;
+  border: 1px solid #D1FAE5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cell-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.cell-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+/* Notes Container */
+.notes-container {
+  background-color: #F3FAF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.notes-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notes-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.notes-body {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 3px 0 0 0;
+}
+
+/* Booked At Container */
+.booked-at-container {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.booked-at-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.booked-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+.booked-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-top: 1px;
+}
+
+/* Action Footer */
+.consultancy-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.btn-summary-link {
+  background: transparent;
+  border: none;
+  color: #10A896;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-summary-link:hover {
+  background-color: #F0FDF4;
+  color: #087F76;
+}
+
+.btn-join-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #10A896;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.btn-join-call:hover {
+  background-color: #087F76;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .consultancy-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .highlight-cards-row {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid-box {
+    grid-template-columns: 1fr;
+  }
+
+  .cell-border-right {
+    border-right: none;
+    border-bottom: 1px solid #E5E7EB;
+  }
+}
