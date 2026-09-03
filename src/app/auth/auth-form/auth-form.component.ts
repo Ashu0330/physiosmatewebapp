@@ -70,7 +70,7 @@ export class AuthFormComponent implements OnInit {
       this.loginForm.markAllAsTouched();
       return;
     }
-
+    debugger;
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -79,23 +79,39 @@ export class AuthFormComponent implements OnInit {
       password: this.loginForm.value.password
     };
 
+    console.log('Calling login API:', payload);
+
     this.authService.login(payload).subscribe({
       next: (res: any) => {
+        console.log('SUCCESS:', res);
+
         this.isLoading = false;
+
         if (res && (res.isSuccess || res.token || res.data)) {
           const user = res.data || res;
-          const token = user.token || res.token || 'demo-jwt-token';
+          const token = user.token || res.token;
+
           this.authService.saveUserSession(user, token);
           this.alert.toastSuccess('Welcome back to PhysiosMate!');
           this.authSuccess.emit();
         } else {
-          this.errorMessage = res.message || 'Login failed. Please verify your credentials.';
+          this.errorMessage =
+            res.message || 'Login failed. Please verify your credentials.';
+
           this.alert.toastError(this.errorMessage);
         }
       },
+
       error: (err: any) => {
+        console.error('LOGIN ERROR:', err);
+
         this.isLoading = false;
-        const msg = err.error?.message || err.message || 'Unable to connect to server. Please try again.';
+
+        const msg =
+          err.error?.message ||
+          err.message ||
+          'Unable to connect to server. Please try again.';
+
         this.errorMessage = msg;
         this.alert.toastError(msg);
       }

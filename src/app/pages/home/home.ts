@@ -24,28 +24,28 @@ export class Home {
     {
       title: 'Instant Video Consultation',
       subtitle: 'Connect within 60 secs',
-      image: 'https://www.practostatic.com/consumer-home/desktop/images/1597423628/dweb_instant_video_consulation.png',
+      image: 'assets/images/physio_easy_consult.jpg',
       bgColor: '#E8F8F5',
       route: '/video-consult'
     },
     {
       title: 'Find Doctors Near You',
       subtitle: 'Confirmed appointments',
-      image: 'https://www.practostatic.com/consumer-home/desktop/images/1597423628/dweb_find_doctors.png',
+      image: 'assets/images/physio_find_clinic.jpg',
       bgColor: '#E9FAF9',
       route: '/find-doctors'
     },
     {
       title: 'Lab Tests',
       subtitle: 'Safe and trusted lab tests',
-      image: 'https://www.practostatic.com/consumer-home/desktop/images/1597423628/dweb_lab_tests.png',
+      image: 'assets/images/physio_sports_injury.jpg',
       bgColor: '#D5F3EF',
       route: '/lab-tests'
     },
     {
       title: 'Surgeries',
       subtitle: 'Safe and trusted surgery centers',
-      image: 'https://www.practostatic.com/consumer-home/desktop/images/1597423628/dweb_surgeries.png',
+      image: 'assets/images/physio_rehab_plan.jpg',
       bgColor: '#D0F0E8',
       route: '/surgeries'
     }
