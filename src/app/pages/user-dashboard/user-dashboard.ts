@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { Userservice } from '../../services/userservice';
-import { ConsultancyItem, DayExercise, DayPlan, MedicalReportItem, MyBooking, PaymentItems } from '../../models/usermode';
+import { SweetAlertService } from '../../services/sweet-alert.service';
+import {
+  ConsultancyItem, DayExercise, DayPlan, MedicalReportItem, MyBooking, PaymentItems,
+  SubscriptionPlanItem
+} from '../../models/usermode';
 import { UserSubscription } from '../../models/practitioner.model';
 
 export type DashboardTab =
@@ -26,6 +30,7 @@ export type DashboardTab =
 export class UserDashboard implements OnInit {
   private authService = inject(Authservice);
   private userService = inject(Userservice);
+  private sweetAlert = inject(SweetAlertService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -44,6 +49,9 @@ export class UserDashboard implements OnInit {
 
   // Modals state
   showUploadModal = false;
+  showReportViewerModal = false;
+  selectedReport: MedicalReportItem | null = null;
+  selectedUploadFile: File | null = null;
   showInvoiceModal = false;
   selectedPayment: PaymentItems | null = null;
   selectedConsultancy: ConsultancyItem | null = null;
@@ -60,6 +68,56 @@ export class UserDashboard implements OnInit {
   // Weekly plan state
   selectedDayIndex = 0; // Monday by default
   painLevel = 3;
+
+  // Subscriptions state
+  subscriptionSubTab: 'active' | 'available' = 'active';
+
+  subscriptionPlans: SubscriptionPlanItem[] = [
+    {
+      id: 'PLAN-001',
+      title: 'Advanced Physiotherapy Plan',
+      doctorName: 'Dr. Himanshu suman',
+      providerType: 'Practitioner',
+      iconType: 'physio',
+      status: 'Approval Pending',
+      statusType: 'pending',
+      startDate: '-',
+      expiryDate: '-',
+      totalSessions: 8,
+      completedSessions: 0,
+      remainingSessions: 8,
+      totalAmount: 4000,
+      totalDue: 4000,
+      paidAmount: 0,
+      outstanding: 4000,
+      paymentStatus: 'Pending',
+      paymentStatusLabel: 'Not Paid',
+      progressPercent: 0,
+      isExpanded: true
+    },
+    {
+      id: 'PLAN-002',
+      title: 'Knee Rehabilitation Plan',
+      doctorName: 'Dr. Sarah Jenkins',
+      providerType: 'Practitioner',
+      iconType: 'knee',
+      status: 'In Progress',
+      statusType: 'in-progress',
+      startDate: '10 May 2025',
+      expiryDate: '10 Jul 2025',
+      totalSessions: 12,
+      completedSessions: 5,
+      remainingSessions: 7,
+      totalAmount: 6000,
+      totalDue: 6500,
+      paidAmount: 2500,
+      outstanding: 4000,
+      paymentStatus: 'Partial',
+      paymentStatusLabel: 'Partially Paid',
+      progressPercent: 41,
+      isExpanded: true
+    }
+  ];
 
   // Data arrays
   bookings: MyBooking[] = [];
@@ -171,7 +229,7 @@ export class UserDashboard implements OnInit {
       prescriptionAvailable: true,
       notes: 'joint pain',
       bookedAt: '31 Aug 2026, 06:59 PM',
-      isExpanded: true
+      isExpanded: false
     },
     {
       id: 'CNS-301',
@@ -582,7 +640,7 @@ export class UserDashboard implements OnInit {
   }
 
   get completedDaysCount(): number {
-    return this.weeklyPlan.filter(d => d.exercises.every(e => e.completed)).length;
+    return this.weeklyPlan.filter((d: any) => d.exercises.every((e: any) => e.completed)).length;
   }
 
   // Modals & Actions
@@ -593,26 +651,75 @@ export class UserDashboard implements OnInit {
       doctorName: '',
       date: new Date().toISOString().split('T')[0],
     };
+    this.selectedUploadFile = null;
     this.showUploadModal = true;
   }
 
   closeUploadModal(): void {
     this.showUploadModal = false;
+    this.selectedUploadFile = null;
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedUploadFile = input.files[0];
+      if (!this.newReport.title) {
+        const nameWithoutExt = this.selectedUploadFile.name.replace(/\.[^/.]+$/, '');
+        this.newReport.title = nameWithoutExt;
+      }
+    }
   }
 
   saveReport(): void {
     if (!this.newReport.title.trim()) return;
+    const size = this.selectedUploadFile
+      ? (this.selectedUploadFile.size > 1024 * 1024
+        ? (this.selectedUploadFile.size / (1024 * 1024)).toFixed(1) + ' MB'
+        : Math.round(this.selectedUploadFile.size / 1024) + ' KB')
+      : '1.4 MB';
+
     const newDoc: MedicalReportItem = {
       id: 'REP-' + Math.floor(100 + Math.random() * 900),
       title: this.newReport.title,
       category: this.newReport.category,
       doctorName: this.newReport.doctorName || 'Self Uploaded',
       date: new Date(this.newReport.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      fileSize: '1.2 MB',
+      fileSize: size,
       fileType: 'pdf'
     };
     this.medicalReports.unshift(newDoc);
+    this.sweetAlert.toastSuccess('Report uploaded successfully');
     this.closeUploadModal();
+  }
+
+  viewReport(report: MedicalReportItem): void {
+    this.selectedReport = report;
+    this.showReportViewerModal = true;
+  }
+
+  closeReportViewer(): void {
+    this.showReportViewerModal = false;
+    this.selectedReport = null;
+  }
+
+  downloadReport(report: MedicalReportItem): void {
+    this.sweetAlert.toastSuccess(`Downloading ${report.title}...`);
+  }
+
+  printReport(): void {
+    window.print();
+  }
+
+  togglePlanAccordion(plan: SubscriptionPlanItem): void {
+    plan.isExpanded = !plan.isExpanded;
+  }
+
+  payForPlan(plan: SubscriptionPlanItem, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.sweetAlert.toastSuccess(`Initiating payment for ${plan.title} (₹${plan.outstanding.toLocaleString()})...`);
   }
 
   openInvoice(payment: PaymentItems): void {
@@ -637,6 +744,37 @@ export class UserDashboard implements OnInit {
 
   toggleConsultancyAccordion(item: ConsultancyItem): void {
     item.isExpanded = !item.isExpanded;
+  }
+
+  cancelConsultancy(item: ConsultancyItem, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (item.status === 'Cancelled') {
+      return;
+    }
+    const doctor = item.assignedPractitionerName || item.doctorName || 'Doctor';
+    this.sweetAlert.confirm(
+      'Cancel Consultation?',
+      `Are you sure you want to cancel your consultation with ${doctor}?`,
+      'Yes, Cancel',
+      'Keep Booking'
+    ).then((result) => {
+      if (result.isConfirmed) {
+        item.status = 'Cancelled';
+        this.sweetAlert.toastSuccess('Consultation cancelled successfully');
+      }
+    });
+  }
+
+  rescheduleConsultancy(item: ConsultancyItem, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (item.status === 'Cancelled') {
+      return;
+    }
+    this.router.navigate(['/find-doctors']);
   }
 
   mapBookingsToConsultancies(bookings: MyBooking[]): ConsultancyItem[] {

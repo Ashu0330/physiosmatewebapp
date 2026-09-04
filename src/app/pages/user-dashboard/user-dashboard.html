@@ -236,39 +236,287 @@
         @if (activeTab === 'subscriptions') {
         <section class="physios-tab-panel">
           <div class="physios-subtabs">
-            <button type="button" class="subtab-item active">Active Plans</button>
-            <button type="button" class="subtab-item">Available Programs</button>
+            <button type="button" class="subtab-item" [class.active]="subscriptionSubTab === 'active'"
+              (click)="subscriptionSubTab = 'active'">Active Plans</button>
+
+            <!-- <button type="button" class="subtab-item" [class.active]="subscriptionSubTab === 'available'" (click)="subscriptionSubTab = 'available'">Available Programs</button> -->
           </div>
 
           <div class="tab-body-wrap">
-            <!-- Active Subscription summary -->
-            <div class="minimal-plan-box">
-              <div class="plan-row-main">
-                <div>
-                  <h3 class="plan-name-text">Spine & Posture Rehabilitation 30-Day Plan</h3>
-                  <p class="txt-muted-sm">Supervised by Dr. Sarah Jenkins • 12 Sessions Package</p>
+            @if (subscriptionSubTab === 'active') {
+            <div class="subscription-plans-list">
+              @for (plan of subscriptionPlans; track plan.id) {
+              <div class="subscription-card" [class.is-open]="plan.isExpanded">
+                <!-- ================= CARD HEADER ================= -->
+                <div class="subscription-card-header" (click)="togglePlanAccordion(plan)">
+                  <!-- Left: Icon, Title, Subtitle, Status Badge -->
+                  <div class="sub-header-left">
+                    <div class="plan-icon-box" [class.icon-knee]="plan.iconType === 'knee'">
+                      @if (plan.iconType === 'knee') {
+                      <!-- Knee / Joint SVG Icon -->
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.5-3 5-1.5 1.5-2 3-2 5a3 3 0 0 0 6 0"></path>
+                        <path d="M8 6a4 4 0 0 0-4 4c0 3 2 5 4 6"></path>
+                        <circle cx="12" cy="11" r="1.5"></circle>
+                      </svg>
+                      } @else {
+                      <!-- Physio Table SVG Icon -->
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="5" r="2"></circle>
+                        <path d="M4 17h16"></path>
+                        <path d="M6 17v4"></path>
+                        <path d="M18 17v4"></path>
+                        <path d="M5 11l4-2 3 3 5-3 2 2"></path>
+                        <path d="M4 14h16"></path>
+                      </svg>
+                      }
+                    </div>
+
+                    <div class="plan-title-block">
+                      <h3 class="plan-card-title">{{ plan.title }}</h3>
+                      <p class="plan-provider-sub">with <span>{{ plan.doctorName }}</span></p>
+                      <div class="plan-status-badge" [class.status-pending]="plan.statusType === 'pending'"
+                        [class.status-progress]="plan.statusType === 'in-progress'">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>{{ plan.status }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Middle: 3 Quick Metric Counters -->
+                  <div class="sub-header-metrics">
+                    <div class="metric-col">
+                      <div class="metric-icon-wrap">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                      <div class="metric-data">
+                        <span class="metric-num">{{ plan.totalSessions }}</span>
+                        <span class="metric-lbl">Total Sessions</span>
+                      </div>
+                    </div>
+
+                    <div class="metric-col">
+                      <div class="metric-icon-wrap">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 11 12 14 22 4"></polyline>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                      </div>
+                      <div class="metric-data">
+                        <span class="metric-num">{{ plan.completedSessions }}</span>
+                        <span class="metric-lbl">Completed</span>
+                      </div>
+                    </div>
+
+                    <div class="metric-col">
+                      <div class="metric-icon-wrap">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="23 4 23 10 17 10"></polyline>
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                      </div>
+                      <div class="metric-data">
+                        <span class="metric-num">{{ plan.remainingSessions }}</span>
+                        <span class="metric-lbl">Remaining</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: Total Amount and Chevron -->
+                  <div class="sub-header-right">
+                    <div class="plan-price-block">
+                      <span class="plan-price-val">₹{{ plan.totalAmount | number }}</span>
+                      <span class="plan-price-lbl">Total Amount</span>
+                    </div>
+                    <button type="button" class="plan-accordion-btn"
+                      [attr.aria-label]="plan.isExpanded ? 'Collapse' : 'Expand'"
+                      (click)="$event.stopPropagation(); togglePlanAccordion(plan)">
+                      <svg class="chevron-arrow" [class.rotated]="plan.isExpanded" width="18" height="18"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div class="plan-price-text">₹ 4,999</div>
-              </div>
 
-              <div class="plan-progress-row">
-                <span class="txt-muted-sm">Progress: 6 of 12 Sessions Completed (50%)</span>
-                <span class="txt-muted-sm">18 Days Remaining</span>
-              </div>
-              <div class="mini-progress-bar">
-                <div class="mini-progress-fill" style="width: 50%;"></div>
-              </div>
+                <!-- ================= CARD EXPANDABLE BODY ================= -->
+                @if (plan.isExpanded) {
+                <div class="subscription-card-body">
+                  <!-- Meta Info Row (5 Grid Items) -->
+                  <div class="sub-meta-grid">
+                    <div class="sub-meta-cell">
+                      <div class="sub-meta-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div class="sub-meta-info">
+                        <span class="meta-label">Provider Type</span>
+                        <span class="meta-val">{{ plan.providerType }}</span>
+                      </div>
+                    </div>
 
-              <div class="plan-footer-actions">
-                <button type="button" class="physios-action-btn" (click)="selectTab('weekly-plan')">
-                  View Weekly Plan
-                </button>
-                <a routerLink="/find-doctors" class="link-action">Renew Package</a>
+                    <div class="sub-meta-cell">
+                      <div class="sub-meta-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="8.5" cy="7" r="4"></circle>
+                          <line x1="20" y1="8" x2="20" y2="14"></line>
+                          <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                      </div>
+                      <div class="sub-meta-info">
+                        <span class="meta-label">Provider</span>
+                        <span class="meta-val">{{ plan.doctorName }}</span>
+                      </div>
+                    </div>
+
+                    <div class="sub-meta-cell">
+                      <div class="sub-meta-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                      <div class="sub-meta-info">
+                        <span class="meta-label">Start Date</span>
+                        <span class="meta-val">{{ plan.startDate }}</span>
+                      </div>
+                    </div>
+
+                    <div class="sub-meta-cell">
+                      <div class="sub-meta-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                      <div class="sub-meta-info">
+                        <span class="meta-label">Expiry Date</span>
+                        <span class="meta-val">{{ plan.expiryDate }}</span>
+                      </div>
+                    </div>
+
+                    <div class="sub-meta-cell">
+                      <div class="sub-meta-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                      <div class="sub-meta-info">
+                        <span class="meta-label">Status</span>
+                        <span class="meta-val status-colored" [class.text-amber]="plan.statusType === 'pending'"
+                          [class.text-blue]="plan.statusType === 'in-progress'">
+                          {{ plan.status }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Bottom Details Row (3 Sub-Panels: Progress, Billing Summary, Payment Status & Action) -->
+                  <div class="sub-details-panels-row">
+                    <!-- Sub-Panel 1: Progress -->
+                    <div class="detail-panel panel-progress">
+                      <div class="panel-header-row">
+                        <span class="panel-title">Progress</span>
+                        @if (plan.progressPercent > 0) {
+                        <span class="progress-pct-val">{{ plan.progressPercent }}%</span>
+                        }
+                      </div>
+                      <div class="plan-bar-track">
+                        <div class="plan-bar-fill" [style.width.%]="plan.progressPercent"></div>
+                      </div>
+                      <div class="panel-stats-trio">
+                        <div class="stat-item">
+                          <span class="stat-num">{{ plan.completedSessions }}</span>
+                          <span class="stat-lbl">Completed</span>
+                        </div>
+                        <div class="stat-item">
+                          <span class="stat-num">{{ plan.remainingSessions }}</span>
+                          <span class="stat-lbl">Remaining</span>
+                        </div>
+                        <div class="stat-item">
+                          <span class="stat-num">{{ plan.totalSessions }}</span>
+                          <span class="stat-lbl">Total Sessions</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Sub-Panel 2: Billing Summary -->
+                    <div class="detail-panel panel-billing">
+                      <span class="panel-title">Billing Summary</span>
+                      <div class="billing-stats-trio">
+                        <div class="billing-col">
+                          <span class="billing-lbl">Total Due</span>
+                          <span class="billing-val">₹{{ plan.totalDue | number }}</span>
+                        </div>
+                        <div class="billing-col">
+                          <span class="billing-lbl">Paid Amount</span>
+                          <span class="billing-val">₹{{ plan.paidAmount | number }}</span>
+                        </div>
+                        <div class="billing-col">
+                          <span class="billing-lbl">Outstanding</span>
+                          <span class="billing-val outstanding">₹{{ plan.outstanding | number }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Sub-Panel 3: Payment Status & Actions -->
+                    <div class="detail-panel panel-actions">
+                      <div class="payment-status-box" [class.box-pending]="plan.paymentStatus === 'Pending'"
+                        [class.box-partial]="plan.paymentStatus === 'Partial'">
+                        <span class="ps-label">Payment Status</span>
+                        <span class="ps-main">{{ plan.paymentStatus }}</span>
+                        <span class="ps-sub">{{ plan.paymentStatusLabel }}</span>
+                      </div>
+
+                      <button type="button" class="btn-pay-now" (click)="payForPlan(plan, $event)">
+                        Pay Now
+                      </button>
+
+                      <button type="button" class="btn-more-options" aria-label="More options">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="1"></circle>
+                          <circle cx="12" cy="5" r="1"></circle>
+                          <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                }
               </div>
+              }
             </div>
-
-            <!-- Other Packages -->
-            <h4 class="sub-section-title">Other Rehabilitation Packages</h4>
+            } @else {
+            <!-- Other Available Rehabilitation Packages -->
             <div class="minimal-list">
               <div class="minimal-list-item">
                 <div class="item-info">
@@ -292,6 +540,7 @@
                 </div>
               </div>
             </div>
+            }
           </div>
         </section>
         }
@@ -304,10 +553,8 @@
         <section class="physios-tab-panel">
           <div class="physios-subtabs">
             <button type="button" class="subtab-item active">All Records</button>
-            <button type="button" class="subtab-item">Prescriptions</button>
-            <button type="button" class="subtab-item">Lab & Scan Reports</button>
             <div class="subtabs-right-action">
-              <button type="button" class="link-action-bold" (click)="openUploadModal()">+ Upload Record</button>
+              <button type="button" class="link-action-bold" (click)="openUploadModal()">+ Upload Report</button>
             </div>
           </div>
 
@@ -325,7 +572,23 @@
                 </div>
                 <div class="item-right">
                   <span class="txt-muted-sm">{{ report.fileSize }}</span>
-                  <a href="javascript:void(0)" class="link-action" download>Download</a>
+                  <button type="button" class="link-action btn-view-report" (click)="viewReport(report)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    View
+                  </button>
+                  <button type="button" class="link-action" (click)="downloadReport(report)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download
+                  </button>
                 </div>
               </div>
               }
@@ -356,11 +619,10 @@
                   <div class="header-left">
                     <!-- Doctor Avatar Icon -->
                     <div class="consultancy-avatar">
-                      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="7" r="4"/>
-                        <path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/>
-                        <path d="M10 14.5v1.5a2 2 0 0 0 4 0v-1.5"/>
-                        <circle cx="12" cy="18" r="1" fill="#16a34a"/>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                       </svg>
                     </div>
 
@@ -370,7 +632,8 @@
                       <h3 class="consultancy-doctor-title">{{ c.assignedPractitionerName || c.doctorName }}</h3>
 
                       <div class="consultancy-meta-row">
-                        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="meta-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
@@ -379,7 +642,8 @@
                       </div>
 
                       <div class="consultancy-meta-row">
-                        <svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="meta-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -393,8 +657,10 @@
 
                   <!-- Header Right Actions: Status Badge & Chevron -->
                   <div class="header-right">
-                    <div class="status-pill-scheduled" [class.upcoming]="c.status === 'Upcoming'" [class.completed]="c.status === 'Completed'">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <div class="status-pill-scheduled" [class.upcoming]="c.status === 'Upcoming'"
+                      [class.completed]="c.status === 'Completed'" [class.cancelled]="c.status === 'Cancelled'">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -404,8 +670,12 @@
                       <span>{{ c.status || 'Scheduled' }}</span>
                     </div>
 
-                    <button type="button" class="accordion-trigger-btn" [attr.aria-label]="c.isExpanded ? 'Collapse' : 'Expand'" (click)="$event.stopPropagation(); toggleConsultancyAccordion(c)">
-                      <svg class="chevron-arrow" [class.rotated]="c.isExpanded" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <button type="button" class="accordion-trigger-btn"
+                      [attr.aria-label]="c.isExpanded ? 'Collapse' : 'Expand'"
+                      (click)="$event.stopPropagation(); toggleConsultancyAccordion(c)">
+                      <svg class="chevron-arrow" [class.rotated]="c.isExpanded" width="18" height="18"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                     </button>
@@ -420,14 +690,12 @@
                     <!-- Slot Date Card -->
                     <div class="highlight-card">
                       <div class="highlight-icon-wrap">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
                           <line x1="8" y1="2" x2="8" y2="6"></line>
                           <line x1="3" y1="10" x2="21" y2="10"></line>
-                          <circle cx="8" cy="14" r="1" fill="#047857"></circle>
-                          <circle cx="12" cy="14" r="1" fill="#047857"></circle>
-                          <circle cx="16" cy="14" r="1" fill="#047857"></circle>
                         </svg>
                       </div>
                       <div class="highlight-text">
@@ -440,7 +708,8 @@
                     <!-- Time Card -->
                     <div class="highlight-card">
                       <div class="highlight-icon-wrap">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
                           <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
@@ -448,6 +717,7 @@
                       <div class="highlight-text">
                         <span class="highlight-label">Time</span>
                         <span class="highlight-main">{{ c.time || (c.startTime + ' - ' + c.endTime) }}</span>
+                        <span class="highlight-sub">{{ c.visitType || 'Clinic Visit' }}</span>
                       </div>
                     </div>
                   </div>
@@ -457,7 +727,8 @@
                     <!-- Cell 1: Visit Type -->
                     <div class="grid-cell cell-border-right cell-border-bottom">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M3 21h18"></path>
                           <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
                           <path d="M9 9h1"></path>
@@ -477,7 +748,8 @@
                     <!-- Cell 2: Slot ID -->
                     <div class="grid-cell cell-border-bottom">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="4" y1="9" x2="20" y2="9"></line>
                           <line x1="4" y1="15" x2="20" y2="15"></line>
                           <line x1="10" y1="3" x2="8" y2="21"></line>
@@ -493,7 +765,8 @@
                     <!-- Cell 3: Clinic Name -->
                     <div class="grid-cell cell-border-right cell-border-bottom">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"></path>
                           <line x1="12" y1="8" x2="12" y2="16"></line>
                           <line x1="8" y1="12" x2="16" y2="12"></line>
@@ -508,7 +781,8 @@
                     <!-- Cell 4: Clinic Address -->
                     <div class="grid-cell cell-border-bottom">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
@@ -522,7 +796,8 @@
                     <!-- Cell 5: Assigned Practitioner -->
                     <div class="grid-cell cell-border-right">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
@@ -536,7 +811,8 @@
                     <!-- Cell 6: Assignment Status -->
                     <div class="grid-cell">
                       <div class="cell-icon-circle">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -553,7 +829,8 @@
                   <!-- Section 3: Notes Container -->
                   <div class="notes-container">
                     <div class="notes-icon-box">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="4" y="3" width="16" height="18" rx="2"></rect>
                         <line x1="8" y1="7" x2="16" y2="7"></line>
                         <line x1="8" y1="11" x2="16" y2="11"></line>
@@ -569,7 +846,8 @@
                   <!-- Section 4: Booked At Container -->
                   <div class="booked-at-container">
                     <div class="cell-icon-circle">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
@@ -582,14 +860,41 @@
 
                   <!-- Section 5: Action Footer -->
                   <div class="consultancy-card-footer">
-                    <button type="button" class="btn-summary-link" (click)="openConsultancyDetails(c)">
-                      View Summary
-                    </button>
-                    @if (c.status === 'Upcoming' || c.mode === 'Video Call' || c.visitType === 'Video Call') {
-                    <a routerLink="/video-consult" class="btn-join-call">
-                      Join Video Call
-                    </a>
-                    }
+                    <div class="footer-btn-group">
+                      <button type="button" class="btn-accordion-action btn-cancel"
+                        [disabled]="c.status === 'Cancelled'" (click)="cancelConsultancy(c, $event)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="15" y1="9" x2="9" y2="15"></line>
+                          <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        Cancel
+                      </button>
+
+                      <button type="button" class="btn-accordion-action btn-reschedule"
+                        [disabled]="c.status === 'Cancelled'" (click)="rescheduleConsultancy(c, $event)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                          <path d="M3 3v5h5"></path>
+                          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                          <path d="M16 16h5v5"></path>
+                        </svg>
+                        Reschedule
+                      </button>
+                    </div>
+
+                    <div class="footer-btn-group right-group">
+                      <button type="button" class="btn-summary-link" (click)="openConsultancyDetails(c)">
+                        View Summary
+                      </button>
+                      @if (c.status === 'Upcoming' || c.mode === 'Video Call' || c.visitType === 'Video Call') {
+                      <a routerLink="/video-consult" class="btn-join-call">
+                        Join Video Call
+                      </a>
+                      }
+                    </div>
                   </div>
                 </div>
                 }
@@ -663,20 +968,46 @@
 
 
   <!-- =========================================================================
-       MODAL: UPLOAD MEDICAL REPORT (Minimal)
+       MODAL: UPLOAD MEDICAL REPORT (Minimal & Functional)
        ========================================================================= -->
   @if (showUploadModal) {
   <div class="minimal-modal-overlay" (click)="closeUploadModal()">
-    <div class="minimal-modal-box" (click)="$event.stopPropagation()">
+    <div class="minimal-modal-box upload-modal-box" (click)="$event.stopPropagation()">
       <div class="modal-top">
-        <h3 class="modal-heading">Upload Medical Record</h3>
+        <div>
+          <h3 class="modal-heading">Upload Medical Report</h3>
+          <p class="modal-subtext">Add prescriptions, MRI/X-ray scans, or assessment notes</p>
+        </div>
         <button type="button" class="close-x" (click)="closeUploadModal()">&times;</button>
       </div>
+
       <div class="modal-content">
+        <!-- File Dropzone -->
+        <div class="upload-dropzone" (click)="fileInput.click()">
+          <input #fileInput type="file" (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg"
+            style="display: none;" />
+          <div class="dropzone-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          @if (selectedUploadFile) {
+          <p class="dropzone-filename">{{ selectedUploadFile.name }}</p>
+          <span class="dropzone-filesize">{{ (selectedUploadFile.size / (1024 * 1024)).toFixed(1) }} MB</span>
+          } @else {
+          <p class="dropzone-prompt"><strong>Click to select document</strong> (PDF, JPG, PNG)</p>
+          <span class="dropzone-hint">Max file size: 15MB</span>
+          }
+        </div>
+
         <div class="field-box">
           <label class="field-lbl">Document Title *</label>
           <input type="text" [(ngModel)]="newReport.title" placeholder="e.g. Spine MRI Scan" class="field-inp" />
         </div>
+
         <div class="field-box">
           <label class="field-lbl">Category</label>
           <select [(ngModel)]="newReport.category" class="field-inp">
@@ -684,18 +1015,141 @@
             <option value="Prescription">Prescription</option>
             <option value="X-Ray / MRI">X-Ray / MRI</option>
             <option value="Lab Test">Lab Test</option>
+            <option value="Discharge Summary">Discharge Summary</option>
           </select>
         </div>
+
         <div class="field-box">
           <label class="field-lbl">Doctor / Diagnostic Center</label>
-          <input type="text" [(ngModel)]="newReport.doctorName" placeholder="e.g. Dr. Sarah Jenkins"
+          <input type="text" [(ngModel)]="newReport.doctorName" placeholder="e.g. Dr. Sarah Jenkins / City Imaging"
             class="field-inp" />
         </div>
       </div>
+
       <div class="modal-bottom">
         <button type="button" class="btn-cancel" (click)="closeUploadModal()">Cancel</button>
-        <button type="button" class="physios-action-btn" (click)="saveReport()"
-          [disabled]="!newReport.title.trim()">Upload</button>
+        <button type="button" class="physios-action-btn" (click)="saveReport()" [disabled]="!newReport.title.trim()">
+          Upload Report
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+
+  <!-- =========================================================================
+       MODAL: REPORT VIEWER (Clean Document Preview)
+       ========================================================================= -->
+  @if (showReportViewerModal && selectedReport) {
+  <div class="minimal-modal-overlay" (click)="closeReportViewer()">
+    <div class="minimal-modal-box report-viewer-modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-top">
+        <div class="viewer-top-info">
+          <span class="report-badge">{{ selectedReport.category }}</span>
+          <h3 class="modal-heading">{{ selectedReport.title }}</h3>
+          <span class="modal-meta-id">{{ selectedReport.id }} • {{ selectedReport.date }}</span>
+        </div>
+        <button type="button" class="close-x" (click)="closeReportViewer()">&times;</button>
+      </div>
+
+      <div class="modal-content report-viewer-content">
+        <!-- Medical Document Preview Sheet -->
+        <div class="medical-sheet-preview">
+          <!-- Clinic Brand Header -->
+          <div class="sheet-header">
+            <div class="sheet-brand">
+              <span class="sheet-logo-text">physios<strong>mate</strong></span>
+              <span class="sheet-tag">Clinical & Diagnostic Record</span>
+            </div>
+            <div class="sheet-doc-meta">
+              <span><strong>Doc ID:</strong> {{ selectedReport.id }}</span>
+              <span><strong>Date:</strong> {{ selectedReport.date }}</span>
+            </div>
+          </div>
+
+          <!-- Patient & Doctor Info Grid -->
+          <div class="sheet-info-grid">
+            <div class="sheet-info-cell">
+              <span class="sheet-lbl">Patient Name:</span>
+              <span class="sheet-val">{{ currentUser?.fullName || 'Himanshu Suman' }}</span>
+            </div>
+            <div class="sheet-info-cell">
+              <span class="sheet-lbl">Issued By:</span>
+              <span class="sheet-val">{{ selectedReport.doctorName }}</span>
+            </div>
+            <div class="sheet-info-cell">
+              <span class="sheet-lbl">Document Type:</span>
+              <span class="sheet-val">{{ selectedReport.category }}</span>
+            </div>
+            <div class="sheet-info-cell">
+              <span class="sheet-lbl">File Details:</span>
+              <span class="sheet-val">{{ selectedReport.fileSize }} • {{ selectedReport.fileType | uppercase }}</span>
+            </div>
+          </div>
+
+          <!-- Clinical Findings / Summary -->
+          <div class="sheet-body-section">
+            <h4 class="sheet-section-title">Clinical Findings & Summary</h4>
+            <div class="sheet-text-block">
+              @if (selectedReport.category === 'Assessment') {
+              <p><strong>Primary Assessment:</strong> Biomechanical spinal and musculoskeletal alignment evaluation.
+                Lumbosacral range of motion measured with localized lumbar muscular tightness.</p>
+              <p><strong>Functional Mobility:</strong> Moderate lumbar flexion restriction noted. Core activation
+                protocol initiated. Recommended 3x weekly guided rehab sessions.</p>
+              } @else if (selectedReport.category === 'X-Ray / MRI') {
+              <p><strong>Imaging Protocol:</strong> Lumbo-sacral spine multi-planar MRI scans reviewed.</p>
+              <p><strong>Radiological Impression:</strong> Mild posterior disc protrusion at L4-L5 level with neural
+                foramen preservation. No critical canal stenosis.</p>
+              } @else if (selectedReport.category === 'Prescription') {
+              <p><strong>Medication & Therapy Protocol:</strong> Anti-inflammatory topical pain relief gel recommended
+                twice daily. Ice pack therapy 15 mins post active rehabilitation.</p>
+              <p><strong>Ergonomic Directives:</strong> Lumbar roll support recommended during sitting. Active pelvic
+                tilting and hamstring stretching exercises.</p>
+              } @else {
+              <p><strong>Clinical Notes:</strong> Diagnostic evaluations verified against Physiosmate tele-rehab
+                benchmarks. Patient responding positively to conservative care.</p>
+              }
+            </div>
+          </div>
+
+          <!-- Digital Signature Stamp -->
+          <div class="sheet-footer">
+            <div class="sheet-status-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Digitally Verified Record
+            </div>
+            <div class="sheet-sign">
+              <span class="sign-name">{{ selectedReport.doctorName }}</span>
+              <span class="sign-sub">Authorized Medical Signatory</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-bottom">
+        <button type="button" class="btn-cancel" (click)="closeReportViewer()">Close</button>
+        <button type="button" class="btn-print-report" (click)="printReport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Print
+        </button>
+        <button type="button" class="physios-action-btn" (click)="downloadReport(selectedReport)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download PDF
+        </button>
       </div>
     </div>
   </div>
