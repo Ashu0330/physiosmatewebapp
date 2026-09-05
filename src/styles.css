@@ -3,7 +3,9 @@
 @import './assets/styles/custom.css';
 @import './assets/styles/custom-swiper.css';
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 

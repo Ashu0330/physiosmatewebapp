@@ -1,0 +1,80 @@
+<section class="physios-tab-panel">
+  <div class="physios-subtabs">
+    <button type="button" class="subtab-item active">Payment Options</button>
+    <button type="button" class="subtab-item">HealthCash History</button>
+    <button type="button" class="subtab-item">Invoices</button>
+  </div>
+
+  <div class="tab-body-wrap">
+    <div class="physios-cash-card">
+      <div class="cash-brand-logo">
+        <span class="p-dot"></span>
+        <span class="p-letter">p</span>
+        <span class="p-dot"></span>
+      </div>
+      <span class="cash-balance-text">Physios HealthCash Balance: <strong>200.0</strong></span>
+    </div>
+
+    <div class="minimal-invoices-section">
+      <h4 class="sub-section-title">Recent Invoices</h4>
+      <table class="minimal-table">
+        <thead>
+          <tr>
+            <th>Invoice No</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (payment of payments; track payment.id) {
+          <tr>
+            <td><span class="txt-code">{{ payment.invoiceNumber }}</span></td>
+            <td>
+              <span class="txt-main">{{ payment.title }}</span>
+              <span class="txt-muted-sm">{{ payment.providerName }}</span>
+            </td>
+            <td><span class="txt-muted">{{ payment.date }}</span></td>
+            <td><strong>₹ {{ payment.amount | number }}</strong></td>
+            <td>
+              <span class="txt-status" [class.success]="payment.status === 'Successful'">{{ payment.status }}</span>
+            </td>
+            <td class="text-right">
+              <button type="button" class="link-btn-sm" (click)="openInvoice(payment)">View Invoice</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: INVOICE RECEIPT -->
+@if (showInvoiceModal && selectedPayment) {
+<div class="minimal-modal-overlay" (click)="closeInvoice()">
+  <div class="minimal-modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-top">
+      <h3 class="modal-heading">Invoice: {{ selectedPayment.invoiceNumber }}</h3>
+      <button type="button" class="close-x" (click)="closeInvoice()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div class="inv-summary">
+        <p><strong>Billed To:</strong> {{ currentUser?.fullName || 'Himanshu Suman' }}</p>
+        <p><strong>Provider:</strong> {{ selectedPayment.providerName }}</p>
+        <p><strong>Date:</strong> {{ selectedPayment.date }}</p>
+        <p><strong>Service:</strong> {{ selectedPayment.title }}</p>
+        <p><strong>Amount:</strong> ₹ {{ selectedPayment.amount | number }}</p>
+        <p><strong>Payment Mode:</strong> {{ selectedPayment.paymentMethod }}</p>
+        <p><strong>Status:</strong> {{ selectedPayment.status }}</p>
+      </div>
+    </div>
+    <div class="modal-bottom">
+      <button type="button" class="btn-modal-cancel" (click)="closeInvoice()">Close</button>
+      <button type="button" class="physios-action-btn" onclick="window.print()">Print</button>
+    </div>
+  </div>
+</div>
+}

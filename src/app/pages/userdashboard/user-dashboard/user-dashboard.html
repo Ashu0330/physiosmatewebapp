@@ -1,0 +1,96 @@
+<div class="physios-drive-page">
+  <div class="physios-drive-box">
+
+    <!-- Top Header Row -->
+    <div class="physios-drive-topbar">
+      <div class="topbar-left"></div>
+      <div class="topbar-right">
+        <div class="user-profile-header">
+          <div class="user-avatar-box">
+            @if (currentUser?.profilePictureUrl) {
+            <img [src]="currentUser.profilePictureUrl" [alt]="currentUser?.fullName" class="user-avatar-img" />
+            } @else {
+            <svg class="user-icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="#B0B0B0">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+            }
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ currentUser?.fullName || 'Himanshu Suman' }}</span>
+            <span class="user-phone">{{ currentUser?.mobile || currentUser?.email || '+919571670547' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Body: Left Sidebar + Right Content -->
+    <div class="physios-drive-body">
+
+      <!-- Left Sidebar Navigation -->
+      <aside class="physios-sidebar">
+        <nav class="physios-nav">
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'medical-reports'"
+            (click)="selectTab('medical-reports')">Medical Records</button>
+
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'appointments'"
+            (click)="selectTab('appointments')">Appointments</button>
+
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'subscriptions'"
+            (click)="selectTab('subscriptions')">Subscriptions</button>
+
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'payments'"
+            (click)="selectTab('payments')">Payments</button>
+
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'consultancies'"
+            (click)="selectTab('consultancies')">Consultations</button>
+
+          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'weekly-plan'"
+            (click)="selectTab('weekly-plan')">Manage Weekly Plan</button>
+        </nav>
+      </aside>
+
+      <!-- Right Content Area -->
+      <main class="physios-content">
+
+        @if (activeTab === 'appointments') {
+        <app-patient-appointments
+          [bookings]="bookings"
+          [appointmentFilter]="appointmentFilter"
+          (filterChange)="appointmentFilter = $event">
+        </app-patient-appointments>
+        }
+
+        @if (activeTab === 'payments') {
+        <app-patient-transaction
+          [currentUser]="currentUser">
+        </app-patient-transaction>
+        }
+
+        @if (activeTab === 'subscriptions') {
+        <app-patient-subscription
+          [subscriptionPlans]="subscriptionPlans">
+        </app-patient-subscription>
+        }
+
+        @if (activeTab === 'medical-reports') {
+        <app-patient-medicalrecords
+          [currentUser]="currentUser">
+        </app-patient-medicalrecords>
+        }
+
+        @if (activeTab === 'consultancies') {
+        <app-patient-consultancy
+          [consultancies]="consultancies">
+        </app-patient-consultancy>
+        }
+
+        @if (activeTab === 'weekly-plan') {
+        <app-patient-weeklyappointmentplan>
+        </app-patient-weeklyappointmentplan>
+        }
+
+      </main>
+    </div>
+
+  </div>
+</div>

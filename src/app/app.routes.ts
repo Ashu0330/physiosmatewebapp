@@ -6,92 +6,36 @@ import { Doctordetail } from './pages/doctordetail/doctordetail';
 import { AuthPageComponent } from './auth/auth-page/auth-page.component';
 import { BookingAuthComponent } from './booking/booking-auth/booking-auth.component';
 
-import { UserDashboard } from './pages/user-dashboard/user-dashboard';
-
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
   {
     path: '',
     component: Layoutwithheaderfooter,
     children: [
-      {
-        path: '',
-        component: Home,
-      },
-      {
-        path: 'find-doctors',
-        component: Doctors,
-      },
-      {
-        path: 'doctors',
-        component: Doctors,
-      },
-      {
-        path: 'doctors/:specialty',
-        component: Doctors,
-      },
-      {
-        path: 'doctor-detail',
-        component: Doctordetail,
-      },
-      {
-        path: 'doctor-detail/:id',
-        component: Doctordetail,
-      },
-      {
-        path: 'doctor/:id',
-        component: Doctordetail,
-      },
-      {
-        path: 'providers/:id',
-        component: Doctordetail,
-      },
-      {
-        path: 'appointments',
-        component: UserDashboard,
-      },
-      {
-        path: 'dashboard',
-        component: UserDashboard,
-      },
-      {
-        path: 'medical-records',
-        component: UserDashboard,
-      },
-      {
-        path: 'online-consultations',
-        component: UserDashboard,
-      },
-      {
-        path: 'consultations',
-        component: UserDashboard,
-      },
-      {
-        path: 'user-dashboard',
-        component: UserDashboard,
-      },
+      { path: '',              component: Home },
+      { path: 'find-doctors',  component: Doctors },
+      { path: 'doctors',       component: Doctors },
+      { path: 'doctors/:specialty', component: Doctors },
+      { path: 'doctor-detail',      component: Doctordetail },
+      { path: 'doctor-detail/:id',  component: Doctordetail },
+      { path: 'doctor/:id',         component: Doctordetail },
+      { path: 'providers/:id',      component: Doctordetail },
+
+      // ─── Patient Dashboard — single entry, routes handled inside UserdashboardRoutingModule
+      { path: 'user-dashboard',   loadChildren: () => import('./pages/userdashboard/userdashboard-routing-module').then(m => m.UserdashboardRoutingModule) },
+
+      // ─── Doctor Dashboard — single entry, routes handled inside DoctorDashboardRoutingModule
+      { path: 'doctor-dashboard', loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule) },
     ],
   },
 
   // ─── Standalone Authentication Routes ────────────────────────────────────
-  {
-    path: 'login',
-    component: AuthPageComponent,
-  },
-  {
-    path: 'signup',
-    component: AuthPageComponent,
-  },
+  { path: 'login',  component: AuthPageComponent },
+  { path: 'signup', component: AuthPageComponent },
 
-  // ─── Booking Authentication Route ────────────────────────────────────────
-  {
-    path: 'booking/consultancy/:providerId',
-    component: BookingAuthComponent,
-  },
+  // ─── Booking Route ────────────────────────────────────────────────────────
+  { path: 'booking/consultancy/:providerId', component: BookingAuthComponent },
 
   // ─── Fallback ────────────────────────────────────────────────────────────
-  {
-    path: '**',
-    redirectTo: '',
-  },
+  { path: '**', redirectTo: '' },
 ];

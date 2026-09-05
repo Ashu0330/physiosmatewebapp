@@ -53,6 +53,10 @@ export class Header implements OnInit {
     this.profileDropdownOpen = false;
   }
 
+  navigateTo(path: string): void {
+    this.profileDropdownOpen = false;
+  }
+
   logout(): void {
     this.authService.logout();
     this.isLoggedIn = false;

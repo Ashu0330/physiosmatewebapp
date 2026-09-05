@@ -1,0 +1,176 @@
+<section class="physios-tab-panel">
+  <div class="physios-subtabs">
+    <button type="button" class="subtab-item active">All Records</button>
+    <div class="subtabs-right-action">
+      <button type="button" class="link-action-bold" (click)="openUploadModal()">+ Upload Report</button>
+    </div>
+  </div>
+
+  <div class="tab-body-wrap">
+    <div class="minimal-list">
+      @for (report of medicalReports; track report.id) {
+      <div class="minimal-list-item">
+        <div class="item-left">
+          <div class="doc-icon-square">PDF</div>
+          <div class="item-info">
+            <h3 class="item-title">{{ report.title }}</h3>
+            <p class="item-sub">{{ report.category }} • Issued by {{ report.doctorName }} • {{ report.date }}</p>
+          </div>
+        </div>
+        <div class="item-right">
+          <span class="txt-muted-sm">{{ report.fileSize }}</span>
+          <button type="button" class="link-action btn-view-report" (click)="viewReport(report)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            View
+          </button>
+          <button type="button" class="link-action" (click)="downloadReport(report)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: UPLOAD MEDICAL REPORT -->
+@if (showUploadModal) {
+<div class="minimal-modal-overlay" (click)="closeUploadModal()">
+  <div class="minimal-modal-box upload-modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-top">
+      <div>
+        <h3 class="modal-heading">Upload Medical Report</h3>
+        <p class="modal-subtext">Add prescriptions, MRI/X-ray scans, or assessment notes</p>
+      </div>
+      <button type="button" class="close-x" (click)="closeUploadModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div class="upload-dropzone" (click)="fileInput.click()">
+        <input #fileInput type="file" (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" />
+        <div class="dropzone-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        @if (selectedUploadFile) {
+        <p class="dropzone-filename">{{ selectedUploadFile.name }}</p>
+        <span class="dropzone-filesize">{{ (selectedUploadFile.size / (1024 * 1024)).toFixed(1) }} MB</span>
+        } @else {
+        <p class="dropzone-prompt"><strong>Click to select document</strong> (PDF, JPG, PNG)</p>
+        <span class="dropzone-hint">Max file size: 15MB</span>
+        }
+      </div>
+      <div class="field-box">
+        <label class="field-lbl">Document Title *</label>
+        <input type="text" [(ngModel)]="newReport.title" placeholder="e.g. Spine MRI Scan" class="field-inp" />
+      </div>
+      <div class="field-box">
+        <label class="field-lbl">Category</label>
+        <select [(ngModel)]="newReport.category" class="field-inp">
+          <option value="Assessment">Physio Assessment</option>
+          <option value="Prescription">Prescription</option>
+          <option value="X-Ray / MRI">X-Ray / MRI</option>
+          <option value="Lab Test">Lab Test</option>
+          <option value="Discharge Summary">Discharge Summary</option>
+        </select>
+      </div>
+      <div class="field-box">
+        <label class="field-lbl">Doctor / Diagnostic Center</label>
+        <input type="text" [(ngModel)]="newReport.doctorName" placeholder="e.g. Dr. Sarah Jenkins" class="field-inp" />
+      </div>
+    </div>
+    <div class="modal-bottom">
+      <button type="button" class="btn-modal-cancel" (click)="closeUploadModal()">Cancel</button>
+      <button type="button" class="physios-action-btn" (click)="saveReport()" [disabled]="!newReport.title.trim()">Upload Report</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- MODAL: REPORT VIEWER -->
+@if (showReportViewerModal && selectedReport) {
+<div class="minimal-modal-overlay" (click)="closeReportViewer()">
+  <div class="minimal-modal-box report-viewer-modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-top">
+      <div class="viewer-top-info">
+        <span class="report-badge">{{ selectedReport.category }}</span>
+        <h3 class="modal-heading">{{ selectedReport.title }}</h3>
+        <span class="modal-meta-id">{{ selectedReport.id }} • {{ selectedReport.date }}</span>
+      </div>
+      <button type="button" class="close-x" (click)="closeReportViewer()">&times;</button>
+    </div>
+    <div class="modal-content report-viewer-content">
+      <div class="medical-sheet-preview">
+        <div class="sheet-header">
+          <div class="sheet-brand">
+            <span class="sheet-logo-text">physios<strong>mate</strong></span>
+            <span class="sheet-tag">Clinical & Diagnostic Record</span>
+          </div>
+          <div class="sheet-doc-meta">
+            <span><strong>Doc ID:</strong> {{ selectedReport.id }}</span>
+            <span><strong>Date:</strong> {{ selectedReport.date }}</span>
+          </div>
+        </div>
+        <div class="sheet-info-grid">
+          <div class="sheet-info-cell"><span class="sheet-lbl">Patient Name:</span><span class="sheet-val">{{ currentUser?.fullName || 'Himanshu Suman' }}</span></div>
+          <div class="sheet-info-cell"><span class="sheet-lbl">Issued By:</span><span class="sheet-val">{{ selectedReport.doctorName }}</span></div>
+          <div class="sheet-info-cell"><span class="sheet-lbl">Document Type:</span><span class="sheet-val">{{ selectedReport.category }}</span></div>
+          <div class="sheet-info-cell"><span class="sheet-lbl">File Details:</span><span class="sheet-val">{{ selectedReport.fileSize }} • {{ selectedReport.fileType | uppercase }}</span></div>
+        </div>
+        <div class="sheet-body-section">
+          <h4 class="sheet-section-title">Clinical Findings & Summary</h4>
+          <div class="sheet-text-block">
+            @if (selectedReport.category === 'Assessment') {
+            <p><strong>Primary Assessment:</strong> Biomechanical spinal and musculoskeletal alignment evaluation. Lumbosacral range of motion measured with localized lumbar muscular tightness.</p>
+            <p><strong>Functional Mobility:</strong> Moderate lumbar flexion restriction noted. Core activation protocol initiated.</p>
+            } @else if (selectedReport.category === 'X-Ray / MRI') {
+            <p><strong>Imaging Protocol:</strong> Lumbo-sacral spine multi-planar MRI scans reviewed.</p>
+            <p><strong>Radiological Impression:</strong> Mild posterior disc protrusion at L4-L5 level with neural foramen preservation.</p>
+            } @else if (selectedReport.category === 'Prescription') {
+            <p><strong>Medication & Therapy Protocol:</strong> Anti-inflammatory topical pain relief gel recommended twice daily.</p>
+            <p><strong>Ergonomic Directives:</strong> Lumbar roll support recommended during sitting.</p>
+            } @else {
+            <p><strong>Clinical Notes:</strong> Diagnostic evaluations verified against Physiosmate tele-rehab benchmarks.</p>
+            }
+          </div>
+        </div>
+        <div class="sheet-footer">
+          <div class="sheet-status-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Digitally Verified Record
+          </div>
+          <div class="sheet-sign">
+            <span class="sign-name">{{ selectedReport.doctorName }}</span>
+            <span class="sign-sub">Authorized Medical Signatory</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-bottom">
+      <button type="button" class="btn-modal-cancel" (click)="closeReportViewer()">Close</button>
+      <button type="button" class="btn-print-report" (click)="printReport()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Print
+      </button>
+      <button type="button" class="physios-action-btn" (click)="downloadReport(selectedReport)">Download PDF</button>
+    </div>
+  </div>
+</div>
+}
