@@ -28,9 +28,10 @@ export class Patients {
       const matchesStatus = status === 'All' || p.status === status;
       const matchesQuery = !query ||
         p.fullName.toLowerCase().includes(query) ||
-        p.patientCode.toLowerCase().includes(query) ||
-        p.primaryCondition.toLowerCase().includes(query) ||
-        p.phone.includes(query);
+        (p.patientCode && p.patientCode.toLowerCase().includes(query)) ||
+        (p.primaryCondition && p.primaryCondition.toLowerCase().includes(query)) ||
+        (p.phone && p.phone.includes(query)) ||
+        (p.mobile && p.mobile.includes(query));
 
       return matchesStatus && matchesQuery;
     });

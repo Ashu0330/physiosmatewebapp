@@ -8,6 +8,10 @@ const routes: Routes = [
   { path: 'add-patient',     component: Doctordashboard },
   { path: 'patients',        component: Doctordashboard },
   { path: 'treatment-plans', component: Doctordashboard },
+  { path: 'consultations',   component: Doctordashboard },
+  { path: 'Consultations',   component: Doctordashboard },
+  { path: 'appointments',    component: Doctordashboard },
+  { path: 'Appointments',    component: Doctordashboard },
 ];
 
 @NgModule({

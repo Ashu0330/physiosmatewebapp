@@ -1,7 +1,7 @@
-import { Component, output, signal, computed } from '@angular/core';
+import { Component, ElementRef, ViewChild, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NewPatientFormData } from '../../../models/doctor-dashboard.model';
+import { NewPatientFormData, DoctorPatient } from '../../../models/doctor-dashboard.model';
 
 @Component({
   selector: 'app-addpatient',
@@ -11,240 +11,165 @@ import { NewPatientFormData } from '../../../models/doctor-dashboard.model';
   styleUrl: './addpatient.css',
 })
 export class Addpatient {
+  @ViewChild('photoInput') photoInputRef?: ElementRef<HTMLInputElement>;
+
   patientAdded = output<NewPatientFormData>();
   cancel = output<void>();
+  startConsultationWith = output<DoctorPatient>();
 
   formData: NewPatientFormData = {
+    file: null,
+    photoPreview: '',
     fullName: '',
-    phone: '',
+    mobile: '',
     email: '',
+    gender: 'Male',
     dob: '',
     age: null,
-    gender: 'Male',
-    primaryCondition: '',
-    severity: 'Moderate',
-    chiefComplaint: '',
-    redFlags: '',
-    relevantMedicalHistory: '',
-    assignedPlanTemplate: 'Spine Decompression & Core Stabilization',
-    treatmentGoal: '',
-    notes: '',
-    precautionNotes: [],
-    emergencyContact: ''
+    address: '',
+    city: '',
+    state: '',
+    userId: 1,
+    roleId: 3,
+    phone: '',
+    primaryCondition: 'General Assessment'
   };
 
+  photoPreview: string | null = null;
+  registeredPatient = signal<DoctorPatient | null>(null);
   errorMessage = '';
 
-  // ─── Care Plan Templates ──────────────────────────────────────────────────
-  planTemplates = [
-    'Spine Decompression & Core Stabilization',
-    'Knee ACL Accelerated Rehab Protocol',
-    'Glenohumeral Joint Mobilization & ROM',
-    'Cervical Postural & Deep Neck Flexor Protocol',
-    'Ankle Stability & Tendinopathy Care',
-    'Custom Physical Therapy Care Plan'
-  ];
+  // ─── Photo File Upload Handling ──────────────────────────────────────────
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const selectedFile = input.files[0];
+      this.formData.file = selectedFile;
 
-  // ─── Right Sidebar: Conditions ────────────────────────────────────────────
-  conditionSearch = signal<string>('');
-  conditionsList = signal<string[]>([
-    'Low Back Pain',
-    'Cervical Spondylosis',
-    'ACL Post-Op',
-    'Shoulder Impingement',
-    'Frozen Shoulder',
-    'Lumbar Disc Herniation',
-    'Plantar Fasciitis',
-    'Tennis Elbow (Lateral Epicondylitis)'
-  ]);
-
-  showAddCondition = false;
-  newConditionInput = '';
-
-  filteredConditions = computed(() => {
-    const query = this.conditionSearch().toLowerCase().trim();
-    if (!query) return this.conditionsList();
-    return this.conditionsList().filter(c => c.toLowerCase().includes(query));
-  });
-
-  selectCondition(condition: string): void {
-    this.formData.primaryCondition = condition;
-    // Contextual protocol auto-mapping
-    if (condition.toLowerCase().includes('back') || condition.toLowerCase().includes('lumbar') || condition.toLowerCase().includes('spine')) {
-      this.formData.assignedPlanTemplate = 'Spine Decompression & Core Stabilization';
-    } else if (condition.toLowerCase().includes('acl') || condition.toLowerCase().includes('knee')) {
-      this.formData.assignedPlanTemplate = 'Knee ACL Accelerated Rehab Protocol';
-    } else if (condition.toLowerCase().includes('shoulder') || condition.toLowerCase().includes('impingement')) {
-      this.formData.assignedPlanTemplate = 'Glenohumeral Joint Mobilization & ROM';
-    } else if (condition.toLowerCase().includes('cervical') || condition.toLowerCase().includes('neck')) {
-      this.formData.assignedPlanTemplate = 'Cervical Postural & Deep Neck Flexor Protocol';
-    } else if (condition.toLowerCase().includes('ankle')) {
-      this.formData.assignedPlanTemplate = 'Ankle Stability & Tendinopathy Care';
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.photoPreview = reader.result as string;
+        this.formData.photoPreview = this.photoPreview;
+      };
+      reader.readAsDataURL(selectedFile);
     }
   }
 
-  addCustomCondition(): void {
-    const trimmed = this.newConditionInput.trim();
-    if (trimmed) {
-      if (!this.conditionsList().includes(trimmed)) {
-        this.conditionsList.update(list => [trimmed, ...list]);
-      }
-      this.selectCondition(trimmed);
-      this.newConditionInput = '';
-      this.showAddCondition = false;
+  removePhoto(fileInput?: HTMLInputElement): void {
+    this.formData.file = null;
+    this.photoPreview = null;
+    this.formData.photoPreview = '';
+    const input = fileInput || this.photoInputRef?.nativeElement;
+    if (input) {
+      input.value = '';
     }
   }
 
-  removeSelectedCondition(): void {
-    this.formData.primaryCondition = '';
-  }
-
-  // ─── Right Sidebar: Precaution Notes ─────────────────────────────────────
-  precautionSearch = signal<string>('');
-  precautionsList = signal<string[]>([
-    'Avoid loaded deep squats',
-    'No high-impact activity',
-    'Avoid overhead loading',
-    'Monitor pain > 6/10',
-    'No end-range lumbar flexion',
-    'Limit weight-bearing to 50%',
-    'Avoid rapid rotational twisting'
-  ]);
-
-  selectedPrecautions = signal<string[]>([]);
-  showAddPrecaution = false;
-  newPrecautionInput = '';
-
-  filteredPrecautions = computed(() => {
-    const query = this.precautionSearch().toLowerCase().trim();
-    if (!query) return this.precautionsList();
-    return this.precautionsList().filter(p => p.toLowerCase().includes(query));
-  });
-
-  isPrecautionSelected(precaution: string): boolean {
-    return this.selectedPrecautions().includes(precaution);
-  }
-
-  togglePrecaution(precaution: string): void {
-    if (this.isPrecautionSelected(precaution)) {
-      this.selectedPrecautions.update(list => list.filter(p => p !== precaution));
-    } else {
-      this.selectedPrecautions.update(list => [...list, precaution]);
-    }
-    this.syncPrecautionsToForm();
-  }
-
-  addCustomPrecaution(): void {
-    const trimmed = this.newPrecautionInput.trim();
-    if (trimmed) {
-      if (!this.precautionsList().includes(trimmed)) {
-        this.precautionsList.update(list => [trimmed, ...list]);
-      }
-      if (!this.isPrecautionSelected(trimmed)) {
-        this.selectedPrecautions.update(list => [...list, trimmed]);
-        this.syncPrecautionsToForm();
-      }
-      this.newPrecautionInput = '';
-      this.showAddPrecaution = false;
-    }
-  }
-
-  removeSelectedPrecaution(precaution: string): void {
-    this.selectedPrecautions.update(list => list.filter(p => p !== precaution));
-    this.syncPrecautionsToForm();
-  }
-
-  syncPrecautionsToForm(): void {
-    this.formData.precautionNotes = [...this.selectedPrecautions()];
-    const precautionsStr = this.selectedPrecautions().join('; ');
-    this.formData.notes = precautionsStr;
-  }
-
-  // ─── Relevant Medical History Presets ────────────────────────────────────
-  medicalHistoryPresets = [
-    'Hypertension',
-    'Type 2 Diabetes',
-    'Previous Spinal Surgery',
-    'Osteoarthritis',
-    'Cardiac Pacemaker',
-    'None reported'
-  ];
-
-  appendMedicalHistory(history: string): void {
-    if (history === 'None reported') {
-      this.formData.relevantMedicalHistory = 'None reported';
-      return;
-    }
-    if (!this.formData.relevantMedicalHistory || this.formData.relevantMedicalHistory === 'None reported') {
-      this.formData.relevantMedicalHistory = history;
-    } else if (!this.formData.relevantMedicalHistory.includes(history)) {
-      this.formData.relevantMedicalHistory += `, ${history}`;
-    }
-  }
-
-  // ─── DOB to Age Calculation ──────────────────────────────────────────────
+  // ─── DOB & Age Calculation ───────────────────────────────────────────────
   onDobChange(): void {
     if (this.formData.dob) {
-      const birthDate = new Date(this.formData.dob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      const birth = new Date(this.formData.dob);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
         age--;
       }
-      if (age >= 0 && age <= 120) {
-        this.formData.age = age;
-      }
+      this.formData.age = age >= 0 ? age : null;
+    } else {
+      this.formData.age = null;
     }
   }
 
-  // ─── Form Submission ──────────────────────────────────────────────────────
+  // ─── Submit Registration Form ────────────────────────────────────────────
   onSubmit(): void {
+    if (!this.formData.fullName?.trim()) {
+      this.errorMessage = 'Please enter patient full name.';
+      return;
+    }
+    if (!this.formData.mobile?.trim()) {
+      this.errorMessage = 'Please enter mobile number.';
+      return;
+    }
+
     this.errorMessage = '';
+    this.formData.phone = this.formData.mobile.trim();
 
-    if (!this.formData.fullName.trim()) {
-      this.errorMessage = 'Please provide the patient full name.';
-      return;
-    }
-    if (!this.formData.phone.trim()) {
-      this.errorMessage = 'Please provide a valid contact phone number.';
-      return;
-    }
-    if (!this.formData.primaryCondition.trim()) {
-      this.errorMessage = 'Please specify the primary condition or select one from Clinical Quick Select.';
-      return;
-    }
+    // Emit payload to parent dashboard
+    this.patientAdded.emit({ ...this.formData });
 
-    this.patientAdded.emit({
-      ...this.formData,
-      precautionNotes: [...this.selectedPrecautions()]
-    });
+    // Generate local patient entity for post-registration preview
+    const newPtCode = `PT-${Math.floor(1040 + Math.random() * 900)}`;
+    const newPatient: DoctorPatient = {
+      id: newPtCode,
+      patientCode: newPtCode,
+      fullName: this.formData.fullName.trim(),
+      age: this.formData.age || 30,
+      gender: this.formData.gender as string,
+      dob: this.formData.dob,
+      phone: this.formData.mobile.trim(),
+      mobile: this.formData.mobile.trim(),
+      email: this.formData.email?.trim() || `${this.formData.fullName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      address: this.formData.address?.trim() || '',
+      city: this.formData.city?.trim() || '',
+      state: this.formData.state?.trim() || '',
+      photoUrl: this.photoPreview || undefined,
+      userId: this.formData.userId || 1,
+      roleId: this.formData.roleId || 3,
+      primaryCondition: 'General Assessment',
+      status: 'Active',
+      currentPlan: 'General Physiotherapy Plan',
+      sessionsCompleted: 0,
+      totalSessions: 10,
+      lastVisit: 'Just Registered',
+      nextAppointment: 'Pending Schedule',
+      notes: 'Registered via Add Patient form.'
+    };
+
+    this.registeredPatient.set(newPatient);
   }
 
+  // ─── Form Reset & Navigation ─────────────────────────────────────────────
   resetForm(): void {
     this.formData = {
+      file: null,
+      photoPreview: '',
       fullName: '',
-      phone: '',
+      mobile: '',
       email: '',
+      gender: 'Male',
       dob: '',
       age: null,
-      gender: 'Male',
-      primaryCondition: '',
-      severity: 'Moderate',
-      chiefComplaint: '',
-      redFlags: '',
-      relevantMedicalHistory: '',
-      assignedPlanTemplate: 'Spine Decompression & Core Stabilization',
-      treatmentGoal: '',
-      notes: '',
-      precautionNotes: [],
-      emergencyContact: ''
+      address: '',
+      city: '',
+      state: '',
+      userId: 1,
+      roleId: 3,
+      phone: '',
+      primaryCondition: 'General Assessment'
     };
-    this.selectedPrecautions.set([]);
+    this.photoPreview = null;
     this.errorMessage = '';
+    this.registeredPatient.set(null);
+    // const input = fileInput || this.photoInputRef?.nativeElement;
+    // if (input) {
+    //   input.value = '';
+    // }
   }
 
   onCancel(): void {
     this.cancel.emit();
+  }
+
+  onStartConsultation(): void {
+    if (this.registeredPatient()) {
+      this.startConsultationWith.emit(this.registeredPatient()!);
+    }
+  }
+
+  getInitials(name: string): string {
+    return name
+      ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      : 'PT';
   }
 }

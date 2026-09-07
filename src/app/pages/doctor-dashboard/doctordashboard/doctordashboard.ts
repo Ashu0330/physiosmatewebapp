@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 
@@ -10,15 +10,19 @@ import {
   DoctorAppointment,
   DoctorStats,
   DoctorStatsFilter,
-  NewPatientFormData
+  NewPatientFormData,
+  DoctorConsultationRecord,
+  DoctorInquiryOrAppointment
 } from '../../../models/doctor-dashboard.model';
 
 // Child components
 import { Addpatient } from '../addpatient/addpatient';
 import { Patients } from '../patients/patients';
 import { Treatmentplans } from '../treatmentplans/treatmentplans';
+import { Consultations } from '../consultations/consultations';
+import { DoctorAppointments } from '../appointments/doctor-appointments';
 
-export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans';
+export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments';
 
 @Component({
   selector: 'app-doctordashboard',
@@ -28,7 +32,9 @@ export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'tre
     RouterModule,
     Addpatient,
     Patients,
-    Treatmentplans
+    Treatmentplans,
+    Consultations,
+    DoctorAppointments
   ],
   templateUrl: './doctordashboard.html',
   styleUrl: './doctordashboard.css',
@@ -40,6 +46,7 @@ export class Doctordashboard implements OnInit {
 
   activeTab: DoctorDashboardTab = 'dashboard';
   doctorName = 'Dr. Himanshu Suman';
+  preSelectedPatientId = signal<string | null>(null);
 
   // ─── Central Clinical State ────────────────────────────────────────────────
   patients: DoctorPatient[] = [
@@ -441,6 +448,10 @@ export class Doctordashboard implements OnInit {
     'add-patient': 'add-patient',
     'patients': 'patients',
     'treatment-plans': 'treatment-plans',
+    'consultations': 'Consultations',
+    'Consultations': 'Consultations',
+    'appointments': 'Appointments',
+    'Appointments': 'Appointments',
   };
 
   /** Map each tab → the URL path segment */
@@ -449,6 +460,8 @@ export class Doctordashboard implements OnInit {
     'add-patient': 'add-patient',
     'patients': 'patients',
     'treatment-plans': 'treatment-plans',
+    'Consultations': 'Consultations',
+    'Appointments': 'Appointments',
   };
 
   resolveTabFromRoute(): void {
@@ -539,18 +552,28 @@ export class Doctordashboard implements OnInit {
     const newIdNum = 1040 + this.patients.length + 1;
     const patientCode = `PT-${newIdNum}`;
 
+    const phoneVal = formData.mobile || formData.phone || '';
+    const condition = formData.primaryCondition || 'General Physiotherapy';
+
     const newPatient: DoctorPatient = {
       id: patientCode,
       patientCode: patientCode,
       fullName: formData.fullName,
       age: formData.age || 30,
-      gender: formData.gender,
+      gender: formData.gender as 'Male' | 'Female' | 'Other',
       dob: formData.dob,
-      phone: formData.phone,
+      phone: phoneVal,
+      mobile: formData.mobile || phoneVal,
       email: formData.email || `${formData.fullName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-      primaryCondition: formData.primaryCondition,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      photoUrl: formData.photoPreview,
+      userId: formData.userId || 1,
+      roleId: formData.roleId || 3,
+      primaryCondition: condition,
       status: 'Active',
-      currentPlan: formData.assignedPlanTemplate || 'Custom Physical Therapy Care Plan',
+      currentPlan: `${condition} Rehabilitation Plan`,
       sessionsCompleted: 0,
       totalSessions: 10,
       lastVisit: 'Just Registered',
@@ -558,8 +581,12 @@ export class Doctordashboard implements OnInit {
       emergencyContact: formData.emergencyContact,
       redFlags: formData.redFlags,
       relevantMedicalHistory: formData.relevantMedicalHistory,
+      allergies: formData.allergies,
+      existingConditions: formData.existingConditions,
+      initialComplaint: formData.initialComplaint,
+      initialNotes: formData.initialNotes,
       precautionNotes: formData.precautionNotes,
-      notes: formData.chiefComplaint ? `Chief Complaint: ${formData.chiefComplaint}. ${formData.notes || ''}` : formData.notes
+      notes: formData.initialComplaint ? `Initial Complaint: ${formData.initialComplaint}. ${formData.notes || ''}` : formData.notes
     };
 
     // Add to patient state
@@ -569,10 +596,10 @@ export class Doctordashboard implements OnInit {
     const newPlan: DoctorTreatmentPlan = {
       id: `PLN-${300 + this.treatmentPlans.length + 1}`,
       planCode: `PLN-${300 + this.treatmentPlans.length + 1}`,
-      title: formData.assignedPlanTemplate || `${formData.primaryCondition} Rehabilitation Plan`,
+      title: `${condition} Rehabilitation Plan`,
       patientId: patientCode,
       patientName: formData.fullName,
-      diagnosis: formData.primaryCondition,
+      diagnosis: condition,
       totalSessions: 10,
       completedSessions: 0,
       frequency: '3x weekly',
@@ -584,8 +611,8 @@ export class Doctordashboard implements OnInit {
       progressPercent: 0,
       isExpanded: true,
       clinicalNotes: formData.precautionNotes && formData.precautionNotes.length
-        ? `Precautions: ${formData.precautionNotes.join('; ')}. ${formData.treatmentGoal ? 'Goal: ' + formData.treatmentGoal : ''}`
-        : (formData.treatmentGoal ? `Goal: ${formData.treatmentGoal}. ${formData.notes || ''}` : (formData.notes || 'Clinical protocol initiated.')),
+        ? `Precautions: ${formData.precautionNotes.join('; ')}. ${formData.initialNotes || ''}`
+        : (formData.initialNotes || 'Clinical baseline registered.'),
       phases: [
         {
           phaseNumber: 1,
@@ -613,6 +640,25 @@ export class Doctordashboard implements OnInit {
     });
 
     // Navigate to patients directory tab to view the added patient
+    this.selectTab('patients');
+  }
+
+  onStartConsultationWith(patient: DoctorPatient): void {
+    // If patient is not yet in patients list, add them
+    if (!this.patients.some(p => p.id === patient.id || p.patientCode === patient.patientCode)) {
+      this.patients = [patient, ...this.patients];
+      this.doctorService.AddPatient(patient).subscribe({
+        next: () => { },
+        error: () => { }
+      });
+    }
+
+    // Pre-select patient in consultations tab
+    this.preSelectedPatientId.set(patient.id);
+    this.selectTab('Consultations');
+  }
+
+  onViewPatientProfile(patient: DoctorPatient): void {
     this.selectTab('patients');
   }
 
@@ -647,5 +693,48 @@ export class Doctordashboard implements OnInit {
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
+  }
+
+  onConsultationAdded(consultation: DoctorConsultationRecord): void {
+    const exists = this.patients.some(p => p.id === consultation.patientId || p.patientCode === consultation.patientCode);
+    if (!exists && consultation.patientName) {
+      const newPt: DoctorPatient = {
+        id: consultation.patientCode,
+        patientCode: consultation.patientCode,
+        fullName: consultation.patientName,
+        age: consultation.age || 30,
+        gender: consultation.gender,
+        phone: consultation.phone,
+        email: consultation.email || '',
+        primaryCondition: consultation.primaryCondition,
+        status: 'Active',
+        currentPlan: consultation.recommendedPlan || 'Custom Care Plan',
+        sessionsCompleted: 1,
+        totalSessions: 10,
+        lastVisit: 'Today',
+        notes: consultation.chiefComplaint
+      };
+      this.patients = [newPt, ...this.patients];
+    }
+  }
+
+  onAppointmentAdded(item: DoctorInquiryOrAppointment): void {
+    if (item.entryType === 'appointment') {
+      const newApt: DoctorAppointment = {
+        id: item.id,
+        bookingCode: item.bookingCode,
+        patientId: item.patientId || item.patientCode || 'PT-NEW',
+        patientName: item.patientName,
+        timeSlot: item.timeSlot || '09:30 AM - 10:15 AM',
+        date: item.date,
+        visitType: (item.visitType as any) || 'In-Clinic',
+        condition: item.conditionOrInterest,
+        sessionNumber: 1,
+        totalSessions: 10,
+        status: (item.status as any) || 'Scheduled',
+        phone: item.phone
+      };
+      this.todayAppointments = [newApt, ...this.todayAppointments];
+    }
   }
 }
