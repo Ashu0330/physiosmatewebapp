@@ -275,7 +275,7 @@
 }
 
 /* Quick Patient Pills */
-.quick-patient-pills-row {
+/* .quick-patient-pills-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -335,7 +335,7 @@
   font-weight: 400;
   color: #6B7280;
   font-size: 11.5px;
-}
+} */
 
 /* ── MAIN WORKSPACE: TWO-COLUMN LAYOUT (70% Form / 30% Sidebar) ────────── */
 .consultation-two-col-layout {

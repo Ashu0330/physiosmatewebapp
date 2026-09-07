@@ -112,15 +112,53 @@
             </div>
             <div class="header-actions-wrap">
               <!-- Period Filter Group: Day, This Week, Month, Lifetime -->
-              <div class="kpi-filter-group" role="group" aria-label="Time period filter">
-                @for (filter of periodFilters; track filter.id) {
-                  <button
-                    type="button"
-                    class="kpi-filter-btn"
-                    [class.active]="selectedPeriod === filter.id"
-                    (click)="setPeriodFilter(filter.id)">
-                    {{ filter.label }}
-                  </button>
+              <!-- Custom Period Dropdown -->
+              <div class="cpd-wrap">
+                <!-- Trigger -->
+                <button
+                  type="button"
+                  class="cpd-trigger"
+                  [class.cpd-open]="isPeriodDropdownOpen"
+                  (click)="togglePeriodDropdown($event)"
+                  aria-haspopup="listbox"
+                  [attr.aria-expanded]="isPeriodDropdownOpen"
+                  aria-label="Select time period">
+                  <span class="cpd-trigger-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </span>
+                  <span class="cpd-trigger-label">{{ selectedPeriodLabel }}</span>
+                  <span class="cpd-trigger-chevron" [class.rotated]="isPeriodDropdownOpen">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </span>
+                </button>
+
+                <!-- Dropdown Panel -->
+                @if (isPeriodDropdownOpen) {
+                  <div class="cpd-panel" role="listbox" aria-label="Time period options">
+                    @for (filter of periodFilters; track filter.id) {
+                      <button
+                        type="button"
+                        class="cpd-option"
+                        [class.cpd-option-active]="selectedPeriod === filter.id"
+                        role="option"
+                        [attr.aria-selected]="selectedPeriod === filter.id"
+                        (click)="selectPeriodOption(filter.id, $event)">
+                        <span class="cpd-option-dot"></span>
+                        <span class="cpd-option-label">{{ filter.label }}</span>
+                        @if (selectedPeriod === filter.id) {
+                          <span class="cpd-option-check">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          </span>
+                        }
+                      </button>
+                    }
+                  </div>
                 }
               </div>
 
@@ -390,9 +428,9 @@
                     <td>
                       <span class="mode-tag" [class.video]="apt.visitType === 'Video Call'">
                         @if (apt.visitType === 'Video Call') {
-                        📹 Video Call
+                         Video Call
                         } @else {
-                        🏥 In-Clinic
+                         In-Clinic
                         }
                       </span>
                     </td>

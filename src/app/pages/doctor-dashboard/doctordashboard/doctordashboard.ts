@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 
@@ -43,6 +43,7 @@ export class Doctordashboard implements OnInit {
   private doctorService = inject(DoctorDashboardService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private elementRef = inject(ElementRef);
 
   activeTab: DoctorDashboardTab = 'dashboard';
   doctorName = 'Dr. Himanshu Suman';
@@ -359,6 +360,7 @@ export class Doctordashboard implements OnInit {
 
   // ─── Filter State & Dynamic KPI Statistics ──────────────────────────────
   selectedPeriod: DoctorStatsFilter = 'day';
+  isPeriodDropdownOpen = false;
 
   periodFilters: { id: DoctorStatsFilter; label: string }[] = [
     { id: 'day', label: 'Day' },
@@ -430,9 +432,42 @@ export class Doctordashboard implements OnInit {
     return this.statsByPeriod[this.selectedPeriod];
   }
 
+  get selectedPeriodLabel(): string {
+    return this.periodFilters.find(f => f.id === this.selectedPeriod)?.label ?? this.selectedPeriod;
+  }
+
   setPeriodFilter(period: DoctorStatsFilter): void {
     this.selectedPeriod = period;
     this.fetchStats(period);
+  }
+
+  togglePeriodDropdown(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isPeriodDropdownOpen = !this.isPeriodDropdownOpen;
+  }
+
+  selectPeriodOption(period: DoctorStatsFilter, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.setPeriodFilter(period);
+    this.isPeriodDropdownOpen = false;
+  }
+
+  closePeriodDropdown(): void {
+    this.isPeriodDropdownOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isPeriodDropdownOpen) {
+      const target = event.target as HTMLElement;
+      if (target && !this.elementRef.nativeElement.querySelector('.cpd-wrap')?.contains(target)) {
+        this.isPeriodDropdownOpen = false;
+      }
+    }
   }
 
   // ─── Lifecycle & Routing Synchronization ─────────────────────────────────

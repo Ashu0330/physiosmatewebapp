@@ -449,7 +449,7 @@
 }
 
 .metric-number.text-gold {
-  color: #B45309;
+  color: #f8ce26;
 }
 
 .star-sym {
@@ -857,3 +857,181 @@
     padding: 16px;
   }
 }
+
+/* ==========================================================================
+   Custom Period Dropdown (CPD)
+   ========================================================================== */
+
+/* Wrapper – positioning context for the panel */
+.cpd-wrap {
+  position: relative;
+  display: inline-block;
+  outline: none;
+}
+
+/* ── Trigger Button ─────────────────────────────────────────────────────── */
+.cpd-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 12px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1.5px solid #E5E7EB;
+  background: #ffffff;
+  cursor: pointer;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  transition:
+    border-color 0.2s ease,
+    box-shadow   0.2s ease,
+    background   0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  user-select: none;
+}
+
+.cpd-trigger:hover {
+  border-color: #10A896;
+  background: #F0FDFB;
+  box-shadow: 0 2px 8px rgba(16, 168, 150, 0.12);
+}
+
+.cpd-trigger.cpd-open {
+  border-color: #10A896;
+  background: linear-gradient(135deg, #F0FDFB 0%, #E6FAF7 100%);
+  box-shadow:
+    0 0 0 3px rgba(16, 168, 150, 0.14),
+    0 2px 8px rgba(16, 168, 150, 0.12);
+  color: #087F76;
+}
+
+/* Calendar icon */
+.cpd-trigger-icon {
+  display: flex;
+  align-items: center;
+  color: #10A896;
+  flex-shrink: 0;
+}
+
+/* Label text */
+.cpd-trigger-label {
+  flex: 1;
+  min-width: 64px;
+  text-align: left;
+  letter-spacing: 0.01em;
+}
+
+/* Animated chevron */
+.cpd-trigger-chevron {
+  display: flex;
+  align-items: center;
+  color: #9CA3AF;
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+}
+
+.cpd-trigger-chevron.rotated {
+  transform: rotate(180deg);
+  color: #10A896;
+}
+
+/* ── Dropdown Panel ─────────────────────────────────────────────────────── */
+.cpd-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 148px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(16, 168, 150, 0.18);
+  border-radius: 14px;
+  box-shadow:
+    0 4px 6px -1px rgba(0,0,0,0.07),
+    0 10px 24px -4px rgba(16, 168, 150, 0.16),
+    0 0 0 1px rgba(255,255,255,0.8) inset;
+  padding: 6px;
+  z-index: 999;
+  animation: cpdSlideIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: top left;
+}
+
+@keyframes cpdSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Option Rows ────────────────────────────────────────────────────────── */
+.cpd-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    color      0.15s ease;
+  position: relative;
+}
+
+.cpd-option:hover {
+  background: linear-gradient(90deg, rgba(16,168,150,0.08) 0%, rgba(16,168,150,0.04) 100%);
+  color: #087F76;
+}
+
+/* Active / selected option */
+.cpd-option.cpd-option-active {
+  background: linear-gradient(90deg, rgba(16,168,150,0.13) 0%, rgba(16,168,150,0.06) 100%);
+  color: #087F76;
+  font-weight: 700;
+}
+
+/* Dot indicator */
+.cpd-option-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #D1D5DB;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.cpd-option-active .cpd-option-dot {
+  background: #10A896;
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.2);
+}
+
+/* Option label */
+.cpd-option-label {
+  flex: 1;
+}
+
+/* Check mark */
+.cpd-option-check {
+  display: flex;
+  align-items: center;
+  color: #10A896;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+
