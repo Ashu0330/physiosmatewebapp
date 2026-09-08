@@ -96,7 +96,7 @@
   position: relative;
   flex: 1;
   min-width: 300px;
-  max-width: 520px;
+  /* max-width: 520px; */
   display: flex;
   align-items: center;
 }

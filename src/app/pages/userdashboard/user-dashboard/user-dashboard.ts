@@ -192,6 +192,7 @@ export class UserDashboard implements OnInit {
     this.activeTab = tab;
     const path = this.tabToPath[tab] || '';
     this.router.navigate(['/user-dashboard', path]);
+    window.scrollTo(0, 0);
   }
 
   get userInitials(): string {

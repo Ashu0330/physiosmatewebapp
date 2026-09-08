@@ -153,8 +153,8 @@
 .btn_3:hover {
   color: #ffffff;
   transform: scale(1);
-  outline: 1px solid #70bdca;
-  box-shadow: 4px 5px 17px -4px var(--primary-dark);
+  outline: none;
+  box-shadow: none;
 }
 
 .btn_3::before {

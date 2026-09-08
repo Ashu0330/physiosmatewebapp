@@ -515,6 +515,7 @@ export class Doctordashboard implements OnInit {
     this.activeTab = tab;
     const path = this.tabToPath[tab] || '';
     this.router.navigate(['/doctor-dashboard', path]);
+    window.scrollTo(0, 0);
   }
 
   // ─── Data Fetching (Uses Pure API Service with graceful fallback) ──────────
