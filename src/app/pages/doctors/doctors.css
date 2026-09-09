@@ -497,6 +497,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: sticky;
+  top: 10px;
+  /* Header + Gap */
 }
 
 /* 1. Quick Links Card */

@@ -1,5 +1,5 @@
-import { Component, signal, computed, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { Authservice } from '../../services/authservice';
@@ -85,11 +85,13 @@ export interface TreatmentItem {
   templateUrl: './doctordetail.html',
   styleUrl: './doctordetail.css',
 })
-export class Doctordetail implements OnInit, OnDestroy {
+export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(Authservice);
   private bookingService = inject(BookingService);
+  private platformId = inject(PLATFORM_ID);
+  private elRef = inject(ElementRef);
 
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
@@ -357,7 +359,22 @@ export class Doctordetail implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { }
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      import('@fancyapps/ui').then(({ Fancybox }) => {
+        Fancybox.bind(this.elRef.nativeElement, '[data-fancybox="clinic-gallery"]');
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      import('@fancyapps/ui').then(({ Fancybox }) => {
+        Fancybox.unbind(this.elRef.nativeElement);
+        Fancybox.close();
+      });
+    }
+  }
 
   @HostListener('window:scroll', [])
   onWindowScroll(): void {

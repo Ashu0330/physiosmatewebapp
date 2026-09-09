@@ -186,65 +186,13 @@
           </div>
         </div>
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- SECTION 1: Consultation Specs & Pricing                            -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <div class="form-section">
-          <div class="sec-heading-row">
-            <span class="sec-number">1</span>
-            <div>
-              <h5 class="sec-title">Consultation Specs & Pricing</h5>
-              <span class="sec-desc">Consultation type, session mode, and encounter billing fee</span>
-            </div>
-          </div>
-
-          <div class="form-grid-4">
-            <!-- Consultancy Fee -->
-            <div class="form-group">
-              <label class="form-label" for="c-fee">Consultancy Fee (₹) <span class="req">*</span></label>
-              <div class="input-with-icon">
-                <span class="currency-symbol">₹</span>
-                <input id="c-fee" name="cFee" type="number" class="form-input with-prefix" placeholder="500"
-                  [(ngModel)]="formData.fee" required />
-              </div>
-            </div>
-
-            <!-- Payment Status -->
-            <div class="form-group">
-              <label class="form-label" for="c-pay-status">Payment Status</label>
-              <select id="c-pay-status" name="cPayStatus" class="form-select" [(ngModel)]="formData.paymentStatus">
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending Collection</option>
-                <option value="Waived">Waived (Free Inquiry / Doctor Courtesy)</option>
-              </select>
-            </div>
-
-            <!-- Consultation Type -->
-            <div class="form-group">
-              <label class="form-label" for="c-type">Consultation Type</label>
-              <select id="c-type" name="cType" class="form-select" [(ngModel)]="formData.consultationType">
-                <option value="Initial Assessment">Initial Assessment</option>
-                <option value="Follow-up Visit">Follow-up Visit</option>
-              </select>
-            </div>
-
-            <!-- Visit Mode -->
-            <div class="form-group">
-              <label class="form-label" for="c-mode">Visit Mode</label>
-              <select id="c-mode" name="cMode" class="form-select" [(ngModel)]="formData.visitMode">
-                <option value="In-Clinic">In-Clinic (Center)</option>
-                <option value="Home Visit">Home Visit (Domiciliary)</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
         <!-- ────────────────────────────────────────────────────────────────── -->
         <!-- SECTION 2: Clinical Examination & Symptoms                         -->
         <!-- ────────────────────────────────────────────────────────────────── -->
         <div class="form-section">
           <div class="sec-heading-row">
-            <span class="sec-number">2</span>
+            <span class="sec-number">1</span>
             <div>
               <h5 class="sec-title">Clinical Examination & Diagnosis</h5>
               <span class="sec-desc">Symptoms onset, pain severity rating, and clinical provisional diagnosis</span>
@@ -352,7 +300,58 @@
               [(ngModel)]="formData.clinicalAdvice"></textarea>
           </div>
         </div>
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- SECTION 1: Consultation Specs & Pricing                            -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="sec-heading-row">
+            <span class="sec-number">3</span>
+            <div>
+              <h5 class="sec-title">Consultation Specs & Pricing</h5>
+              <span class="sec-desc">Consultation type, session mode, and encounter billing fee</span>
+            </div>
+          </div>
 
+          <div class="form-grid-4">
+            <!-- Consultancy Fee -->
+            <div class="form-group">
+              <label class="form-label" for="c-fee">Consultancy Fee (₹) <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="currency-symbol">₹</span>
+                <input id="c-fee" name="cFee" type="number" class="form-input with-prefix" placeholder="500"
+                  [(ngModel)]="formData.fee" required />
+              </div>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="form-group">
+              <label class="form-label" for="c-pay-status">Payment Status</label>
+              <select id="c-pay-status" name="cPayStatus" class="form-select" [(ngModel)]="formData.paymentStatus">
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending Collection</option>
+                <option value="Waived">Waived (Free Inquiry / Doctor Courtesy)</option>
+              </select>
+            </div>
+
+            <!-- Consultation Type -->
+            <div class="form-group">
+              <label class="form-label" for="c-type">Consultation Type</label>
+              <select id="c-type" name="cType" class="form-select" [(ngModel)]="formData.consultationType">
+                <option value="Initial Assessment">Initial Assessment</option>
+                <option value="Follow-up Visit">Follow-up Visit</option>
+              </select>
+            </div>
+
+            <!-- Visit Mode -->
+            <div class="form-group">
+              <label class="form-label" for="c-mode">Visit Mode</label>
+              <select id="c-mode" name="cMode" class="form-select" [(ngModel)]="formData.visitMode">
+                <option value="In-Clinic">In-Clinic (Center)</option>
+                <option value="Home Visit">Home Visit (Domiciliary)</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <!-- Form Actions Bar -->
         <div class="form-actions-bar">
           <button type="button" class="btn-reset" (click)="clearConsultation()">

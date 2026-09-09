@@ -239,7 +239,7 @@
 
 .sec-heading {
   font-family: var(--font-heading, 'Inter Tight', sans-serif);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-main, #1F2937);
   margin: 0;
@@ -256,7 +256,10 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 18px;
   width: 100%;
-  box-sizing: border-box;
+}
+
+.form-row-4 div:nth-child(7) {
+  grid-column: span 2;
 }
 
 .mt-16 {

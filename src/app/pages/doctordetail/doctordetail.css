@@ -426,6 +426,14 @@
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.gallery-thumb-item:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
 }
 
 .gallery-img {
@@ -984,6 +992,18 @@
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.gallery-photo-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.gallery-photo-link {
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
 }
 
 .gallery-big-img {
@@ -991,6 +1011,11 @@
   height: 140px;
   object-fit: cover;
   display: block;
+  transition: transform 0.35s ease;
+}
+
+.gallery-photo-link:hover .gallery-big-img {
+  transform: scale(1.05);
 }
 
 .gallery-caption {

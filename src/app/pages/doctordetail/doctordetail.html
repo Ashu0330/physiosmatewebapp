@@ -167,9 +167,9 @@
                 <h4 class="gallery-title">Clinic Photos &amp; Videos</h4>
                 <div class="gallery-thumbs-list">
                   @for (photo of clinicPhotos; track photo.url; let i = $index) {
-                  <div class="gallery-thumb-item">
+                  <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption" class="gallery-thumb-item">
                     <img [src]="photo.url" [alt]="photo.caption" class="gallery-img" />
-                  </div>
+                  </a>
                   }
                   <div class="gallery-thumb-more" (click)="scrollToSection('photos')">
                     <span>+6</span>
@@ -314,7 +314,9 @@
           <div class="full-gallery-grid">
             @for (photo of clinicPhotos; track photo.url) {
             <div class="gallery-photo-card">
-              <img [src]="photo.url" [alt]="photo.caption" class="gallery-big-img" />
+              <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption" class="gallery-photo-link">
+                <img [src]="photo.url" [alt]="photo.caption" class="gallery-big-img" />
+              </a>
               <span class="gallery-caption">{{ photo.caption }}</span>
             </div>
             }

@@ -123,6 +123,12 @@
           <input id="doc-weight" name="weight" type="text" class="form-input" placeholder="e.g. 70"
             [(ngModel)]="formData.weight" required />
         </div>
+        <!-- Col 2: Address -->
+        <div class="form-group">
+          <label class="form-label" for="doc-address">Residential Address</label>
+          <input id="doc-address" name="address" type="text" class="form-input"
+            placeholder="e.g. Flat 402, Green Valley Apartments" [(ngModel)]="formData.address" />
+        </div>
       </div>
 
       <!-- ROW 2: 4 COLUMNS (Gender, Address, City, State) -->
@@ -136,13 +142,7 @@
             <option value="Other">Other</option>
           </select>
         </div>
-
-        <!-- Col 2: Address -->
-        <div class="form-group">
-          <label class="form-label" for="doc-address">Residential Address</label>
-          <input id="doc-address" name="address" type="text" class="form-input"
-            placeholder="e.g. Flat 402, Green Valley Apartments" [(ngModel)]="formData.address" />
-        </div>
+        
 
         <!-- Col 3: City -->
         <div class="form-group">
@@ -153,7 +153,7 @@
 
         <!-- Col 4: State -->
         <div class="form-group">
-          <label class="form-label" for="doc-state">State / Province</label>
+          <label class="form-label" for="doc-state">State</label>
           <input id="doc-state" name="state" type="text" class="form-input" placeholder="e.g. Maharashtra"
             [(ngModel)]="formData.state" />
         </div>
