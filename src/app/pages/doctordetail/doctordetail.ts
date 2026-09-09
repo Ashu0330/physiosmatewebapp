@@ -296,7 +296,6 @@ export class Doctordetail implements OnInit, OnDestroy {
   readonly navTabs = [
     { id: 'info', label: 'Info' },
     { id: 'stories', label: 'Stories (2)' },
-    { id: 'plans', label: 'Rehab Plans & Packages' },
     { id: 'treatments', label: 'Surgeries & Treatments' },
     { id: 'photos', label: 'Photos & Videos' },
     { id: 'qa', label: 'Consult Q&A' }

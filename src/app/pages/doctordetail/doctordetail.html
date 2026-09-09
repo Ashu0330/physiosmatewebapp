@@ -79,7 +79,6 @@
           <!-- Doctor Photo -->
           <div class="doctor-photo-wrap">
             <img [src]="practitioner.photoUrl" [alt]="practitioner.name" class="doctor-photo" />
-            <span class="doctor-brand-watermark">• physiosmate •</span>
           </div>
 
           <!-- Doctor Meta Info -->
@@ -88,14 +87,9 @@
               <h1 class="doctor-name">
                 {{ practitioner.name }} <span class="doctor-spec-title">{{ practitioner.specialtyTitle }}</span>
               </h1>
-              <a href="javascript:void(0)" class="claim-profile-link">Claim this profile</a>
             </div>
 
             <p class="doctor-degree">{{ practitioner.degree }}</p>
-
-            <div class="doctor-badge-row">
-              <span class="doctor-role-tag">{{ practitioner.roleBadge }}</span>
-            </div>
 
             <p class="doctor-specialization">{{ practitioner.specializations }}</p>
             <p class="doctor-experience">
@@ -208,10 +202,9 @@
                 </div>
               </div>
 
-              <button type="button" class="btn-book-instant" (click)="bookConsultancy()">
-                <span class="bolt-icon">⚡</span> Book Consultancy
-                <small class="instant-tag">Instant Pay Available</small>
-              </button>
+              <a type="button" class="btn_3" (click)="bookConsultancy()">
+                Book Consultancy
+              </a>
             </div>
           </div>
         </div>
@@ -270,98 +263,6 @@
                 </div>
               </div>
               }
-            </div>
-            }
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. Section: Rehab Plans & Packages (#plans) -->
-      <section id="plans" class="physios-detail-section">
-        <div class="section-card plans-card">
-          <div class="plans-header-row">
-            <div>
-              <h3 class="section-header-title">Rehab Plans &amp; Session Packages</h3>
-              <p class="section-sub-title">Save more with specialized rehabilitation packages</p>
-            </div>
-            <span class="popular-badge-pill">Recommended</span>
-          </div>
-
-          <!-- Active User Subscription Card (from JSON) -->
-          @if (activeSubscription()) {
-          <div class="user-active-subscription-card">
-            <div class="sub-header-line">
-              <div class="sub-title-group">
-                <span class="sub-badge-active">ACTIVE SUBSCRIPTION</span>
-                <h4 class="sub-plan-name">10-Session Rehab Plan (Plan #{{ activeSubscription()?.planId }})</h4>
-              </div>
-              <div class="sub-payment-status">
-                <span class="paid-badge">✔ {{ activeSubscription()?.paymentStatus }}</span>
-                <span class="sub-price">₹{{ activeSubscription()?.amount }}</span>
-              </div>
-            </div>
-
-            <div class="sub-progress-block">
-              <div class="sub-progress-labels">
-                <span>Sessions Completed: <strong>{{ activeSubscription()?.usedSessions }} / {{
-                    activeSubscription()?.totalSessions }}</strong></span>
-                <span class="remaining-highlight"><strong>{{ activeSubscription()?.remainingSessions }} Sessions
-                    Remaining</strong></span>
-              </div>
-              <div class="sub-progress-bar-bg">
-                <div class="sub-progress-bar-fill"
-                  [style.width.%]="(activeSubscription()!.usedSessions / activeSubscription()!.totalSessions) * 100">
-                </div>
-              </div>
-            </div>
-
-            <div class="sub-meta-footer">
-              <span>Valid: <strong>15 Aug 2026 – 14 Oct 2026</strong></span>
-              <span>Patient ID: <strong>#{{ activeSubscription()?.patientId }}</strong></span>
-            </div>
-          </div>
-          }
-
-          <!-- Available Plans Grid -->
-          <div class="plans-grid">
-            @for (plan of rehabPlans(); track plan.id) {
-            <div class="rehab-plan-item" [class.popular-card]="plan.isPopular">
-              @if (plan.isPopular) {
-              <div class="popular-tag">MOST POPULAR</div>
-              }
-              <div class="plan-header">
-                <h4 class="plan-title">{{ plan.planName }}</h4>
-                <div class="plan-price-row">
-                  <span class="plan-price">₹{{ plan.price }}</span>
-                  <span class="plan-sessions-tag">/ {{ plan.totalSessions }} Sessions</span>
-                </div>
-                <span class="plan-validity-text">Validity: {{ plan.validityDays }} Days (₹{{ (plan.price /
-                  plan.totalSessions).toFixed(0) }} per session)</span>
-              </div>
-
-              <div class="plan-benefits-list">
-                <span class="benefits-heading">Included Benefits:</span>
-                <ul>
-                  @for (b of plan.benefits; track b.id) {
-                  <li>
-                    <span class="check-icon">✔</span>
-                    <span>{{ b.benefitText }}</span>
-                  </li>
-                  }
-                  <li>
-                    <span class="check-icon">✔</span>
-                    <span>Priority Slot Booking on App</span>
-                  </li>
-                  <li>
-                    <span class="check-icon">✔</span>
-                    <span>Physiotherapist Direct Support</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button type="button" class="btn-buy-plan" (click)="buyPlan(plan)">
-                Buy Rehab Plan
-              </button>
             </div>
             }
           </div>
@@ -455,7 +356,23 @@
           <!-- Card Header Strip -->
           <div class="booking-card-header">
             <div class="appointment-type">
-              <span class="home-icon-badge">🏠</span>
+              <span class="home-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-building">
+                  <path d="M12 10h.01" />
+                  <path d="M12 14h.01" />
+                  <path d="M12 6h.01" />
+                  <path d="M16 10h.01" />
+                  <path d="M16 14h.01" />
+                  <path d="M16 6h.01" />
+                  <path d="M8 10h.01" />
+                  <path d="M8 14h.01" />
+                  <path d="M8 6h.01" />
+                  <path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                </svg>
+              </span>
               <span class="type-text">Clinic Appointment</span>
             </div>
             <span class="appointment-fee">₹{{ practitioner.consultationFee }} fee</span>
@@ -464,11 +381,6 @@
           <!-- Clinic Mini Details -->
           <div class="booking-clinic-meta">
             <h4 class="booking-clinic-name">{{ practitioner.clinicName }}</h4>
-            <div class="meta-sub-line">
-              <span class="star-rating">{{ practitioner.clinicRating }} ★</span>
-              <span class="fee-text">₹{{ practitioner.consultationFee }}</span>
-              <span class="verified-link">Verified details</span>
-            </div>
             <span class="clinic-loc">Mansarovar</span>
           </div>
 
@@ -484,7 +396,6 @@
               <button type="button" class="day-tab-btn" [class.active]="selectedDayIndex() === i"
                 (click)="selectDay(i)">
                 <span class="day-title">{{ d.label }}</span>
-                <span class="day-slots-avail" [class.no-slots]="!d.hasSlots">{{ d.subLabel }}</span>
               </button>
               }
             </div>
@@ -499,11 +410,10 @@
           <div class="slot-content-body">
             @if (!dayList[selectedDayIndex()].hasSlots) {
             <div class="no-slots-alert">
-              <div class="calendar-alert-icon">📅</div>
-              <p class="no-slots-msg">No slots available for today</p>
-              <button type="button" class="btn-next-avail" (click)="selectDay(1)">
-                Next availability on Wed, 2 Sep
-              </button>
+              <div class="calendar-alert-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2c9caf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-clock"><path d="M16 14v2.2l1.6 1"/><path d="M16 2v3"/><path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338"/><path d="M3 9h5.859"/><path d="M8 2v3"/><circle cx="16" cy="16" r="6"/></svg>
+              </div>
+              <p class="no-slots-msg">No slots available for today</p>              
             </div>
             } @else {
             <!-- Morning Slots -->
@@ -568,7 +478,7 @@
 
     <h3 class="modal-title">Consultation Confirmed!</h3>
     <p class="modal-desc">
-      Your in-clinic consultation has been successfully booked with 
+      Your in-clinic consultation has been successfully booked with
       <strong>{{ bookingConfirmationDetails()?.doctorName || practitioner.name }}</strong>.
     </p>
 
@@ -586,7 +496,8 @@
         <span class="si-icon">📅</span>
         <div class="si-content">
           <span class="si-label">Date &amp; Time</span>
-          <strong class="si-val">{{ bookingConfirmationDetails()?.day }} at {{ bookingConfirmationDetails()?.time }}</strong>
+          <strong class="si-val">{{ bookingConfirmationDetails()?.day }} at {{ bookingConfirmationDetails()?.time
+            }}</strong>
         </div>
       </div>
 
@@ -603,7 +514,8 @@
         <span class="si-icon">💰</span>
         <div class="si-content">
           <span class="si-label">Consultation Fee</span>
-          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.fee || practitioner.consultationFee }} (Pay at Clinic)</strong>
+          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.fee || practitioner.consultationFee }} (Pay at
+            Clinic)</strong>
         </div>
       </div>
     </div>

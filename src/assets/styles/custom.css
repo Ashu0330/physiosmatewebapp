@@ -2417,7 +2417,7 @@ a {
 }
 
 .appointment-fee {
-  color: #0369a1;
+  color: var(--primary-color);
 }
 
 .booking-clinic-meta {
