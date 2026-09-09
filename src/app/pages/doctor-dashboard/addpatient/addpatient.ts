@@ -19,6 +19,8 @@ export class Addpatient {
 
   formData: NewPatientFormData = {
     file: null,
+    height: '',
+    weight: '',
     photoPreview: '',
     fullName: '',
     mobile: '',

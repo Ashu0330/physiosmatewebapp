@@ -109,7 +109,8 @@ export interface NewPatientFormData {
   state?: string;
   userId?: number;
   roleId?: number;
-
+  height?: string;
+  weight?: string;
   // Compatibility / optional fields:
   age?: number | null;
   phone?: string;
