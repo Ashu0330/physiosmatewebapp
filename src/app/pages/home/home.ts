@@ -22,14 +22,14 @@ export class Home {
   // 4 Featured Cards (Using Green/Mint/Aqua tones from variable.css)
   readonly cards = [
     {
-      title: 'Consultation',
+      title: 'Home Consultation',
       subtitle: 'Connect within 60 secs',
       image: 'assets/images/physio_easy_consult.jpg',
       bgColor: '#E8F8F5',
       route: '/video-consult'
     },
     {
-      title: 'Find Doctors Near You',
+      title: 'Clinic Near You',
       subtitle: 'Confirmed appointments',
       image: 'assets/images/physio_find_clinic.jpg',
       bgColor: '#E9FAF9',

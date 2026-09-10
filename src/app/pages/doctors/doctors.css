@@ -346,7 +346,7 @@
 }
 
 .physios-doc-name a {
-  color: var(--primary-dark, #087F76);
+  color: #000000;
   text-decoration: none;
   transition: color 0.15s ease;
 }

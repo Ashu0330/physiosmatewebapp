@@ -46,6 +46,18 @@
               </div>
             </div>
           </div>
+          <button type="button" class="btn-manage-weekly" [class.is-active]="isWeeklyPlanOpen"
+            (click)="$event.stopPropagation(); isWeeklyPlanOpen = !isWeeklyPlanOpen">
+            <svg class="btn-manage-weekly-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <path d="m9 16 2 2 4-4"></path>
+            </svg>
+            <span>{{ isWeeklyPlanOpen ? 'Hide Weekly Plan' : 'Manage Weekly Plan' }}</span>
+          </button>
           <div class="sub-header-metrics">
             <div class="metric-col">
               <div class="metric-icon-wrap">
@@ -103,6 +115,163 @@
             </button>
           </div>
         </div>
+
+        <!-- WEEKLY PLAN EXPANDED PANEL (MATCHING SCREENSHOT) -->
+        @if (isWeeklyPlanOpen) {
+        <div class="weekly-plan-panel">
+          <!-- Weekly Plan Sub-Header -->
+          <div class="weekly-plan-subhead">
+            <div class="weekly-subhead-left">
+              <div class="weekly-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="5" r="2"></circle>
+                  <path d="M4 17h16"></path>
+                  <path d="M6 17v4"></path>
+                  <path d="M18 17v4"></path>
+                  <path d="M5 11l4-2 3 3 5-3 2 2"></path>
+                  <path d="M4 14h16"></path>
+                </svg>
+              </div>
+              <div class="weekly-title-group">
+                <h4 class="weekly-subhead-title">{{ plan.title }}</h4>
+                <div class="weekly-subhead-meta">
+                  <span class="cancellation-badge">
+                    <svg class="check-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Cancellation available
+                  </span>
+                  <span class="meta-separator">•</span>
+                  <span class="provider-info-text">with <strong>{{ plan.doctorName }}</strong></span>
+                </div>
+              </div>
+            </div>
+            <div class="weekly-subhead-right">
+              <div class="remaining-sessions-pill">
+                <span class="remaining-count">{{ plan.remainingSessions }}</span>
+                <span class="remaining-label">REMAINING SESSIONS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informational Alert Banner -->
+          <div class="weekly-info-alert">
+            <svg class="info-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span class="info-text">Tap slots to select. Use the action bar to Update, Share or mark as Complete.</span>
+          </div>
+
+          <!-- Dates with Slots Grid -->
+          <div class="weekly-dates-list">
+            @for (day of weeklySchedule; track day.dateStr) {
+            <div class="weekly-date-row">
+              <div class="date-label-strip">
+                <svg class="date-calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span class="date-title-bold">{{ day.dateStr }}</span>
+                <span class="date-day-muted">({{ day.dayName }})</span>
+              </div>
+
+              <div class="slots-horizontal-row">
+                @for (slot of day.slots; track slot.id) {
+                <button type="button" class="slot-button-card" [class.is-selected]="isSlotSelected(slot.id)"
+                  (click)="toggleSlot(slot.id)">
+                  <span class="slot-quantity">
+                    @if (isSlotSelected(slot.id)) {
+                    <svg class="slot-check-icon" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    }
+                    {{ slot.count }}
+                  </span>
+                  <span class="slot-timing">{{ slot.time }}</span>
+                </button>
+                }
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Bottom Action Bar with Dynamic Add / Update Button -->
+          <div class="weekly-action-bar">
+            <!-- <div class="action-bar-status">
+              @if (selectedSlotIds.length > 0) {
+              <div class="selection-pill selected">
+                <span class="pill-dot"></span>
+                <span><strong>{{ selectedSlotIds.length }} slot{{ selectedSlotIds.length > 1 ? 's' : '' }}</strong> selected &bull; IDs: #{{ selectedSlotIds.join(', #') }}</span>
+                <button type="button" class="btn-clear-slot" (click)="clearSelectedSlots()" title="Clear all selections">✕ Clear</button>
+              </div>
+              } @else {
+              <div class="selection-pill unselected">
+                <span class="pill-dot-idle"></span>
+                <span>No slots selected. Tap multiple slots to select and update, or add a new plan entry.</span>
+              </div>
+              }
+            </div> -->
+
+            <div class="action-bar-buttons">
+              @if (selectedSlotIds.length > 0) {
+              <button type="button" class="btn-action-ghost btn-deselect" (click)="clearSelectedSlots()">
+                <span>Deselect All</span>
+              </button>
+              }
+
+              <button type="button" class="btn-action-ghost" (click)="$event.stopPropagation()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share</span>
+              </button>
+
+              <button type="button" class="btn-action-ghost" (click)="$event.stopPropagation()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Complete</span>
+              </button>
+
+              <!-- Dynamic Add / Update Button -->
+              @if (selectedSlotIds.length > 0) {
+              <button type="button" class="btn-plan-action btn-update" (click)="$event.stopPropagation()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Update Weekly Plan ({{ selectedSlotIds.length }})</span>
+              </button>
+              } @else {
+              <button type="button" class="btn-plan-action btn-add" (click)="$event.stopPropagation()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add to Weekly Plan</span>
+              </button>
+              }
+            </div>
+          </div>
+        </div>
+        }
 
         <!-- CARD EXPANDED BODY -->
         @if (plan.isExpanded) {
@@ -176,7 +345,8 @@
             <div class="detail-panel subs-notes">
               <div class="subs-notes-content">
                 <span class="panel-title">Notes:</span>
-                <span class="billing-lbl" style="font-size:12px">meri 1 tang nakli hai , mein hockey bahut bada khiladi tha.
+                <span class="billing-lbl" style="font-size:12px">meri 1 tang nakli hai , mein hockey bahut bada khiladi
+                  tha.
                 </span>
               </div>
             </div>
