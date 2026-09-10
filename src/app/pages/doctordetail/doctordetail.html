@@ -120,7 +120,7 @@
       <!-- 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy) -->
       <nav class="physios-scroll-nav-sticky">
         <ul class="scroll-nav-list">
-          @for (tab of navTabs; track tab.id) {
+          @for (tab of navTabs(); track tab.id) {
           <li class="scroll-nav-item">
             <button type="button" class="scroll-nav-btn" [class.active]="activeSection() === tab.id"
               (click)="scrollToSection(tab.id)">
@@ -268,6 +268,97 @@
           </div>
         </div>
       </section>
+
+      <!-- 5. EXTRA SECTION: Associated Doctors (#doctors) - Only in Clinic Mode -->
+      @if (isClinic()) {
+      <section id="doctors" class="physios-detail-section">
+        <div class="section-card associated-doctors-card">
+          <div class="associated-header-block">
+            <div class="associated-title-wrap">
+              <h3 class="section-header-title">
+                Associated Doctors &amp; Therapists ({{ associatedDoctors().length }})
+              </h3>
+              <p class="associated-subtitle">
+                Certified physiotherapists practicing at {{ practitioner.clinicName }}. Choose a doctor for in-clinic consultation.
+              </p>
+            </div>
+          </div>
+
+          <div class="associated-doctors-list">
+            @for (doc of associatedDoctors(); track doc.id) {
+            <article class="associated-doctor-item" id="doc-card-{{ doc.id }}">
+              <!-- Col 1: Doctor Photo -->
+              <div class="associated-doc-avatar-wrap">
+                <img [src]="doc.photo" [alt]="doc.name" class="associated-doc-photo" />
+                @if (doc.prime) {
+                <span class="doc-prime-badge" title="Prime Verified Doctor">Prime ✔</span>
+                }
+              </div>
+
+              <!-- Col 2: Doctor Meta Info -->
+              <div class="associated-doc-info">
+                <div class="doc-name-row">
+                  <h4 class="associated-doc-name">{{ doc.name }}</h4>
+                  @if (doc.isVerified) {
+                  <span class="doc-verified-icon" title="Verified Doctor">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#087F76">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-4-4 1.41-1.41L10.8 13.38l6.99-6.99 1.41 1.41-8.4 8.4z"/>
+                    </svg>
+                  </span>
+                  }
+                </div>
+
+                <p class="associated-doc-degree">{{ doc.degree }}</p>
+                <p class="associated-doc-spec">{{ doc.specialist }}</p>
+                <p class="associated-doc-exp">{{ doc.experienceYears }} Years Experience Overall</p>
+
+                <!-- Rating & Stories -->
+                <div class="associated-doc-metrics">
+                  <span class="doc-metric-pill">
+                    <span class="thumbs-icon">👍</span>
+                    <strong>{{ doc.ratingPercent }}%</strong>
+                  </span>
+                  <span class="doc-stories-count">{{ doc.patientStoriesCount }} patient reviews</span>
+                </div>
+
+                <!-- Specialties Tags -->
+                <div class="associated-doc-tags">
+                  @for (tag of doc.specialties; track tag) {
+                  <span class="doc-tag-pill">{{ tag }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Col 3: Availability, Fee & Action -->
+              <div class="associated-doc-action-col">
+                <div class="doc-availability-pill">
+                  <span class="pulse-dot"></span>
+                  <span>{{ doc.availableText }}</span>
+                </div>
+
+                <div class="doc-fee-box">
+                  <span class="doc-fee-amount">₹{{ doc.consultationFee }}</span>
+                  <span class="doc-fee-label">Consultation fee</span>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn-book-with-doc"
+                  (click)="selectDoctorForBooking(doc)"
+                >
+                  Book Appointment
+                </button>
+
+                <a [routerLink]="['/doctor-detail', doc.id]" class="link-view-doc-profile">
+                  View Full Profile &rarr;
+                </a>
+              </div>
+            </article>
+            }
+          </div>
+        </div>
+      </section>
+      }
 
       <!-- 6. Section: Surgeries & Treatments (#treatments) -->
       <section id="treatments" class="physios-detail-section">

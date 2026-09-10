@@ -294,14 +294,84 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     return this.treatmentsList().filter(t => t.name.toLowerCase().includes(q));
   });
 
-  // Single-Page Scroll Spy Tabs
-  readonly navTabs = [
-    { id: 'info', label: 'Info' },
-    { id: 'stories', label: 'Stories (2)' },
-    { id: 'treatments', label: 'Surgeries & Treatments' },
-    { id: 'photos', label: 'Photos & Videos' },
-    { id: 'qa', label: 'Consult Q&A' }
-  ];
+  // Mode flag: Doctor vs Clinic Detail
+  readonly isClinic = signal<boolean>(false);
+
+  // Associated Doctors list when in Clinic mode
+  readonly associatedDoctors = signal([
+    {
+      id: 'doc-s1',
+      name: 'Dr. Sneha Sharma',
+      degree: 'BPTh/BPT, MPT - Sports Physiotherapy',
+      specialist: 'Sports & Musculoskeletal Physiotherapist',
+      experienceYears: 12,
+      ratingPercent: 98,
+      patientStoriesCount: 142,
+      availableText: 'Available Today',
+      consultationFee: 500,
+      photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
+      gender: 'female',
+      prime: true,
+      isVerified: true,
+      specialties: ['Sports Rehab', 'Joint Mobilization', 'Dry Needling', 'Post-Op Knee'],
+    },
+    {
+      id: 'doc-s2',
+      name: 'Dr. Rajesh Sharma',
+      degree: 'BPT, MPT - Sports Rehabilitation',
+      specialist: 'Senior Physiotherapist',
+      experienceYears: 15,
+      ratingPercent: 99,
+      patientStoriesCount: 220,
+      availableText: 'Available Tomorrow',
+      consultationFee: 500,
+      photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80',
+      gender: 'male',
+      prime: true,
+      isVerified: true,
+      specialties: ['Spine Rehabilitation', 'Sciatica Care', 'Ergonomics', 'Neuro Rehab'],
+    },
+    {
+      id: 'doc-s3',
+      name: 'Dr. Ananya Verma',
+      degree: 'BPT, Certification in Manual Therapy',
+      specialist: 'Consultant Physiotherapist',
+      experienceYears: 8,
+      ratingPercent: 95,
+      patientStoriesCount: 88,
+      availableText: 'Available Today',
+      consultationFee: 450,
+      photo: 'https://images.unsplash.com/photo-1594824813753-48b4d88e0031?auto=format&fit=crop&w=400&q=80',
+      gender: 'female',
+      prime: false,
+      isVerified: true,
+      specialties: ['Post-Fracture Rehab', 'Pediatric Therapy', 'Geriatric Balance Care'],
+    },
+  ]);
+
+  readonly selectedAssociatedDoctor = signal<any | null>(null);
+
+  selectDoctorForBooking(doc: any): void {
+    this.selectedAssociatedDoctor.set(doc);
+    this.scrollToSection('appointment-slots');
+  }
+
+  // Single-Page Scroll Spy Tabs (Dynamically adds Associated Doctors in Clinic mode)
+  readonly navTabs = computed(() => {
+    const list = [
+      { id: 'info', label: 'Info' },
+      { id: 'stories', label: 'Stories (2)' },
+    ];
+    if (this.isClinic()) {
+      list.push({ id: 'doctors', label: `Associated Doctors (${this.associatedDoctors().length})` });
+    }
+    list.push(
+      { id: 'treatments', label: 'Surgeries & Treatments' },
+      { id: 'photos', label: 'Photos & Videos' },
+      { id: 'qa', label: 'Consult Q&A' }
+    );
+    return list;
+  });
 
   readonly activeSection = signal<string>('info');
 
@@ -332,6 +402,12 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    const isClinicRoute =
+      this.route.snapshot.data['isClinic'] === true ||
+      this.router.url.includes('clinic') ||
+      (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
+    this.isClinic.set(isClinicRoute);
+
     if (typeof window !== 'undefined') {
       this.updateActiveSectionFromScroll();
     }
@@ -398,7 +474,9 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
   // Detect which section is currently on screen
   private updateActiveSectionFromScroll(): void {
     if (typeof window === 'undefined') return;
-    const sectionIds = ['info', 'stories', 'plans', 'treatments', 'photos', 'qa'];
+    const sectionIds = this.isClinic()
+      ? ['info', 'stories', 'doctors', 'treatments', 'photos', 'qa']
+      : ['info', 'stories', 'treatments', 'photos', 'qa'];
     const scrollPosition = window.pageYOffset + 200;
 
     for (let i = sectionIds.length - 1; i >= 0; i--) {

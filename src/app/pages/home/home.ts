@@ -40,7 +40,7 @@ export class Home implements AfterViewInit, OnDestroy {
       subtitle: 'Discover trusted physiotherapy clinics near you',
       image: 'assets/images/physio_clinic_near_you.jpg',
       icon: 'clinic',
-      route: '/find-doctors'
+      route: '/find-clinics'
     },
     {
       title: 'Find a Physiotherapist',

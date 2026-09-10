@@ -685,7 +685,6 @@ a {
 
 .physios-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(8, 127, 118, 0.12);
   border-color: #cdebe5;
 }
 
