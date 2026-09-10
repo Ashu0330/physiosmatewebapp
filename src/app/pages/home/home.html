@@ -128,18 +128,30 @@
       </div>
     </div>
 
-    <!-- In-Clinic Cards Row with Carousel Next Button -->
+    <!-- In-Clinic Cards Wrapper with Swiper Carousel -->
     <div class="physios-inclinic-cards-wrapper">
-      <div class="physios-inclinic-cards-row">
-        @for (item of inClinicConsultations; track item.title) {
-        <a [routerLink]="item.route" class="physios-inclinic-card">
-          <div class="physios-inclinic-img-box">
-            <img [src]="item.image" [alt]="item.title" class="physios-inclinic-img" loading="lazy" />
+      <!-- Carousel Left Arrow -->
+      <button type="button" class="physios-carousel-prev" aria-label="Previous items">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="swiper physios-inclinic-swiper" #inClinicSwiper>
+        <div class="swiper-wrapper">
+          @for (item of inClinicConsultations; track item.title) {
+          <div class="swiper-slide">
+            <a [routerLink]="item.route" class="physios-inclinic-card">
+              <div class="physios-inclinic-img-box">
+                <img [src]="item.image" [alt]="item.title" class="physios-inclinic-img" loading="lazy" />
+              </div>
+              <div class="physios-inclinic-title">{{ item.title }}</div>
+              <div class="physios-inclinic-sub">{{ item.subtitle }}</div>
+            </a>
           </div>
-          <div class="physios-inclinic-title">{{ item.title }}</div>
-          <div class="physios-inclinic-sub">{{ item.subtitle }}</div>
-        </a>
-        }
+          }
+        </div>
       </div>
 
       <!-- Carousel Right Arrow -->

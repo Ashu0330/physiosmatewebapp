@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+@import 'swiper/swiper-bundle.css';
 @import './assets/styles/variable.css';
 @import './assets/styles/custom.css';
 @import './assets/styles/custom-swiper.css';
