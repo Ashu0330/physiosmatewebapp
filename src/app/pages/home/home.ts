@@ -1,7 +1,9 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import Swiper from 'swiper';
+import { Navigation } from 'swiper/modules';
 
 @Component({
   selector: 'app-home',
@@ -10,7 +12,12 @@ import { RouterModule } from '@angular/router';
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class Home {
+export class Home implements AfterViewInit, OnDestroy {
+  private readonly platformId = inject(PLATFORM_ID);
+  @ViewChild('inClinicSwiper') inClinicSwiperRef?: ElementRef<HTMLDivElement>;
+
+  private swiperInstance?: Swiper;
+
   readonly selectedCity = signal<string>('Mumbai');
   readonly searchQuery = signal<string>('');
   readonly isCityOpen = signal<boolean>(false);
@@ -143,6 +150,42 @@ export class Home {
     }
   ];
 
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId) && this.inClinicSwiperRef?.nativeElement) {
+      const container = this.inClinicSwiperRef.nativeElement;
+      const wrapper = container.closest('.physios-inclinic-cards-wrapper');
+
+      setTimeout(() => {
+        const nextBtn = wrapper?.querySelector('.physios-carousel-next') as HTMLElement;
+        const prevBtn = wrapper?.querySelector('.physios-carousel-prev') as HTMLElement;
+
+        this.swiperInstance = new Swiper(container, {
+          modules: [Navigation],
+          slidesPerView: 4,
+          spaceBetween: 20,
+          observer: true,
+          observeParents: true,
+          navigation: {
+            nextEl: nextBtn,
+            prevEl: prevBtn,
+          },
+          breakpoints: {
+            0: { slidesPerView: 1, spaceBetween: 16 },
+            576: { slidesPerView: 2, spaceBetween: 16 },
+            768: { slidesPerView: 3, spaceBetween: 20 },
+            1024: { slidesPerView: 4, spaceBetween: 20 },
+          },
+        });
+      }, 0);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.swiperInstance) {
+      this.swiperInstance.destroy(true, true);
+    }
+  }
+
   toggleCity(): void {
     this.isCityOpen.update(v => !v);
   }
@@ -152,3 +195,4 @@ export class Home {
     this.isCityOpen.set(false);
   }
 }
+
