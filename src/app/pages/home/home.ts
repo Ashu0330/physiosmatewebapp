@@ -22,32 +22,32 @@ export class Home {
   // 4 Featured Cards (Using Green/Mint/Aqua tones from variable.css)
   readonly cards = [
     {
-      title: 'Home Consultation',
-      subtitle: 'Connect within 60 secs',
-      image: 'assets/images/physio_easy_consult.jpg',
-      bgColor: '#E8F8F5',
-      route: '/video-consult'
-    },
-    {
-      title: 'Clinic Near You',
-      subtitle: 'Confirmed appointments',
-      image: 'assets/images/physio_find_clinic.jpg',
-      bgColor: '#E9FAF9',
+      title: 'Home Physiotherapy',
+      subtitle: 'Get expert physiotherapy at your doorstep',
+      image: 'assets/images/physio_home_care.jpg',
+      icon: 'home',
       route: '/find-doctors'
     },
     {
-      title: 'Patient Management',
-      subtitle: 'Manage patient profiles, history & records',
-      image: 'assets/images/physio_sports_injury.jpg',
-      bgColor: '#D5F3EF',
-      route: '/lab-tests'
+      title: 'Clinic Near You',
+      subtitle: 'Discover trusted physiotherapy clinics near you',
+      image: 'assets/images/physio_clinic_near_you.jpg',
+      icon: 'clinic',
+      route: '/find-doctors'
     },
     {
-      title: 'Reports & Documents',
-      subtitle: 'Keep clinical reports organized',
-      image: 'assets/images/physio_rehab_plan.jpg',
-      bgColor: '#D0F0E8',
-      route: '/surgeries'
+      title: 'Find a Physiotherapist',
+      subtitle: 'Explore physiotherapists by expertise, experience and location',
+      image: 'assets/images/physio_find_doctor.jpg',
+      icon: 'doctor',
+      route: '/find-doctors'
+    },
+    {
+      title: 'Explore Conditions',
+      subtitle: 'Understand your condition and find the right care',
+      image: 'assets/images/physio_explore_conditions.jpg',
+      icon: 'conditions',
+      route: '/doctors'
     }
   ];
 

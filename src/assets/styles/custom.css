@@ -649,98 +649,142 @@ a {
 }
 
 /* =========================================================
- * 2. Row of 4 Cards (Centered Doctor Images & Exact Box Size)
+ * 2. Row of 4 Cards (Featured Services)
  * ========================================================= */
-.physios-cards-row {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  gap: 20px;
-  max-width: 980px;
+.physios-cards-section {
+  max-width: 1140px;
   margin: 0 auto 4.5rem;
 }
 
+.physios-cards-section-sub {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 16px 4px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.physios-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
 .physios-card {
-  flex: 0 1 220px;
-  width: 220px;
-  border-radius: 24px;
-  corner-shape: squircle;
+  border-radius: 16px;
   overflow: hidden;
   background: #ffffff;
+  border: 1px solid #e2ece9;
   text-decoration: none;
   display: flex;
   flex-direction: column;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
-/* .physios-card:hover {
+.physios-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
-} */
+  box-shadow: 0 10px 24px rgba(8, 127, 118, 0.12);
+  border-color: #cdebe5;
+}
 
-/* Banner: 195px height, Centered Doctor Cutout resting on baseline */
-.physios-card-banner {
-  min-height: 195px;
-  max-height: 400px;
+.physios-card-img-wrap {
   width: 100%;
+  height: 185px;
   overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  background: #f0f7f6;
   position: relative;
 }
 
 .physios-card-img {
-  max-height: 100%;
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  object-position: bottom center;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   display: block;
-  margin: 0 auto;
-  transition: scale 0.22s ease, transform 0.22s ease;
+  transition: transform 0.3s ease;
 }
 
+.physios-card:hover .physios-card-img {
+  transform: scale(1.03);
+}
 
-.physios-card-info {
-  position: absolute;
-  bottom: 0;
-  padding: 16px 18px 22px;
-  background: rgb(232, 248, 245);
+.physios-card-body {
+  position: relative;
+  padding: 16px 14px 20px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 0 0 20px 20px;
-  corner-shape: squircle;
-  width: 100%;
-  height: 100px;
-  transition: all 0.5s ease;
+}
+
+.physios-card-icon-box {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: #e8f8f5;
+  color: #087f76;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.physios-card-text {
+  flex: 1;
+  padding-right: 32px;
 }
 
 .physios-card-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading, sans-serif);
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 6px;
+  color: #0f2c28;
+  margin: 0 0 5px 0;
   line-height: 1.25;
 }
 
 .physios-card-sub {
-  font-size: 12px;
-  color: #787887;
-  line-height: 1.35;
+  font-size: 12.5px;
+  color: #5a7572;
+  line-height: 1.4;
+  margin: 0;
 }
 
-.physios-card-banner:hover .physios-card-info {
-  opacity: 0;
-  bottom: -10px;
-  transition: all 0.5s ease;
+.physios-card-arrow {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8f8f5;
+  color: #087f76;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.physios-card-banner:hover .physios-card-img {
-  scale: 1.02;
-  transition: cubic-bezier(0.075, 0.82, 0.165, 1);
+.physios-card:hover .physios-card-arrow {
+  background: #10a896;
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+@media (max-width: 1024px) {
+  .physios-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .physios-cards-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* =========================================================

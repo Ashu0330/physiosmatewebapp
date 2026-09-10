@@ -39,18 +39,65 @@
   </div>
 
   <!-- 2. Row of 4 Cards -->
-  <div class="physios-cards-row">
-    @for (card of cards; track card.title) {
-    <a [routerLink]="card.route" class="physios-card">
-      <div class="physios-card-banner">
-        <img [src]="card.image" [alt]="card.title" class="physios-card-img" />
-        <div class="physios-card-info">
-          <div class="physios-card-title">{{ card.title }}</div>
-          <div class="physios-card-sub">{{ card.subtitle }}</div>
+  <div class="physios-cards-section">
+    <p class="physios-cards-section-sub">Find the right physiotherapy care for your needs</p>
+    <div class="physios-cards-row">
+      @for (card of cards; track card.title) {
+      <a [routerLink]="card.route" class="physios-card">
+        <div class="physios-card-img-wrap">
+          <img [src]="card.image" [alt]="card.title" class="physios-card-img" />
         </div>
-      </div>
-    </a>
-    }
+        <div class="physios-card-body">
+          <div class="physios-card-icon-box">
+            @if (card.icon === 'home') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            } @else if (card.icon === 'clinic') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+              <line x1="9" y1="6" x2="9" y2="6.01"></line>
+              <line x1="15" y1="6" x2="15" y2="6.01"></line>
+              <line x1="9" y1="10" x2="9" y2="10.01"></line>
+              <line x1="15" y1="10" x2="15" y2="10.01"></line>
+              <line x1="9" y1="14" x2="9" y2="14.01"></line>
+              <line x1="15" y1="14" x2="15" y2="14.01"></line>
+              <line x1="9" y1="18" x2="15" y2="18"></line>
+            </svg>
+            } @else if (card.icon === 'doctor') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            } @else if (card.icon === 'conditions') {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <circle cx="11.5" cy="14.5" r="2.5"></circle>
+              <path d="m13.5 16.5 2 2"></path>
+            </svg>
+            }
+          </div>
+          <div class="physios-card-text">
+            <h3 class="physios-card-title">{{ card.title }}</h3>
+            <p class="physios-card-sub">{{ card.subtitle }}</p>
+          </div>
+          <div class="physios-card-arrow" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </a>
+      }
+    </div>
   </div>
 
   <!-- 3. Consult top doctors online for any health concern -->
