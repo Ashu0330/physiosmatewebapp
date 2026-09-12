@@ -1,53 +1,4 @@
 <!-- Top Search Bar Strip (Matching Physiosmate Search Standard) -->
-<div class="physios-search-bar-strip">
-  <div class="physios-search-bar-container">
-    <div class="physios-search-wrapper doctordetail-search-bar">
-      <!-- City Filter -->
-      <div class="physios-city-box">
-        <button type="button" class="physios-city-btn" (click)="toggleCity()">
-          <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
-          <span class="physios-city-text">{{ selectedCity() }}</span>
-        </button>
-
-        @if (isCityOpen()) {
-        <div class="physios-city-dropdown">
-          @for (c of popularCities; track c) {
-          <button type="button" class="physios-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
-            {{ c }}
-          </button>
-          }
-        </div>
-        }
-      </div>
-
-      <!-- Divider -->
-      <div class="physios-search-divider"></div>
-
-      <!-- Search Input -->
-      <div class="physios-input-box">
-        <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" class="physios-search-field" placeholder="Search doctors, clinics, hospitals, etc."
-          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-      </div>
-    </div>
-
-    <!-- Prime Callout (Right Side) -->
-    <div class="physios-search-prime-callout">
-      <span class="prime-wait-text">Fed up of endless wait?</span>
-      <span class="prime-badge-text">
-        Look for clinic with <strong class="prime-highlight">Prime <span class="prime-check">✔</span></strong>
-      </span>
-    </div>
-  </div>
-</div>
 
 <!-- Breadcrumb Strip -->
 <div class="physios-breadcrumb-strip">
@@ -167,7 +118,8 @@
                 <h4 class="gallery-title">Clinic Photos &amp; Videos</h4>
                 <div class="gallery-thumbs-list">
                   @for (photo of clinicPhotos; track photo.url; let i = $index) {
-                  <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption" class="gallery-thumb-item">
+                  <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption"
+                    class="gallery-thumb-item">
                     <img [src]="photo.url" [alt]="photo.caption" class="gallery-img" />
                   </a>
                   }
@@ -279,7 +231,8 @@
                 Associated Doctors &amp; Therapists ({{ associatedDoctors().length }})
               </h3>
               <p class="associated-subtitle">
-                Certified physiotherapists practicing at {{ practitioner.clinicName }}. Choose a doctor for in-clinic consultation.
+                Certified physiotherapists practicing at {{ practitioner.clinicName }}. Choose a doctor for in-clinic
+                consultation.
               </p>
             </div>
           </div>
@@ -290,9 +243,7 @@
               <!-- Col 1: Doctor Photo -->
               <div class="associated-doc-avatar-wrap">
                 <img [src]="doc.photo" [alt]="doc.name" class="associated-doc-photo" />
-                @if (doc.prime) {
-                <span class="doc-prime-badge" title="Prime Verified Doctor">Prime ✔</span>
-                }
+
               </div>
 
               <!-- Col 2: Doctor Meta Info -->
@@ -302,7 +253,8 @@
                   @if (doc.isVerified) {
                   <span class="doc-verified-icon" title="Verified Doctor">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#087F76">
-                      <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-4-4 1.41-1.41L10.8 13.38l6.99-6.99 1.41 1.41-8.4 8.4z"/>
+                      <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.2 14.2l-4-4 1.41-1.41L10.8 13.38l6.99-6.99 1.41 1.41-8.4 8.4z" />
                     </svg>
                   </span>
                   }
@@ -330,29 +282,7 @@
               </div>
 
               <!-- Col 3: Availability, Fee & Action -->
-              <div class="associated-doc-action-col">
-                <div class="doc-availability-pill">
-                  <span class="pulse-dot"></span>
-                  <span>{{ doc.availableText }}</span>
-                </div>
-
-                <div class="doc-fee-box">
-                  <span class="doc-fee-amount">₹{{ doc.consultationFee }}</span>
-                  <span class="doc-fee-label">Consultation fee</span>
-                </div>
-
-                <button
-                  type="button"
-                  class="btn-book-with-doc"
-                  (click)="selectDoctorForBooking(doc)"
-                >
-                  Book Appointment
-                </button>
-
-                <a [routerLink]="['/doctor-detail', doc.id]" class="link-view-doc-profile">
-                  View Full Profile &rarr;
-                </a>
-              </div>
+           
             </article>
             }
           </div>
@@ -405,7 +335,8 @@
           <div class="full-gallery-grid">
             @for (photo of clinicPhotos; track photo.url) {
             <div class="gallery-photo-card">
-              <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption" class="gallery-photo-link">
+              <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption"
+                class="gallery-photo-link">
                 <img [src]="photo.url" [alt]="photo.caption" class="gallery-big-img" />
               </a>
               <span class="gallery-caption">{{ photo.caption }}</span>
@@ -504,9 +435,18 @@
             @if (!dayList[selectedDayIndex()].hasSlots) {
             <div class="no-slots-alert">
               <div class="calendar-alert-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2c9caf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-clock"><path d="M16 14v2.2l1.6 1"/><path d="M16 2v3"/><path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338"/><path d="M3 9h5.859"/><path d="M8 2v3"/><circle cx="16" cy="16" r="6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none"
+                  stroke="#2c9caf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-calendar-clock">
+                  <path d="M16 14v2.2l1.6 1" />
+                  <path d="M16 2v3" />
+                  <path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338" />
+                  <path d="M3 9h5.859" />
+                  <path d="M8 2v3" />
+                  <circle cx="16" cy="16" r="6" />
+                </svg>
               </div>
-              <p class="no-slots-msg">No slots available for today</p>              
+              <p class="no-slots-msg">No slots available for today</p>
             </div>
             } @else {
             <!-- Morning Slots -->

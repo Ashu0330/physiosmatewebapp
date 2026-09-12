@@ -1107,7 +1107,7 @@
   width: 100%;
 }
 
-.physios-btn-book-clinic {
+/* .physios-btn-book-clinic {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1124,8 +1124,8 @@
 
 .physios-btn-book-clinic:hover {
   background: var(--primary-dark, #087F76);
-}
-
+} */
+/* 
 .physios-btn-view-clinic {
   display: inline-flex;
   align-items: center;
@@ -1145,4 +1145,4 @@
 .physios-btn-view-clinic:hover {
   border-color: var(--primary-color, #10A896);
   color: var(--primary-color, #10A896);
-}
+} */

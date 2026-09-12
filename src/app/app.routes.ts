@@ -3,6 +3,7 @@ import { Layoutwithheaderfooter } from './pages/layout/layoutwithheaderfooter/la
 import { Home } from './pages/home/home';
 import { Doctors } from './pages/doctors/doctors';
 import { Doctordetail } from './pages/doctordetail/doctordetail';
+import { Findphysiotherapist } from './pages/findphysiotherapist/findphysiotherapist';
 import { AuthPageComponent } from './auth/auth-page/auth-page.component';
 import { BookingAuthComponent } from './booking/booking-auth/booking-auth.component';
 
@@ -12,23 +13,26 @@ export const routes: Routes = [
     path: '',
     component: Layoutwithheaderfooter,
     children: [
-      { path: '',                   component: Home },
-      { path: 'find-doctors',       component: Doctors, data: { isClinic: false } },
-      { path: 'doctors',            component: Doctors, data: { isClinic: false } },
+      { path: '', component: Home },
+      { path: 'find-physiotherapist', component: Findphysiotherapist },
+      { path: 'findphysiotherapy', component: Findphysiotherapist },
+      { path: 'find-physiotherapy', component: Findphysiotherapist },
+      { path: 'find-doctors', component: Doctors, data: { isClinic: false } },
+      { path: 'doctors', component: Doctors, data: { isClinic: false } },
       { path: 'doctors/:specialty', component: Doctors, data: { isClinic: false } },
-      { path: 'find-clinics',       component: Doctors, data: { isClinic: true } },
-      { path: 'clinics',            component: Doctors, data: { isClinic: true } },
-      { path: 'clinics-near-you',   component: Doctors, data: { isClinic: true } },
-      { path: 'clinic-detail/:id',  component: Doctordetail, data: { isClinic: true } },
-      { path: 'clinic-detail',      component: Doctordetail, data: { isClinic: true } },
-      { path: 'clinic/:id',         component: Doctordetail, data: { isClinic: true } },
-      { path: 'doctor-detail',      component: Doctordetail, data: { isClinic: false } },
-      { path: 'doctor-detail/:id',  component: Doctordetail, data: { isClinic: false } },
-      { path: 'doctor/:id',         component: Doctordetail, data: { isClinic: false } },
-      { path: 'providers/:id',      component: Doctordetail, data: { isClinic: false } },
+      { path: 'find-clinics', component: Doctors, data: { isClinic: true } },
+      { path: 'clinics', component: Doctors, data: { isClinic: true } },
+      { path: 'clinics-near-you', component: Doctors, data: { isClinic: true } },
+      { path: 'clinic-detail/:id', component: Doctordetail, data: { isClinic: true } },
+      { path: 'clinic-detail', component: Doctordetail, data: { isClinic: true } },
+      { path: 'clinic/:id', component: Doctordetail, data: { isClinic: true } },
+      { path: 'doctor-detail', component: Doctordetail, data: { isClinic: false } },
+      { path: 'doctor-detail/:id', component: Doctordetail, data: { isClinic: false } },
+      { path: 'doctor/:id', component: Doctordetail, data: { isClinic: false } },
+      { path: 'providers/:id', component: Doctordetail, data: { isClinic: false } },
 
       // ─── Patient Dashboard — single entry, routes handled inside UserdashboardRoutingModule
-      { path: 'user-dashboard',   loadChildren: () => import('./pages/userdashboard/userdashboard-routing-module').then(m => m.UserdashboardRoutingModule) },
+      { path: 'user-dashboard', loadChildren: () => import('./pages/userdashboard/userdashboard-routing-module').then(m => m.UserdashboardRoutingModule) },
 
       // ─── Doctor Dashboard — single entry, routes handled inside DoctorDashboardRoutingModule
       { path: 'doctor-dashboard', loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule) },
@@ -36,7 +40,7 @@ export const routes: Routes = [
   },
 
   // ─── Standalone Authentication Routes ────────────────────────────────────
-  { path: 'login',  component: AuthPageComponent },
+  { path: 'login', component: AuthPageComponent },
   { path: 'signup', component: AuthPageComponent },
 
   // ─── Booking Route ────────────────────────────────────────────────────────

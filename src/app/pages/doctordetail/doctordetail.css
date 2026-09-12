@@ -34,23 +34,7 @@
   line-height: 1.3;
 }
 
-.prime-wait-text {
-  color: #64748b;
-  font-size: 0.78rem;
-}
 
-.prime-badge-text {
-  color: #1e293b;
-  font-size: 0.82rem;
-}
-
-.prime-highlight {
-  color: #6366f1;
-}
-
-.prime-check {
-  color: #6366f1;
-}
 
 /* Breadcrumbs */
 .physios-breadcrumb-strip {
@@ -1657,7 +1641,7 @@
   height: 100%;
   object-fit: cover;
 }
-
+/* 
 .doc-prime-badge {
   position: absolute;
   bottom: 0;
@@ -1670,7 +1654,7 @@
   padding: 1px 6px;
   border-radius: 9999px;
   white-space: nowrap;
-}
+} */
 
 .associated-doc-info {
   flex: 1;
@@ -1762,7 +1746,7 @@
   flex-shrink: 0;
 }
 
-.doc-availability-pill {
+/* .doc-availability-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1772,9 +1756,9 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 9999px;
-}
+} */
 
-.pulse-dot {
+/* .pulse-dot {
   width: 7px;
   height: 7px;
   background: #10b981;
@@ -1785,7 +1769,7 @@
 @keyframes pulseAnim {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.4); opacity: 0.6; }
-}
+} */
 
 .doc-fee-box {
   text-align: right;
@@ -1801,34 +1785,4 @@
 .doc-fee-label {
   font-size: 0.72rem;
   color: #64748b;
-}
-
-.btn-book-with-doc {
-  background: var(--primary-dark, #087F76);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-family: var(--font-body);
-  font-size: 0.84rem;
-  font-weight: 600;
-  padding: 8px 18px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-book-with-doc:hover {
-  background: #066059;
-  box-shadow: 0 4px 10px rgba(8, 127, 118, 0.25);
-}
-
-.link-view-doc-profile {
-  font-size: 0.78rem;
-  color: var(--primary-dark, #087F76);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.link-view-doc-profile:hover {
-  text-decoration: underline;
 }
