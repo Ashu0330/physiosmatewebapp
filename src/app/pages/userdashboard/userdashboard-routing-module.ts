@@ -10,7 +10,6 @@ const routes: Routes = [
   { path: 'online-consultations', component: UserDashboard },  // /user-dashboard/online-consultations
   { path: 'subscriptions',        component: UserDashboard },  // /user-dashboard/subscriptions
   { path: 'payments',             component: UserDashboard },  // /user-dashboard/payments
-  { path: 'weekly-plan',          component: UserDashboard },  // /user-dashboard/weekly-plan
 ];
 
 @NgModule({

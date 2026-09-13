@@ -12,15 +12,13 @@ import { PatientConsultancy } from '../patient-consultancy/patient-consultancy';
 import { PatientSubscription } from '../patient-subscription/patient-subscription';
 import { PatientMedicalrecords } from '../patient-medicalrecords/patient-medicalrecords';
 import { PatientTransaction } from '../patient-transaction/patient-transaction';
-import { PatientWeeklyappointmentplan } from '../patient-weeklyappointmentplan/patient-weeklyappointmentplan';
 
 export type DashboardTab =
   | 'appointments'
   | 'subscriptions'
   | 'payments'
   | 'medical-reports'
-  | 'consultancies'
-  | 'weekly-plan';
+  | 'consultancies';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -33,7 +31,6 @@ export type DashboardTab =
     PatientSubscription,
     PatientMedicalrecords,
     PatientTransaction,
-    PatientWeeklyappointmentplan,
   ],
   templateUrl: './user-dashboard.html',
   styleUrl: './user-dashboard.css',
@@ -134,7 +131,6 @@ export class UserDashboard implements OnInit {
     'online-consultations': 'consultancies',
     'subscriptions':        'subscriptions',
     'payments':             'payments',
-    'weekly-plan':          'weekly-plan',
   };
 
   /** Map each tab → the URL path segment it should navigate to */
@@ -144,7 +140,6 @@ export class UserDashboard implements OnInit {
     'consultancies':  'consultations',
     'subscriptions':  'subscriptions',
     'payments':       'payments',
-    'weekly-plan':    'weekly-plan',
   };
 
   resolveTabFromRoute(): void {

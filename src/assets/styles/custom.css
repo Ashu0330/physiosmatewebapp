@@ -2818,4 +2818,94 @@ a {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
+
+/* =========================================================
+ * Global Reusable Buttons & Badges (Powered by variable.css)
+ * ========================================================= */
+.physios-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--primary-color, #10A896);
+  color: #ffffff !important;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid var(--primary-color, #10A896);
+  border-radius: var(--radius-sm, 8px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(16, 168, 150, 0.18);
+  white-space: nowrap;
+}
+
+.physios-btn-primary:hover {
+  background-color: var(--primary-hover, #0e9282);
+  border-color: var(--primary-hover, #0e9282);
+  box-shadow: var(--shadow-button, 0 4px 14px rgba(16, 168, 150, 0.28));
+  transform: translateY(-1px);
+}
+
+.physios-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: var(--primary-dark, #087F76) !important;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  border: 1.5px solid var(--primary-color, #10A896);
+  border-radius: var(--radius-sm, 8px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.physios-btn-outline:hover {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-deep, #094741) !important;
+  border-color: var(--primary-dark, #087F76);
+  transform: translateY(-1px);
+}
+
+.physios-btn-sm {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  border-radius: 6px;
+}
+
+.physios-badge-condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  border: 1px solid var(--green-border, #D5F3EF);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.physios-badge-cyan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--aqua-light, #E9FAF9);
+  color: var(--aqua-dark, #32AAA5);
+  border: 1px solid var(--aqua, #5CCFCB);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

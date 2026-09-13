@@ -1,1 +1,509 @@
-<p>condition works!</p>
+<!-- =========================================================
+     1. Hero Section Matching Mockup
+     ========================================================= -->
+<section class="cond-hero-banner">
+  <div class="cond-container cond-hero-inner">
+    <!-- Left Hero Content -->
+    <div class="cond-hero-content">
+      <h1 class="cond-hero-title">
+        All <span class="cond-title-highlight">Conditions</span>
+      </h1>
+      <h2 class="cond-hero-subheading">
+        Find the right physiotherapy care for every stage of your life
+      </h2>
+      <p class="cond-hero-desc">
+        From pain relief to better mobility, explore conditions and connect with expert physiotherapists who can help
+        you
+        move better.
+      </p>
+    </div>
+
+    <!-- Right Hero Visual with Quote -->
+    <div class="cond-hero-visual">
+      <div class="cond-hero-img-wrapper">
+        <img src="assets/images/physio_explore_conditions.jpg" alt="Physiotherapy treatment session"
+          class="cond-hero-img" />
+        <!-- Speech Bubble Badge -->
+        <!-- <div class="cond-quote-bubble">
+          <span class="cond-quote-mark">&ldquo;</span>
+          <span class="cond-quote-text">Move well,<br />Live well</span>
+          <span class="cond-quote-mark">&rdquo;</span>
+        </div> -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     3. Breadcrumbs
+     ========================================================= -->
+<div class="cond-breadcrumbs-wrapper">
+  <div class="cond-container">
+    <nav class="cond-breadcrumbs" aria-label="Breadcrumb">
+      <a routerLink="/" class="cond-bc-link">Home</a>
+      <span class="cond-bc-sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </span>
+      <span class="cond-bc-current">Conditions</span>
+    </nav>
+  </div>
+</div>
+
+<!-- =========================================================
+     4. Main Conditions Section (Without Filter Panel)
+     ========================================================= -->
+<section id="conditions-grid-section" class="cond-main-section">
+  <div class="cond-container">
+    <!-- Section Top Bar: Title & Search/Sort Controls -->
+    <div class="cond-section-header">
+      <div class="cond-header-titles">
+        <h2 class="cond-section-title">All Conditions</h2>
+        <p class="cond-section-subtitle">
+          Explore common conditions and find expert physiotherapy care.
+        </p>
+      </div>
+
+      <!-- Integrated Live Search & Sorting Controls -->
+      <div class="cond-controls-bar">
+        <!-- Live Instant Search Box -->
+        <div class="cond-filter-search-box">
+          <svg class="cond-box-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="cond-filter-input" placeholder="Filter conditions..." [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)" />
+          @if (searchQuery()) {
+          <button type="button" class="cond-filter-clear" (click)="clearSearch()" aria-label="Clear filter">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          }
+        </div>
+
+        <!-- Showing Counter -->
+        <div class="cond-counter-badge">
+          Showing <strong>{{ paginatedConditions().length }}</strong> of
+          <strong>{{ filteredConditions().length }}</strong> conditions
+        </div>
+
+        <!-- Sort Select -->
+        <div class="cond-sort-box">
+          <label for="sort-select" class="cond-sort-label">Sort by:</label>
+          <select id="sort-select" class="cond-sort-dropdown" [value]="sortBy()" (change)="onSortChange($event)">
+            <option value="popular">Popular</option>
+            <option value="therapists">Most Therapists</option>
+            <option value="name">Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Condition Cards 4-Column Grid -->
+    @if (paginatedConditions().length > 0) {
+    <div class="cond-grid">
+      @for (cond of paginatedConditions(); track cond.id) {
+      <div class="cond-card" (click)="navigateToCondition(cond)" role="button" tabindex="0"
+        (keyup.enter)="navigateToCondition(cond)">
+        <!-- Top Visual Banner with Condition Illustration -->
+        <div class="cond-card-visual" [style.background-color]="cond.bgColor">
+          <div class="cond-illustration-wrap">
+            <!-- Dynamic SVG Artwork based on iconType -->
+            @switch (cond.iconType) {
+            @case ('back-pain') {
+            <!-- Back & Spine Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <rect x="52" y="10" width="16" height="76" rx="8" fill="#E2E8F0" opacity="0.4" />
+              <!-- Spine Vertebrae Column -->
+              <rect x="46" y="12" width="28" height="8" rx="4" fill="#94A3B8" />
+              <rect x="44" y="24" width="32" height="9" rx="4.5" fill="#64748B" />
+              <rect x="42" y="37" width="36" height="10" rx="5" fill="#0284C7" />
+              <circle cx="60" cy="42" r="14" fill="#0284C7" opacity="0.2" />
+              <rect x="44" y="51" width="32" height="9" rx="4.5" fill="#0284C7" />
+              <circle cx="60" cy="55" r="18" fill="#E11D48" opacity="0.25" />
+              <rect x="46" y="64" width="28" height="9" rx="4.5" fill="#E11D48" />
+              <rect x="48" y="77" width="24" height="8" rx="4" fill="#CBD5E1" />
+              <!-- Pain focal pulse -->
+              <circle cx="60" cy="60" r="4" fill="#E11D48" />
+              <path d="M40 60 L32 60 M80 60 L88 60" stroke="#E11D48" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            }
+            @case ('neck-pain') {
+            <!-- Neck & Cervical Spine Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Head & Neck Contour -->
+              <circle cx="60" cy="22" r="15" fill="#CBD5E1" opacity="0.7" />
+              <path d="M52 35 C52 35, 50 58, 40 78 L80 78 C70 58, 68 35, 68 35 Z" fill="#94A3B8" opacity="0.3" />
+              <!-- Cervical Spine -->
+              <rect x="54" y="38" width="12" height="6" rx="3" fill="#E11D48" />
+              <rect x="53" y="46" width="14" height="6" rx="3" fill="#E11D48" />
+              <rect x="52" y="54" width="16" height="6" rx="3" fill="#F43F5E" />
+              <circle cx="60" cy="49" r="16" fill="#E11D48" opacity="0.22" />
+              <!-- Pain tension waves -->
+              <path d="M38 45 C42 42, 44 48, 48 45" stroke="#E11D48" stroke-width="2.2" stroke-linecap="round" />
+              <path d="M82 45 C78 42, 76 48, 72 45" stroke="#E11D48" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+            }
+            @case ('knee-pain') {
+            <!-- Knee Joint Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Femur bone -->
+              <path d="M48 10 L56 10 C56 26, 52 38, 46 44 L74 44 C68 38, 64 26, 64 10 L72 10" stroke="#94A3B8"
+                stroke-width="7" stroke-linecap="round" />
+              <!-- Tibia & Fibula -->
+              <path d="M48 86 L56 86 C56 70, 52 58, 46 52 L74 52 C68 58, 64 70, 64 86 L72 86" stroke="#94A3B8"
+                stroke-width="7" stroke-linecap="round" />
+              <!-- Patella & Joint Highlight -->
+              <circle cx="60" cy="48" r="18" fill="#7C3AED" opacity="0.2" />
+              <circle cx="60" cy="48" r="8" fill="#7C3AED" />
+              <circle cx="60" cy="48" r="4" fill="#F43F5E" />
+              <!-- Ligaments -->
+              <path d="M45 42 Q60 38 75 42" stroke="#7C3AED" stroke-width="2.5" fill="none" stroke-linecap="round" />
+              <path d="M45 54 Q60 58 75 54" stroke="#7C3AED" stroke-width="2.5" fill="none" stroke-linecap="round" />
+            </svg>
+            }
+            @case ('shoulder-pain') {
+            <!-- Shoulder Joint Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <path d="M25 65 C35 32, 60 26, 95 26" stroke="#CBD5E1" stroke-width="9" stroke-linecap="round" />
+              <path d="M40 68 L40 88" stroke="#94A3B8" stroke-width="8" stroke-linecap="round" />
+              <circle cx="42" cy="48" r="20" fill="#D97706" opacity="0.2" />
+              <circle cx="42" cy="48" r="9" fill="#D97706" />
+              <!-- Rotator cuff tendons -->
+              <path d="M42 34 Q58 36 68 45" stroke="#F59E0B" stroke-width="3" fill="none" stroke-linecap="round" />
+              <circle cx="42" cy="48" r="4" fill="#E11D48" />
+            </svg>
+            }
+            @case ('sports-injury') {
+            <!-- Sports Injury / Athletic Running Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <path d="M35 22 L55 45 L78 38 L95 58" stroke="#10A896" stroke-width="6" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M55 45 L42 75 L62 82" stroke="#087F76" stroke-width="6" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <!-- Sneaker sole -->
+              <path d="M58 82 L76 82 C82 82, 85 78, 80 74 L68 74" stroke="#0F172A" stroke-width="3.5" fill="none"
+                stroke-linecap="round" />
+              <!-- Recovery target -->
+              <circle cx="55" cy="45" r="14" fill="#10A896" opacity="0.25" />
+              <circle cx="55" cy="45" r="5" fill="#10A896" />
+            </svg>
+            }
+            @case ('post-surgical') {
+            <!-- Post-Surgical Rehab Knee Brace Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <rect x="42" y="14" width="36" height="68" rx="8" fill="#FCE7F3" stroke="#DB2777" stroke-width="2" />
+              <!-- Medical Straps -->
+              <rect x="36" y="24" width="48" height="8" rx="4" fill="#DB2777" />
+              <rect x="36" y="64" width="48" height="8" rx="4" fill="#DB2777" />
+              <!-- Hinge Dial -->
+              <circle cx="60" cy="48" r="13" fill="#FFFFFF" stroke="#DB2777" stroke-width="2.5" />
+              <circle cx="60" cy="48" r="6" fill="#DB2777" />
+              <path d="M60 39 L60 57 M51 48 L69 48" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            }
+            @case ('hip-pain') {
+            <!-- Hip Joint Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Pelvis curve -->
+              <path d="M28 28 C45 18, 75 18, 92 28 C84 45, 78 52, 60 52 C42 52, 36 45, 28 28 Z" fill="#E2E8F0"
+                stroke="#94A3B8" stroke-width="2" />
+              <!-- Femur Head / Ball & Socket -->
+              <path d="M38 50 L32 82" stroke="#64748B" stroke-width="7" stroke-linecap="round" />
+              <circle cx="38" cy="48" r="16" fill="#2563EB" opacity="0.25" />
+              <circle cx="38" cy="48" r="7" fill="#2563EB" />
+              <circle cx="38" cy="48" r="3" fill="#E11D48" />
+              <!-- Opposite side -->
+              <path d="M82 50 L88 82" stroke="#CBD5E1" stroke-width="7" stroke-linecap="round" />
+              <circle cx="82" cy="48" r="5" fill="#94A3B8" />
+            </svg>
+            }
+            @case ('ankle-pain') {
+            <!-- Foot & Ankle Pain Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <path
+                d="M46 12 L46 54 C46 68, 38 72, 32 74 C26 76, 26 84, 34 84 L88 84 C94 84, 96 78, 88 74 L68 70 L62 52 L62 12"
+                fill="#E2E8F0" stroke="#94A3B8" stroke-width="2.5" stroke-linejoin="round" />
+              <!-- Ankle bone & pain circle -->
+              <circle cx="56" cy="58" r="17" fill="#EA580C" opacity="0.25" />
+              <circle cx="56" cy="58" r="7" fill="#EA580C" />
+              <circle cx="56" cy="58" r="3" fill="#DC2626" />
+              <path d="M42 58 L36 58 M76 58 L70 58" stroke="#EA580C" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            }
+            @case ('wrist-pain') {
+            <!-- Hand & Wrist Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Arm & Wrist -->
+              <path
+                d="M42 90 L44 58 L36 46 L38 28 C38 24, 44 24, 44 28 L46 44 L50 20 C50 16, 56 16, 56 20 L57 44 L61 22 C61 18, 67 18, 67 22 L67 46 L72 32 C72 28, 77 28, 77 32 L75 58 L78 90 Z"
+                fill="#FEE2E2" stroke="#E11D48" stroke-width="1.8" stroke-linejoin="round" />
+              <!-- Carpal Tunnel / Wrist Focus -->
+              <circle cx="60" cy="66" r="18" fill="#E11D48" opacity="0.25" />
+              <rect x="42" y="63" width="36" height="7" rx="3.5" fill="#E11D48" />
+              <circle cx="60" cy="66.5" r="3" fill="#FFFFFF" />
+            </svg>
+            }
+            @case ('elbow-pain') {
+            <!-- Elbow Joint Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Arm bend -->
+              <path d="M30 22 L58 55 L90 55" stroke="#94A3B8" stroke-width="8" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <circle cx="58" cy="55" r="18" fill="#C2410C" opacity="0.25" />
+              <circle cx="58" cy="55" r="8" fill="#C2410C" />
+              <!-- Epicondyle tendon highlight -->
+              <path d="M50 46 L66 64" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
+              <circle cx="58" cy="55" r="3" fill="#EA580C" />
+            </svg>
+            }
+            @case ('womens-health') {
+            <!-- Women's Health Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <circle cx="60" cy="24" r="12" fill="#9333EA" opacity="0.3" />
+              <path d="M48 38 C42 48, 38 60, 44 80 L76 80 C82 60, 78 48, 72 38 Z" fill="#F3E8FF" stroke="#9333EA"
+                stroke-width="2" />
+              <path d="M60 48 C54 48, 50 54, 52 64 C54 72, 60 76, 60 76 C60 76, 66 72, 68 64 C70 54, 66 48, 60 48 Z"
+                fill="#9333EA" opacity="0.8" />
+              <!-- Heart care emblem -->
+              <circle cx="60" cy="62" r="14" fill="#9333EA" opacity="0.2" />
+            </svg>
+            }
+            @case ('pediatric') {
+            <!-- Pediatric Movement & Ball Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Therapy Ball -->
+              <circle cx="72" cy="54" r="28" fill="#0284C7" opacity="0.25" />
+              <circle cx="72" cy="54" r="28" stroke="#0284C7" stroke-width="2.5" />
+              <path d="M52 40 C65 48, 79 48, 92 40 M52 68 C65 60, 79 60, 92 68" stroke="#0284C7" stroke-width="2"
+                stroke-linecap="round" />
+              <!-- Joyful child silhouette -->
+              <circle cx="42" cy="30" r="10" fill="#0284C7" />
+              <path d="M42 40 L42 62 L32 80 M42 50 L26 40 M42 50 L58 44" stroke="#0284C7" stroke-width="3.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            }
+            @case ('geriatric') {
+            <!-- Geriatric Care Resistance Band Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Elderly person silhouette -->
+              <circle cx="60" cy="24" r="11" fill="#0D9488" opacity="0.35" />
+              <path d="M50 37 L50 68 L42 88 M70 37 L70 68 L78 88" stroke="#0D9488" stroke-width="4"
+                stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Resistance Exercise Band -->
+              <path d="M30 48 Q60 56 90 48" stroke="#14B8A6" stroke-width="4.5" stroke-linecap="round" fill="none" />
+              <circle cx="30" cy="48" r="5" fill="#0D9488" />
+              <circle cx="90" cy="48" r="5" fill="#0D9488" />
+            </svg>
+            }
+            @case ('neurological') {
+            <!-- Neurological Brain Cortex Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Brain lobes -->
+              <path d="M40 38 C32 38, 30 50, 36 58 C32 66, 38 76, 48 76 L60 76 L60 26 C48 26, 44 32, 40 38 Z"
+                fill="#F3E8FF" stroke="#9333EA" stroke-width="2.5" />
+              <path d="M80 38 C88 38, 90 50, 84 58 C88 66, 82 76, 72 76 L60 76 L60 26 C72 26, 76 32, 80 38 Z"
+                fill="#F3E8FF" stroke="#9333EA" stroke-width="2.5" />
+              <!-- Neural synapse nodes -->
+              <circle cx="48" cy="46" r="3.5" fill="#9333EA" />
+              <circle cx="72" cy="46" r="3.5" fill="#9333EA" />
+              <circle cx="60" cy="60" r="4" fill="#9333EA" />
+              <path d="M48 46 L60 60 L72 46" stroke="#9333EA" stroke-width="1.8" />
+              <circle cx="60" cy="50" r="22" fill="#9333EA" opacity="0.15" />
+            </svg>
+            }
+            @case ('posture') {
+            <!-- Posture & Spine Alignment Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <line x1="60" y1="8" x2="60" y2="88" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="3 3" />
+              <!-- Perfectly aligned spine vertebrae -->
+              <circle cx="60" cy="18" r="9" fill="#CA8A04" opacity="0.25" />
+              <rect x="53" y="30" width="14" height="6" rx="3" fill="#CA8A04" />
+              <rect x="52" y="40" width="16" height="7" rx="3.5" fill="#EAB308" />
+              <rect x="51" y="51" width="18" height="7" rx="3.5" fill="#EAB308" />
+              <rect x="52" y="62" width="16" height="7" rx="3.5" fill="#CA8A04" />
+              <rect x="54" y="73" width="12" height="6" rx="3" fill="#94A3B8" />
+              <path d="M38 54 C46 54, 52 48, 60 48 C68 48, 74 54, 82 54" stroke="#CA8A04" stroke-width="2"
+                stroke-linecap="round" fill="none" />
+            </svg>
+            }
+            @default {
+            <!-- General Wellness / Yoga & Fit Visual -->
+            <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+              <!-- Rolled yoga mat -->
+              <ellipse cx="44" cy="56" rx="14" ry="8" fill="#6366F1" />
+              <path d="M44 48 L86 36 C92 34, 98 40, 94 48 L52 64 Z" fill="#818CF8" />
+              <!-- Dumbbell -->
+              <rect x="36" y="72" width="48" height="5" rx="2.5" fill="#64748B" />
+              <rect x="32" y="67" width="8" height="15" rx="3" fill="#0F172A" />
+              <rect x="80" y="67" width="8" height="15" rx="3" fill="#0F172A" />
+              <circle cx="68" cy="50" r="22" fill="#6366F1" opacity="0.12" />
+            </svg>
+            }
+            }
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="cond-card-body">
+          <h3 class="cond-card-title">{{ cond.title }}</h3>
+          <p class="cond-card-desc">{{ cond.description }}</p>
+
+          <!-- Card Footer (Count + Action Arrow) -->
+          <div class="cond-card-footer">
+            <span class="cond-therapists-count">
+              <strong>{{ cond.therapistsCount }}</strong>
+            </span>
+            <div class="cond-arrow-btn" aria-label="Find physiotherapists for {{ cond.title }}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Pagination Controls -->
+    @if (totalPages() > 1) {
+    <div class="cond-pagination">
+      <button type="button" class="cond-page-arrow" [disabled]="currentPage() === 1"
+        (click)="setPage(currentPage() - 1)" aria-label="Previous page">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      @for (page of [1, 2, 3, 4]; track page) {
+      @if (page <= totalPages()) { <button type="button" class="cond-page-num" [class.active]="currentPage() === page"
+        (click)="setPage(page)">
+        {{ page }}
+        </button>
+        }
+        }
+
+        <button type="button" class="cond-page-arrow" [disabled]="currentPage() === totalPages()"
+          (click)="setPage(currentPage() + 1)" aria-label="Next page">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+    </div>
+    }
+    } @else {
+    <!-- Empty State when filter yields 0 results -->
+    <div class="cond-empty-state">
+      <div class="cond-empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </div>
+      <h3 class="cond-empty-title">No conditions found for "{{ searchQuery() }}"</h3>
+      <p class="cond-empty-desc">
+        We couldn't find any conditions matching your search term. Try checking for typos or browse our full list of
+        conditions.
+      </p>
+      <button type="button" class="cond-empty-btn" (click)="clearSearch()">
+        View All Conditions
+      </button>
+    </div>
+    }
+  </div>
+</section>
+
+<!-- =========================================================
+     5. Bottom CTA Consultation Banner
+     ========================================================= -->
+<section class="cond-cta-section">
+  <div class="cond-container">
+    <div class="cond-cta-banner">
+      <!-- Left: Copy & Action -->
+      <div class="cond-cta-left">
+        <h3 class="cond-cta-title">Not sure which condition you have?</h3>
+        <p class="cond-cta-desc">
+          Talk to a verified physiotherapist and get expert guidance tailored to your needs.
+        </p>
+        <a routerLink="/find-doctors" class="cond-cta-btn">
+          <span>Consult a Physiotherapist</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Center: Doctor Image with Quote Badge -->
+      <div class="cond-cta-center">
+        <div class="cond-cta-avatar-wrap">
+          <img src="assets/images/physio_easy_consult.jpg" alt="Verified Physiotherapist" class="cond-cta-doctor-img" />
+          <div class="cond-cta-quote-pill">
+            <span class="cond-cta-quote-text">
+              &ldquo;Expert care today, a stronger you tomorrow&rdquo;
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Trust Badges -->
+      <div class="cond-cta-right">
+        <div class="cond-cta-badge">
+          <div class="cond-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10A896" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <polyline points="9 10 12 12 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="cond-badge-text">
+            <h4 class="cond-badge-title">Quick Consultations</h4>
+            <p class="cond-badge-sub">Talk in less than 2 minutes</p>
+          </div>
+        </div>
+
+        <div class="cond-cta-badge">
+          <div class="cond-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10A896" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="cond-badge-text">
+            <h4 class="cond-badge-title">Verified Experts</h4>
+            <p class="cond-badge-sub">Experienced &amp; certified</p>
+          </div>
+        </div>
+
+        <div class="cond-cta-badge">
+          <div class="cond-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10A896" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+              </path>
+            </svg>
+          </div>
+          <div class="cond-badge-text">
+            <h4 class="cond-badge-title">Personalized Care</h4>
+            <p class="cond-badge-sub">For a healthier, active life</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

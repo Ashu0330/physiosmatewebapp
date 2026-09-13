@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ExploreService } from '../../services/explore.service';
-import { Authservice } from '../../services/authservice';
+import { ExploreService } from '../../../services/explore.service';
+import { Authservice } from '../../../services/authservice';
 import { BookingService } from '../booking.service';
 import { ProviderSummaryComponent } from '../provider-summary/provider-summary.component';
-import { AuthFormComponent } from '../../auth/auth-form/auth-form.component';
+import { AuthFormComponent } from '../../../auth/auth-form/auth-form.component';
 
 @Component({
   selector: 'app-booking-auth',

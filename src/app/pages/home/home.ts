@@ -47,14 +47,14 @@ export class Home implements AfterViewInit, OnDestroy {
       subtitle: 'Explore physiotherapists by expertise, experience and location',
       image: 'assets/images/physio_find_doctor.jpg',
       icon: 'doctor',
-      route: '/find-doctors'
+      route: '/find-physiotherapist'
     },
     {
       title: 'Explore Conditions',
       subtitle: 'Understand your condition and find the right care',
       image: 'assets/images/physio_explore_conditions.jpg',
       icon: 'conditions',
-      route: '/doctors'
+      route: '/conditions'
     }
   ];
 

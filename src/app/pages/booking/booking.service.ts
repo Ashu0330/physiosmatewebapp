@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { BookingState, PractitionerDetailedData } from '../models/practitioner.model';
+import { BookingState, PractitionerDetailedData } from '../../models/practitioner.model';
 
 
 

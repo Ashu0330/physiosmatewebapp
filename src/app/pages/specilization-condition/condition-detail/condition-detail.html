@@ -1,0 +1,565 @@
+<!-- =========================================================
+     1. Top Floating Pill Search Bar (Matching Mockup)
+     ========================================================= -->
+<div class="cd-top-search-wrap">
+  <div class="cd-search-pill">
+    <!-- City Selector Box -->
+    <div class="cd-city-box">
+      <button type="button" class="cd-city-btn" (click)="toggleCity()" [attr.aria-expanded]="isCityOpen()">
+        <svg class="cd-pin-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="cd-city-name">{{ selectedCity() }}</span>
+        <svg class="cd-chevron-svg" [class.rotated]="isCityOpen()" width="12" height="12" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+
+      @if (isCityOpen()) {
+      <div class="cd-city-dropdown">
+        @for (c of popularCities; track c) {
+        <button type="button" class="cd-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
+          {{ c }}
+        </button>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Search Divider -->
+    <div class="cd-search-divider"></div>
+
+    <!-- Search Field -->
+    <div class="cd-input-box">
+      <svg class="cd-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" class="cd-search-field" placeholder="Search conditions, treatments or concerns..."
+        [ngModel]="searchQuery()" (ngModelChange)="onSearchInput($event)" />
+      @if (searchQuery()) {
+      <button type="button" class="cd-clear-btn" (click)="clearSearch()" aria-label="Clear search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     2. Minimal Condition Header (Strictly NO Hero Banner)
+     ========================================================= -->
+<div class="cd-header-strip">
+  <div class="cd-container">
+    <!-- Breadcrumbs -->
+    <nav class="cd-breadcrumbs" aria-label="Breadcrumb">
+      <a routerLink="/" class="cd-bc-link">Home</a>
+      <span class="cd-bc-sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </span>
+      <a routerLink="/conditions" class="cd-bc-link">Conditions</a>
+      <span class="cd-bc-sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </span>
+      <span class="cd-bc-current">{{ currentCondition().title }}</span>
+    </nav>
+
+    <!-- Minimal Condition Title Row -->
+    <div class="cd-title-block">
+      <div class="cd-title-meta">
+        <span class="cd-verified-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Condition Guide
+        </span>
+        <span class="cd-read-time">Verified Clinical Overview</span>
+      </div>
+      <h1 class="cd-main-title">{{ currentCondition().title }}</h1>
+      <p class="cd-main-tagline">{{ currentCondition().tagline }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     3. Section Tabs Bar (Sticky Quick-Navigation)
+     ========================================================= -->
+<div class="cd-tabs-wrapper">
+  <div class="cd-container">
+    <div class="cd-tabs-scroll" role="tablist">
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'overview'"
+        (click)="setActiveTab('overview')" role="tab">
+        Overview
+      </button>
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'causes'"
+        (click)="setActiveTab('causes')" role="tab">
+        Causes
+      </button>
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'symptoms'"
+        (click)="setActiveTab('symptoms')" role="tab">
+        Symptoms
+      </button>
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'treatment'"
+        (click)="setActiveTab('treatment')" role="tab">
+        Treatment
+      </button>
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'prevention'"
+        (click)="setActiveTab('prevention')" role="tab">
+        Prevention
+      </button>
+      <button type="button" class="cd-tab-item" [class.active]="activeTab() === 'doctors'"
+        (click)="setActiveTab('doctors')" role="tab">
+        Recommended Physiotherapists
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     4. Main Content Container
+     ========================================================= -->
+<div class="cd-main-wrapper">
+  <div class="cd-container">
+    <!-- =======================================================
+         Section: Overview ("What is Back Pain?") + Quick Facts
+         ======================================================= -->
+    <section id="sec-overview" class="cd-section cd-overview-section">
+      <div class="cd-overview-grid">
+        <!-- Left: What is Back Pain + Quote Box -->
+        <div class="cd-overview-left">
+          <h2 class="cd-section-heading">What is {{ currentCondition().title }}?</h2>
+          <p class="cd-overview-text">
+            {{ currentCondition().overviewDescription }}
+          </p>
+
+          <!-- Quote Callout Card -->
+          <div class="cd-quote-card">
+            <div class="cd-quote-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z" />
+              </svg>
+            </div>
+            <p class="cd-quote-text">
+              &ldquo;{{ currentCondition().overviewQuote }}&rdquo;
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Quick Facts Card -->
+        <div class="cd-overview-right">
+          <div class="cd-facts-card">
+            <h3 class="cd-facts-title">Quick Facts</h3>
+            <ul class="cd-facts-list">
+              @for (fact of currentCondition().quickFacts; track fact.text) {
+              <li class="cd-fact-item">
+                <div class="cd-fact-icon-wrap">
+                  @switch (fact.icon) {
+                  @case ('stat') {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                  </svg>
+                  }
+                  @case ('clock') {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  }
+                  @case ('lightning') {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  }
+                  @default {
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                  </svg>
+                  }
+                  }
+                </div>
+                <span class="cd-fact-text">{{ fact.text }}</span>
+              </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================
+         Section: Common Causes (6 Icon Cards)
+         ======================================================= -->
+    <section id="sec-causes" class="cd-section">
+      <div class="cd-section-header">
+        <h2 class="cd-section-heading">Common Causes</h2>
+        <p class="cd-section-subtitle">
+          {{ currentCondition().title }} can occur due to various reasons, including:
+        </p>
+      </div>
+
+      <div class="cd-causes-grid">
+        @for (cause of currentCondition().causes; track cause.id) {
+        <div class="cd-cause-card">
+          <div class="cd-cause-icon-wrap">
+            @switch (cause.icon) {
+            @case ('chair') {
+            <!-- Sitting / Posture Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="4" r="2"></circle>
+              <path d="M12 6v6l4 2"></path>
+              <path d="M7 16h10"></path>
+              <path d="M9 16v6"></path>
+              <path d="M15 16v6"></path>
+            </svg>
+            }
+            @case ('strain') {
+            <!-- Muscle Strain / Bending Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="15" cy="5" r="2"></circle>
+              <path d="M15 7l-5 5-3-2-3 4"></path>
+              <path d="M10 12l2 6-4 4"></path>
+            </svg>
+            }
+            @case ('injury') {
+            <!-- Sports / Injury Runner Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="17" cy="4" r="2"></circle>
+              <path d="M15 9l-4 3 2 4 4-2"></path>
+              <path d="M7 13l4-2"></path>
+              <path d="M7 21l3-5 5-2"></path>
+            </svg>
+            }
+            @case ('ageing') {
+            <!-- Ageing / Walking Stick Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="10" cy="5" r="2"></circle>
+              <path d="M10 7v7l3 2"></path>
+              <path d="M8 21l2-7"></path>
+              <path d="M15 11v10"></path>
+              <path d="M14 11h2"></path>
+            </svg>
+            }
+            @case ('lifestyle') {
+            <!-- Lifestyle / Obesity / Stress Weight Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 3v18"></path>
+              <path d="M3 12h18"></path>
+            </svg>
+            }
+            @default {
+            <!-- Medical / Spine Column Icon -->
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20"></path>
+              <path d="M8 6h8"></path>
+              <path d="M7 10h10"></path>
+              <path d="M7 14h10"></path>
+              <path d="M8 18h8"></path>
+            </svg>
+            }
+            }
+          </div>
+          <h3 class="cd-cause-title">{{ cause.title }}</h3>
+          <p class="cd-cause-desc">{{ cause.desc }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- =======================================================
+         Section: Who Can Get Back Pain? (5 Icon Cards)
+         ======================================================= -->
+    <section id="sec-who-can-get" class="cd-section">
+      <div class="cd-section-header">
+        <h2 class="cd-section-heading">Who Can Get {{ currentCondition().title }}?</h2>
+      </div>
+
+      <div class="cd-audience-grid">
+        @for (item of currentCondition().whoCanGet; track item.id) {
+        <div class="cd-audience-card">
+          <div class="cd-audience-icon-wrap">
+            @switch (item.icon) {
+            @case ('laptop') {
+            <!-- Office / Laptop Worker -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="2" y1="20" x2="22" y2="20"></line>
+            </svg>
+            }
+            @case ('running') {
+            <!-- Athletes -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="17" cy="4" r="2"></circle>
+              <path d="M15 9l-4 3 2 4 4-2"></path>
+              <path d="M7 21l3-5 5-2"></path>
+            </svg>
+            }
+            @case ('elderly') {
+            <!-- Older Adults -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"></path>
+              <line x1="19" y1="14" x2="19" y2="21"></line>
+            </svg>
+            }
+            @case ('recovery') {
+            <!-- Post-Surgery Patients -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+              <line x1="12" y1="9" x2="12" y2="15"></line>
+              <line x1="9" y1="12" x2="15" y2="12"></line>
+            </svg>
+            }
+            @default {
+            <!-- Everyone -->
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            }
+            }
+          </div>
+          <h3 class="cd-audience-title">{{ item.title }}</h3>
+          <p class="cd-audience-desc">{{ item.desc }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- =======================================================
+         Section: Symptoms & Treatment & Prevention (Condition Based Information)
+         ======================================================= -->
+    <section id="sec-symptoms" class="cd-section">
+      <div class="cd-section-header">
+        <h2 class="cd-section-heading">Common Symptoms</h2>
+        <p class="cd-section-subtitle">
+          Recognize the early signs before chronic discomfort develops:
+        </p>
+      </div>
+
+      <div class="cd-clinical-grid">
+        @for (sym of currentCondition().symptoms; track sym.title) {
+        <div class="cd-clinical-card">
+          <div class="cd-clinical-top">
+            <h3 class="cd-clinical-title">{{ sym.title }}</h3>
+            @if (sym.badge) {
+            <span class="physios-badge-condition">{{ sym.badge }}</span>
+            }
+          </div>
+          <p class="cd-clinical-desc">{{ sym.desc }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <section id="sec-treatment" class="cd-section">
+      <div class="cd-section-header">
+        <h2 class="cd-section-heading">Physiotherapy &amp; Treatment Approach</h2>
+        <p class="cd-section-subtitle">
+          Our verified physiotherapists design customized, non-invasive rehabilitation protocols:
+        </p>
+      </div>
+
+      <div class="cd-clinical-grid">
+        @for (trt of currentCondition().treatments; track trt.title) {
+        <div class="cd-clinical-card cd-card-treatment">
+          <div class="cd-clinical-top">
+            <h3 class="cd-clinical-title">{{ trt.title }}</h3>
+            @if (trt.badge) {
+            <span class="physios-badge-cyan">{{ trt.badge }}</span>
+            }
+          </div>
+          <p class="cd-clinical-desc">{{ trt.desc }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <section id="sec-prevention" class="cd-section">
+      <div class="cd-section-header">
+        <h2 class="cd-section-heading">Prevention &amp; Mobility Tips</h2>
+        <p class="cd-section-subtitle">
+          Proactive measures recommended by spine specialists to prevent recurrent episodes:
+        </p>
+      </div>
+
+      <div class="cd-clinical-grid">
+        @for (prv of currentCondition().prevention; track prv.title) {
+        <div class="cd-clinical-card">
+          <h3 class="cd-clinical-title">{{ prv.title }}</h3>
+          <p class="cd-clinical-desc">{{ prv.desc }}</p>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- =======================================================
+         Section: Recommended Physiotherapists (Matching Mockup)
+         ======================================================= -->
+    <section id="sec-doctors" class="cd-section cd-doctors-section">
+      <div class="cd-doctors-header">
+        <div class="cd-doctors-titles">
+          <h2 class="cd-section-heading">Find the Best Physiotherapists for {{ currentCondition().title }}</h2>
+          <p class="cd-section-subtitle">
+            Consult our verified physiotherapists who specialize in {{ currentCondition().title.toLowerCase() }} treatment.
+          </p>
+        </div>
+
+        <button type="button" class="cd-view-all-btn" (click)="viewAllDoctors()">
+          <span>View All</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Doctors 4-Card Grid -->
+      <div class="cd-doctors-grid">
+        @for (doc of recommendedDoctors(); track doc.id) {
+        <div class="cd-doc-card">
+          <!-- Doctor Top: Avatar with Verified Icon -->
+          <div class="cd-doc-avatar-wrap">
+            <img [src]="doc.photo" [alt]="doc.name" class="cd-doc-avatar" (error)="onImgError($event)" />
+            <div class="cd-doc-verified-dot" title="Verified Specialist">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Doctor Meta Details -->
+          <h3 class="cd-doc-name">{{ doc.name }}</h3>
+          <p class="cd-doc-spec">{{ doc.specialist }}</p>
+
+          <!-- Rating & Reviews -->
+          <div class="cd-doc-rating-row">
+            <div class="cd-stars">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <span class="cd-rating-val">{{ doc.rating }}</span>
+            <span class="cd-review-count">({{ doc.reviewCount }} reviews)</span>
+          </div>
+
+          <!-- Experience & Location -->
+          <div class="cd-doc-info-list">
+            <div class="cd-info-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>{{ doc.experienceYears }}+ years exp</span>
+            </div>
+            <div class="cd-info-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>{{ doc.location }}</span>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="cd-doc-tags">
+            @for (t of doc.tags; track t) {
+            <span class="physios-badge-condition">{{ t }}</span>
+            }
+          </div>
+
+          <!-- Dual Actions (Variable CSS Buttons) -->
+          <div class="cd-doc-actions">
+            <button type="button" class="physios-btn-primary physios-btn-sm cd-btn-full"
+              (click)="viewDoctorProfile(doc)">
+              View Profile
+            </button>
+            <button type="button" class="physios-btn-outline physios-btn-sm cd-btn-full"
+              (click)="bookAppointment(doc)">
+              Book Appointment
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </section>
+
+    <!-- =======================================================
+         Section: Bottom CTA Consultation Banner (Matching Mockup)
+         ======================================================= -->
+    <section class="cd-section cd-cta-section">
+      <div class="cd-cta-banner">
+        <!-- Left: Copy & Action -->
+        <div class="cd-cta-left">
+          <h3 class="cd-cta-title">Still have questions about {{ currentCondition().title }}?</h3>
+          <p class="cd-cta-desc">
+            Talk to our experts and get personalized guidance for your condition.
+          </p>
+          <button type="button" class="physios-btn-primary cd-cta-btn" (click)="consultNow()">
+            <span>Consult Now</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Center: Doctor Photo -->
+        <div class="cd-cta-center">
+          <img src="assets/images/physio_easy_consult.jpg" alt="Physiotherapist Consultant" class="cd-cta-doc-img" />
+        </div>
+
+        <!-- Right: Inspiration Quote Banner -->
+        <div class="cd-cta-right">
+          <div class="cd-cta-quote-box">
+            <span class="cd-cta-quote-icon">&ldquo;</span>
+            <p class="cd-cta-quote-text">
+              Move better today, for a healthier tomorrow.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

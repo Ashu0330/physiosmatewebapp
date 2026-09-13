@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { ExploreService } from '../../services/explore.service';
-import { BookingService } from '../../booking/booking.service';
+import { BookingService } from '../booking/booking.service';
 
 export interface PlanBenefit {
   id: number;

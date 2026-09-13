@@ -5,7 +5,11 @@ import { Doctors } from './pages/doctors/doctors';
 import { Doctordetail } from './pages/doctordetail/doctordetail';
 import { Findphysiotherapist } from './pages/findphysiotherapist/findphysiotherapist';
 import { AuthPageComponent } from './auth/auth-page/auth-page.component';
-import { BookingAuthComponent } from './booking/booking-auth/booking-auth.component';
+import { BookingAuthComponent } from './pages/booking/booking-auth/booking-auth.component';
+import { Condition } from './pages/specilization-condition/condition/condition';
+import { ConditionDetail } from './pages/specilization-condition/condition-detail/condition-detail';
+import { Articles } from './pages/articles/articles';
+import { ArticleDetail } from './pages/articles/article-detail/article-detail';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -14,9 +18,21 @@ export const routes: Routes = [
     component: Layoutwithheaderfooter,
     children: [
       { path: '', component: Home },
+      { path: 'articles', component: Articles },
+      { path: 'health-articles', component: Articles },
+      { path: 'article', component: ArticleDetail },
+      { path: 'article-detail', component: ArticleDetail },
+      { path: 'article/:id', component: ArticleDetail },
+      { path: 'article-detail/:id', component: ArticleDetail },
+      { path: 'articles/:id', component: ArticleDetail },
       { path: 'find-physiotherapist', component: Findphysiotherapist },
       { path: 'findphysiotherapy', component: Findphysiotherapist },
       { path: 'find-physiotherapy', component: Findphysiotherapist },
+      { path: 'conditions', component: Condition },
+      { path: 'condition', component: ConditionDetail },
+      { path: 'condition-detail', component: ConditionDetail },
+      { path: 'condition-detail/:id', component: ConditionDetail },
+      { path: 'condition/:id', component: ConditionDetail },
       { path: 'find-doctors', component: Doctors, data: { isClinic: false } },
       { path: 'doctors', component: Doctors, data: { isClinic: false } },
       { path: 'doctors/:specialty', component: Doctors, data: { isClinic: false } },

@@ -44,9 +44,6 @@
 
           <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'consultancies'"
             (click)="selectTab('consultancies')">Consultations</button>
-
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'weekly-plan'"
-            (click)="selectTab('weekly-plan')">Manage Weekly Plan</button>
         </nav>
       </aside>
 
@@ -77,11 +74,6 @@
         @if (activeTab === 'consultancies') {
         <app-patient-consultancy [consultancies]="consultancies">
         </app-patient-consultancy>
-        }
-
-        @if (activeTab === 'weekly-plan') {
-        <app-patient-weeklyappointmentplan>
-        </app-patient-weeklyappointmentplan>
         }
 
       </main>
