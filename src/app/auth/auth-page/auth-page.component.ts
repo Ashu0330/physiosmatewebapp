@@ -2,11 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthFormComponent } from '../auth-form/auth-form.component';
+import { RegisterComponent } from '../register-component/register-component';
 
 @Component({
   selector: 'app-auth-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, AuthFormComponent],
+  imports: [CommonModule, RouterLink, AuthFormComponent, RegisterComponent],
   templateUrl: './auth-page.component.html',
   styleUrl: './auth-page.component.css'
 })
@@ -16,6 +17,9 @@ export class AuthPageComponent implements OnInit {
 
   authMode: 'login' | 'signup' = 'login';
   returnUrl: string = '/';
+
+  isOtpVerified = false;
+  verifiedMobile = '';
 
   ngOnInit(): void {
     // Detect mode from route path
@@ -35,6 +39,16 @@ export class AuthPageComponent implements OnInit {
 
   onModeChange(mode: 'login' | 'signup'): void {
     this.authMode = mode;
+    this.isOtpVerified = false;
+  }
+
+  onOtpVerified(data: { mobile: string }): void {
+    this.verifiedMobile = data.mobile;
+    this.isOtpVerified = true;
+  }
+
+  onBackToAuth(): void {
+    this.isOtpVerified = false;
   }
 
   onAuthSuccess(): void {

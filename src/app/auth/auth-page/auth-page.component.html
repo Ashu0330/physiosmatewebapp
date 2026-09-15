@@ -2,9 +2,7 @@
   <!-- Minimalist Brand Header -->
   <header class="auth-top-bar">
     <a routerLink="/" class="brand-link" aria-label="PhysiosMate Home">
-      <span class="brand-dot"></span>
       <span class="brand-name">physios<span class="brand-accent">mate</span></span>
-      <span class="brand-dot"></span>
     </a>
     <a routerLink="/" class="back-home-link">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -18,12 +16,21 @@
   <!-- Centered Content -->
   <main class="auth-main-content">
     <div class="auth-card-frame">
-      <app-auth-form 
-        [mode]="authMode" 
-        [bookingContext]="false"
-        (authSuccess)="onAuthSuccess()"
-        (modeChange)="onModeChange($event)">
-      </app-auth-form>
+      @if (!isOtpVerified) {
+        <app-auth-form 
+          [mode]="authMode" 
+          [bookingContext]="false"
+          (authSuccess)="onAuthSuccess()"
+          (otpVerified)="onOtpVerified($event)"
+          (modeChange)="onModeChange($event)">
+        </app-auth-form>
+      } @else {
+        <app-register-component
+          [verifiedMobile]="verifiedMobile"
+          (backToAuth)="onBackToAuth()"
+          (registrationSuccess)="onAuthSuccess()">
+        </app-register-component>
+      }
     </div>
 
     <!-- Trust Badges Footer -->

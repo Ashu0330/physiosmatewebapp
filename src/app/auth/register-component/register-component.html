@@ -1,0 +1,589 @@
+<div class="register-container">
+  <!-- Top Navigation & Stepper Header -->
+  <div class="register-header">
+    <div class="header-top-row">
+      <button type="button" class="back-link-btn" (click)="currentStep === 1 ? backToAuth.emit() : prevStep()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>{{ currentStep === 1 ? 'Back to Verification' : 'Back to Basic Details' }}</span>
+      </button>
+
+      <div class="step-pill">
+        <span class="step-dot"></span>
+        <span class="step-text">
+          {{ userType === 'user' ? 'Step 1 of 1' : (currentStep === 1 ? 'Step 1 of 2: Basic Details' : 'Step 2 of 2: Profile Details') }}
+        </span>
+      </div>
+    </div>
+
+    <h2 class="register-title">
+      {{ currentStep === 1 ? 'Complete Your Account Profile' : (userType === 'doctor' ? 'Doctor Professional Profile' : 'Clinic Facility Information') }}
+    </h2>
+    <p class="register-subtitle">
+      {{ currentStep === 1 
+          ? 'Enter your details below to set up your PhysiosMate profile.' 
+          : (userType === 'doctor' 
+              ? 'Provide your clinical credentials and expertise for patient consultations.' 
+              : 'Register your clinic profile to list services and manage appointments.') }}
+    </p>
+
+    <!-- Multi-step Stepper Indicator (for Doctor & Clinic) -->
+    @if (userType !== 'user') {
+      <div class="stepper-bar">
+        <div class="step-item" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+          <span class="step-circle">{{ currentStep > 1 ? '✓' : '1' }}</span>
+          <span class="step-label">Basic Details</span>
+        </div>
+        <div class="step-line" [class.filled]="currentStep > 1"></div>
+        <div class="step-item" [class.active]="currentStep === 2">
+          <span class="step-circle">2</span>
+          <span class="step-label">{{ userType === 'doctor' ? 'Doctor Profile' : 'Clinic Details' }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ==================== STEP 1: BASIC DETAILS (FOR ALL) ==================== -->
+  @if (currentStep === 1) {
+    <form [formGroup]="basicForm" (ngSubmit)="onNextOrSubmit()" class="register-form" novalidate>
+      
+      <!-- Field 4: User Type Selection (Visual Cards + Dropdown) -->
+      <div class="form-group">
+        <label class="form-label">Select Account Type <span class="required-star">*</span></label>
+        <div class="role-cards-grid">
+          <!-- User / Patient -->
+          <div 
+            class="role-card" 
+            [class.selected]="userType === 'user'"
+            (click)="setUserType('user')">
+            <div class="role-icon-wrap">🧑</div>
+            <div class="role-info">
+              <div class="role-name">User / Patient</div>
+              <div class="role-desc">Book consultations & home visits</div>
+            </div>
+            <div class="role-radio-circle">
+              <span class="radio-inner" *ngIf="userType === 'user'"></span>
+            </div>
+          </div>
+
+          <!-- Doctor -->
+          <div 
+            class="role-card" 
+            [class.selected]="userType === 'doctor'"
+            (click)="setUserType('doctor')">
+            <div class="role-icon-wrap">🩺</div>
+            <div class="role-info">
+              <div class="role-name">Doctor / Physio</div>
+              <div class="role-desc">Provide care & grow practice</div>
+            </div>
+            <div class="role-radio-circle">
+              <span class="radio-inner" *ngIf="userType === 'doctor'"></span>
+            </div>
+          </div>
+
+          <!-- Clinic -->
+          <div 
+            class="role-card" 
+            [class.selected]="userType === 'clinic'"
+            (click)="setUserType('clinic')">
+            <div class="role-icon-wrap">🏥</div>
+            <div class="role-info">
+              <div class="role-name">Rehab Clinic</div>
+              <div class="role-desc">Manage centers & practitioners</div>
+            </div>
+            <div class="role-radio-circle">
+              <span class="radio-inner" *ngIf="userType === 'clinic'"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessible Hidden Select or Native Sync Dropdown -->
+        <div class="dropdown-wrapper mt-2">
+          <label for="userTypeSelect" class="form-sublabel">Or select from dropdown:</label>
+          <select 
+            id="userTypeSelect" 
+            formControlName="userType" 
+            (change)="setUserType(basicForm.get('userType')?.value)"
+            class="form-select">
+            <option value="user">User / Patient</option>
+            <option value="doctor">Doctor / Physiotherapist</option>
+            <option value="clinic">Clinic / Rehabilitation Center</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Field 1: Full Name -->
+        <div class="form-group">
+          <label for="reg-name" class="form-label">Full Name <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input 
+              id="reg-name"
+              type="text" 
+              formControlName="fullName"
+              placeholder="e.g. Dr. / Mr. / Ms. Full Name"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('fullName')?.invalid && basicForm.get('fullName')?.touched"
+            />
+          </div>
+          @if (basicForm.get('fullName')?.invalid && basicForm.get('fullName')?.touched) {
+            <span class="field-error">Please enter your full name (at least 2 characters)</span>
+          }
+        </div>
+
+        <!-- Field 2: Mobile Number (Pre-filled from OTP) -->
+        <div class="form-group">
+          <div class="label-with-badge">
+            <label for="reg-mobile" class="form-label">Mobile Number <span class="required-star">*</span></label>
+            <span class="verified-pill">✓ Verified</span>
+          </div>
+          <div class="input-wrapper phone-wrapper">
+            <span class="phone-prefix">+91</span>
+            <input 
+              id="reg-mobile"
+              type="tel" 
+              formControlName="mobile"
+              placeholder="10-digit mobile number"
+              maxlength="10"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched"
+            />
+          </div>
+          @if (basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched) {
+            <span class="field-error">Please enter a valid 10-digit mobile number</span>
+          }
+        </div>
+      </div>
+
+      <!-- Field 3: Email Address -->
+      <div class="form-group">
+        <label for="reg-email" class="form-label">Email Address <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <input 
+            id="reg-email"
+            type="email" 
+            formControlName="email"
+            placeholder="e.g. name@example.com"
+            class="form-input"
+            [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched"
+          />
+        </div>
+        @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
+          <span class="field-error">Please enter a valid email address</span>
+        }
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Field 6: Date of Birth -->
+        <div class="form-group">
+          <label for="reg-dob" class="form-label">Date of Birth (DOB) <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <input 
+              id="reg-dob"
+              type="date" 
+              formControlName="dob"
+              (change)="onDobChange($event)"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched"
+            />
+          </div>
+          @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
+            <span class="field-error">Please select your date of birth</span>
+          }
+        </div>
+
+        <!-- Field 5: Age (Auto-calculated from DOB) -->
+        <div class="form-group">
+          <label for="reg-age" class="form-label">Age (Years) <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <input 
+              id="reg-age"
+              type="number" 
+              formControlName="age"
+              placeholder="e.g. 28"
+              min="1"
+              max="120"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('age')?.invalid && basicForm.get('age')?.touched"
+            />
+          </div>
+          @if (basicForm.get('age')?.invalid && basicForm.get('age')?.touched) {
+            <span class="field-error">Please enter a valid age</span>
+          }
+        </div>
+      </div>
+
+      <!-- Password & Confirm Password -->
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="reg-password" class="form-label">Create Password <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input 
+              id="reg-password"
+              [type]="showPassword ? 'text' : 'password'" 
+              formControlName="password"
+              placeholder="Min. 6 characters"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('password')?.invalid && basicForm.get('password')?.touched"
+            />
+            <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1">
+              {{ showPassword ? '👁️' : '🔒' }}
+            </button>
+          </div>
+          @if (basicForm.get('password')?.invalid && basicForm.get('password')?.touched) {
+            <span class="field-error">Password must be at least 6 characters</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm-password" class="form-label">Confirm Password <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input 
+              id="reg-confirm-password"
+              [type]="showConfirmPassword ? 'text' : 'password'" 
+              formControlName="confirmPassword"
+              placeholder="Re-enter password"
+              class="form-input"
+              [class.is-invalid]="basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched"
+            />
+            <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1">
+              {{ showConfirmPassword ? '👁️' : '🔒' }}
+            </button>
+          </div>
+          @if (basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched) {
+            <span class="field-error">Please confirm your password</span>
+          }
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button 
+        type="submit" 
+        class="submit-btn register-action-btn" 
+        [disabled]="isSubmitting">
+        @if (isSubmitting) {
+          <span class="spinner"></span>
+          <span>Creating Account...</span>
+        } @else {
+          <span>
+            {{ userType === 'user' ? 'Complete User Registration ✓' : (userType === 'doctor' ? 'Next: Doctor Profile Details →' : 'Next: Clinic Details →') }}
+          </span>
+        }
+      </button>
+
+      <div class="switch-footer">
+        <span>Already have an account?</span>
+        <button type="button" class="switch-link" (click)="backToAuth.emit()">
+          Sign In
+        </button>
+      </div>
+    </form>
+  }
+
+  <!-- ==================== STEP 2: DOCTOR PROFESSIONAL PROFILE ==================== -->
+  @if (currentStep === 2 && userType === 'doctor') {
+    <form [formGroup]="doctorForm" (ngSubmit)="submitDoctorRegistration()" class="register-form" novalidate>
+      
+      <!-- Specialization -->
+      <div class="form-group">
+        <label for="doc-specialization" class="form-label">Primary Specialization <span class="required-star">*</span></label>
+        <select id="doc-specialization" formControlName="specialization" class="form-select">
+          @for (item of specializations; track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Qualification -->
+      <div class="form-group">
+        <label for="doc-qualification" class="form-label">Highest Degree / Qualification <span class="required-star">*</span></label>
+        <select id="doc-qualification" formControlName="qualification" class="form-select">
+          @for (qual of qualifications; track qual) {
+            <option [value]="qual">{{ qual }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Medical Registration Number -->
+        <div class="form-group">
+          <label for="doc-reg-no" class="form-label">State / Council License No. <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <input 
+              id="doc-reg-no"
+              type="text" 
+              formControlName="registrationNumber"
+              placeholder="e.g. DCP-14528"
+              class="form-input"
+              [class.is-invalid]="doctorForm.get('registrationNumber')?.invalid && doctorForm.get('registrationNumber')?.touched"
+            />
+          </div>
+          @if (doctorForm.get('registrationNumber')?.invalid && doctorForm.get('registrationNumber')?.touched) {
+            <span class="field-error">Medical license number is required</span>
+          }
+        </div>
+
+        <!-- Experience Years -->
+        <div class="form-group">
+          <label for="doc-exp" class="form-label">Years of Clinical Experience <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <input 
+              id="doc-exp"
+              type="number" 
+              formControlName="experienceYears"
+              placeholder="e.g. 5"
+              min="0"
+              class="form-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Consultation Fee -->
+        <div class="form-group">
+          <label for="doc-fee" class="form-label">Consultation Fee (₹) <span class="required-star">*</span></label>
+          <div class="input-wrapper">
+            <span class="fee-prefix">₹</span>
+            <input 
+              id="doc-fee"
+              type="number" 
+              formControlName="consultationFee"
+              placeholder="600"
+              class="form-input fee-input"
+            />
+          </div>
+        </div>
+
+        <!-- Practice Type -->
+        <div class="form-group">
+          <label for="doc-practice-type" class="form-label">Consultation Mode <span class="required-star">*</span></label>
+          <select id="doc-practice-type" formControlName="practiceType" class="form-select">
+            <option value="clinic">In-Clinic Consultation</option>
+            <option value="home_visit">Home Visit Care</option>
+            <option value="both">Both In-Clinic & Home Visit</option>
+            <option value="online">Online Video Consultation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <!-- City -->
+        <div class="form-group">
+          <label for="doc-city" class="form-label">City <span class="required-star">*</span></label>
+          <input 
+            id="doc-city"
+            type="text" 
+            formControlName="city"
+            placeholder="e.g. Mumbai"
+            class="form-input"
+            [class.is-invalid]="doctorForm.get('city')?.invalid && doctorForm.get('city')?.touched"
+          />
+        </div>
+
+        <!-- State -->
+        <div class="form-group">
+          <label for="doc-state" class="form-label">State <span class="required-star">*</span></label>
+          <input 
+            id="doc-state"
+            type="text" 
+            formControlName="state"
+            placeholder="e.g. Maharashtra"
+            class="form-input"
+            [class.is-invalid]="doctorForm.get('state')?.invalid && doctorForm.get('state')?.touched"
+          />
+        </div>
+      </div>
+
+      <!-- About / Bio -->
+      <div class="form-group">
+        <label for="doc-about" class="form-label">About Your Clinical Background & Expertise</label>
+        <textarea 
+          id="doc-about"
+          formControlName="about"
+          rows="3"
+          placeholder="Brief summary of your specialization, clinical techniques, rehabilitation approach..."
+          class="form-textarea">
+        </textarea>
+      </div>
+
+      <!-- Form Buttons -->
+      <div class="btn-group-row">
+        <button type="button" class="secondary-btn" (click)="prevStep()">
+          ← Back to Step 1
+        </button>
+        <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <span class="spinner"></span>
+            <span>Registering Doctor...</span>
+          } @else {
+            <span>Complete Doctor Registration ✓</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+
+  <!-- ==================== STEP 2: CLINIC FACILITY DETAILS ==================== -->
+  @if (currentStep === 2 && userType === 'clinic') {
+    <form [formGroup]="clinicForm" (ngSubmit)="submitClinicRegistration()" class="register-form" novalidate>
+      
+      <!-- Clinic Name -->
+      <div class="form-group">
+        <label for="clinic-name" class="form-label">Clinic / Center Name <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"></path>
+            <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+          </svg>
+          <input 
+            id="clinic-name"
+            type="text" 
+            formControlName="clinicName"
+            placeholder="e.g. Apex Physiotherapy & Rehabilitation Center"
+            class="form-input"
+            [class.is-invalid]="clinicForm.get('clinicName')?.invalid && clinicForm.get('clinicName')?.touched"
+          />
+        </div>
+        @if (clinicForm.get('clinicName')?.invalid && clinicForm.get('clinicName')?.touched) {
+          <span class="field-error">Please enter the clinic name</span>
+        }
+      </div>
+
+      <div class="form-grid-2">
+        <!-- Registration License -->
+        <div class="form-group">
+          <label for="clinic-reg-no" class="form-label">Establishment / License No. <span class="required-star">*</span></label>
+          <input 
+            id="clinic-reg-no"
+            type="text" 
+            formControlName="registrationNumber"
+            placeholder="e.g. CEA/MH/2023/8892"
+            class="form-input"
+            [class.is-invalid]="clinicForm.get('registrationNumber')?.invalid && clinicForm.get('registrationNumber')?.touched"
+          />
+        </div>
+
+        <!-- Owner / Contact Person -->
+        <div class="form-group">
+          <label for="clinic-owner" class="form-label">Medical Director / Owner Name <span class="required-star">*</span></label>
+          <input 
+            id="clinic-owner"
+            type="text" 
+            formControlName="ownerName"
+            placeholder="Dr. Owner Name"
+            class="form-input"
+            [class.is-invalid]="clinicForm.get('ownerName')?.invalid && clinicForm.get('ownerName')?.touched"
+          />
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="form-group">
+        <label for="clinic-address" class="form-label">Clinic Street Address <span class="required-star">*</span></label>
+        <textarea 
+          id="clinic-address"
+          formControlName="address"
+          rows="2"
+          placeholder="Shop / Unit No., Building Name, Street Landmark"
+          class="form-textarea"
+          [class.is-invalid]="clinicForm.get('address')?.invalid && clinicForm.get('address')?.touched">
+        </textarea>
+      </div>
+
+      <div class="form-grid-3">
+        <!-- City -->
+        <div class="form-group">
+          <label for="clinic-city" class="form-label">City <span class="required-star">*</span></label>
+          <input id="clinic-city" type="text" formControlName="city" placeholder="Mumbai" class="form-input" />
+        </div>
+
+        <!-- State -->
+        <div class="form-group">
+          <label for="clinic-state" class="form-label">State <span class="required-star">*</span></label>
+          <input id="clinic-state" type="text" formControlName="state" placeholder="Maharashtra" class="form-input" />
+        </div>
+
+        <!-- Pincode -->
+        <div class="form-group">
+          <label for="clinic-pincode" class="form-label">Pincode <span class="required-star">*</span></label>
+          <input id="clinic-pincode" type="text" formControlName="pincode" maxlength="6" placeholder="400001" class="form-input" />
+        </div>
+      </div>
+
+      <!-- Facilities & Services -->
+      <div class="form-group">
+        <label for="clinic-facilities" class="form-label">Rehabilitation Facilities & Equipment</label>
+        <input 
+          id="clinic-facilities"
+          type="text" 
+          formControlName="facilities"
+          placeholder="e.g. Ultrasound, IFT, Traction, Gait Lab, Hydrotherapy"
+          class="form-input"
+        />
+      </div>
+
+      <!-- Operating Hours -->
+      <div class="form-group">
+        <label for="clinic-hours" class="form-label">Operating Hours</label>
+        <input 
+          id="clinic-hours"
+          type="text" 
+          formControlName="operatingHours"
+          placeholder="e.g. Monday - Saturday: 08:00 AM - 08:00 PM"
+          class="form-input"
+        />
+      </div>
+
+      <!-- Form Buttons -->
+      <div class="btn-group-row">
+        <button type="button" class="secondary-btn" (click)="prevStep()">
+          ← Back to Step 1
+        </button>
+        <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <span class="spinner"></span>
+            <span>Registering Clinic...</span>
+          } @else {
+            <span>Complete Clinic Registration ✓</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -5,6 +5,7 @@ import { Doctors } from './pages/doctors/doctors';
 import { Doctordetail } from './pages/doctordetail/doctordetail';
 import { Findphysiotherapist } from './pages/findphysiotherapist/findphysiotherapist';
 import { AuthPageComponent } from './auth/auth-page/auth-page.component';
+import { RegisterComponent } from './auth/register-component/register-component';
 import { BookingAuthComponent } from './pages/booking/booking-auth/booking-auth.component';
 import { Condition } from './pages/specilization-condition/condition/condition';
 import { ConditionDetail } from './pages/specilization-condition/condition-detail/condition-detail';
@@ -58,6 +59,7 @@ export const routes: Routes = [
   // ─── Standalone Authentication Routes ────────────────────────────────────
   { path: 'login', component: AuthPageComponent },
   { path: 'signup', component: AuthPageComponent },
+  { path: 'register', component: RegisterComponent },
 
   // ─── Booking Route ────────────────────────────────────────────────────────
   { path: 'booking/consultancy/:providerId', component: BookingAuthComponent },
