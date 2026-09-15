@@ -245,13 +245,14 @@
 
     <!-- Field 1: Mobile Number -->
     <div class="form-group">
-      <label for="signup-mobile" class="form-label">Mobile Number</label>
+      <label for="signup-mobile" class="form-label">Mobile Number/Email</label>
       <div class="input-wrapper phone-wrapper">
         <span class="phone-prefix">+91</span>
         <input id="signup-mobile" type="tel" formControlName="mobile" placeholder="10-digit mobile number"
           maxlength="10" class="form-input"
           [class.is-invalid]="signupForm.get('mobile')?.invalid && signupForm.get('mobile')?.touched" />
-        <button type="button" class="fp-send-otp-btn" [disabled]="isSignupOtpSending || signupOtpCountdown > 0" (click)="sendSignupOtp()">
+        <button type="button" class="fp-send-otp-btn" [disabled]="isSignupOtpSending || signupOtpCountdown > 0"
+          (click)="sendSignupOtp()">
           @if (isSignupOtpSending) {
           <span class="spinner-sm"></span>
           } @else if (signupOtpCountdown > 0) {

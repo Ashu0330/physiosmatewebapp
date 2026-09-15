@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { SweetAlertService } from '../../services/sweet-alert.service';
+import { SharedModule } from '../../shared/shared-module';
 
 @Component({
   selector: 'app-auth-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [SharedModule],
   templateUrl: './auth-form.component.html',
   styleUrl: './auth-form.component.css'
 })
@@ -33,7 +34,6 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
 
-  // Forgot Password / OTP State
   showForgotPassword = false;
   isOtpSending = false;
   otpSent = false;
@@ -42,7 +42,6 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   otpTimer: any = null;
   forgotErrorMessage = '';
 
-  // Signup OTP State
   isSignupOtpSending = false;
   signupOtpSent = false;
   signupOtpCountdown = 0;
@@ -70,6 +69,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
 
     this.signupForm = this.fb.group({
       mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      email: ['', [Validators.required, Validators.email]],
       otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]],
       terms: [true, [Validators.requiredTrue]]
     });
@@ -94,6 +94,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   sendOtp(): void {
+    debugger
     const mobileCtrl = this.forgotForm.get('mobile');
     if (!mobileCtrl || mobileCtrl.invalid) {
       mobileCtrl?.markAsTouched();
@@ -105,7 +106,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     this.isOtpSending = true;
     this.forgotErrorMessage = '';
 
-    this.authService.resendOtp({ mobile: mobile, isLogin: true }).subscribe({
+    this.authService.register({ mobile: mobile, isLogin: true }).subscribe({
       next: (res: any) => {
         this.isOtpSending = false;
         this.otpSent = true;
@@ -239,6 +240,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
 
   sendSignupOtp(): void {
     const mobileCtrl = this.signupForm.get('mobile');
+    const emailCtrl = this.signupForm.get('email');
     if (!mobileCtrl || mobileCtrl.invalid) {
       mobileCtrl?.markAsTouched();
       this.alert.toastError('Please enter a valid 10-digit mobile number');
@@ -246,10 +248,11 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     }
 
     const mobile = mobileCtrl.value.trim();
+    const email = emailCtrl?.value.trim();
     this.isSignupOtpSending = true;
     this.errorMessage = '';
 
-    this.authService.resendOtp({ mobile: mobile, isLogin: false }).subscribe({
+    this.authService.register({ mobile: mobile, email: email, isLogin: true }).subscribe({
       next: (res: any) => {
         this.isSignupOtpSending = false;
         this.signupOtpSent = true;

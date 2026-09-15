@@ -29,8 +29,6 @@ export class AuthPageComponent implements OnInit {
     } else {
       this.authMode = 'login';
     }
-
-    // Check for returnUrl
     const paramReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     if (paramReturnUrl) {
       this.returnUrl = paramReturnUrl;
