@@ -14,7 +14,7 @@ import { SharedModule } from '../../shared/shared-module';
   styleUrl: './auth-form.component.css'
 })
 export class AuthFormComponent implements OnInit, OnDestroy {
-  @Input() mode: 'login' | 'signup' = 'login';
+  @Input() mode: 'login' | 'signup' = 'signup';
   @Input() bookingContext: boolean = false;
   @Input() providerName?: string;
 
@@ -27,22 +27,11 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   private alert = inject(SweetAlertService);
   private router = inject(Router);
 
-  loginForm!: FormGroup;
-  signupForm!: FormGroup;
-  forgotForm!: FormGroup;
 
-  showPassword = false;
+  signupForm!: FormGroup;
   showSignupPassword = false;
   isLoading = false;
   errorMessage = '';
-
-  showForgotPassword = false;
-  isOtpSending = false;
-  otpSent = false;
-  isSubmittingOtp = false;
-  otpCountdown = 0;
-  otpTimer: any = null;
-  forgotErrorMessage = '';
 
   isSignupOtpSending = false;
   signupOtpSent = false;
@@ -54,20 +43,13 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.otpTimer) {
-      clearInterval(this.otpTimer);
-    }
+
     if (this.signupOtpTimer) {
       clearInterval(this.signupOtpTimer);
     }
   }
 
   initForms(): void {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(4)]],
-      rememberMe: [true]
-    });
 
     this.signupForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -75,165 +57,16 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       terms: [true, [Validators.requiredTrue]]
     });
 
-    this.forgotForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]]
-    });
+
   }
 
-  togglePassword(): void {
-    this.showPassword = !this.showPassword;
-  }
+
 
   toggleSignupPassword(): void {
     this.showSignupPassword = !this.showSignupPassword;
   }
 
-  // toggleForgotPassword(): void {
-  //   this.showForgotPassword = !this.showForgotPassword;
-  //   this.forgotErrorMessage = '';
-  // }
 
-  sendOtp(): void {
-    const emailCtrl = this.forgotForm.get('email');
-    if (!emailCtrl || emailCtrl.invalid) {
-      emailCtrl?.markAsTouched();
-      this.alert.toastError('Please enter a valid email address');
-      return;
-    }
-
-    const email = emailCtrl.value.trim();
-    this.isOtpSending = true;
-    this.forgotErrorMessage = '';
-
-    const formData = new FormData();
-    formData.append('Email', email);
-    formData.append('IsLogin', 'true');
-
-    this.authService.register(formData).subscribe({
-      next: (res: any) => {
-        this.isOtpSending = false;
-        this.otpSent = true;
-        this.alert.toastSuccess('OTP sent successfully to ' + email);
-        this.startOtpCountdown();
-      },
-      error: (err: any) => {
-        this.isOtpSending = false;
-        console.warn('sendOtp error or mock fallback:', err);
-        this.otpSent = true;
-        this.alert.toastSuccess('OTP sent successfully to ' + email);
-        this.startOtpCountdown();
-      }
-    });
-  }
-
-  startOtpCountdown(): void {
-    this.otpCountdown = 30;
-    if (this.otpTimer) {
-      clearInterval(this.otpTimer);
-    }
-    this.otpTimer = setInterval(() => {
-      this.otpCountdown--;
-      if (this.otpCountdown <= 0) {
-        clearInterval(this.otpTimer);
-        this.otpTimer = null;
-      }
-    }, 1000);
-  }
-
-  onSubmitForgotPassword(): void {
-    if (this.forgotForm.invalid) {
-      this.forgotForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSubmittingOtp = true;
-    this.forgotErrorMessage = '';
-
-    const payload = {
-      otpCode: this.forgotForm.value.otp.trim(),
-      oTPType: 'Email',
-      email: this.forgotForm.value.email.trim()
-    };
-
-    this.authService.verifyOtp(payload).subscribe({
-      next: (res: any) => {
-        this.isSubmittingOtp = false;
-        if (res && (res.isSuccess || res.token || res.data)) {
-          const user = res.data || res;
-          const token = user.token || res.token;
-          if (token) {
-            this.authService.saveUserSession(user, token);
-          }
-          this.alert.toastSuccess('OTP verified successfully!');
-          this.showForgotPassword = false;
-          this.authSuccess.emit();
-        } else {
-          this.alert.toastSuccess('OTP verified successfully!');
-          this.showForgotPassword = false;
-        }
-      },
-      error: (err: any) => {
-        this.isSubmittingOtp = false;
-        const msg = err.error?.message || err.message || 'OTP verification failed. Please try again.';
-        this.forgotErrorMessage = msg;
-        this.alert.toastError(msg);
-      }
-    });
-  }
-
-  switchMode(newMode: 'login' | 'signup'): void {
-    this.mode = newMode;
-    this.errorMessage = '';
-    this.showForgotPassword = false;
-    this.modeChange.emit(newMode);
-  }
-
-  onLogin(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
-
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    const payload = {
-      email: this.loginForm.value.email.trim(),
-      password: this.loginForm.value.password
-    };
-
-    this.authService.login(payload).subscribe({
-      next: (res: any) => {
-        this.isLoading = false;
-        if (res.isSuccess) {
-          const user = res.data || res;
-          const token = user.token || res.token;
-
-          this.authService.saveUserSession(user, token);
-          this.alert.toastSuccess('Welcome back to PhysiosMate!');
-          this.authSuccess.emit();
-        } else {
-          this.errorMessage =
-            res.message || 'Login failed. Please verify your credentials.';
-
-          this.alert.toastError(this.errorMessage);
-        }
-      },
-
-      error: (err: any) => {
-        this.isLoading = false;
-
-        const msg =
-          err.error?.message ||
-          err.message ||
-          'Unable to connect to server. Please try again.';
-
-        this.errorMessage = msg;
-        this.alert.toastError(msg);
-      }
-    });
-  }
 
   sendSignupOtp(): void {
     const emailCtrl = this.signupForm.get('email');
@@ -303,6 +136,10 @@ export class AuthFormComponent implements OnInit, OnDestroy {
         if (res.isSuccess == true) {
           this.isLoading = false;
           this.alert.toastSuccess('OTP verified! Proceeding to registration.');
+          if (res.data.isProfileCompleted == true) {
+            this.authService.saveUserSession(res.data, res.data.token);
+            this.router.navigate(['/'])
+          }
           this.otpVerified.emit({ email: this.signupForm.value.email });
         } else {
           this.isLoading = false;

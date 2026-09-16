@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { SweetAlertService } from '../../services/sweet-alert.service';
+import { mastermodel } from '../../models/mastermodel';
+import { HttpClient } from '@angular/common/http';
+import { Masterservice } from '../../services/masterservice';
 
 @Component({
   selector: 'app-register-component',
@@ -18,10 +21,11 @@ export class RegisterComponent implements OnInit, OnChanges {
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
 
-  private fb = inject(FormBuilder);
-  private authService = inject(Authservice);
-  private alert = inject(SweetAlertService);
-  private router = inject(Router);
+
+  specializationList: mastermodel[] = [];
+  qualificationList: mastermodel[] = [];
+
+  constructor(private http: HttpClient, private masterService: Masterservice, private fb: FormBuilder, private authService: Authservice, private alert: SweetAlertService, private router: Router) { }
 
   currentStep: 1 | 2 = 1;
   userType: 'user' | 'doctor' | 'clinic' = 'user';
@@ -35,33 +39,33 @@ export class RegisterComponent implements OnInit, OnChanges {
   doctorForm!: FormGroup;
   clinicForm!: FormGroup;
 
-  // Predefined lists
-  specializations = [
-    'Orthopedic Physiotherapy',
-    'Sports Rehabilitation & Injury',
-    'Neurological Rehabilitation',
-    'Pediatric Physiotherapy',
-    'Geriatric Physical Therapy',
-    'Cardiopulmonary Rehabilitation',
-    'Post-Surgical Rehab & Spine Care',
-    'Women Health & Prenatal / Postnatal',
-    'General Physical Therapy'
-  ];
+  GetAllSpecialization() {
+    this.masterService.getSpecialization().subscribe({
+      next: (res: any) => {
+        this.specializationList = res.data;
+      },
+      error: (err: any) => {
+        this.alert.toastError(err.error.message);
+        this.specializationList = [];
+      }
+    })
+  }
 
-  qualifications = [
-    'BPT - Bachelor of Physiotherapy',
-    'MPT - Master of Physiotherapy (Orthopedics)',
-    'MPT - Master of Physiotherapy (Neurology)',
-    'MPT - Master of Physiotherapy (Sports)',
-    'MPT - Master of Physiotherapy (Cardiopulmonary)',
-    'MPT - Master of Physiotherapy (Pediatrics)',
-    'Ph.D. in Physical Therapy / Rehab Sciences',
-    'Fellowship in Sports Rehabilitation',
-    'Diploma in Physiotherapy (DPT)'
-  ];
-
+  GetAllQualification() {
+    this.masterService.GetAllQualification().subscribe({
+      next: (res: any) => {
+        this.qualificationList = res.data;
+      },
+      error: (err: any) => {
+        this.alert.toastError(err.error.message);
+        this.qualificationList = [];
+      }
+    })
+  }
   ngOnInit(): void {
     this.initForms();
+    this.GetAllQualification();
+    this.GetAllSpecialization();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -74,7 +78,6 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
   initForms(): void {
-    // Step 1: Basic details for all user types
     this.basicForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       mobile: [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
@@ -87,7 +90,6 @@ export class RegisterComponent implements OnInit, OnChanges {
       confirmPassword: ['', [Validators.required]],
     });
 
-    // Step 2: Doctor professional details
     this.doctorForm = this.fb.group({
       specialization: ['Orthopedic Physiotherapy', [Validators.required]],
       qualification: ['BPT - Bachelor of Physiotherapy', [Validators.required]],
@@ -100,7 +102,6 @@ export class RegisterComponent implements OnInit, OnChanges {
       about: ['']
     });
 
-    // Step 2: Clinic facility details
     this.clinicForm = this.fb.group({
       clinicName: ['', [Validators.required, Validators.minLength(2)]],
       registrationNumber: ['', [Validators.required]],
@@ -159,11 +160,9 @@ export class RegisterComponent implements OnInit, OnChanges {
       return;
     }
 
-    // If User / Patient, registration finishes at Step 1
     if (this.userType === 'user') {
       this.submitUserRegistration();
     } else {
-      // Doctor or Clinic moves to Step 2
       this.currentStep = 2;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -177,20 +176,18 @@ export class RegisterComponent implements OnInit, OnChanges {
   submitUserRegistration(): void {
     this.isSubmitting = true;
     this.errorMessage = '';
-
     const b = this.basicForm.value;
-    const payload = {
-      fullName: b.fullName.trim(),
-      email: b.email.trim(),
-      mobile: b.mobile.trim(),
-      password: b.password,
-      dob: b.dob,
-      age: b.age,
-      gender: b.gender,
-      roleId: 3 // Patient / User
-    };
+    const form = new FormData();
+    form.append('fullName', b.fullName);
+    form.append('email', b.email);
+    form.append('mobile', b.mobile);
+    form.append('password', b.password);
+    form.append('dob', b.dob);
+    form.append('age', b.age);
+    form.append('gender', b.gender);
+    form.append('roleId', '1');
 
-    this.authService.register(payload).subscribe({
+    this.authService.register(form).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
         const user = res?.data || res;
@@ -225,40 +222,31 @@ export class RegisterComponent implements OnInit, OnChanges {
 
     const b = this.basicForm.value;
     const d = this.doctorForm.value;
+    const form = new FormData();
+    form.append('fullName', b.fullName);
+    form.append('email', b.email);
+    form.append('mobile', b.mobile);
+    form.append('password', b.password);
+    form.append('dob', b.dob);
+    form.append('age', b.age);
+    form.append('gender', b.gender);
+    form.append('roleId', '2');
+    form.append('specialization', d.specialization);
+    form.append('qualification', d.qualification);
+    form.append('registrationNumber', d.registrationNumber);
+    form.append('experienceYears', d.experienceYears);
+    form.append('consultationFee', d.consultationFee);
+    form.append('practiceType', d.practiceType);
+    form.append('city', d.city);
+    form.append('state', d.state);
+    form.append('about', d.about);
 
-    const basePayload = {
-      fullName: b.fullName.trim(),
-      email: b.email.trim(),
-      mobile: b.mobile.trim(),
-      password: b.password,
-      dob: b.dob,
-      age: b.age,
-      gender: b.gender,
-      roleId: 2 // Doctor / Practitioner
-    };
-
-    this.authService.register(basePayload).subscribe({
+    this.authService.register(form).subscribe({
       next: (res: any) => {
         const user = res?.data || res;
         const token = user?.token || res?.token || 'doctor-jwt-token';
         this.authService.saveUserSession(user, token);
-
-        const docPayload = {
-          fullName: b.fullName.trim(),
-          specialization: d.specialization,
-          qualification: d.qualification,
-          registrationNumber: d.registrationNumber,
-          experienceYears: d.experienceYears,
-          consultationFee: d.consultationFee,
-          practiceType: d.practiceType,
-          city: d.city,
-          state: d.state,
-          about: d.about,
-          mobile: b.mobile.trim(),
-          email: b.email.trim()
-        };
-
-        this.authService.addPractitioner(docPayload).subscribe({
+        this.authService.addPractitioner(form).subscribe({
           next: () => {
             this.isSubmitting = false;
             this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
@@ -296,16 +284,23 @@ export class RegisterComponent implements OnInit, OnChanges {
 
     const b = this.basicForm.value;
     const c = this.clinicForm.value;
+    const form = new FormData();
+    form.append('fullName', c.ownerName.trim());
+    form.append('email', b.email.trim());
+    form.append('mobile', b.mobile.trim());
+    form.append('password', b.password);
+    form.append('roleId', '3');
+    form.append('clinicName', c.clinicName);
+    form.append('registrationNumber', c.registrationNumber);
+    form.append('ownerName', c.ownerName);
+    form.append('address', c.address);
+    form.append('city', c.city);
+    form.append('state', c.state);
+    form.append('pincode', c.pincode);
+    form.append('facilities', c.facilities);
+    form.append('operatingHours', c.operatingHours);
 
-    const basePayload = {
-      fullName: c.ownerName.trim(),
-      email: b.email.trim(),
-      mobile: b.mobile.trim(),
-      password: b.password,
-      roleId: 4 // Clinic Partner
-    };
-
-    this.authService.register(basePayload).subscribe({
+    this.authService.register(form).subscribe({
       next: (res: any) => {
         const user = res?.data || res;
         const token = user?.token || res?.token || 'clinic-jwt-token';

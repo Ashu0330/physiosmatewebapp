@@ -73,7 +73,8 @@
   line-height: 1.5;
 }
 
-/* Mode Switcher Tabs */
+/* Mode Switcher Tabs (COMMENTED OUT) */
+/*
 .mode-tabs {
   display: flex;
   background: var(--bg-muted);
@@ -106,6 +107,7 @@
 .tab-btn:hover:not(.active) {
   color: var(--text-main);
 }
+*/
 
 /* Error Banner */
 .error-banner {
@@ -145,6 +147,7 @@
   color: var(--text-body);
 }
 
+/*
 .label-row {
   display: flex;
   justify-content: space-between;
@@ -161,6 +164,7 @@
 .forgot-link:hover {
   text-decoration: underline;
 }
+*/
 
 .input-wrapper {
   position: relative;
@@ -226,6 +230,7 @@
   margin-top: 2px;
 }
 
+/*
 .toggle-pwd-btn {
   position: absolute;
   right: 12px;
@@ -243,6 +248,7 @@
 .toggle-pwd-btn:hover {
   color: var(--text-body);
 }
+*/
 
 /* Extra checkbox */
 /* .form-extra {
@@ -321,7 +327,8 @@
   }
 }
 
-/* Demo login helper button */
+/* Demo login helper button (COMMENTED OUT) */
+/*
 .demo-helper {
   display: flex;
   justify-content: center;
@@ -348,8 +355,10 @@
   border-color: var(--primary-color);
   color: var(--primary-dark);
 }
+*/
 
-/* Switch mode footer */
+/* Switch mode footer (COMMENTED OUT) */
+/*
 .switch-footer {
   display: flex;
   align-items: center;
@@ -374,15 +383,19 @@
 .switch-link:hover {
   color: var(--primary-dark);
 }
+*/
 
-/* Login View Wrapper */
+/* Login View Wrapper (COMMENTED OUT) */
+/*
 .login-view-wrapper {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+*/
 
-/* Forgot Password Line below Submit Button */
+/* Forgot Password Line below Submit Button (COMMENTED OUT) */
+/*
 .forgot-pwd-line-wrapper {
   display: flex;
   justify-content: center;
@@ -412,8 +425,10 @@
   color: var(--primary-dark);
   background: rgba(16, 168, 150, 0.08);
 }
+*/
 
-/* Forgot Password Screen & Banner */
+/* Forgot Password Screen & Banner (COMMENTED OUT) */
+/*
 .forgot-password-screen {
   animation: fpFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -496,6 +511,7 @@
 }
 
 .forgot-password-screen .phone-wrapper .form-input,
+*/
 .email-action-wrapper .form-input {
   padding-right: 110px;
 }
