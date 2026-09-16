@@ -245,11 +245,11 @@
 }
 
 /* Extra checkbox */
-.form-extra {
+/* .form-extra {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
+} */
 
 .checkbox-label {
   display: inline-flex;
@@ -423,6 +423,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -540,8 +541,13 @@
     padding: 24px 18px;
     border-radius: var(--radius-lg);
   }
-  
+
   .auth-title {
     font-size: 20px;
   }
+}
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
 }

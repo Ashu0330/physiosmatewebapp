@@ -89,10 +89,10 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     this.showSignupPassword = !this.showSignupPassword;
   }
 
-  toggleForgotPassword(): void {
-    this.showForgotPassword = !this.showForgotPassword;
-    this.forgotErrorMessage = '';
-  }
+  // toggleForgotPassword(): void {
+  //   this.showForgotPassword = !this.showForgotPassword;
+  //   this.forgotErrorMessage = '';
+  // }
 
   sendOtp(): void {
     const emailCtrl = this.forgotForm.get('email');
@@ -206,8 +206,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     this.authService.login(payload).subscribe({
       next: (res: any) => {
         this.isLoading = false;
-
-        if (res && (res.isSuccess || res.token || res.data)) {
+        if (res.isSuccess) {
           const user = res.data || res;
           const token = user.token || res.token;
 
@@ -250,6 +249,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('Email', email);
     formData.append('IsLogin', 'true');
+    formData.append('IsSignIn', 'true');
 
     this.authService.register(formData).subscribe({
       next: (res: any) => {
@@ -302,13 +302,6 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         if (res.isSuccess == true) {
           this.isLoading = false;
-          if (res.data.isProfileCompleted === true) {
-            this.authService.saveUserSession(res.data, res.data?.token);
-            this.alert.toastSuccess('Welcome back to PhysiosMate!');
-            this.authSuccess.emit();
-            this.router.navigate(['/']);
-            return;
-          }
           this.alert.toastSuccess('OTP verified! Proceeding to registration.');
           this.otpVerified.emit({ email: this.signupForm.value.email });
         } else {
