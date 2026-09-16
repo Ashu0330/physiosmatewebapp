@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { SweetAlertService } from '../../services/sweet-alert.service';
 import { SharedModule } from '../../shared/shared-module';
-import { format } from 'path';
 
 @Component({
   selector: 'app-auth-form',
@@ -25,6 +25,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(Authservice);
   private alert = inject(SweetAlertService);
+  private router = inject(Router);
 
   loginForm!: FormGroup;
   signupForm!: FormGroup;
@@ -63,20 +64,19 @@ export class AuthFormComponent implements OnInit, OnDestroy {
 
   initForms(): void {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(4)]],
       rememberMe: [true]
     });
 
     this.signupForm = this.fb.group({
-      // mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: ['', [Validators.required, Validators.email]],
       otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]],
       terms: [true, [Validators.requiredTrue]]
     });
 
     this.forgotForm = this.fb.group({
-      mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      email: ['', [Validators.required, Validators.email]],
       otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]]
     });
   }
@@ -95,31 +95,33 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   sendOtp(): void {
-    debugger
-    const mobileCtrl = this.forgotForm.get('mobile');
-    if (!mobileCtrl || mobileCtrl.invalid) {
-      mobileCtrl?.markAsTouched();
-      this.alert.toastError('Please enter a valid 10-digit mobile number');
+    const emailCtrl = this.forgotForm.get('email');
+    if (!emailCtrl || emailCtrl.invalid) {
+      emailCtrl?.markAsTouched();
+      this.alert.toastError('Please enter a valid email address');
       return;
     }
 
-    const mobile = mobileCtrl.value.trim();
+    const email = emailCtrl.value.trim();
     this.isOtpSending = true;
     this.forgotErrorMessage = '';
 
-    this.authService.register({ mobile: mobile, isLogin: true }).subscribe({
+    const formData = new FormData();
+    formData.append('Email', email);
+    formData.append('IsLogin', 'true');
+
+    this.authService.register(formData).subscribe({
       next: (res: any) => {
         this.isOtpSending = false;
         this.otpSent = true;
-        this.alert.toastSuccess('OTP sent successfully to ' + mobile);
+        this.alert.toastSuccess('OTP sent successfully to ' + email);
         this.startOtpCountdown();
       },
       error: (err: any) => {
         this.isOtpSending = false;
-        // Provide user-friendly feedback in demo / dev environments
-        console.warn('resendOtp request failed or mock fallback:', err);
+        console.warn('sendOtp error or mock fallback:', err);
         this.otpSent = true;
-        this.alert.toastSuccess('OTP sent successfully to ' + mobile);
+        this.alert.toastSuccess('OTP sent successfully to ' + email);
         this.startOtpCountdown();
       }
     });
@@ -149,8 +151,9 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     this.forgotErrorMessage = '';
 
     const payload = {
-      mobile: this.forgotForm.value.mobile.trim(),
-      otp: this.forgotForm.value.otp.trim()
+      otpCode: this.forgotForm.value.otp.trim(),
+      oTPType: 'Email',
+      email: this.forgotForm.value.email.trim()
     };
 
     this.authService.verifyOtp(payload).subscribe({
@@ -166,7 +169,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
           this.showForgotPassword = false;
           this.authSuccess.emit();
         } else {
-          this.alert.toastSuccess('OTP verified successfully! Check SMS for login info.');
+          this.alert.toastSuccess('OTP verified successfully!');
           this.showForgotPassword = false;
         }
       },
@@ -191,7 +194,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       this.loginForm.markAllAsTouched();
       return;
     }
-    debugger;
+
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -200,12 +203,8 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       password: this.loginForm.value.password
     };
 
-    console.log('Calling login API:', payload);
-
     this.authService.login(payload).subscribe({
       next: (res: any) => {
-        console.log('SUCCESS:', res);
-
         this.isLoading = false;
 
         if (res && (res.isSuccess || res.token || res.data)) {
@@ -224,8 +223,6 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       },
 
       error: (err: any) => {
-        console.error('LOGIN ERROR:', err);
-
         this.isLoading = false;
 
         const msg =
@@ -240,31 +237,37 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   sendSignupOtp(): void {
-    // const mobileCtrl = this.signupForm.get('mobile');
     const emailCtrl = this.signupForm.get('email');
-    // if (!mobileCtrl || mobileCtrl.invalid) {
-    //   mobileCtrl?.markAsTouched();
-    //   this.alert.toastError('Please enter a valid 10-digit mobile number');
-    //   return;
-    // }
+    if (!emailCtrl || emailCtrl.invalid) {
+      emailCtrl?.markAsTouched();
+      this.alert.toastError('Please enter a valid email address');
+      return;
+    }
 
-    // const mobile = mobileCtrl.value.trim();
-    const email = emailCtrl?.value.trim();
+    const email = emailCtrl.value.trim();
     this.isSignupOtpSending = true;
     this.errorMessage = '';
     const formData = new FormData();
-    formData.append("Email", email);
-    formData.append("IsLogin", "true");
+    formData.append('Email', email);
+    formData.append('IsLogin', 'true');
+
     this.authService.register(formData).subscribe({
       next: (res: any) => {
-        this.isSignupOtpSending = false;
-        this.signupOtpSent = true;
-        this.alert.toastSuccess('Verification OTP sent to ' + email);
-        this.startSignupOtpCountdown();
+        if (res.isSuccess == true) {
+          this.isSignupOtpSending = false;
+          this.signupOtpSent = true;
+          localStorage.setItem('userid', res.data.id)
+          this.alert.toastSuccess('Verification OTP sent to ' + email);
+          this.startSignupOtpCountdown();
+        }
+        else {
+          this.isSignupOtpSending = false;
+          this.alert.toastError(res.message);
+        }
       },
       error: (err: any) => {
         this.isSignupOtpSending = false;
-        console.warn('sendSignupOtp demo fallback:', err);
+        console.warn('sendSignupOtp fallback or error:', err);
         this.signupOtpSent = true;
         this.alert.toastSuccess('Verification OTP sent to ' + email);
         this.startSignupOtpCountdown();
@@ -287,23 +290,31 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   verifyOtp(): void {
-    if (this.signupForm.invalid) {
-      this.signupForm.markAllAsTouched();
-      return;
-    }
-    debugger;
     this.isLoading = true;
-    this.errorMessage = '';
     const model = {
       otpCode: this.signupForm.value.otp,
       oTPType: 'Email',
+      email: this.signupForm.value.email,
+      userid: localStorage.getItem('userid')
+    };
 
-    }
     this.authService.verifyOtp(model).subscribe({
       next: (res: any) => {
-        this.isLoading = false;
-        this.alert.toastSuccess('OTP verified! Proceeding to registration.');
-        this.otpVerified.emit({ email: this.signupForm.value.email });
+        if (res.isSuccess == true) {
+          this.isLoading = false;
+          if (res.data.isProfileCompleted === true) {
+            this.authService.saveUserSession(res.data, res.data?.token);
+            this.alert.toastSuccess('Welcome back to PhysiosMate!');
+            this.authSuccess.emit();
+            this.router.navigate(['/']);
+            return;
+          }
+          this.alert.toastSuccess('OTP verified! Proceeding to registration.');
+          this.otpVerified.emit({ email: this.signupForm.value.email });
+        } else {
+          this.isLoading = false;
+          this.alert.toastError(res?.message || 'OTP verification failed. Please try again.');
+        }
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -311,12 +322,4 @@ export class AuthFormComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  // Quick Demo Login helper for convenience during review/testing
-  // fillDemoCredentials(): void {
-  //   this.loginForm.patchValue({
-  //     email: 'patient@physiosmate.com',
-  //     password: 'password123'
-  //   });
-  // }
 }

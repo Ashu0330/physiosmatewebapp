@@ -20,7 +20,7 @@
         (modeChange)="onModeChange($event)" (otpVerified)="onOtpVerified($event)">
       </app-auth-form>
       } @else {
-      <app-register-component [verifiedMobile]="verifiedMobile" (backToAuth)="onBackToAuth()"
+      <app-register-component [verifiedEmail]="verifiedEmail" (backToAuth)="onBackToAuth()"
         (registrationSuccess)="onAuthSuccess()">
       </app-register-component>
       }

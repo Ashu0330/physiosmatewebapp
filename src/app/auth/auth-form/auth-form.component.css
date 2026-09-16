@@ -494,8 +494,9 @@
   font-weight: 500;
 }
 
-.forgot-password-screen .phone-wrapper .form-input {
-  padding-right: 95px;
+.forgot-password-screen .phone-wrapper .form-input,
+.email-action-wrapper .form-input {
+  padding-right: 110px;
 }
 
 .fp-send-otp-btn {

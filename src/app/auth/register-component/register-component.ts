@@ -14,6 +14,7 @@ import { SweetAlertService } from '../../services/sweet-alert.service';
 })
 export class RegisterComponent implements OnInit, OnChanges {
   @Input() verifiedMobile: string = '';
+  @Input() verifiedEmail: string = '';
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
 
@@ -22,7 +23,6 @@ export class RegisterComponent implements OnInit, OnChanges {
   private alert = inject(SweetAlertService);
   private router = inject(Router);
 
-  // Stepper state
   currentStep: 1 | 2 = 1;
   userType: 'user' | 'doctor' | 'clinic' = 'user';
 
@@ -68,6 +68,9 @@ export class RegisterComponent implements OnInit, OnChanges {
     if (changes['verifiedMobile'] && this.basicForm) {
       this.basicForm.patchValue({ mobile: this.verifiedMobile || '' });
     }
+    if (changes['verifiedEmail'] && this.basicForm) {
+      this.basicForm.patchValue({ email: this.verifiedEmail || '' });
+    }
   }
 
   initForms(): void {
@@ -75,7 +78,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.basicForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       mobile: [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: [this.verifiedEmail || '', [Validators.required, Validators.email]],
       userType: ['user', [Validators.required]],
       dob: ['', [Validators.required]],
       age: ['', [Validators.required, Validators.min(1), Validators.max(120)]],

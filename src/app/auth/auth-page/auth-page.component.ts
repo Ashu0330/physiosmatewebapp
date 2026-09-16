@@ -19,7 +19,7 @@ export class AuthPageComponent implements OnInit {
   returnUrl: string = '/';
 
   isOtpVerified = false;
-  verifiedMobile = '';
+  verifiedEmail = '';
 
   ngOnInit(): void {
     const url = this.router.url;
@@ -40,7 +40,7 @@ export class AuthPageComponent implements OnInit {
   }
 
   onOtpVerified(data: { email: string }): void {
-    this.verifiedMobile = data.email;
+    this.verifiedEmail = data.email;
     this.isOtpVerified = true;
   }
 
