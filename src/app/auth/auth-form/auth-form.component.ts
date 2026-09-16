@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Authservice } from '../../services/authservice';
 import { SweetAlertService } from '../../services/sweet-alert.service';
 import { SharedModule } from '../../shared/shared-module';
+import { format } from 'path';
 
 @Component({
   selector: 'app-auth-form',
@@ -19,7 +20,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
 
   @Output() authSuccess = new EventEmitter<void>();
   @Output() modeChange = new EventEmitter<'login' | 'signup'>();
-  @Output() otpVerified = new EventEmitter<{ mobile: string }>();
+  @Output() otpVerified = new EventEmitter<{ email: string }>();
 
   private fb = inject(FormBuilder);
   private authService = inject(Authservice);
@@ -68,7 +69,7 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     });
 
     this.signupForm = this.fb.group({
-      mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      // mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: ['', [Validators.required, Validators.email]],
       otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]],
       terms: [true, [Validators.requiredTrue]]
@@ -239,31 +240,33 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   }
 
   sendSignupOtp(): void {
-    const mobileCtrl = this.signupForm.get('mobile');
+    // const mobileCtrl = this.signupForm.get('mobile');
     const emailCtrl = this.signupForm.get('email');
-    if (!mobileCtrl || mobileCtrl.invalid) {
-      mobileCtrl?.markAsTouched();
-      this.alert.toastError('Please enter a valid 10-digit mobile number');
-      return;
-    }
+    // if (!mobileCtrl || mobileCtrl.invalid) {
+    //   mobileCtrl?.markAsTouched();
+    //   this.alert.toastError('Please enter a valid 10-digit mobile number');
+    //   return;
+    // }
 
-    const mobile = mobileCtrl.value.trim();
+    // const mobile = mobileCtrl.value.trim();
     const email = emailCtrl?.value.trim();
     this.isSignupOtpSending = true;
     this.errorMessage = '';
-
-    this.authService.register({ mobile: mobile, email: email, isLogin: true }).subscribe({
+    const formData = new FormData();
+    formData.append("Email", email);
+    formData.append("IsLogin", "true");
+    this.authService.register(formData).subscribe({
       next: (res: any) => {
         this.isSignupOtpSending = false;
         this.signupOtpSent = true;
-        this.alert.toastSuccess('Verification OTP sent to ' + mobile);
+        this.alert.toastSuccess('Verification OTP sent to ' + email);
         this.startSignupOtpCountdown();
       },
       error: (err: any) => {
         this.isSignupOtpSending = false;
         console.warn('sendSignupOtp demo fallback:', err);
         this.signupOtpSent = true;
-        this.alert.toastSuccess('Verification OTP sent to ' + mobile);
+        this.alert.toastSuccess('Verification OTP sent to ' + email);
         this.startSignupOtpCountdown();
       }
     });
@@ -283,38 +286,37 @@ export class AuthFormComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  onSignup(): void {
+  verifyOtp(): void {
     if (this.signupForm.invalid) {
       this.signupForm.markAllAsTouched();
       return;
     }
-
+    debugger;
     this.isLoading = true;
     this.errorMessage = '';
+    const model = {
+      otpCode: this.signupForm.value.otp,
+      oTPType: 'Email',
 
-    const mobile = this.signupForm.value.mobile.trim();
-    const otp = this.signupForm.value.otp.trim();
-
-    this.authService.verifyOtp({ mobile, otp }).subscribe({
+    }
+    this.authService.verifyOtp(model).subscribe({
       next: (res: any) => {
         this.isLoading = false;
-        this.alert.toastSuccess('Mobile number verified! Proceeding to registration.');
-        this.otpVerified.emit({ mobile });
+        this.alert.toastSuccess('OTP verified! Proceeding to registration.');
+        this.otpVerified.emit({ email: this.signupForm.value.email });
       },
       error: (err: any) => {
         this.isLoading = false;
-        console.warn('verifyOtp error or demo fallback:', err);
-        this.alert.toastSuccess('Mobile number verified! Proceeding to registration.');
-        this.otpVerified.emit({ mobile });
+        this.alert.toastError(err?.error?.message || 'OTP verification failed. Please try again.');
       }
     });
   }
 
   // Quick Demo Login helper for convenience during review/testing
-  fillDemoCredentials(): void {
-    this.loginForm.patchValue({
-      email: 'patient@physiosmate.com',
-      password: 'password123'
-    });
-  }
+  // fillDemoCredentials(): void {
+  //   this.loginForm.patchValue({
+  //     email: 'patient@physiosmate.com',
+  //     password: 'password123'
+  //   });
+  // }
 }

@@ -22,7 +22,6 @@ export class AuthPageComponent implements OnInit {
   verifiedMobile = '';
 
   ngOnInit(): void {
-    // Detect mode from route path
     const url = this.router.url;
     if (url.includes('/signup')) {
       this.authMode = 'signup';
@@ -40,8 +39,8 @@ export class AuthPageComponent implements OnInit {
     this.isOtpVerified = false;
   }
 
-  onOtpVerified(data: { mobile: string }): void {
-    this.verifiedMobile = data.mobile;
+  onOtpVerified(data: { email: string }): void {
+    this.verifiedMobile = data.email;
     this.isOtpVerified = true;
   }
 
