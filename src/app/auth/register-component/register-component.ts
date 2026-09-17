@@ -7,6 +7,7 @@ import { SweetAlertService } from '../../services/sweet-alert.service';
 import { mastermodel } from '../../models/mastermodel';
 import { HttpClient } from '@angular/common/http';
 import { Masterservice } from '../../services/masterservice';
+import { role } from '../../helper/utilities';
 
 @Component({
   selector: 'app-register-component',
@@ -21,30 +22,24 @@ export class RegisterComponent implements OnInit, OnChanges {
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
 
-  // Master data lists
   specializationList: mastermodel[] = [];
   qualificationList: mastermodel[] = [];
   languageList: mastermodel[] = [];
   stateList: any[] = [];
-  cityList: any[] = [];          // Step 1 basic form cities
-  clinicCityList: any[] = [];    // Step 2 clinic form cities
+  cityList: any[] = [];
+  clinicCityList: any[] = [];
 
-  // Multi-select state (managed outside reactive form)
   selectedSpecializations: number[] = [];
   selectedQualifications: number[] = [];
   selectedLanguages: number[] = [];
 
-  // Dropdown open states
   specializationDropdownOpen = false;
   qualificationDropdownOpen = false;
   languageDropdownOpen = false;
 
-  // Search filter terms for dropdowns
   specializationSearch = '';
   qualificationSearch = '';
   languageSearch = '';
-
-  // Profile image
   profileImageFile: File | null = null;
   profileImagePreview: string | null = null;
 
@@ -55,7 +50,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     private authService: Authservice,
     private alert: SweetAlertService,
     private router: Router
-  ) {}
+  ) { }
 
   currentStep: 1 | 2 = 1;
   userType: 'user' | 'doctor' | 'clinic' = 'user';
@@ -68,8 +63,6 @@ export class RegisterComponent implements OnInit, OnChanges {
   basicForm!: FormGroup;
   doctorForm!: FormGroup;
   clinicForm!: FormGroup;
-
-  // ── Master data loaders ──────────────────────────────────────────────────────
 
   GetAllSpecialization() {
     this.masterService.getSpecialization().subscribe({
@@ -85,7 +78,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.masterService.GetAllQualification().subscribe({
       next: (res: any) => { this.qualificationList = res.data; },
       error: (err: any) => {
-        this.alert.toastError(err?.error?.message || 'Failed to load qualifications.');
+        this.alert.toastError(err?.error?.message);
         this.qualificationList = [];
       }
     });
@@ -105,7 +98,6 @@ export class RegisterComponent implements OnInit, OnChanges {
     });
   }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.initForms();
@@ -125,69 +117,61 @@ export class RegisterComponent implements OnInit, OnChanges {
     }
   }
 
-  // ── Form Initialisation ───────────────────────────────────────────────────────
 
   initForms(): void {
     this.basicForm = this.fb.group({
-      fullName:        ['', [Validators.required, Validators.minLength(2)]],
-      mobile:          [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email:           [this.verifiedEmail || '', [Validators.required, Validators.email]],
-      userType:        ['user', [Validators.required]],
-      gender:          ['male', [Validators.required]],
-      dob:             ['', [Validators.required]],
-      state:           [null, [Validators.required]],
-      city:            [null, [Validators.required]],
-      password:        ['', [Validators.required, Validators.minLength(6)]],
+      fullName: ['', [Validators.required, Validators.minLength(2)]],
+      mobile: [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      email: [this.verifiedEmail || '', [Validators.required, Validators.email]],
+      userType: ['user', [Validators.required]],
+      gender: ['male', [Validators.required]],
+      dob: ['', [Validators.required]],
+      state: [null, [Validators.required]],
+      city: [null, [Validators.required]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
-      termsAccepted:   [false, [Validators.requiredTrue]],
+      termsAccepted: [false, [Validators.requiredTrue]],
     });
 
     this.doctorForm = this.fb.group({
-      specializationId:   [null], // Kept for model compatibility; validated via selectedSpecializations
+      specializationId: [null], // Kept for model compatibility; validated via selectedSpecializations
       registrationNumber: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9\-\/]+$/)]],
-      experienceYears:    [0,  [Validators.required, Validators.min(0)]],
-      consultationFee:    [0,  [Validators.required, Validators.min(0)]],
-      institute:          ['', [Validators.required]],
-      about:              [''],
+      experienceYears: [0, [Validators.required, Validators.min(0)]],
+      consultationFee: [0, [Validators.required, Validators.min(0)]],
+      institute: ['', [Validators.required]],
+      about: [''],
     });
 
     this.clinicForm = this.fb.group({
-      clinicName:      ['', [Validators.required, Validators.minLength(2)]],
+      clinicName: ['', [Validators.required, Validators.minLength(2)]],
       establishedYear: [null, [Validators.required, Validators.min(1900), Validators.max(new Date().getFullYear())]],
-      consultancyFees: [0,   [Validators.required, Validators.min(0)]],
-      phone:           ['',  [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email:           [this.verifiedEmail || '', [Validators.required, Validators.email]],
-      state:           [null, [Validators.required]],
-      city:            [null, [Validators.required]],
-      pincode:         ['',  [Validators.required, Validators.pattern(/^[0-9]{6}$/)]],
-      address:         ['',  [Validators.required]],
-      description:     [''],
+      consultancyFees: [0, [Validators.required, Validators.min(0)]],
+      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      email: [this.verifiedEmail || '', [Validators.required, Validators.email]],
+      state: [null, [Validators.required]],
+      city: [null, [Validators.required]],
+      pincode: ['', [Validators.required, Validators.pattern(/^[0-9]{6}$/)]],
+      address: ['', [Validators.required]],
+      description: [''],
     });
   }
 
-  // ── User Type ─────────────────────────────────────────────────────────────────
 
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
     this.userType = type;
     this.basicForm.patchValue({ userType: type });
   }
 
-  // ── Gender ────────────────────────────────────────────────────────────────────
 
   setGender(gender: string): void {
     this.basicForm.patchValue({ gender });
   }
 
-  // ── DOB ───────────────────────────────────────────────────────────────────────
 
   onDobChange(event: Event): void {
-    // Age is auto-calculated internally and NOT submitted to API
     const input = event.target as HTMLInputElement;
     if (!input.value) return;
-    // intentionally empty — dob value is captured by formControl directly
   }
-
-  // ── State / City Cascade ──────────────────────────────────────────────────────
 
   onStateChange(event: Event, target: 'basic' | 'clinic'): void {
     const select = event.target as HTMLSelectElement;
@@ -207,12 +191,14 @@ export class RegisterComponent implements OnInit, OnChanges {
         if (target === 'basic') this.cityList = res.data;
         else this.clinicCityList = res.data;
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
-  // ── Profile Image ─────────────────────────────────────────────────────────────
-
+  triggerImageUpload(): void {
+    const el = document.getElementById('profile-image-input') as HTMLInputElement;
+    el?.click();
+  }
   onProfileImageChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -223,12 +209,11 @@ export class RegisterComponent implements OnInit, OnChanges {
     reader.readAsDataURL(file);
   }
 
-  triggerImageUpload(): void {
-    const el = document.getElementById('profile-image-input') as HTMLInputElement;
-    el?.click();
-  }
+  // triggerImageUpload(): void {
+  //   const el = document.getElementById('profile-image-input') as HTMLInputElement;
+  //   el?.click();
+  // }
 
-  // ── Dropdown Control ─────────────────────────────────────────────────────────
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -261,7 +246,6 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.languageDropdownOpen = false;
   }
 
-  // ── Multi-select: Specializations ─────────────────────────────────────────────
 
   toggleSpecialization(id: number): void {
     const idx = this.selectedSpecializations.indexOf(id);
@@ -307,7 +291,6 @@ export class RegisterComponent implements OnInit, OnChanges {
     return this.specializationList.filter(s => s.name?.toLowerCase().includes(term));
   }
 
-  // ── Multi-select: Qualifications ──────────────────────────────────────────────
 
   toggleQualification(id: number): void {
     const idx = this.selectedQualifications.indexOf(id);
@@ -346,7 +329,6 @@ export class RegisterComponent implements OnInit, OnChanges {
     return this.qualificationList.filter(q => q.name?.toLowerCase().includes(term));
   }
 
-  // ── Multi-select: Languages ───────────────────────────────────────────────────
 
   toggleLanguage(id: number): void {
     const idx = this.selectedLanguages.indexOf(id);
@@ -385,12 +367,11 @@ export class RegisterComponent implements OnInit, OnChanges {
     return this.languageList.filter(l => l.name?.toLowerCase().includes(term));
   }
 
-  // ── Password Toggle ───────────────────────────────────────────────────────────
+
 
   togglePassword(): void { this.showPassword = !this.showPassword; }
   toggleConfirmPassword(): void { this.showConfirmPassword = !this.showConfirmPassword; }
 
-  // ── Navigation ────────────────────────────────────────────────────────────────
 
   onNextOrSubmit(): void {
     if (this.basicForm.invalid) {
@@ -420,46 +401,43 @@ export class RegisterComponent implements OnInit, OnChanges {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Submit: User ──────────────────────────────────────────────────────────────
 
   submitUserRegistration(): void {
     this.isSubmitting = true;
     this.errorMessage = '';
     const b = this.basicForm.value;
     const form = new FormData();
+    const cityname = this.cityList.find(c => c.id === b.city)?.name;
+    const statename = this.stateList.find(c => c.id === b.state)?.name;
     form.append('fullName', b.fullName);
     form.append('email', b.email);
     form.append('mobile', b.mobile);
     form.append('password', b.password);
     form.append('dob', b.dob);
     form.append('gender', b.gender);
-    form.append('state', b.state);
-    form.append('city', b.city);
-    form.append('roleId', '1');
-    if (this.profileImageFile) form.append('profileImageFile', this.profileImageFile);
+    form.append('state', statename || '');
+    form.append('city', cityname || '');
+    form.append('roleId', role.patient.toString());
+    debugger;
+    console.log(form);
+    if (this.profileImageFile) form.append('file', this.profileImageFile);
 
     this.authService.register(form).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
-        const user = res?.data || res;
-        const token = user?.token || res?.token || 'user-jwt-token';
+        const user = res.data;
+        const token = user.token;
         this.authService.saveUserSession(user, token);
-        this.alert.toastSuccess('Welcome to PhysiosMate! Your account is created.');
         this.registrationSuccess.emit();
         this.router.navigate(['/user-dashboard']);
       },
       error: (err: any) => {
         this.isSubmitting = false;
-        const user = { fullName: b.fullName.trim(), email: b.email.trim(), mobile: b.mobile.trim(), roleId: 3 };
-        this.authService.saveUserSession(user, 'demo-user-token');
-        this.alert.toastSuccess('Account created successfully!');
-        this.registrationSuccess.emit();
-        this.router.navigate(['/user-dashboard']);
+        this.alert.toastError(err?.message || 'Error creating account');
       }
     });
   }
 
-  // ── Submit: Doctor ────────────────────────────────────────────────────────────
 
   submitDoctorRegistration(): void {
     if (this.doctorForm.invalid) {
@@ -536,7 +514,6 @@ export class RegisterComponent implements OnInit, OnChanges {
     });
   }
 
-  // ── Submit: Clinic ────────────────────────────────────────────────────────────
 
   submitClinicRegistration(): void {
     if (this.clinicForm.invalid) {
@@ -565,16 +542,16 @@ export class RegisterComponent implements OnInit, OnChanges {
         this.authService.saveUserSession(user, token);
 
         const formData = new FormData();
-        formData.append('clinicName',      c.clinicName);
+        formData.append('clinicName', c.clinicName);
         formData.append('establishedYear', c.establishedYear);
         formData.append('consultancyFees', c.consultancyFees);
-        formData.append('phone',           c.phone);
-        formData.append('email',           c.email);
-        formData.append('state',           c.state);
-        formData.append('city',            c.city);
-        formData.append('pincode',         c.pincode);
-        formData.append('address',         c.address);
-        formData.append('description',     c.description || '');
+        formData.append('phone', c.phone);
+        formData.append('email', c.email);
+        formData.append('state', c.state);
+        formData.append('city', c.city);
+        formData.append('pincode', c.pincode);
+        formData.append('address', c.address);
+        formData.append('description', c.description || '');
 
         this.authService.addClinic(formData).subscribe({
           next: () => {
