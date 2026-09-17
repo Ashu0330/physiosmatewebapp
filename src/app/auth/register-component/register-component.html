@@ -13,36 +13,24 @@
       <div class="step-pill">
         <span class="step-dot"></span>
         <span class="step-text">
-          {{ userType === 'user' ? 'Step 1 of 1' : (currentStep === 1 ? 'Step 1 of 2: Basic Details' : 'Step 2 of 2: Profile Details') }}
+          {{ userType === 'user' ? 'Step 1 of 1' : (currentStep === 1 ? 'Step 1 of 2: Basic Details' : 'Step 2 of 2:
+          Profile Details') }}
         </span>
       </div>
     </div>
 
     <h2 class="register-title">
-      {{ currentStep === 1 ? 'Complete Your Account Profile' : (userType === 'doctor' ? 'Doctor Professional Profile' : 'Clinic Facility Information') }}
+      {{ currentStep === 1 ? 'Complete Your Account Profile' : (userType === 'doctor' ? 'Doctor Professional Profile' :
+      'Clinic Facility Information') }}
     </h2>
     <p class="register-subtitle">
       {{ currentStep === 1
-        ? 'Enter your details below to set up your PhysiosMate profile.'
-        : (userType === 'doctor'
-          ? 'Provide your clinical credentials and expertise for patient consultations.'
-          : 'Register your clinic profile to list services and manage appointments.') }}
+      ? 'Enter your details below to set up your PhysiosMate profile.'
+      : (userType === 'doctor'
+      ? 'Provide your clinical credentials and expertise for patient consultations.'
+      : 'Register your clinic profile to list services and manage appointments.') }}
     </p>
 
-    <!-- Multi-step Stepper Indicator (for Doctor & Clinic) -->
-    @if (userType !== 'user') {
-    <div class="stepper-bar">
-      <div class="step-item" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
-        <span class="step-circle">{{ currentStep > 1 ? '✓' : '1' }}</span>
-        <span class="step-label">Basic Details</span>
-      </div>
-      <div class="step-line" [class.filled]="currentStep > 1"></div>
-      <div class="step-item" [class.active]="currentStep === 2">
-        <span class="step-circle">2</span>
-        <span class="step-label">{{ userType === 'doctor' ? 'Doctor Profile' : 'Clinic Details' }}</span>
-      </div>
-    </div>
-    }
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════
@@ -51,69 +39,19 @@
   @if (currentStep === 1) {
   <form [formGroup]="basicForm" (ngSubmit)="onNextOrSubmit()" class="register-form" novalidate>
 
-    <!-- Account Type -->
-    <div class="form-group">
-      <label class="form-label">Select Account Type <span class="required-star">*</span></label>
-      <div class="role-cards-grid">
-        <div class="role-card" [class.selected]="userType === 'user'" (click)="setUserType('user')">
-          <div class="role-icon-wrap">🧑</div>
-          <div class="role-info">
-            <div class="role-name">User / Patient</div>
-            <div class="role-desc">Book consultations & home visits</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'user'"></span>
-          </div>
-        </div>
-
-        <div class="role-card" [class.selected]="userType === 'doctor'" (click)="setUserType('doctor')">
-          <div class="role-icon-wrap">🩺</div>
-          <div class="role-info">
-            <div class="role-name">Doctor / Physio</div>
-            <div class="role-desc">Provide care & grow practice</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'doctor'"></span>
-          </div>
-        </div>
-
-        <div class="role-card" [class.selected]="userType === 'clinic'" (click)="setUserType('clinic')">
-          <div class="role-icon-wrap">🏥</div>
-          <div class="role-info">
-            <div class="role-name">Rehab Clinic</div>
-            <div class="role-desc">Manage centers & practitioners</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'clinic'"></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="dropdown-wrapper mt-2">
-        <label for="userTypeSelect" class="form-sublabel">Or select from dropdown:</label>
-        <select id="userTypeSelect" formControlName="userType" (change)="setUserType(basicForm.get('userType')?.value)"
-          class="form-select">
-          <option value="user">User / Patient</option>
-          <option value="doctor">Doctor / Physiotherapist</option>
-          <option value="clinic">Clinic / Rehabilitation Center</option>
-        </select>
-      </div>
-    </div>
-
     <!-- Profile Image Upload -->
     <div class="form-group">
-      <label class="form-label">Profile Photo <span class="form-label-hint">(optional)</span></label>
       <div class="profile-upload-row">
         <div class="profile-avatar-wrap" (click)="triggerImageUpload()">
           @if (profileImagePreview) {
-            <img [src]="profileImagePreview" alt="Profile preview" class="profile-avatar-img" />
+          <img [src]="profileImagePreview" alt="Profile preview" class="profile-avatar-img" />
           } @else {
-            <div class="profile-avatar-placeholder">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
+          <div class="profile-avatar-placeholder">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
           }
           <div class="profile-avatar-overlay">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -133,12 +71,32 @@
       </div>
     </div>
 
+    <!-- Account Type -->
+    <div class="form-group">
+      <label class="form-label">Select Account Type <span class="required-star">*</span></label>
+      <div class="gender-pills account-type-pills">
+        <button type="button" class="gender-pill account-type-pill" id="account-type-user"
+          [class.active]="basicForm.get('userType')?.value === 'user'" (click)="setUserType('user')">
+           Patient
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-doctor"
+          [class.active]="basicForm.get('userType')?.value === 'doctor'" (click)="setUserType('doctor')">
+           Doctor
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-clinic"
+          [class.active]="basicForm.get('userType')?.value === 'clinic'" (click)="setUserType('clinic')">
+           Clinic
+        </button>
+      </div>
+    </div>
+
     <!-- Full Name + Mobile -->
-    <div class="form-grid-2">
+    <div class="form-grid">
       <div class="form-group">
         <label for="reg-name" class="form-label">Full Name <span class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
@@ -150,7 +108,63 @@
         <span class="field-error">Please enter your full name (at least 2 characters)</span>
         }
       </div>
+    </div>
 
+    <!-- Email -->
+    <div class="form-group">
+      <label for="reg-email" class="form-label">Email Address <span class="required-star">*</span></label>
+      <div class="input-wrapper">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        <input id="reg-email" type="email" formControlName="email" placeholder="e.g. name@example.com"
+          class="form-input" [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
+      </div>
+      @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
+      <span class="field-error">Please enter a valid email address</span>
+      }
+    </div>
+
+    <!-- Gender -->
+    <div class="form-group">
+      <label class="form-label">Gender <span class="required-star">*</span></label>
+      <div class="gender-pills">
+        <button type="button" class="gender-pill" id="gender-male"
+          [class.active]="basicForm.get('gender')?.value === 'male'" (click)="setGender('male')">
+          <span>♂</span> Male
+        </button>
+        <button type="button" class="gender-pill" id="gender-female"
+          [class.active]="basicForm.get('gender')?.value === 'female'" (click)="setGender('female')">
+          <span>♀</span> Female
+        </button>
+        <button type="button" class="gender-pill" id="gender-other"
+          [class.active]="basicForm.get('gender')?.value === 'other'" (click)="setGender('other')">
+          <span>⚧</span> Other
+        </button>
+      </div>
+    </div>
+
+    <!-- DOB -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="reg-dob" class="form-label">Date of Birth <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
+            [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
+        </div>
+        @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
+        <span class="field-error">Please select your date of birth</span>
+        }
+      </div>
       <div class="form-group">
         <div class="label-with-badge">
           <label for="reg-mobile" class="form-label">Mobile Number <span class="required-star">*</span></label>
@@ -168,68 +182,11 @@
       </div>
     </div>
 
-    <!-- Email -->
-    <div class="form-group">
-      <label for="reg-email" class="form-label">Email Address <span class="required-star">*</span></label>
-      <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-          <polyline points="22,6 12,13 2,6"></polyline>
-        </svg>
-        <input id="reg-email" type="email" formControlName="email" placeholder="e.g. name@example.com"
-          class="form-input" [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
-      </div>
-      @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
-      <span class="field-error">Please enter a valid email address</span>
-      }
-    </div>
-
-    <!-- Gender -->
-    <div class="form-group">
-      <label class="form-label">Gender <span class="required-star">*</span></label>
-      <div class="gender-pills">
-        <button type="button" class="gender-pill" id="gender-male"
-          [class.active]="basicForm.get('gender')?.value === 'male'"
-          (click)="setGender('male')">
-          <span>♂</span> Male
-        </button>
-        <button type="button" class="gender-pill" id="gender-female"
-          [class.active]="basicForm.get('gender')?.value === 'female'"
-          (click)="setGender('female')">
-          <span>♀</span> Female
-        </button>
-        <button type="button" class="gender-pill" id="gender-other"
-          [class.active]="basicForm.get('gender')?.value === 'other'"
-          (click)="setGender('other')">
-          <span>⚧</span> Other
-        </button>
-      </div>
-    </div>
-
-    <!-- DOB -->
-    <div class="form-group">
-      <label for="reg-dob" class="form-label">Date of Birth <span class="required-star">*</span></label>
-      <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
-          [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
-      </div>
-      @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
-      <span class="field-error">Please select your date of birth</span>
-      }
-    </div>
-
     <!-- State + City -->
     <div class="form-grid-2">
       <div class="form-group">
         <label for="reg-state" class="form-label">State <span class="required-star">*</span></label>
-        <select id="reg-state" formControlName="state" class="form-select"
-          (change)="onStateChange($event, 'basic')"
+        <select id="reg-state" formControlName="state" class="form-select" (change)="onStateChange($event, 'basic')"
           [class.is-invalid]="basicForm.get('state')?.invalid && basicForm.get('state')?.touched">
           <option [value]="null" disabled selected>Select state</option>
           @for (s of stateList; track s.id) {
@@ -246,7 +203,8 @@
         <select id="reg-city" formControlName="city" class="form-select"
           [class.is-invalid]="basicForm.get('city')?.invalid && basicForm.get('city')?.touched"
           [attr.disabled]="cityList.length === 0 ? true : null">
-          <option [value]="null" disabled selected>{{ cityList.length === 0 ? 'Select state first' : 'Select city' }}</option>
+          <option [value]="null" disabled selected>{{ cityList.length === 0 ? 'Select state first' : 'Select city' }}
+          </option>
           @for (c of cityList; track c.id) {
           <option [value]="c.id">{{ c.name }}</option>
           }
@@ -262,15 +220,29 @@
       <div class="form-group">
         <label for="reg-password" class="form-label">Create Password <span class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
           <input id="reg-password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
             placeholder="Min. 6 characters" class="form-input"
             [class.is-invalid]="basicForm.get('password')?.invalid && basicForm.get('password')?.touched" />
-          <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1">
-            {{ showPassword ? '👁️' : '🔒' }}
+          <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1"
+            aria-label="Toggle password visibility">
+            @if (showPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
           </button>
         </div>
         @if (basicForm.get('password')?.invalid && basicForm.get('password')?.touched) {
@@ -279,17 +251,32 @@
       </div>
 
       <div class="form-group">
-        <label for="reg-confirm-password" class="form-label">Confirm Password <span class="required-star">*</span></label>
+        <label for="reg-confirm-password" class="form-label">Confirm Password <span
+            class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
           <input id="reg-confirm-password" [type]="showConfirmPassword ? 'text' : 'password'"
             formControlName="confirmPassword" placeholder="Re-enter password" class="form-input"
             [class.is-invalid]="basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched" />
-          <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1">
-            {{ showConfirmPassword ? '👁️' : '🔒' }}
+          <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1"
+            aria-label="Toggle confirm password visibility">
+            @if (showConfirmPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
           </button>
         </div>
         @if (basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched) {
@@ -304,7 +291,8 @@
         <input id="terms-checkbox" type="checkbox" formControlName="termsAccepted" class="terms-checkbox" />
         <span class="terms-custom-box">
           <svg *ngIf="basicForm.get('termsAccepted')?.value" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </span>
         <span class="terms-text">I agree to Terms &amp; Conditions</span>
@@ -321,7 +309,8 @@
       <span>Creating Account...</span>
       } @else {
       <span>
-        {{ userType === 'user' ? 'Complete User Registration ✓' : (userType === 'doctor' ? 'Next: Doctor Profile Details →' : 'Next: Clinic Details →') }}
+        {{ userType === 'user' ? 'Complete User Registration ✓' : (userType === 'doctor' ? 'Next: Doctor Profile Details
+        →' : 'Next: Clinic Details →') }}
       </span>
       }
     </button>
@@ -344,27 +333,29 @@
       <label class="form-label">Specializations <span class="required-star">*</span>
         <span class="form-label-hint">(select one or more)</span>
       </label>
-      <div class="multiselect-trigger-box"
-        id="specialization-select-trigger"
+      <div class="multiselect-trigger-box" id="specialization-select-trigger"
         (click)="toggleDropdown('specialization', $event)"
         [class.is-invalid]="selectedSpecializations.length === 0 && doctorForm.touched">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v4a3 3 0 0 0 3 3h1M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v4a3 3 0 0 0 3 3h1M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
         </svg>
         <span class="multiselect-trigger-text" [class.placeholder]="selectedSpecializations.length === 0">
           @if (selectedSpecializations.length === 0) {
-            Select specialization(s)...
+          Select specialization(s)...
           } @else if (selectedSpecializations.length === 1) {
-            {{ getSpecializationName(selectedSpecializations[0]) }}
+          {{ getSpecializationName(selectedSpecializations[0]) }}
           } @else {
-            {{ selectedSpecializations.length }} specializations selected
+          {{ selectedSpecializations.length }} specializations selected
           }
         </span>
         @if (selectedSpecializations.length > 0) {
-          <span class="multiselect-count-badge">{{ selectedSpecializations.length }}</span>
-          <button type="button" class="multiselect-clear-btn" (click)="clearSpecializations($event)" title="Clear all">✕</button>
+        <span class="multiselect-count-badge">{{ selectedSpecializations.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearSpecializations($event)"
+          title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="specializationDropdownOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="chevron-icon" [class.rotated]="specializationDropdownOpen" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
@@ -373,31 +364,28 @@
       @if (specializationDropdownOpen) {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
-          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text"
-            placeholder="Search specializations..."
-            class="dropdown-search-input"
-            [value]="specializationSearch"
-            (input)="specializationSearch = $any($event.target).value" />
+          <input type="text" placeholder="Search specializations..." class="dropdown-search-input"
+            [value]="specializationSearch" (input)="specializationSearch = $any($event.target).value" />
           @if (specializationSearch) {
-            <button type="button" class="clear-search-btn" (click)="specializationSearch = ''">✕</button>
+          <button type="button" class="clear-search-btn" (click)="specializationSearch = ''">✕</button>
           }
         </div>
 
         <div class="dropdown-options-list">
           @for (item of filteredSpecializations; track item.id) {
           <label class="dropdown-option-item" [class.selected]="isSpecializationSelected(item.id)">
-            <input type="checkbox"
-              class="dropdown-checkbox"
-              [checked]="isSpecializationSelected(item.id)"
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isSpecializationSelected(item.id)"
               (change)="toggleSpecialization(item.id)" />
             <span class="custom-checkbox">
               @if (isSpecializationSelected(item.id)) {
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </svg>
               }
             </span>
@@ -421,7 +409,8 @@
         @for (id of selectedSpecializations; track id) {
         <span class="selected-tag-pill">
           {{ getSpecializationName(id) }}
-          <button type="button" class="tag-remove-btn" (click)="removeSpecialization(id, $event)" title="Remove">✕</button>
+          <button type="button" class="tag-remove-btn" (click)="removeSpecialization(id, $event)"
+            title="Remove">✕</button>
         </span>
         }
       </div>
@@ -433,28 +422,30 @@
       <label class="form-label">Qualifications <span class="required-star">*</span>
         <span class="form-label-hint">(select one or more)</span>
       </label>
-      <div class="multiselect-trigger-box"
-        id="qualification-select-trigger"
+      <div class="multiselect-trigger-box" id="qualification-select-trigger"
         (click)="toggleDropdown('qualification', $event)"
         [class.is-invalid]="selectedQualifications.length === 0 && doctorForm.touched">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c3 3 9 3 12 0v-5" />
         </svg>
         <span class="multiselect-trigger-text" [class.placeholder]="selectedQualifications.length === 0">
           @if (selectedQualifications.length === 0) {
-            Select qualification(s)...
+          Select qualification(s)...
           } @else if (selectedQualifications.length === 1) {
-            {{ getQualificationName(selectedQualifications[0]) }}
+          {{ getQualificationName(selectedQualifications[0]) }}
           } @else {
-            {{ selectedQualifications.length }} qualifications selected
+          {{ selectedQualifications.length }} qualifications selected
           }
         </span>
         @if (selectedQualifications.length > 0) {
-          <span class="multiselect-count-badge">{{ selectedQualifications.length }}</span>
-          <button type="button" class="multiselect-clear-btn" (click)="clearQualifications($event)" title="Clear all">✕</button>
+        <span class="multiselect-count-badge">{{ selectedQualifications.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearQualifications($event)"
+          title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="qualificationDropdownOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="chevron-icon" [class.rotated]="qualificationDropdownOpen" width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
@@ -463,31 +454,28 @@
       @if (qualificationDropdownOpen) {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
-          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text"
-            placeholder="Search qualifications..."
-            class="dropdown-search-input"
-            [value]="qualificationSearch"
-            (input)="qualificationSearch = $any($event.target).value" />
+          <input type="text" placeholder="Search qualifications..." class="dropdown-search-input"
+            [value]="qualificationSearch" (input)="qualificationSearch = $any($event.target).value" />
           @if (qualificationSearch) {
-            <button type="button" class="clear-search-btn" (click)="qualificationSearch = ''">✕</button>
+          <button type="button" class="clear-search-btn" (click)="qualificationSearch = ''">✕</button>
           }
         </div>
 
         <div class="dropdown-options-list">
           @for (item of filteredQualifications; track item.id) {
           <label class="dropdown-option-item" [class.selected]="isQualificationSelected(item.id)">
-            <input type="checkbox"
-              class="dropdown-checkbox"
-              [checked]="isQualificationSelected(item.id)"
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isQualificationSelected(item.id)"
               (change)="toggleQualification(item.id)" />
             <span class="custom-checkbox">
               @if (isQualificationSelected(item.id)) {
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </svg>
               }
             </span>
@@ -511,7 +499,8 @@
         @for (id of selectedQualifications; track id) {
         <span class="selected-tag-pill">
           {{ getQualificationName(id) }}
-          <button type="button" class="tag-remove-btn" (click)="removeQualification(id, $event)" title="Remove">✕</button>
+          <button type="button" class="tag-remove-btn" (click)="removeQualification(id, $event)"
+            title="Remove">✕</button>
         </span>
         }
       </div>
@@ -520,9 +509,11 @@
 
     <!-- Registration Number -->
     <div class="form-group">
-      <label for="doc-reg-no" class="form-label">State / Council License No. <span class="required-star">*</span></label>
+      <label for="doc-reg-no" class="form-label">State / Council License No. <span
+          class="required-star">*</span></label>
       <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
         <input id="doc-reg-no" type="text" formControlName="registrationNumber"
@@ -539,7 +530,8 @@
       <div class="form-group">
         <label for="doc-exp" class="form-label">Years of Experience <span class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
@@ -562,7 +554,8 @@
     <div class="form-group">
       <label for="doc-institute" class="form-label">Institution / College <span class="required-star">*</span></label>
       <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M3 21h18"></path>
           <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
           <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"></path>
@@ -581,28 +574,29 @@
       <label class="form-label">Languages Spoken
         <span class="form-label-hint">(select all that apply)</span>
       </label>
-      <div class="multiselect-trigger-box"
-        id="language-select-trigger"
-        (click)="toggleDropdown('language', $event)">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="multiselect-trigger-box" id="language-select-trigger" (click)="toggleDropdown('language', $event)">
+        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
         <span class="multiselect-trigger-text" [class.placeholder]="selectedLanguages.length === 0">
           @if (selectedLanguages.length === 0) {
-            Select language(s)...
+          Select language(s)...
           } @else if (selectedLanguages.length === 1) {
-            {{ getLanguageName(selectedLanguages[0]) }}
+          {{ getLanguageName(selectedLanguages[0]) }}
           } @else {
-            {{ selectedLanguages.length }} languages selected
+          {{ selectedLanguages.length }} languages selected
           }
         </span>
         @if (selectedLanguages.length > 0) {
-          <span class="multiselect-count-badge">{{ selectedLanguages.length }}</span>
-          <button type="button" class="multiselect-clear-btn" (click)="clearLanguages($event)" title="Clear all">✕</button>
+        <span class="multiselect-count-badge">{{ selectedLanguages.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearLanguages($event)"
+          title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="languageDropdownOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="chevron-icon" [class.rotated]="languageDropdownOpen" width="16" height="16" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
@@ -611,31 +605,28 @@
       @if (languageDropdownOpen) {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
-          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text"
-            placeholder="Search languages..."
-            class="dropdown-search-input"
-            [value]="languageSearch"
+          <input type="text" placeholder="Search languages..." class="dropdown-search-input" [value]="languageSearch"
             (input)="languageSearch = $any($event.target).value" />
           @if (languageSearch) {
-            <button type="button" class="clear-search-btn" (click)="languageSearch = ''">✕</button>
+          <button type="button" class="clear-search-btn" (click)="languageSearch = ''">✕</button>
           }
         </div>
 
         <div class="dropdown-options-list">
           @for (item of filteredLanguages; track item.id) {
           <label class="dropdown-option-item" [class.selected]="isLanguageSelected(item.id)">
-            <input type="checkbox"
-              class="dropdown-checkbox"
-              [checked]="isLanguageSelected(item.id)"
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isLanguageSelected(item.id)"
               (change)="toggleLanguage(item.id)" />
             <span class="custom-checkbox">
               @if (isLanguageSelected(item.id)) {
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </svg>
               }
             </span>
@@ -700,7 +691,8 @@
     <div class="form-group">
       <label for="clinic-name" class="form-label">Clinic / Center Name <span class="required-star">*</span></label>
       <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M3 21h18"></path>
           <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
         </svg>
@@ -718,14 +710,15 @@
       <div class="form-group">
         <label for="clinic-est-year" class="form-label">Established Year <span class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <input id="clinic-est-year" type="number" formControlName="establishedYear"
-            placeholder="e.g. 2015" min="1900" [max]="2026" class="form-input"
+          <input id="clinic-est-year" type="number" formControlName="establishedYear" placeholder="e.g. 2015" min="1900"
+            [max]="2026" class="form-input"
             [class.is-invalid]="clinicForm.get('establishedYear')?.invalid && clinicForm.get('establishedYear')?.touched" />
         </div>
         @if (clinicForm.get('establishedYear')?.invalid && clinicForm.get('establishedYear')?.touched) {
@@ -761,7 +754,8 @@
       <div class="form-group">
         <label for="clinic-email" class="form-label">Clinic Email <span class="required-star">*</span></label>
         <div class="input-wrapper">
-          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
             <polyline points="22,6 12,13 2,6"></polyline>
           </svg>
@@ -791,8 +785,7 @@
     <div class="form-grid-3">
       <div class="form-group">
         <label for="clinic-state" class="form-label">State <span class="required-star">*</span></label>
-        <select id="clinic-state" formControlName="state" class="form-select"
-          (change)="onStateChange($event, 'clinic')"
+        <select id="clinic-state" formControlName="state" class="form-select" (change)="onStateChange($event, 'clinic')"
           [class.is-invalid]="clinicForm.get('state')?.invalid && clinicForm.get('state')?.touched">
           <option [value]="null" disabled selected>Select state</option>
           @for (s of stateList; track s.id) {
@@ -809,7 +802,8 @@
         <select id="clinic-city" formControlName="city" class="form-select"
           [class.is-invalid]="clinicForm.get('city')?.invalid && clinicForm.get('city')?.touched"
           [attr.disabled]="clinicCityList.length === 0 ? true : null">
-          <option [value]="null" disabled selected>{{ clinicCityList.length === 0 ? 'Select state first' : 'Select city' }}</option>
+          <option [value]="null" disabled selected>{{ clinicCityList.length === 0 ? 'Select state first' : 'Select city'
+            }}</option>
           @for (c of clinicCityList; track c.id) {
           <option [value]="c.id">{{ c.name }}</option>
           }
