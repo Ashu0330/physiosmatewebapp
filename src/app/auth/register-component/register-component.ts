@@ -231,22 +231,26 @@ export class RegisterComponent implements OnInit, OnChanges {
     form.append('age', b.age);
     form.append('gender', b.gender);
     form.append('roleId', '2');
-    form.append('specialization', d.specialization);
-    form.append('qualification', d.qualification);
-    form.append('registrationNumber', d.registrationNumber);
-    form.append('experienceYears', d.experienceYears);
-    form.append('consultationFee', d.consultationFee);
-    form.append('practiceType', d.practiceType);
-    form.append('city', d.city);
-    form.append('state', d.state);
-    form.append('about', d.about);
 
+    debugger;
     this.authService.register(form).subscribe({
       next: (res: any) => {
         const user = res?.data || res;
         const token = user?.token || res?.token || 'doctor-jwt-token';
         this.authService.saveUserSession(user, token);
-        this.authService.addPractitioner(form).subscribe({
+        var payload = {
+          userId: user.id,
+          specialization: d.specialization,
+          qualification: d.qualification,
+          registrationNumber: d.registrationNumber,
+          experienceYears: d.experienceYears,
+          consultationFee: d.consultationFee,
+          practiceType: d.practiceType,
+          city: d.city,
+          state: d.state,
+          about: d.about
+        };
+        this.authService.addPractitioner(payload).subscribe({
           next: () => {
             this.isSubmitting = false;
             this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
