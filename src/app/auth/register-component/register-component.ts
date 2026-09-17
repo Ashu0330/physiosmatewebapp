@@ -54,6 +54,7 @@ export class RegisterComponent implements OnInit, OnChanges {
 
   currentStep: 1 | 2 = 1;
   userType: 'user' | 'doctor' | 'clinic' = 'user';
+  registeredUser: any = null;
 
   showPassword = false;
   showConfirmPassword = false;
@@ -160,6 +161,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
     this.userType = type;
     this.basicForm.patchValue({ userType: type });
+    this.registeredUser = null;
   }
 
 
@@ -384,16 +386,25 @@ export class RegisterComponent implements OnInit, OnChanges {
       this.alert.toastError('Passwords do not match! Please check your password confirmation.');
       return;
     }
-    if (this.userType === 'user') {
-      this.submitUserRegistration();
-    } else {
-      // Pre-fill clinic email from basic form before showing step 2
-      if (this.userType === 'clinic') {
-        this.clinicForm.patchValue({ email: bVal.email });
+
+    if (this.registeredUser) {
+      if (this.userType === 'user' || this.registeredUser?.roleId === role.patient) {
+        this.registrationSuccess.emit();
+        this.alert.toastSuccess('Registration successful! Welcome to PhysiosMate.');
+        this.router.navigate(['/']);
+      } else {
+        if (this.userType === 'doctor') {
+          this.doctorForm.patchValue({ email: bVal.email });
+        } else if (this.userType === 'clinic') {
+          this.clinicForm.patchValue({ email: bVal.email, phone: bVal.mobile });
+        }
+        this.currentStep = 2;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      this.currentStep = 2;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+
+    this.submitUserRegistration();
   }
 
   prevStep(): void {
@@ -417,23 +428,46 @@ export class RegisterComponent implements OnInit, OnChanges {
     form.append('gender', b.gender);
     form.append('state', statename || '');
     form.append('city', cityname || '');
-    form.append('roleId', role.patient.toString());
-    debugger;
-    console.log(form);
-    if (this.profileImageFile) form.append('file', this.profileImageFile);
+
+    let roleId = role.patient;
+    if (this.userType === 'doctor') {
+      roleId = role.doctor;
+    } else if (this.userType === 'clinic') {
+      roleId = role.clinic;
+    }
+    form.append('roleId', roleId.toString());
+
+    if (this.profileImageFile) {
+      form.append('file', this.profileImageFile);
+      form.append('profileImageFile', this.profileImageFile);
+    }
 
     this.authService.register(form).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
-        const user = res.data;
-        const token = user.token;
+        const user = res?.data || res;
+        this.registeredUser = user;
+        const token = user?.token;
         this.authService.saveUserSession(user, token);
-        this.registrationSuccess.emit();
-        this.router.navigate(['/user-dashboard']);
+
+        if (this.userType === 'user' || user?.roleId === role.patient) {
+          this.registrationSuccess.emit();
+          this.alert.toastSuccess('Registration successful! Welcome to PhysiosMate.');
+          this.router.navigate(['/']);
+        } else {
+          // Send doctor or clinic to their signup next screen (Step 2)
+          if (this.userType === 'doctor') {
+            this.doctorForm.patchValue({ email: b.email });
+          } else if (this.userType === 'clinic') {
+            this.clinicForm.patchValue({ email: b.email, phone: b.mobile });
+          }
+          this.currentStep = 2;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       },
       error: (err: any) => {
         this.isSubmitting = false;
-        this.alert.toastError(err?.message || 'Error creating account');
+        this.alert.toastError(err?.error?.message || err?.message || 'Error creating account');
       }
     });
   }
@@ -457,59 +491,33 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    const b = this.basicForm.value;
     const d = this.doctorForm.value;
-    const form = new FormData();
-    form.append('fullName', b.fullName);
-    form.append('email', b.email);
-    form.append('mobile', b.mobile);
-    form.append('password', b.password);
-    form.append('dob', b.dob);
-    form.append('gender', b.gender);
-    form.append('state', b.state);
-    form.append('city', b.city);
-    form.append('roleId', '2');
-    if (this.profileImageFile) form.append('profileImageFile', this.profileImageFile);
+    const user = this.registeredUser || this.authService.getCurrentUser();
+    const userId = user?.id || this.authService.getuserid();
 
-    this.authService.register(form).subscribe({
-      next: (res: any) => {
-        const user = res?.data || res;
-        const token = user?.token || res?.token || 'doctor-jwt-token';
-        this.authService.saveUserSession(user, token);
-        const payload = {
-          userId: user.id,
-          specializationId: this.selectedSpecializations[0] || null,
-          selectedSpecializations: this.selectedSpecializations,
-          selectedQualifications: this.selectedQualifications,
-          experienceYears: d.experienceYears,
-          consultationFee: d.consultationFee,
-          institute: d.institute,
-          selectedLanguages: this.selectedLanguages,
-          about: d.about,
-          registrationNumber: d.registrationNumber,
-        };
-        this.authService.addPractitioner(payload).subscribe({
-          next: () => {
-            this.isSubmitting = false;
-            this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
-            this.registrationSuccess.emit();
-            this.router.navigate(['/doctor-dashboard']);
-          },
-          error: () => {
-            this.isSubmitting = false;
-            this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
-            this.registrationSuccess.emit();
-            this.router.navigate(['/doctor-dashboard']);
-          }
-        });
-      },
-      error: () => {
+    const payload = {
+      userId: userId,
+      specializationId: this.selectedSpecializations[0] || null,
+      selectedSpecializations: this.selectedSpecializations,
+      selectedQualifications: this.selectedQualifications,
+      experienceYears: d.experienceYears,
+      consultationFee: d.consultationFee,
+      institute: d.institute,
+      selectedLanguages: this.selectedLanguages,
+      about: d.about,
+      registrationNumber: d.registrationNumber,
+    };
+
+    this.authService.addPractitioner(payload).subscribe({
+      next: () => {
         this.isSubmitting = false;
-        const user = { fullName: b.fullName.trim(), email: b.email.trim(), mobile: b.mobile.trim(), roleId: 2 };
-        this.authService.saveUserSession(user, 'demo-doctor-token');
         this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
         this.registrationSuccess.emit();
         this.router.navigate(['/doctor-dashboard']);
+      },
+      error: (err: any) => {
+        this.isSubmitting = false;
+        this.alert.toastError(err?.error?.message || err?.message || 'Failed to complete doctor profile.');
       }
     });
   }
@@ -525,56 +533,39 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    const b = this.basicForm.value;
     const c = this.clinicForm.value;
-    const form = new FormData();
-    form.append('fullName', b.fullName);
-    form.append('email', b.email);
-    form.append('mobile', b.mobile);
-    form.append('password', b.password);
-    form.append('roleId', '3');
-    if (this.profileImageFile) form.append('profileImageFile', this.profileImageFile);
+    const user = this.registeredUser || this.authService.getCurrentUser();
+    const userId = user?.id || this.authService.getuserid();
 
-    this.authService.register(form).subscribe({
-      next: (res: any) => {
-        const user = res?.data || res;
-        const token = user?.token || res?.token || 'clinic-jwt-token';
-        this.authService.saveUserSession(user, token);
+    const formData = new FormData();
+    if (userId) {
+      formData.append('userId', userId.toString());
+    }
+    formData.append('clinicName', c.clinicName);
+    formData.append('establishedYear', c.establishedYear);
+    formData.append('consultancyFees', c.consultancyFees);
+    formData.append('phone', c.phone);
+    formData.append('email', c.email);
+    formData.append('state', c.state);
+    formData.append('city', c.city);
+    formData.append('pincode', c.pincode);
+    formData.append('address', c.address);
+    formData.append('description', c.description || '');
+    if (this.profileImageFile) {
+      formData.append('file', this.profileImageFile);
+      formData.append('profileImageFile', this.profileImageFile);
+    }
 
-        const formData = new FormData();
-        formData.append('clinicName', c.clinicName);
-        formData.append('establishedYear', c.establishedYear);
-        formData.append('consultancyFees', c.consultancyFees);
-        formData.append('phone', c.phone);
-        formData.append('email', c.email);
-        formData.append('state', c.state);
-        formData.append('city', c.city);
-        formData.append('pincode', c.pincode);
-        formData.append('address', c.address);
-        formData.append('description', c.description || '');
-
-        this.authService.addClinic(formData).subscribe({
-          next: () => {
-            this.isSubmitting = false;
-            this.alert.toastSuccess('Clinic registration submitted successfully!');
-            this.registrationSuccess.emit();
-            this.router.navigate(['/clinics']);
-          },
-          error: () => {
-            this.isSubmitting = false;
-            this.alert.toastSuccess('Clinic registration submitted successfully!');
-            this.registrationSuccess.emit();
-            this.router.navigate(['/clinics']);
-          }
-        });
-      },
-      error: () => {
+    this.authService.addClinic(formData).subscribe({
+      next: () => {
         this.isSubmitting = false;
-        const user = { fullName: b.fullName.trim(), email: b.email.trim(), mobile: b.mobile.trim(), roleId: 4 };
-        this.authService.saveUserSession(user, 'demo-clinic-token');
         this.alert.toastSuccess('Clinic registration submitted successfully!');
         this.registrationSuccess.emit();
         this.router.navigate(['/clinics']);
+      },
+      error: (err: any) => {
+        this.isSubmitting = false;
+        this.alert.toastError(err?.error?.message || err?.message || 'Failed to complete clinic profile.');
       }
     });
   }
