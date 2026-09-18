@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
-import { SweetAlertService } from '../../services/sweet-alert.service';
+import { ApiEndPoints } from '../../helper/api-endpoints';
+import { AppMessage } from '../../helper/app-message';
 import { SharedModule } from '../../shared/shared-module';
+import { BaseComponent } from '../../helper/base-component';
 
 @Component({
   selector: 'app-auth-form',
@@ -13,7 +13,7 @@ import { SharedModule } from '../../shared/shared-module';
   templateUrl: './auth-form.component.html',
   styleUrl: './auth-form.component.css'
 })
-export class AuthFormComponent implements OnInit, OnDestroy {
+export class AuthFormComponent extends BaseComponent implements OnInit, OnDestroy {
   @Input() mode: 'login' | 'signup' = 'signup';
   @Input() bookingContext: boolean = false;
   @Input() providerName?: string;
@@ -23,133 +23,129 @@ export class AuthFormComponent implements OnInit, OnDestroy {
   @Output() otpVerified = new EventEmitter<{ email: string }>();
 
   private fb = inject(FormBuilder);
-  private authService = inject(Authservice);
-  private alert = inject(SweetAlertService);
-  private router = inject(Router);
-
+  protected override authService = inject(Authservice);
 
   signupForm!: FormGroup;
-  showSignupPassword = false;
   isLoading = false;
   errorMessage = '';
 
   isSignupOtpSending = false;
   signupOtpSent = false;
   signupOtpCountdown = 0;
-  signupOtpTimer: any = null;
+  private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     this.initForms();
   }
 
   ngOnDestroy(): void {
-
-    if (this.signupOtpTimer) {
-      clearInterval(this.signupOtpTimer);
-    }
+    if (this.signupOtpTimer) clearInterval(this.signupOtpTimer);
   }
 
   initForms(): void {
-
     this.signupForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      otp: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(6)]],
+      otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       terms: [true, [Validators.requiredTrue]]
     });
-
-
   }
 
+  // ── Send OTP ────────────────────────────────────────────────────────────────
 
-
-  toggleSignupPassword(): void {
-    this.showSignupPassword = !this.showSignupPassword;
-  }
-
-
-
-  sendSignupOtp(): void {
+  async sendSignupOtp(): Promise<void> {
     const emailCtrl = this.signupForm.get('email');
     if (!emailCtrl || emailCtrl.invalid) {
       emailCtrl?.markAsTouched();
-      this.alert.toastError('Please enter a valid email address');
+      this.alert.toastError('Please enter a valid email address.');
       return;
     }
 
-    const email = emailCtrl.value.trim();
     this.isSignupOtpSending = true;
     this.errorMessage = '';
-    const formData = new FormData();
-    formData.append('Email', email);
-    formData.append('IsLogin', 'true');
-    formData.append('IsSignIn', 'true');
 
-    this.authService.register(formData).subscribe({
-      next: (res: any) => {
-        if (res.isSuccess == true) {
-          this.isSignupOtpSending = false;
-          this.signupOtpSent = true;
-          localStorage.setItem('userid', res.data.id)
-          this.alert.toastSuccess('Verification OTP sent to ' + email);
-          this.startSignupOtpCountdown();
-        }
-        else {
-          this.isSignupOtpSending = false;
-          this.alert.toastError(res.message);
-        }
-      },
-      error: (err: any) => {
-        this.isSignupOtpSending = false;
-        console.warn('sendSignupOtp fallback or error:', err);
-        this.signupOtpSent = true;
-        this.alert.toastSuccess('Verification OTP sent to ' + email);
-        this.startSignupOtpCountdown();
+    try {
+      const email = emailCtrl.value.trim();
+
+      const formData = new FormData();
+      formData.append('Email', email);
+      formData.append('IsLogin', 'true');
+      formData.append('IsSignIn', 'true');
+
+      const res = await this.apiService.PostForm<any>(ApiEndPoints.Register, formData);
+
+      if (!res.isSuccess) {
+        this.alert.toastError(res.message || 'Unable to send OTP. Please try again.');
+        return;
       }
-    });
+
+      this.signupOtpSent = true;
+
+      if (res.data?.id) {
+        this.authService.setPendingUserId(res.data.id);
+      }
+
+      this.alert.toastSuccess(AppMessage.OtpSent);
+      this.startSignupOtpCountdown();
+
+    } finally {
+      this.isSignupOtpSending = false;
+    }
   }
+
+  // ── Verify OTP ─────────────────────────────────────────────────────────────
+
+  async verifyOtp(): Promise<void> {
+    const otpCtrl = this.signupForm.get('otp');
+    if (!otpCtrl || otpCtrl.invalid) {
+      otpCtrl?.markAsTouched();
+      this.alert.toastError('Please enter the 6-digit OTP sent to your email.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    try {
+      const model = {
+        otpCode: this.signupForm.value.otp,
+        oTPType: 'Email',
+        email: this.signupForm.value.email,
+        userid: this.authService.getPendingUserId() ?? this.authService.getuserid()
+      };
+
+      const res = await this.apiService.Post<any>(ApiEndPoints.VerifyOtp, model);
+
+      if (!res.isSuccess) {
+        this.alert.toastError(res.message || 'OTP verification failed. Please try again.');
+        return;
+      }
+
+      this.authService.clearPendingUserId();
+      this.alert.toastSuccess(AppMessage.OtpVerified);
+
+      if (res.data?.isProfileCompleted) {
+        this.authService.saveUserSession(res.data, res.data.token);
+        this.authSuccess.emit();
+      }
+
+      this.otpVerified.emit({ email: this.signupForm.value.email });
+
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // ── OTP countdown timer ────────────────────────────────────────────────────
 
   startSignupOtpCountdown(): void {
     this.signupOtpCountdown = 30;
-    if (this.signupOtpTimer) {
-      clearInterval(this.signupOtpTimer);
-    }
+    if (this.signupOtpTimer) clearInterval(this.signupOtpTimer);
     this.signupOtpTimer = setInterval(() => {
       this.signupOtpCountdown--;
       if (this.signupOtpCountdown <= 0) {
-        clearInterval(this.signupOtpTimer);
+        clearInterval(this.signupOtpTimer!);
         this.signupOtpTimer = null;
       }
     }, 1000);
-  }
-
-  verifyOtp(): void {
-    this.isLoading = true;
-    const model = {
-      otpCode: this.signupForm.value.otp,
-      oTPType: 'Email',
-      email: this.signupForm.value.email,
-      userid: localStorage.getItem('userid')
-    };
-
-    this.authService.verifyOtp(model).subscribe({
-      next: (res: any) => {
-        if (res.isSuccess == true) {
-          this.isLoading = false;
-          this.alert.toastSuccess('OTP verified! Proceeding to registration.');
-          if (res.data.isProfileCompleted == true) {
-            this.authService.saveUserSession(res.data, res.data.token);
-            this.router.navigate(['/'])
-          }
-          this.otpVerified.emit({ email: this.signupForm.value.email });
-        } else {
-          this.isLoading = false;
-          this.alert.toastError(res?.message || 'OTP verification failed. Please try again.');
-        }
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        this.alert.toastError(err?.error?.message || 'OTP verification failed. Please try again.');
-      }
-    });
   }
 }

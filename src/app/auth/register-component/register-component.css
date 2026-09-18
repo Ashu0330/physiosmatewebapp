@@ -543,6 +543,7 @@
 }
 
 .select-lead-icon {
+  position: static !important;
   color: var(--primary-color);
   flex-shrink: 0;
 }
@@ -552,14 +553,19 @@
   font-size: 13.5px;
   font-weight: 500;
   color: var(--text-body);
+  background: transparent !important;
+  opacity: 1 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: none;
 }
 
-.multiselect-trigger-text.placeholder {
+.multiselect-trigger-text.is-placeholder {
   color: var(--text-muted);
   font-weight: 400;
+  background: transparent !important;
+  opacity: 1 !important;
 }
 
 .multiselect-count-badge {

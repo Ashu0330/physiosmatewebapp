@@ -1,26 +1,32 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
-import { SweetAlertService } from '../../services/sweet-alert.service';
 import { mastermodel } from '../../models/mastermodel';
-import { HttpClient } from '@angular/common/http';
 import { Masterservice } from '../../services/masterservice';
 import { role } from '../../helper/utilities';
+import { ApiEndPoints } from '../../helper/api-endpoints';
+import { AppMessage } from '../../helper/app-message';
+import { BaseComponent } from '../../helper/base-component';
+import { SharedModule } from '../../shared/shared-module';
 
 @Component({
   selector: 'app-register-component',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [SharedModule],
   templateUrl: './register-component.html',
   styleUrl: './register-component.css',
 })
-export class RegisterComponent implements OnInit, OnChanges {
+export class RegisterComponent extends BaseComponent implements OnInit, OnChanges, OnDestroy {
   @Input() verifiedMobile: string = '';
   @Input() verifiedEmail: string = '';
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
+
+  // ── @ViewChild file inputs (replaces document.getElementById) ──────────────
+  @ViewChild('profileImageInput') profileImageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('clinicLogoInput') clinicLogoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('clinicBannerInput') clinicBannerInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('clinicMediaInput') clinicMediaInput!: ElementRef<HTMLInputElement>;
 
   specializationList: mastermodel[] = [];
   qualificationList: mastermodel[] = [];
@@ -28,21 +34,19 @@ export class RegisterComponent implements OnInit, OnChanges {
   stateList: any[] = [];
   cityList: any[] = [];
 
+  private specializationMap = new Map<number, string>();
+  private qualificationMap = new Map<number, string>();
+  private languageMap = new Map<number, string>();
   selectedSpecializations: number[] = [];
   selectedQualifications: number[] = [];
   selectedLanguages: number[] = [];
-
-  specializationDropdownOpen = false;
-  qualificationDropdownOpen = false;
-  languageDropdownOpen = false;
-
+  openDropdown: 'specialization' | 'qualification' | 'language' | null = null;
   specializationSearch = '';
   qualificationSearch = '';
   languageSearch = '';
   profileImageFile: File | null = null;
   profileImagePreview: string | null = null;
 
-  // Clinic-specific image uploads
   clinicLogoFile: File | null = null;
   clinicLogoPreview: string | null = null;
 
@@ -54,13 +58,12 @@ export class RegisterComponent implements OnInit, OnChanges {
 
   readonly CLINIC_MEDIA_MAX = 10;
 
-  constructor(
-    private masterService: Masterservice,
-    private fb: FormBuilder,
-    private authService: Authservice,
-    private alert: SweetAlertService,
-    private router: Router
-  ) { }
+  private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;         // 5 MB
+  private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;       // 10 MB
+
+  private fb = inject(FormBuilder);
+  protected override authService = inject(Authservice);
 
   currentStep: 1 | 2 = 1;
   userType: 'user' | 'doctor' | 'clinic' = 'user';
@@ -75,47 +78,39 @@ export class RegisterComponent implements OnInit, OnChanges {
   doctorForm!: FormGroup;
   clinicForm!: FormGroup;
 
-  GetAllSpecialization() {
-    this.masterService.getSpecialization().subscribe({
-      next: (res: any) => { this.specializationList = res.data; },
-      error: (err: any) => {
-        this.alert.toastError(err?.error?.message || 'Failed to load specializations.');
-        this.specializationList = [];
-      }
-    });
+
+  async GetAllSpecialization(): Promise<void> {
+    const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllSpecialization);
+    this.specializationList = res.isSuccess ? (res.data ?? []) : [];
+    this.specializationMap = new Map(this.specializationList.map(x => [x.id, x.name ?? '']));
   }
 
-  GetAllQualification() {
-    this.masterService.GetAllQualification().subscribe({
-      next: (res: any) => { this.qualificationList = res.data; },
-      error: (err: any) => {
-        this.alert.toastError(err?.error?.message);
-        this.qualificationList = [];
-      }
-    });
+  async GetAllQualification(): Promise<void> {
+    const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllQualification);
+    this.qualificationList = res.isSuccess ? (res.data ?? []) : [];
+    this.qualificationMap = new Map(this.qualificationList.map(x => [x.id, x.name ?? '']));
   }
 
-  GetAllLanguages() {
-    this.masterService.GetAllLanguages().subscribe({
-      next: (res: any) => { this.languageList = res.data; },
-      error: () => { this.languageList = []; }
-    });
+  async GetAllLanguages(): Promise<void> {
+    const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllLanguage);
+    this.languageList = res.isSuccess ? (res.data ?? []) : [];
+    this.languageMap = new Map(this.languageList.map(x => [x.id, x.name ?? '']));
   }
 
-  GetAllStates() {
-    this.masterService.getstates().subscribe({
-      next: (res: any) => { this.stateList = res.data; },
-      error: () => { this.stateList = []; }
-    });
+  async GetAllStates(): Promise<void> {
+    const res = await this.apiService.Get<any[]>(ApiEndPoints.GetAllState);
+    this.stateList = res.isSuccess ? (res.data ?? []) : [];
   }
 
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.initForms();
-    this.GetAllQualification();
-    this.GetAllSpecialization();
-    this.GetAllLanguages();
-    this.GetAllStates();
+    await Promise.all([
+      this.GetAllQualification(),
+      this.GetAllSpecialization(),
+      this.GetAllLanguages(),
+      this.GetAllStates()
+    ]);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -127,6 +122,14 @@ export class RegisterComponent implements OnInit, OnChanges {
       this.clinicForm?.patchValue({ email: this.verifiedEmail || '' });
     }
   }
+
+  ngOnDestroy(): void {
+    if (this.profileImagePreview) URL.revokeObjectURL(this.profileImagePreview);
+    if (this.clinicLogoPreview) URL.revokeObjectURL(this.clinicLogoPreview);
+    if (this.clinicBannerPreview) URL.revokeObjectURL(this.clinicBannerPreview);
+    this.clinicMediaPreviews.forEach(p => URL.revokeObjectURL(p.url));
+  }
+
 
 
   initForms(): void {
@@ -145,7 +148,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     });
 
     this.doctorForm = this.fb.group({
-      specializationId: [null], // Kept for model compatibility; validated via selectedSpecializations
+      specializationId: [null],
       registrationNumber: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9\-\/]+$/)]],
       experienceYears: [0, [Validators.required, Validators.min(0)]],
       consultationFee: [0, [Validators.required, Validators.min(0)]],
@@ -168,95 +171,107 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
 
+
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
     this.userType = type;
     this.basicForm.patchValue({ userType: type });
     this.registeredUser = null;
   }
 
-
   setGender(gender: string): void {
     this.basicForm.patchValue({ gender });
   }
-
 
   onDobChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.value) return;
   }
 
-  onStateChange(event: Event, target: 'basic' | 'clinic'): void {
+  async onStateChange(event: Event, target: 'basic' | 'clinic'): Promise<void> {
     const select = event.target as HTMLSelectElement;
     const stateId = +select.value;
     if (!stateId) return;
 
+    this.cityList = [];
     if (target === 'basic') {
-      this.cityList = [];
       this.basicForm.patchValue({ city: null });
     } else {
-      this.cityList = [];
       this.clinicForm.patchValue({ city: null });
     }
 
-    this.masterService.getcities(stateId).subscribe({
-      next: (res: any) => {
-        if (target === 'basic') this.cityList = res.data;
-        else this.cityList = res.data;
-      },
-      error: () => { }
-    });
+    const res = await this.apiService.Get<any[]>(`${ApiEndPoints.GetAllCity}?stateId=${stateId}`);
+    this.cityList = res.isSuccess ? (res.data ?? []) : [];
   }
 
-  triggerImageUpload(): void {
-    const el = document.getElementById('profile-image-input') as HTMLInputElement;
-    el?.click();
+
+  private validateImageFile(file: File, maxSizeBytes: number = this.MAX_IMAGE_SIZE_BYTES): boolean {
+    if (!this.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.alert.toastError('Only JPG, PNG, or WebP images are allowed.');
+      return false;
+    }
+    if (file.size > maxSizeBytes) {
+      const mb = (maxSizeBytes / (1024 * 1024)).toFixed(0);
+      this.alert.toastError(`Image size must be less than ${mb} MB.`);
+      return false;
+    }
+    return true;
   }
+
+
+
+  triggerImageUpload(): void {
+    this.profileImageInput?.nativeElement.click();
+  }
+
   onProfileImageChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    if (!this.validateImageFile(file)) return;
+
+    if (this.profileImagePreview) URL.revokeObjectURL(this.profileImagePreview);
     this.profileImageFile = file;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.profileImagePreview = e.target?.result as string; };
-    reader.readAsDataURL(file);
+    this.profileImagePreview = URL.createObjectURL(file);
   }
 
-  // ── Clinic Logo ──────────────────────────────────────────────────────
+
+
   triggerClinicLogoUpload(): void {
-    const el = document.getElementById('clinic-logo-input') as HTMLInputElement;
-    el?.click();
+    this.clinicLogoInput?.nativeElement.click();
   }
 
   onClinicLogoChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    if (!this.validateImageFile(file)) return;
+
+    if (this.clinicLogoPreview) URL.revokeObjectURL(this.clinicLogoPreview);
     this.clinicLogoFile = file;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.clinicLogoPreview = e.target?.result as string; };
-    reader.readAsDataURL(file);
+    this.clinicLogoPreview = URL.createObjectURL(file);
   }
 
-  // ── Clinic Banner ────────────────────────────────────────────────────
+
+
   triggerClinicBannerUpload(): void {
-    const el = document.getElementById('clinic-banner-input') as HTMLInputElement;
-    el?.click();
+    this.clinicBannerInput?.nativeElement.click();
   }
 
   onClinicBannerChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    if (!this.validateImageFile(file, this.MAX_BANNER_SIZE_BYTES)) return;
+
+    if (this.clinicBannerPreview) URL.revokeObjectURL(this.clinicBannerPreview);
     this.clinicBannerFile = file;
-    const reader = new FileReader();
-    reader.onload = (e) => { this.clinicBannerPreview = e.target?.result as string; };
-    reader.readAsDataURL(file);
+    this.clinicBannerPreview = URL.createObjectURL(file);
   }
 
-  // ── Clinic Media Gallery ─────────────────────────────────────────────
+
+
   triggerClinicMediaUpload(): void {
-    const el = document.getElementById('clinic-media-input') as HTMLInputElement;
-    el?.click();
+    this.clinicMediaInput?.nativeElement.click();
   }
 
   onClinicMediaChange(event: Event): void {
@@ -265,36 +280,37 @@ export class RegisterComponent implements OnInit, OnChanges {
     if (!incoming.length) return;
 
     const remaining = this.CLINIC_MEDIA_MAX - this.clinicMediaFiles.length;
-    const toAdd = incoming.slice(0, remaining);
+    const validFiles: File[] = [];
 
-    if (incoming.length > remaining) {
-      this.alert.toastError(`You can add at most ${this.CLINIC_MEDIA_MAX} photos. Only ${toAdd.length} were added.`);
+    for (const file of incoming) {
+      if (validFiles.length >= remaining) {
+        this.alert.toastError(`You can add at most ${this.CLINIC_MEDIA_MAX} photos. Remaining capacity: ${remaining}.`);
+        break;
+      }
+      if (this.validateImageFile(file)) {
+        validFiles.push(file);
+      }
     }
 
-    toAdd.forEach(file => {
+    validFiles.forEach(file => {
       this.clinicMediaFiles.push(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.clinicMediaPreviews.push({ url: e.target?.result as string, name: file.name });
-      };
-      reader.readAsDataURL(file);
+      this.clinicMediaPreviews.push({ url: URL.createObjectURL(file), name: file.name });
     });
 
-    // Reset input so the same files can be re-selected if needed
     input.value = '';
   }
 
   removeClinicMedia(index: number): void {
+    URL.revokeObjectURL(this.clinicMediaPreviews[index].url);
     this.clinicMediaFiles.splice(index, 1);
     this.clinicMediaPreviews.splice(index, 1);
   }
 
   clearAllClinicMedia(): void {
+    this.clinicMediaPreviews.forEach(p => URL.revokeObjectURL(p.url));
     this.clinicMediaFiles = [];
     this.clinicMediaPreviews = [];
   }
-
-
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -306,25 +322,11 @@ export class RegisterComponent implements OnInit, OnChanges {
 
   toggleDropdown(type: 'specialization' | 'qualification' | 'language', event: MouseEvent): void {
     event.stopPropagation();
-    if (type === 'specialization') {
-      this.specializationDropdownOpen = !this.specializationDropdownOpen;
-      this.qualificationDropdownOpen = false;
-      this.languageDropdownOpen = false;
-    } else if (type === 'qualification') {
-      this.qualificationDropdownOpen = !this.qualificationDropdownOpen;
-      this.specializationDropdownOpen = false;
-      this.languageDropdownOpen = false;
-    } else if (type === 'language') {
-      this.languageDropdownOpen = !this.languageDropdownOpen;
-      this.specializationDropdownOpen = false;
-      this.qualificationDropdownOpen = false;
-    }
+    this.openDropdown = this.openDropdown === type ? null : type;
   }
 
   closeAllDropdowns(): void {
-    this.specializationDropdownOpen = false;
-    this.qualificationDropdownOpen = false;
-    this.languageDropdownOpen = false;
+    this.openDropdown = null;
   }
 
 
@@ -349,9 +351,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     const idx = this.selectedSpecializations.indexOf(id);
     if (idx !== -1) {
       this.selectedSpecializations.splice(idx, 1);
-      this.doctorForm.patchValue({
-        specializationId: this.selectedSpecializations[0] || null
-      });
+      this.doctorForm.patchValue({ specializationId: this.selectedSpecializations[0] || null });
     }
   }
 
@@ -362,8 +362,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
   getSpecializationName(id: number): string {
-    const item = this.specializationList.find(s => s.id === id);
-    return item ? item.name : '';
+    return this.specializationMap.get(id) ?? '';
   }
 
   get filteredSpecializations(): mastermodel[] {
@@ -389,9 +388,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   removeQualification(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     const idx = this.selectedQualifications.indexOf(id);
-    if (idx !== -1) {
-      this.selectedQualifications.splice(idx, 1);
-    }
+    if (idx !== -1) this.selectedQualifications.splice(idx, 1);
   }
 
   clearQualifications(event?: MouseEvent): void {
@@ -400,8 +397,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
   getQualificationName(id: number): string {
-    const item = this.qualificationList.find(q => q.id === id);
-    return item ? item.name : '';
+    return this.qualificationMap.get(id) ?? '';
   }
 
   get filteredQualifications(): mastermodel[] {
@@ -427,9 +423,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   removeLanguage(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     const idx = this.selectedLanguages.indexOf(id);
-    if (idx !== -1) {
-      this.selectedLanguages.splice(idx, 1);
-    }
+    if (idx !== -1) this.selectedLanguages.splice(idx, 1);
   }
 
   clearLanguages(event?: MouseEvent): void {
@@ -438,8 +432,7 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
   getLanguageName(id: number): string {
-    const item = this.languageList.find(l => l.id === id);
-    return item ? item.name : '';
+    return this.languageMap.get(id) ?? '';
   }
 
   get filteredLanguages(): mastermodel[] {
@@ -449,15 +442,13 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
 
-
   togglePassword(): void { this.showPassword = !this.showPassword; }
   toggleConfirmPassword(): void { this.showConfirmPassword = !this.showConfirmPassword; }
-
 
   onNextOrSubmit(): void {
     if (this.basicForm.invalid) {
       this.basicForm.markAllAsTouched();
-      this.alert.toastError('Please fill all required basic fields correctly.');
+      this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
     const bVal = this.basicForm.value;
@@ -469,7 +460,7 @@ export class RegisterComponent implements OnInit, OnChanges {
     if (this.registeredUser) {
       if (this.userType === 'user' || this.registeredUser?.roleId === role.patient) {
         this.registrationSuccess.emit();
-        this.alert.toastSuccess('Registration successful! Welcome to PhysiosMate.');
+        this.alert.toastSuccess(AppMessage.RegistrationSuccess);
         this.router.navigate(['/']);
       } else {
         if (this.userType === 'doctor') {
@@ -492,48 +483,44 @@ export class RegisterComponent implements OnInit, OnChanges {
   }
 
 
-  submitUserRegistration(): void {
+  async submitUserRegistration(): Promise<void> {
     this.isSubmitting = true;
     this.errorMessage = '';
-    const b = this.basicForm.value;
-    const form = new FormData();
-    const cityname = this.cityList.find(c => c.id === b.city)?.name;
-    const statename = this.stateList.find(c => c.id === b.state)?.name;
-    form.append('fullName', b.fullName);
-    form.append('email', b.email);
-    form.append('mobile', b.mobile);
-    form.append('password', b.password);
-    form.append('dob', b.dob);
-    form.append('gender', b.gender);
-    form.append('state', statename || '');
-    form.append('city', cityname || '');
 
-    let roleId = role.patient;
-    if (this.userType === 'doctor') {
-      roleId = role.doctor;
-    } else if (this.userType === 'clinic') {
-      roleId = role.clinic;
-    }
-    form.append('roleId', roleId.toString());
+    try {
+      const b = this.basicForm.value;
+      const form = new FormData();
+      const cityname = this.cityList.find((c: any) => c.id === b.city)?.name;
+      const statename = this.stateList.find((c: any) => c.id === b.state)?.name;
 
-    if (this.profileImageFile) {
-      form.append('file', this.profileImageFile);
-    }
+      form.append('fullName', b.fullName);
+      form.append('email', b.email);
+      form.append('mobile', b.mobile);
+      form.append('password', b.password);
+      form.append('dob', b.dob);
+      form.append('gender', b.gender);
+      form.append('state', statename || '');
+      form.append('city', cityname || '');
 
-    this.authService.register(form).subscribe({
-      next: (res: any) => {
-        this.isSubmitting = false;
-        const user = res?.data || res;
+      let roleId = role.patient;
+      if (this.userType === 'doctor') roleId = role.doctor;
+      else if (this.userType === 'clinic') roleId = role.clinic;
+      form.append('roleId', roleId.toString());
+
+      if (this.profileImageFile) form.append('file', this.profileImageFile);
+
+      const res = await this.apiService.PostForm<any>(ApiEndPoints.Register, form);
+
+      if (res.isSuccess) {
+        const user = res.data;
         this.registeredUser = user;
-        const token = user?.token;
-        this.authService.saveUserSession(user, token);
+        this.authService.saveUserSession(user, user?.token);
 
         if (this.userType === 'user' || user?.roleId === role.patient) {
           this.registrationSuccess.emit();
-          this.alert.toastSuccess('Registration successful! Welcome to PhysiosMate.');
+          this.alert.toastSuccess(AppMessage.RegistrationSuccess);
           this.router.navigate(['/']);
         } else {
-          // Send doctor or clinic to their signup next screen (Step 2)
           if (this.userType === 'doctor') {
             this.doctorForm.patchValue({ email: b.email });
           } else if (this.userType === 'clinic') {
@@ -542,19 +529,16 @@ export class RegisterComponent implements OnInit, OnChanges {
           this.currentStep = 2;
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      },
-      error: (err: any) => {
-        this.isSubmitting = false;
-        this.alert.toastError(err?.error?.message || err?.message || 'Error creating account');
       }
-    });
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 
-
-  submitDoctorRegistration(): void {
+  async submitDoctorRegistration(): Promise<void> {
     if (this.doctorForm.invalid) {
       this.doctorForm.markAllAsTouched();
-      this.alert.toastError('Please fill all required doctor profile details.');
+      this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
     if (this.selectedSpecializations.length === 0) {
@@ -569,90 +553,80 @@ export class RegisterComponent implements OnInit, OnChanges {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    const d = this.doctorForm.value;
-    const user = this.registeredUser || this.authService.getCurrentUser();
-    const userId = user?.id || this.authService.getuserid();
+    try {
+      const d = this.doctorForm.value;
+      const user = this.registeredUser || this.authService.getCurrentUser();
+      const userId = user?.id || this.authService.getuserid();
 
-    const payload = {
-      userId: userId,
-      specializationId: this.selectedSpecializations[0] || null,
-      selectedSpecializations: this.selectedSpecializations,
-      selectedQualifications: this.selectedQualifications,
-      experienceYears: d.experienceYears,
-      consultationFee: d.consultationFee,
-      institute: d.institute,
-      selectedLanguages: this.selectedLanguages,
-      about: d.about,
-      registrationNumber: d.registrationNumber,
-    };
+      const payload = {
+        userId,
+        specializationId: this.selectedSpecializations[0] || null,
+        selectedSpecializations: this.selectedSpecializations,
+        selectedQualifications: this.selectedQualifications,
+        experienceYears: d.experienceYears,
+        consultationFee: d.consultationFee,
+        institute: d.institute,
+        selectedLanguages: this.selectedLanguages,
+        about: d.about,
+        registrationNumber: d.registrationNumber,
+      };
 
-    this.authService.addPractitioner(payload).subscribe({
-      next: () => {
-        this.isSubmitting = false;
+      const res = await this.apiService.Post<any>(ApiEndPoints.AddPractitioner, payload);
+
+      if (res.isSuccess) {
         this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
         this.registrationSuccess.emit();
         this.router.navigate(['/doctor-dashboard']);
-      },
-      error: (err: any) => {
-        this.isSubmitting = false;
-        this.alert.toastError(err?.error?.message || err?.message || 'Failed to complete doctor profile.');
       }
-    });
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 
-
-  submitClinicRegistration(): void {
+  async submitClinicRegistration(): Promise<void> {
     if (this.clinicForm.invalid) {
       this.clinicForm.markAllAsTouched();
-      this.alert.toastError('Please fill all required clinic profile details.');
+      this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
 
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    const c = this.clinicForm.value;
-    const user = this.registeredUser || this.authService.getCurrentUser();
-    const userId = user?.id || this.authService.getuserid();
-    debugger
-    const formData = new FormData();
-    const city = this.cityList.find(ci => ci.id === c.city)?.name;
-    const stateName = this.stateList.find(si => si.id === c.state)?.name;
-    if (userId) {
-      formData.append('ownerUserId', userId.toString());
-    }
-    formData.append('clinicName', c.clinicName);
-    formData.append('establishedYear', c.establishedYear);
-    formData.append('consultancyFees', c.consultancyFees);
-    formData.append('phone', c.phone);
-    formData.append('email', c.email);
-    formData.append('state', stateName || '');
-    formData.append('city', city || '');
-    formData.append('pincode', c.pincode);
-    formData.append('address', c.address);
-    formData.append('description', c.description || '');
-    if (this.profileImageFile) {
-      formData.append('file', this.profileImageFile);
-    }
-    if (this.clinicLogoFile) {
-      formData.append('logoFile', this.clinicLogoFile);
-    }
-    if (this.clinicBannerFile) {
-      formData.append('bannerImageFile', this.clinicBannerFile);
-    }
-    this.clinicMediaFiles.forEach(f => formData.append('clinicMedia', f));
+    try {
+      const c = this.clinicForm.value;
+      const user = this.registeredUser || this.authService.getCurrentUser();
+      const userId = user?.id || this.authService.getuserid();
 
-    this.authService.addClinic(formData).subscribe({
-      next: () => {
-        this.isSubmitting = false;
+      const formData = new FormData();
+      const city = this.cityList.find((ci: any) => ci.id === c.city)?.name;
+      const stateName = this.stateList.find((si: any) => si.id === c.state)?.name;
+
+      if (userId) formData.append('ownerUserId', userId.toString());
+      formData.append('clinicName', c.clinicName);
+      formData.append('establishedYear', c.establishedYear);
+      formData.append('consultancyFees', c.consultancyFees);
+      formData.append('phone', c.phone);
+      formData.append('email', c.email);
+      formData.append('state', stateName || '');
+      formData.append('city', city || '');
+      formData.append('pincode', c.pincode);
+      formData.append('address', c.address);
+      formData.append('description', c.description || '');
+      if (this.profileImageFile) formData.append('file', this.profileImageFile);
+      if (this.clinicLogoFile) formData.append('logoFile', this.clinicLogoFile);
+      if (this.clinicBannerFile) formData.append('bannerImageFile', this.clinicBannerFile);
+      this.clinicMediaFiles.forEach(f => formData.append('clinicMedia', f));
+
+      const res = await this.apiService.PostForm<any>(ApiEndPoints.AddClinic, formData);
+
+      if (res.isSuccess) {
         this.alert.toastSuccess('Clinic registration submitted successfully!');
         this.registrationSuccess.emit();
         this.router.navigate(['/clinics']);
-      },
-      error: (err: any) => {
-        this.isSubmitting = false;
-        this.alert.toastError(err?.error?.message || err?.message || 'Failed to complete clinic profile.');
       }
-    });
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 }

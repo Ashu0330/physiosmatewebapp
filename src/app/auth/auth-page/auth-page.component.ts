@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthFormComponent } from '../auth-form/auth-form.component';
 import { RegisterComponent } from '../register-component/register-component';
+import { BaseComponent } from '../../helper/base-component';
 
 @Component({
   selector: 'app-auth-page',
@@ -11,9 +12,8 @@ import { RegisterComponent } from '../register-component/register-component';
   templateUrl: './auth-page.component.html',
   styleUrl: './auth-page.component.css'
 })
-export class AuthPageComponent implements OnInit {
+export class AuthPageComponent extends BaseComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
   authMode: 'login' | 'signup' = 'login';
   returnUrl: string = '/';
@@ -52,3 +52,4 @@ export class AuthPageComponent implements OnInit {
     this.router.navigateByUrl(this.returnUrl);
   }
 }
+

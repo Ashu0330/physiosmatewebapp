@@ -12,8 +12,22 @@ export class Authservice {
 
   constructor(private http: HttpClient) { }
 
+  // ── In-memory pending user ID (OTP verification step only) ────────────────
+  private pendingUserId: number | string | null = null;
+
+  setPendingUserId(id: number | string | null): void {
+    this.pendingUserId = id;
+  }
+
+  getPendingUserId(): number | string | null {
+    return this.pendingUserId;
+  }
+
+  clearPendingUserId(): void {
+    this.pendingUserId = null;
+  }
+
   login(model: any) {
-    debugger
     return this.http.post<apiresponse<authmodel>>(environment.baseUrl + 'Auth/Login', model);
   }
 
@@ -104,6 +118,7 @@ export class Authservice {
 
   saveUserSession(userData: any, token?: string): void {
     if (typeof localStorage === 'undefined') return;
+    this.clearPendingUserId();
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
@@ -115,6 +130,7 @@ export class Authservice {
   }
 
   logout(): void {
+    this.clearPendingUserId();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('user');
       localStorage.removeItem('token');

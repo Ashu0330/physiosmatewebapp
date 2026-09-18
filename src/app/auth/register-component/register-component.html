@@ -61,7 +61,7 @@
           </div>
         </div>
 
-        <input id="profile-image-input" type="file" accept="image/*" class="hidden-file-input"
+        <input #profileImageInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
           (change)="onProfileImageChange($event)" />
       </div>
     </div>
@@ -323,18 +323,18 @@
   <form [formGroup]="doctorForm" (ngSubmit)="submitDoctorRegistration()" class="register-form" novalidate>
 
     <!-- Specializations (Multi-Select Dropdown) -->
-    <div class="form-group custom-multiselect" [class.is-open]="specializationDropdownOpen">
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'specialization'">
       <label class="form-label">Specializations <span class="required-star">*</span>
         <span class="form-label-hint">(select one or more)</span>
       </label>
       <div class="multiselect-trigger-box" id="specialization-select-trigger"
         (click)="toggleDropdown('specialization', $event)"
         [class.is-invalid]="selectedSpecializations.length === 0 && doctorForm.touched">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
           <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v4a3 3 0 0 0 3 3h1M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
         </svg>
-        <span class="multiselect-trigger-text" [class.placeholder]="selectedSpecializations.length === 0">
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedSpecializations.length === 0">
           @if (selectedSpecializations.length === 0) {
           Select specialization(s)...
           } @else if (selectedSpecializations.length === 1) {
@@ -348,14 +348,14 @@
         <button type="button" class="multiselect-clear-btn" (click)="clearSpecializations($event)"
           title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="specializationDropdownOpen" width="16" height="16"
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'specialization'" width="16" height="16"
           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
 
       <!-- Dropdown Panel -->
-      @if (specializationDropdownOpen) {
+      @if (openDropdown === 'specialization') {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -412,19 +412,19 @@
     </div>
 
     <!-- Qualifications (Multi-Select Dropdown) -->
-    <div class="form-group custom-multiselect" [class.is-open]="qualificationDropdownOpen">
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'qualification'">
       <label class="form-label">Qualifications <span class="required-star">*</span>
         <span class="form-label-hint">(select one or more)</span>
       </label>
       <div class="multiselect-trigger-box" id="qualification-select-trigger"
         (click)="toggleDropdown('qualification', $event)"
         [class.is-invalid]="selectedQualifications.length === 0 && doctorForm.touched">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
           <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
           <path d="M6 12v5c3 3 9 3 12 0v-5" />
         </svg>
-        <span class="multiselect-trigger-text" [class.placeholder]="selectedQualifications.length === 0">
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedQualifications.length === 0">
           @if (selectedQualifications.length === 0) {
           Select qualification(s)...
           } @else if (selectedQualifications.length === 1) {
@@ -438,14 +438,14 @@
         <button type="button" class="multiselect-clear-btn" (click)="clearQualifications($event)"
           title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="qualificationDropdownOpen" width="16" height="16" viewBox="0 0 24 24"
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'qualification'" width="16" height="16" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
 
       <!-- Dropdown Panel -->
-      @if (qualificationDropdownOpen) {
+      @if (openDropdown === 'qualification') {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -564,18 +564,18 @@
     </div>
 
     <!-- Languages (Multi-Select Dropdown) -->
-    <div class="form-group custom-multiselect" [class.is-open]="languageDropdownOpen">
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'language'">
       <label class="form-label">Languages Spoken
         <span class="form-label-hint">(select all that apply)</span>
       </label>
       <div class="multiselect-trigger-box" id="language-select-trigger" (click)="toggleDropdown('language', $event)">
-        <svg class="input-icon select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        <span class="multiselect-trigger-text" [class.placeholder]="selectedLanguages.length === 0">
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedLanguages.length === 0">
           @if (selectedLanguages.length === 0) {
           Select language(s)...
           } @else if (selectedLanguages.length === 1) {
@@ -589,14 +589,14 @@
         <button type="button" class="multiselect-clear-btn" (click)="clearLanguages($event)"
           title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="languageDropdownOpen" width="16" height="16" viewBox="0 0 24 24"
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'language'" width="16" height="16" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
 
       <!-- Dropdown Panel -->
-      @if (languageDropdownOpen) {
+      @if (openDropdown === 'language') {
       <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
         <div class="dropdown-search-wrap">
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -713,7 +713,7 @@
           </button>
           <span class="upload-hint">Square image — JPG, PNG up to 5 MB</span>
         </div>
-        <input id="clinic-logo-input" type="file" accept="image/*" class="hidden-file-input"
+        <input #clinicLogoInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
           (change)="onClinicLogoChange($event)" />
       </div>
     </div>
@@ -743,7 +743,7 @@
         </div>
         }
       </div>
-      <input id="clinic-banner-input" type="file" accept="image/*" class="hidden-file-input"
+      <input #clinicBannerInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
         (change)="onClinicBannerChange($event)" />
     </div>
 
@@ -797,7 +797,7 @@
     </div>
     }
 
-    <input id="clinic-media-input" type="file" accept="image/*" multiple class="hidden-file-input"
+    <input #clinicMediaInput type="file" accept="image/jpeg,image/png,image/webp" multiple class="hidden-file-input"
       (change)="onClinicMediaChange($event)" />
 </div>
 
