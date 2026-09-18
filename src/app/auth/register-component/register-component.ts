@@ -27,7 +27,6 @@ export class RegisterComponent implements OnInit, OnChanges {
   languageList: mastermodel[] = [];
   stateList: any[] = [];
   cityList: any[] = [];
-  clinicCityList: any[] = [];
 
   selectedSpecializations: number[] = [];
   selectedQualifications: number[] = [];
@@ -43,8 +42,19 @@ export class RegisterComponent implements OnInit, OnChanges {
   profileImageFile: File | null = null;
   profileImagePreview: string | null = null;
 
+  // Clinic-specific image uploads
+  clinicLogoFile: File | null = null;
+  clinicLogoPreview: string | null = null;
+
+  clinicBannerFile: File | null = null;
+  clinicBannerPreview: string | null = null;
+
+  clinicMediaFiles: File[] = [];
+  clinicMediaPreviews: { url: string; name: string }[] = [];
+
+  readonly CLINIC_MEDIA_MAX = 10;
+
   constructor(
-    private http: HttpClient,
     private masterService: Masterservice,
     private fb: FormBuilder,
     private authService: Authservice,
@@ -184,14 +194,14 @@ export class RegisterComponent implements OnInit, OnChanges {
       this.cityList = [];
       this.basicForm.patchValue({ city: null });
     } else {
-      this.clinicCityList = [];
+      this.cityList = [];
       this.clinicForm.patchValue({ city: null });
     }
 
     this.masterService.getcities(stateId).subscribe({
       next: (res: any) => {
         if (target === 'basic') this.cityList = res.data;
-        else this.clinicCityList = res.data;
+        else this.cityList = res.data;
       },
       error: () => { }
     });
@@ -211,10 +221,79 @@ export class RegisterComponent implements OnInit, OnChanges {
     reader.readAsDataURL(file);
   }
 
-  // triggerImageUpload(): void {
-  //   const el = document.getElementById('profile-image-input') as HTMLInputElement;
-  //   el?.click();
-  // }
+  // ── Clinic Logo ──────────────────────────────────────────────────────
+  triggerClinicLogoUpload(): void {
+    const el = document.getElementById('clinic-logo-input') as HTMLInputElement;
+    el?.click();
+  }
+
+  onClinicLogoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.clinicLogoFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.clinicLogoPreview = e.target?.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Clinic Banner ────────────────────────────────────────────────────
+  triggerClinicBannerUpload(): void {
+    const el = document.getElementById('clinic-banner-input') as HTMLInputElement;
+    el?.click();
+  }
+
+  onClinicBannerChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.clinicBannerFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { this.clinicBannerPreview = e.target?.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Clinic Media Gallery ─────────────────────────────────────────────
+  triggerClinicMediaUpload(): void {
+    const el = document.getElementById('clinic-media-input') as HTMLInputElement;
+    el?.click();
+  }
+
+  onClinicMediaChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const incoming = Array.from(input.files || []);
+    if (!incoming.length) return;
+
+    const remaining = this.CLINIC_MEDIA_MAX - this.clinicMediaFiles.length;
+    const toAdd = incoming.slice(0, remaining);
+
+    if (incoming.length > remaining) {
+      this.alert.toastError(`You can add at most ${this.CLINIC_MEDIA_MAX} photos. Only ${toAdd.length} were added.`);
+    }
+
+    toAdd.forEach(file => {
+      this.clinicMediaFiles.push(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.clinicMediaPreviews.push({ url: e.target?.result as string, name: file.name });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset input so the same files can be re-selected if needed
+    input.value = '';
+  }
+
+  removeClinicMedia(index: number): void {
+    this.clinicMediaFiles.splice(index, 1);
+    this.clinicMediaPreviews.splice(index, 1);
+  }
+
+  clearAllClinicMedia(): void {
+    this.clinicMediaFiles = [];
+    this.clinicMediaPreviews = [];
+  }
+
 
 
   @HostListener('document:click', ['$event'])
@@ -439,7 +518,6 @@ export class RegisterComponent implements OnInit, OnChanges {
 
     if (this.profileImageFile) {
       form.append('file', this.profileImageFile);
-      form.append('profileImageFile', this.profileImageFile);
     }
 
     this.authService.register(form).subscribe({
@@ -536,25 +614,33 @@ export class RegisterComponent implements OnInit, OnChanges {
     const c = this.clinicForm.value;
     const user = this.registeredUser || this.authService.getCurrentUser();
     const userId = user?.id || this.authService.getuserid();
-
+    debugger
     const formData = new FormData();
+    const city = this.cityList.find(ci => ci.id === c.city)?.name;
+    const stateName = this.stateList.find(si => si.id === c.state)?.name;
     if (userId) {
-      formData.append('userId', userId.toString());
+      formData.append('ownerUserId', userId.toString());
     }
     formData.append('clinicName', c.clinicName);
     formData.append('establishedYear', c.establishedYear);
     formData.append('consultancyFees', c.consultancyFees);
     formData.append('phone', c.phone);
     formData.append('email', c.email);
-    formData.append('state', c.state);
-    formData.append('city', c.city);
+    formData.append('state', stateName || '');
+    formData.append('city', city || '');
     formData.append('pincode', c.pincode);
     formData.append('address', c.address);
     formData.append('description', c.description || '');
     if (this.profileImageFile) {
       formData.append('file', this.profileImageFile);
-      formData.append('profileImageFile', this.profileImageFile);
     }
+    if (this.clinicLogoFile) {
+      formData.append('logoFile', this.clinicLogoFile);
+    }
+    if (this.clinicBannerFile) {
+      formData.append('bannerImageFile', this.clinicBannerFile);
+    }
+    this.clinicMediaFiles.forEach(f => formData.append('clinicMedia', f));
 
     this.authService.addClinic(formData).subscribe({
       next: () => {
