@@ -31,20 +31,6 @@
       : 'Register your clinic profile to list services and manage appointments.') }}
     </p>
 
-    <!-- Multi-step Stepper Indicator (for Doctor & Clinic) -->
-    @if (userType !== 'user') {
-    <div class="stepper-bar">
-      <div class="step-item" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
-        <span class="step-circle">{{ currentStep > 1 ? '✓' : '1' }}</span>
-        <span class="step-label">Basic Details</span>
-      </div>
-      <div class="step-line" [class.filled]="currentStep > 1"></div>
-      <div class="step-item" [class.active]="currentStep === 2">
-        <span class="step-circle">2</span>
-        <span class="step-label">{{ userType === 'doctor' ? 'Doctor Profile' : 'Clinic Details' }}</span>
-      </div>
-    </div>
-    }
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════
@@ -53,58 +39,8 @@
   @if (currentStep === 1) {
   <form [formGroup]="basicForm" (ngSubmit)="onNextOrSubmit()" class="register-form" novalidate>
 
-    <!-- Account Type -->
-    <div class="form-group">
-      <label class="form-label">Select Account Type <span class="required-star">*</span></label>
-      <div class="role-cards-grid">
-        <div class="role-card" [class.selected]="userType === 'user'" (click)="setUserType('user')">
-          <div class="role-icon-wrap">🧑</div>
-          <div class="role-info">
-            <div class="role-name">User / Patient</div>
-            <div class="role-desc">Book consultations & home visits</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'user'"></span>
-          </div>
-        </div>
-
-        <div class="role-card" [class.selected]="userType === 'doctor'" (click)="setUserType('doctor')">
-          <div class="role-icon-wrap">🩺</div>
-          <div class="role-info">
-            <div class="role-name">Doctor / Physio</div>
-            <div class="role-desc">Provide care & grow practice</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'doctor'"></span>
-          </div>
-        </div>
-
-        <div class="role-card" [class.selected]="userType === 'clinic'" (click)="setUserType('clinic')">
-          <div class="role-icon-wrap">🏥</div>
-          <div class="role-info">
-            <div class="role-name">Rehab Clinic</div>
-            <div class="role-desc">Manage centers & practitioners</div>
-          </div>
-          <div class="role-radio-circle">
-            <span class="radio-inner" *ngIf="userType === 'clinic'"></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="dropdown-wrapper mt-2">
-        <label for="userTypeSelect" class="form-sublabel">Or select from dropdown:</label>
-        <select id="userTypeSelect" formControlName="userType" (change)="setUserType(basicForm.get('userType')?.value)"
-          class="form-select">
-          <option value="user">User / Patient</option>
-          <option value="doctor">Doctor / Physiotherapist</option>
-          <option value="clinic">Clinic / Rehabilitation Center</option>
-        </select>
-      </div>
-    </div>
-
     <!-- Profile Image Upload -->
     <div class="form-group">
-      <label class="form-label">Profile Photo <span class="form-label-hint">(optional)</span></label>
       <div class="profile-upload-row">
         <div class="profile-avatar-wrap" (click)="triggerImageUpload()">
           @if (profileImagePreview) {
@@ -135,8 +71,27 @@
       </div>
     </div>
 
+    <!-- Account Type -->
+    <div class="form-group">
+      <label class="form-label">Select Account Type <span class="required-star">*</span></label>
+      <div class="gender-pills account-type-pills">
+        <button type="button" class="gender-pill account-type-pill" id="account-type-user"
+          [class.active]="basicForm.get('userType')?.value === 'user'" (click)="setUserType('user')">
+           Patient
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-doctor"
+          [class.active]="basicForm.get('userType')?.value === 'doctor'" (click)="setUserType('doctor')">
+           Doctor
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-clinic"
+          [class.active]="basicForm.get('userType')?.value === 'clinic'" (click)="setUserType('clinic')">
+           Clinic
+        </button>
+      </div>
+    </div>
+
     <!-- Full Name + Mobile -->
-    <div class="form-grid-2">
+    <div class="form-grid">
       <div class="form-group">
         <label for="reg-name" class="form-label">Full Name <span class="required-star">*</span></label>
         <div class="input-wrapper">
@@ -151,22 +106,6 @@
         </div>
         @if (basicForm.get('fullName')?.invalid && basicForm.get('fullName')?.touched) {
         <span class="field-error">Please enter your full name (at least 2 characters)</span>
-        }
-      </div>
-
-      <div class="form-group">
-        <div class="label-with-badge">
-          <label for="reg-mobile" class="form-label">Mobile Number <span class="required-star">*</span></label>
-          <span class="verified-pill">✓ Verified</span>
-        </div>
-        <div class="input-wrapper phone-wrapper">
-          <span class="phone-prefix">+91</span>
-          <input id="reg-mobile" type="tel" formControlName="mobile" placeholder="10-digit mobile number" maxlength="10"
-            class="form-input"
-            [class.is-invalid]="basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched" />
-        </div>
-        @if (basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched) {
-        <span class="field-error">Please enter a valid 10-digit mobile number</span>
         }
       </div>
     </div>
@@ -208,22 +147,39 @@
     </div>
 
     <!-- DOB -->
-    <div class="form-group">
-      <label for="reg-dob" class="form-label">Date of Birth <span class="required-star">*</span></label>
-      <div class="input-wrapper">
-        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
-          [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="reg-dob" class="form-label">Date of Birth <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
+            [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
+        </div>
+        @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
+        <span class="field-error">Please select your date of birth</span>
+        }
       </div>
-      @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
-      <span class="field-error">Please select your date of birth</span>
-      }
+      <div class="form-group">
+        <div class="label-with-badge">
+          <label for="reg-mobile" class="form-label">Mobile Number <span class="required-star">*</span></label>
+          <span class="verified-pill">✓ Verified</span>
+        </div>
+        <div class="input-wrapper phone-wrapper">
+          <span class="phone-prefix">+91</span>
+          <input id="reg-mobile" type="tel" formControlName="mobile" placeholder="10-digit mobile number" maxlength="10"
+            class="form-input"
+            [class.is-invalid]="basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched" />
+        </div>
+        @if (basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched) {
+        <span class="field-error">Please enter a valid 10-digit mobile number</span>
+        }
+      </div>
     </div>
 
     <!-- State + City -->
@@ -272,8 +228,21 @@
           <input id="reg-password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
             placeholder="Min. 6 characters" class="form-input"
             [class.is-invalid]="basicForm.get('password')?.invalid && basicForm.get('password')?.touched" />
-          <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1">
-            {{ showPassword ? '👁️' : '🔒' }}
+          <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1"
+            aria-label="Toggle password visibility">
+            @if (showPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
           </button>
         </div>
         @if (basicForm.get('password')?.invalid && basicForm.get('password')?.touched) {
@@ -293,8 +262,21 @@
           <input id="reg-confirm-password" [type]="showConfirmPassword ? 'text' : 'password'"
             formControlName="confirmPassword" placeholder="Re-enter password" class="form-input"
             [class.is-invalid]="basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched" />
-          <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1">
-            {{ showConfirmPassword ? '👁️' : '🔒' }}
+          <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1"
+            aria-label="Toggle confirm password visibility">
+            @if (showConfirmPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
           </button>
         </div>
         @if (basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched) {
@@ -938,10 +920,10 @@
         <label for="clinic-city" class="form-label">City <span class="required-star">*</span></label>
         <select id="clinic-city" formControlName="city" class="form-select"
           [class.is-invalid]="clinicForm.get('city')?.invalid && clinicForm.get('city')?.touched"
-          [attr.disabled]="cityList.length === 0 ? true : null">
-          <option [value]="null" disabled selected>{{ cityList.length === 0 ? 'Select state first' : 'Select city' }}
-          </option>
-          @for (c of cityList; track c.id) {
+          [attr.disabled]="clinicCityList.length === 0 ? true : null">
+          <option [value]="null" disabled selected>{{ clinicCityList.length === 0 ? 'Select state first' : 'Select city'
+            }}</option>
+          @for (c of clinicCityList; track c.id) {
           <option [value]="c.id">{{ c.name }}</option>
           }
         </select>

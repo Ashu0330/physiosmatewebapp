@@ -14,7 +14,7 @@
 
   <main class="auth-main-content">
     <div class="auth-card-frame">
-      @if (!isOtpVerified) {
+      @if (isOtpVerified) {
       <app-auth-form [mode]="authMode" [bookingContext]="false" (authSuccess)="onAuthSuccess()"
         (modeChange)="onModeChange($event)" (otpVerified)="onOtpVerified($event)">
       </app-auth-form>

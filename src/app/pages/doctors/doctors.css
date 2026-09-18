@@ -626,19 +626,6 @@
   gap: 12px;
 }
 
-.physios-trust-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--primary-color, #10A896);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-}
-
 .physios-trust-title {
   display: flex;
   flex-direction: column;
