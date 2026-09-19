@@ -61,4 +61,7 @@ export const ApiEndPoints = {
     // ── Push Notifications ─────────────────────────────────────────────────────────
     PushSubscribe: 'Push/Subscribe',
     PushUnsubscribe: 'Push/Unsubscribe',
+
+    // ── SideBar Menus ─────────────────────────────────────────────────────────
+    GetAllMenu: 'Master/GetSideMenu',
 };
