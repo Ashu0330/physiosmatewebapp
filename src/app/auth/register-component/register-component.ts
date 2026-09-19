@@ -2,7 +2,6 @@ import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, On
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { mastermodel } from '../../models/mastermodel';
-import { Masterservice } from '../../services/masterservice';
 import { role } from '../../helper/utilities';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
@@ -59,8 +58,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   readonly CLINIC_MEDIA_MAX = 10;
 
   private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;         // 5 MB
-  private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;       // 10 MB
+  private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+  private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
 
   private fb = inject(FormBuilder);
   protected override authService = inject(Authservice);

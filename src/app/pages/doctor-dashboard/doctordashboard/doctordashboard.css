@@ -104,68 +104,6 @@
   min-height: 540px;
 }
 
-/* Left Sidebar Menu */
-.physios-sidebar {
-  width: 220px;
-  border-right: 1px solid var(--border-light, #EAEAEA);
-  background-color: var(--bg-card, #FFFFFF);
-  flex-shrink: 0;
-}
-
-.physios-nav {
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 15px;
-  z-index: 10;
-}
-
-.physios-nav-btn {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #F0F0F0;
-  padding: 13px 20px;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--text-body, #414146);
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  outline: none;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.physios-nav-btn .sidebar-icon {
-  color: #94A3B8;
-  flex-shrink: 0;
-  transition: color 0.15s ease;
-}
-
-.physios-nav-btn:hover {
-  background-color: #F8FAFC;
-  color: var(--text-main, #1F2937);
-}
-
-.physios-nav-btn:hover .sidebar-icon {
-  color: var(--text-main, #1F2937);
-}
-
-.physios-nav-btn.active {
-  border-left-color: var(--primary-color, #10A896);
-  background-color: #F6FCFA;
-  font-weight: 600;
-  color: var(--primary-dark, #087F76);
-}
-
-.physios-nav-btn.active .sidebar-icon {
-  color: var(--primary-color, #10A896);
-}
-
 /* Right Content Area */
 .physios-content {
   flex: 1;

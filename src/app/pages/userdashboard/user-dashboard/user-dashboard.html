@@ -27,25 +27,8 @@
     <!-- Main 2-Column Body: Left Sidebar + Right Content -->
     <div class="physios-drive-body">
 
-      <!-- Left Sidebar Navigation -->
-      <aside class="physios-sidebar">
-        <nav class="physios-nav">
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'medical-reports'"
-            (click)="selectTab('medical-reports')">Medical Records</button>
-
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'appointments'"
-            (click)="selectTab('appointments')">Appointments</button>
-
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'subscriptions'"
-            (click)="selectTab('subscriptions')">Subscriptions</button>
-
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'payments'"
-            (click)="selectTab('payments')">Payments</button>
-
-          <button type="button" class="physios-nav-btn" [class.active]="activeTab === 'consultancies'"
-            (click)="selectTab('consultancies')">Consultations</button>
-        </nav>
-      </aside>
+      <!-- Left Sidebar Navigation (shared role-specific sidebar component) -->
+      <app-sidebar [activeTab]="activeTab" (tabChange)="selectTab($any($event))"></app-sidebar>
 
       <!-- Right Content Area -->
       <main class="physios-content">

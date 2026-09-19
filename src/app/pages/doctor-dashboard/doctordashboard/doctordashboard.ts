@@ -21,6 +21,7 @@ import { Patients } from '../patients/patients';
 import { Treatmentplans } from '../treatmentplans/treatmentplans';
 import { Consultations } from '../consultations/consultations';
 import { DoctorAppointments } from '../appointments/doctor-appointments';
+import { Sidebar } from '../../layout/sidebar/sidebar';
 
 export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments';
 
@@ -30,6 +31,7 @@ export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'tre
   imports: [
     CommonModule,
     RouterModule,
+    Sidebar,
     Addpatient,
     Patients,
     Treatmentplans,

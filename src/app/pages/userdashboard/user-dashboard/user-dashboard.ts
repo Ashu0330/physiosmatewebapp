@@ -12,6 +12,7 @@ import { PatientConsultancy } from '../patient-consultancy/patient-consultancy';
 import { PatientSubscription } from '../patient-subscription/patient-subscription';
 import { PatientMedicalrecords } from '../patient-medicalrecords/patient-medicalrecords';
 import { PatientTransaction } from '../patient-transaction/patient-transaction';
+import { Sidebar } from '../../layout/sidebar/sidebar';
 
 export type DashboardTab =
   | 'appointments'
@@ -26,6 +27,7 @@ export type DashboardTab =
   imports: [
     CommonModule,
     RouterModule,
+    Sidebar,
     PatientAppointments,
     PatientConsultancy,
     PatientSubscription,

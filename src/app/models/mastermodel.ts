@@ -1,4 +1,4 @@
 export class mastermodel {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }
