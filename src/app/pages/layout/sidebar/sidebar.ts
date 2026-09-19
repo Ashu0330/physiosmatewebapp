@@ -1,6 +1,5 @@
-import { Component, OnInit, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BaseComponent } from '../../../helper/base-component';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { MenusModel } from '../../../models/mastermodel';
@@ -13,19 +12,29 @@ import { MenusModel } from '../../../models/mastermodel';
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
-export class Sidebar extends BaseComponent implements OnInit {
+export class Sidebar extends BaseComponent implements OnInit, OnChanges {
   @Input() activeTab: string = '';
   @Output() tabChange = new EventEmitter<string>();
-  menulist: MenusModel[] = [];
-
-  private sanitizer = inject(DomSanitizer);
+  @Input() menulist: MenusModel[] = [];
+  @Input() parentMenuId: number | null = null;
 
   async ngOnInit(): Promise<void> {
-    await this.GetAllMenu();
+    if (!this.menulist || this.menulist.length === 0) {
+      await this.GetAllMenu();
+    }
+  }
+
+
+  async ngOnChanges(changes: SimpleChanges): Promise<void> {
+
+    if (changes['parentMenuId'] && !changes['parentMenuId'].firstChange) {
+      await this.GetAllMenu();
+    }
   }
 
   async GetAllMenu(): Promise<void> {
-    const res = await this.apiService.Get<MenusModel[]>(ApiEndPoints.GetAllMenu);
+    const parentId = this.parentMenuId ?? '';
+    const res = await this.apiService.Get<MenusModel[]>(`${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${parentId}`);
     this.menulist = res.isSuccess ? (res.data ?? []) : [];
   }
 
@@ -35,29 +44,23 @@ export class Sidebar extends BaseComponent implements OnInit {
       this.tabChange.emit(itemOrTab);
       return;
     }
-
     const tab = itemOrTab.path || itemOrTab.menuName;
     this.activeTab = tab;
     this.tabChange.emit(tab);
-
     if (itemOrTab.path && itemOrTab.path.startsWith('/')) {
       this.router.navigateByUrl(itemOrTab.path);
     }
   }
 
-  isActive(item: MenusModel): boolean {
-    if (!this.activeTab) return false;
-    const current = this.activeTab.toLowerCase().trim();
-    const path = (item.path || '').toLowerCase().trim();
-    const name = (item.menuName || '').toLowerCase().trim();
-    return current === path || current === name;
-  }
 
-  isSvg(icon?: string): boolean {
-    return !!icon && icon.trim().startsWith('<');
-  }
-
-  getSafeIcon(icon?: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(icon || '');
+  isSidebarActive(): boolean {
+    return this.menulist.some(menu =>
+      this.router.isActive(menu.path, {
+        paths: 'exact',
+        queryParams: 'ignored',
+        matrixParams: 'ignored',
+        fragment: 'ignored'
+      })
+    );
   }
 }

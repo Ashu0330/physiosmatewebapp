@@ -27,12 +27,8 @@ export type DashboardTab =
   imports: [
     CommonModule,
     RouterModule,
-    Sidebar,
-    PatientAppointments,
-    PatientConsultancy,
-    PatientSubscription,
-    PatientMedicalrecords,
-    PatientTransaction,
+
+
   ],
   templateUrl: './user-dashboard.html',
   styleUrl: './user-dashboard.css',
@@ -127,21 +123,21 @@ export class UserDashboard implements OnInit {
 
   /** Map each URL path segment → the tab that should be active */
   private readonly pathToTab: Record<string, DashboardTab> = {
-    'appointments':         'appointments',
-    'medical-records':      'medical-reports',
-    'consultations':        'consultancies',
+    'appointments': 'appointments',
+    'medical-records': 'medical-reports',
+    'consultations': 'consultancies',
     'online-consultations': 'consultancies',
-    'subscriptions':        'subscriptions',
-    'payments':             'payments',
+    'subscriptions': 'subscriptions',
+    'payments': 'payments',
   };
 
   /** Map each tab → the URL path segment it should navigate to */
   private readonly tabToPath: Record<DashboardTab, string> = {
-    'appointments':   'appointments',
-    'medical-reports':'medical-records',
-    'consultancies':  'consultations',
-    'subscriptions':  'subscriptions',
-    'payments':       'payments',
+    'appointments': 'appointments',
+    'medical-reports': 'medical-records',
+    'consultancies': 'consultations',
+    'subscriptions': 'subscriptions',
+    'payments': 'payments',
   };
 
   resolveTabFromRoute(): void {
@@ -185,19 +181,7 @@ export class UserDashboard implements OnInit {
     }
   }
 
-  selectTab(tab: DashboardTab): void {
-    this.activeTab = tab;
-    const path = this.tabToPath[tab] || '';
-    this.router.navigate(['/user-dashboard', path]);
-    window.scrollTo(0, 0);
-  }
 
-  get userInitials(): string {
-    const name = this.currentUser?.fullName || 'Himanshu Suman';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  }
 
   mapBookingsToConsultancies(bookings: MyBooking[]): ConsultancyItem[] {
     return bookings.map((b, index) => {

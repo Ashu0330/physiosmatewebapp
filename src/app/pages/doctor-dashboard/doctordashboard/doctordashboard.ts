@@ -31,13 +31,11 @@ export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'tre
   imports: [
     CommonModule,
     RouterModule,
-    Sidebar,
     Addpatient,
     Patients,
     Treatmentplans,
     Consultations,
-    DoctorAppointments
-  ],
+    DoctorAppointments],
   templateUrl: './doctordashboard.html',
   styleUrl: './doctordashboard.css',
 })

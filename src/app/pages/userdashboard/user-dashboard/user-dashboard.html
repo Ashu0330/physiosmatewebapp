@@ -23,44 +23,5 @@
         </div>
       </div>
     </div>
-
-    <!-- Main 2-Column Body: Left Sidebar + Right Content -->
-    <div class="physios-drive-body">
-
-      <!-- Left Sidebar Navigation (shared role-specific sidebar component) -->
-      <app-sidebar [activeTab]="activeTab" (tabChange)="selectTab($any($event))"></app-sidebar>
-
-      <!-- Right Content Area -->
-      <main class="physios-content">
-
-        @if (activeTab === 'appointments') {
-        <app-patient-appointments [bookings]="bookings" [appointmentFilter]="appointmentFilter"
-          (filterChange)="appointmentFilter = $event">
-        </app-patient-appointments>
-        }
-
-        @if (activeTab === 'payments') {
-        <app-patient-transaction [currentUser]="currentUser">
-        </app-patient-transaction>
-        }
-
-        @if (activeTab === 'subscriptions') {
-        <app-patient-subscription [subscriptionPlans]="subscriptionPlans">
-        </app-patient-subscription>
-        }
-
-        @if (activeTab === 'medical-reports') {
-        <app-patient-medicalrecords [currentUser]="currentUser">
-        </app-patient-medicalrecords>
-        }
-
-        @if (activeTab === 'consultancies') {
-        <app-patient-consultancy [consultancies]="consultancies">
-        </app-patient-consultancy>
-        }
-
-      </main>
-    </div>
-
   </div>
 </div>

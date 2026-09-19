@@ -5,7 +5,8 @@
    ========================================================================== */
 
 .physios-drive-page {
-  width: 100%;
+  width: calc(100% - 220px);
+  margin-left: auto;
   min-height: calc(100vh - 64px);
   background-color: var(--bg-page, #F4F5F8);
   padding: 24px 16px 40px 16px;
@@ -761,25 +762,31 @@
     flex-direction: column;
     align-items: stretch;
   }
+
   .topbar-left {
     width: 100%;
     border-bottom: 1px solid var(--border-light, #EAEAEA);
   }
+
   .topbar-right {
     border-left: none;
   }
+
   .physios-drive-body {
     flex-direction: column;
   }
+
   .physios-sidebar {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border-light, #EAEAEA);
   }
+
   .physios-nav {
     flex-direction: row;
     overflow-x: auto;
   }
+
   .physios-nav-btn {
     width: auto;
     border-bottom: none;
@@ -789,10 +796,12 @@
     padding: 10px 14px;
     white-space: nowrap;
   }
+
   .physios-nav-btn.active {
     border-left-color: transparent;
     border-top-color: var(--primary-color, #10A896);
   }
+
   .physios-content {
     padding: 16px;
   }
@@ -827,9 +836,9 @@
   white-space: nowrap;
   transition:
     border-color 0.2s ease,
-    box-shadow   0.2s ease,
-    background   0.2s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   user-select: none;
 }
 
@@ -890,9 +899,9 @@
   border: 1.5px solid rgba(16, 168, 150, 0.18);
   border-radius: 14px;
   box-shadow:
-    0 4px 6px -1px rgba(0,0,0,0.07),
+    0 4px 6px -1px rgba(0, 0, 0, 0.07),
     0 10px 24px -4px rgba(16, 168, 150, 0.16),
-    0 0 0 1px rgba(255,255,255,0.8) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
   padding: 6px;
   z-index: 999;
   animation: cpdSlideIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -904,6 +913,7 @@
     opacity: 0;
     transform: translateY(-6px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -928,18 +938,18 @@
   text-align: left;
   transition:
     background 0.15s ease,
-    color      0.15s ease;
+    color 0.15s ease;
   position: relative;
 }
 
 .cpd-option:hover {
-  background: linear-gradient(90deg, rgba(16,168,150,0.08) 0%, rgba(16,168,150,0.04) 100%);
+  background: linear-gradient(90deg, rgba(16, 168, 150, 0.08) 0%, rgba(16, 168, 150, 0.04) 100%);
   color: #087F76;
 }
 
 /* Active / selected option */
 .cpd-option.cpd-option-active {
-  background: linear-gradient(90deg, rgba(16,168,150,0.13) 0%, rgba(16,168,150,0.06) 100%);
+  background: linear-gradient(90deg, rgba(16, 168, 150, 0.13) 0%, rgba(16, 168, 150, 0.06) 100%);
   color: #087F76;
   font-weight: 700;
 }
@@ -973,5 +983,3 @@
   margin-left: auto;
   flex-shrink: 0;
 }
-
-

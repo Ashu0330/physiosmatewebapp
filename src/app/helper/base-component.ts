@@ -49,6 +49,7 @@ export abstract class BaseComponent {
         this.alert.toastError(message);
     }
 
+
     get currentUser(): any {
         return this.authService.getCurrentUser();
     }

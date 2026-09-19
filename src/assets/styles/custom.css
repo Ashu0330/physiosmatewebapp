@@ -6,6 +6,18 @@ a {
   text-decoration: none;
 }
 
+.sidebar-container {
+  max-width: 220px;
+  width: 220px;
+  display: block;
+  position: absolute;
+}
+
+.top-grey-div {
+  height: 24px;
+  background-color: var(--bg-page, #F4F5F8) !important;
+}
+
 .physios-header {
   width: 100%;
   background: var(--light-bg, #ffffff);
@@ -2911,6 +2923,7 @@ a {
 /* =========================================================
  * Global Reusable Buttons & Badges (Powered by variable.css)
  * ========================================================= */
-.form-select.is-invalid:focus, .was-validated .form-select:invalid:focus {
+.form-select.is-invalid:focus,
+.was-validated .form-select:invalid:focus {
   box-shadow: none;
 }

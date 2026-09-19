@@ -1,26 +1,14 @@
 <!-- Sidebar Navigation -->
+
+@if (isSidebarActive()) {
+<div class="top-grey-div"></div>
 <aside class="physios-sidebar">
   <nav class="physios-nav">
     @for (item of menulist; track item.menuId || item.path || $index) {
-    <button type="button" class="physios-nav-btn" [class.active]="isActive(item)"
-      (click)="selectTab(item)">
-      @if (item.icon) {
-        @if (isSvg(item.icon)) {
-        <span class="sidebar-icon-wrap" [innerHTML]="getSafeIcon(item.icon)"></span>
-        } @else {
-        <i class="sidebar-icon" [ngClass]="item.icon"></i>
-        }
-      } @else {
-      <svg class="sidebar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2">
-        <rect x="3" y="3" width="7" height="7"></rect>
-        <rect x="14" y="3" width="7" height="7"></rect>
-        <rect x="14" y="14" width="7" height="7"></rect>
-        <rect x="3" y="14" width="7" height="7"></rect>
-      </svg>
-      }
+    <button type="button" class="physios-nav-btn" (click)="selectTab(item)">
       <span>{{ item.menuName }}</span>
     </button>
     }
   </nav>
 </aside>
+}
