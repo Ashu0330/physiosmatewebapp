@@ -23,14 +23,41 @@ export class Header extends BaseComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
 
   async ngOnInit(): Promise<void> {
+
     if (this.isLoggedIn) {
       await this.GetAllMenu();
+      this.setParentMenuFromRoute();
     }
+
     this.router.events.subscribe(() => {
-      if (this.isLoggedIn && (!this.menulist || this.menulist.length === 0)) {
-        this.GetAllMenu();
+
+      if (!this.isLoggedIn) {
+        return;
       }
+
+      this.setParentMenuFromRoute();
+
     });
+  }
+  private setParentMenuFromRoute(): void {
+
+    const currentUrl = this.router.url.split('?')[0];
+
+    const currentMenu = this.menulist.find(menu => {
+
+      if (!menu.path) {
+        return false;
+      }
+
+      const menuPath = menu.path.split('?')[0];
+
+      return currentUrl === menuPath ||
+        currentUrl.startsWith(menuPath + '/');
+    });
+
+    if (currentMenu) {
+      this.selectedParentMenuId = currentMenu.menuId ?? null;
+    }
   }
 
   get userInitials(): string {
@@ -91,11 +118,17 @@ export class Header extends BaseComponent implements OnInit {
   }
 
   async GetAllMenu(): Promise<void> {
-    if (this.isLoggedIn) {
-      const res = await this.apiService.Get<MenusModel[]>
-        (`${ApiEndPoints.GetAllMenu}?Type=Profile`)
-      this.menulist = res.isSuccess ? (res.data ?? []) : [];
+
+    if (!this.isLoggedIn) {
+      return;
     }
+    const res = await this.apiService.Get<MenusModel[]>(
+      `${ApiEndPoints.GetAllMenu}?Type=Profile`
+    );
+
+    this.menulist = res.isSuccess ? (res.data ?? []) : [];
+
+    this.setParentMenuFromRoute();
   }
 
   isSvgIcon(icon?: string): boolean {

@@ -1,7 +1,13 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { expand } from 'rxjs';
+import { BaseComponent } from '../../helper/base-component';
+import { ApiEndPoints } from '../../helper/api-endpoints';
+import { promises } from 'dns';
+import { PractitionerModel } from '../../models/practitioner.model';
+import { SharedModule } from '../../shared/shared-module';
 
 export interface BadgeItem {
   iconType: 'verified' | 'clinic' | 'booking';
@@ -22,15 +28,7 @@ export interface FocusAreaCard {
   route: string;
 }
 
-export interface DoctorCard {
-  name: string;
-  specialty: string;
-  rating: number;
-  reviewsCount: number;
-  tags: string[];
-  location: string;
-  image: string;
-}
+
 
 export interface StepItem {
   num: number;
@@ -56,17 +54,23 @@ export interface ValuePropItem {
 @Component({
   selector: 'app-findphysiotherapist',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [SharedModule],
   templateUrl: './findphysiotherapist.html',
   styleUrl: './findphysiotherapist.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class Findphysiotherapist {
+export class Findphysiotherapist extends BaseComponent implements OnInit {
   // Search state
   selectedCity = 'Mumbai';
   isCityOpen = false;
+  PractitionerList: PractitionerModel[]
   searchQuery = '';
 
+  async ngOnInit(): Promise<void> {
+    await Promise.all([
+      this.GetAllDoctors()
+    ]);
+  }
   readonly popularCities = [
     'Mumbai', 'Delhi NCR', 'Bangalore', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata', 'Kota'
   ];
@@ -151,45 +155,45 @@ export class Findphysiotherapist {
       route: '/doctors'
     }
   ];
-
-  readonly featuredDoctors: DoctorCard[] = [
-    {
-      name: 'Dr. Rohan Mehta',
-      specialty: 'Sports Physiotherapist',
-      rating: 4.8,
-      reviewsCount: 120,
-      tags: ['Sports Injury', 'Post-Surgical'],
-      location: 'Gumanpura, Kota',
-      image: 'assets/images/physio_find_doctor.jpg'
-    },
-    {
-      name: 'Dr. Priya Sharma',
-      specialty: 'Pediatric Physiotherapist',
-      rating: 4.9,
-      reviewsCount: 95,
-      tags: ['Pediatric', 'Neuro Rehab'],
-      location: 'Vigyan Nagar, Kota',
-      image: 'assets/images/physio_book_consultation.jpg'
-    },
-    {
-      name: 'Dr. Amit Verma',
-      specialty: 'Orthopedic Physiotherapist',
-      rating: 4.7,
-      reviewsCount: 110,
-      tags: ['Back Pain', 'Joint Care'],
-      location: 'Talwandi, Kota',
-      image: 'assets/images/physio_find_doctor.jpg'
-    },
-    {
-      name: 'Dr. Sneha Kapoor',
-      specialty: "Women's Health Physio",
-      rating: 4.8,
-      reviewsCount: 90,
-      tags: ["Women's Health", 'Pelvic Care'],
-      location: 'Gumanpura, Kota',
-      image: 'assets/images/physio_book_consultation.jpg'
-    }
-  ];
+  featuredDoctors: PractitionerModel[]
+  // readonly featuredDoctors: PractitionerModel[] = [
+  //   {
+  //     name: 'Dr. Rohan Mehta',
+  //     specialty: 'Sports Physiotherapist',
+  //     rating: 4.8,
+  //     reviewsCount: 120,
+  //     tags: ['Sports Injury', 'Post-Surgical'],
+  //     location: 'Gumanpura, Kota',
+  //     image: 'assets/images/physio_find_doctor.jpg'
+  //   },
+  //   {
+  //     name: 'Dr. Priya Sharma',
+  //     specialty: 'Pediatric Physiotherapist',
+  //     rating: 4.9,
+  //     reviewsCount: 95,
+  //     tags: ['Pediatric', 'Neuro Rehab'],
+  //     location: 'Vigyan Nagar, Kota',
+  //     image: 'assets/images/physio_book_consultation.jpg'
+  //   },
+  //   {
+  //     name: 'Dr. Amit Verma',
+  //     specialty: 'Orthopedic Physiotherapist',
+  //     rating: 4.7,
+  //     reviewsCount: 110,
+  //     tags: ['Back Pain', 'Joint Care'],
+  //     location: 'Talwandi, Kota',
+  //     image: 'assets/images/physio_find_doctor.jpg'
+  //   },
+  //   {
+  //     name: 'Dr. Sneha Kapoor',
+  //     specialty: "Women's Health Physio",
+  //     rating: 4.8,
+  //     reviewsCount: 90,
+  //     tags: ["Women's Health", 'Pelvic Care'],
+  //     location: 'Gumanpura, Kota',
+  //     image: 'assets/images/physio_book_consultation.jpg'
+  //   }
+  // ];
 
   readonly steps: StepItem[] = [
     {
@@ -280,5 +284,10 @@ export class Findphysiotherapist {
   selectCity(city: string): void {
     this.selectedCity = city;
     this.isCityOpen = false;
+  }
+  async GetAllDoctors(): Promise<void> {
+    debugger;
+    const res = await this.apiService.Post<PractitionerModel[]>(ApiEndPoints.GetPractitioners);
+    this.PractitionerList = res.isSuccess ? (res.data ?? []) : []
   }
 }

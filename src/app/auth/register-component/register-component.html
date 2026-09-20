@@ -2,7 +2,7 @@
   <!-- Top Navigation & Stepper Header -->
   <div class="register-header">
     <div class="header-top-row">
-      <button type="button" class="back-link-btn" (click)="currentStep === 1 ? backToAuth.emit() : prevStep()">
+      <button type="button" class="back-link-btn" (click)="currentStep === 1 ? handleBackToAuth() : prevStep()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
@@ -330,8 +330,8 @@
       <div class="multiselect-trigger-box" id="specialization-select-trigger"
         (click)="toggleDropdown('specialization', $event)"
         [class.is-invalid]="selectedSpecializations.length === 0 && doctorForm.touched">
-        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v4a3 3 0 0 0 3 3h1M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
         </svg>
         <span class="multiselect-trigger-text" [class.is-placeholder]="selectedSpecializations.length === 0">
@@ -419,8 +419,8 @@
       <div class="multiselect-trigger-box" id="qualification-select-trigger"
         (click)="toggleDropdown('qualification', $event)"
         [class.is-invalid]="selectedQualifications.length === 0 && doctorForm.touched">
-        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
           <path d="M6 12v5c3 3 9 3 12 0v-5" />
         </svg>
@@ -438,8 +438,8 @@
         <button type="button" class="multiselect-clear-btn" (click)="clearQualifications($event)"
           title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="openDropdown === 'qualification'" width="16" height="16" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'qualification'" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
@@ -473,7 +473,7 @@
               </svg>
               }
             </span>
-            <span class="option-label-text">{{ item.name }}</span>
+            <span class="option-label-text">{{ item.qualificationName }}</span>
           </label>
           } @empty {
           <div class="dropdown-no-results">No qualification found</div>
@@ -569,8 +569,8 @@
         <span class="form-label-hint">(select all that apply)</span>
       </label>
       <div class="multiselect-trigger-box" id="language-select-trigger" (click)="toggleDropdown('language', $event)">
-        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -589,8 +589,8 @@
         <button type="button" class="multiselect-clear-btn" (click)="clearLanguages($event)"
           title="Clear all">✕</button>
         }
-        <svg class="chevron-icon" [class.rotated]="openDropdown === 'language'" width="16" height="16" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'language'" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
@@ -658,6 +658,31 @@
         placeholder="Brief summary of your specialization, clinical techniques, rehabilitation approach..."
         class="form-textarea">
       </textarea>
+    </div>
+
+    <!-- Services Offered (chip multi-select) -->
+    <div class="form-group">
+      <label class="form-label">Services Offered
+        <span class="form-label-hint">(select all that apply)</span>
+        @if (selectedServiceIds.size > 0) {
+        <span class="multiselect-count-badge" style="margin-left:8px">{{ selectedServiceIds.size }} selected</span>
+        }
+      </label>
+      <div class="reg-services-chip-grid">
+        @for (svc of serviceList; track svc.id) {
+        <button type="button" class="reg-svc-chip" [class.reg-svc-chip--selected]="isServiceSelected(svc.id)"
+          (click)="toggleService(svc.id)">
+          <svg class="reg-svc-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          {{ svc.serviceName }}
+        </button>
+        }
+        @if (serviceList.length === 0) {
+        <span class="form-label-hint">Loading services...</span>
+        }
+      </div>
     </div>
 
     <!-- Buttons -->
@@ -943,6 +968,31 @@
     placeholder="Describe your clinic's specialty, services offered, available equipment and facilities..."
     class="form-textarea">
       </textarea>
+</div>
+
+<!-- Services Offered (chip multi-select) -->
+<div class="form-group">
+  <label class="form-label">Services &amp; Treatments Offered
+    <span class="form-label-hint">(select all that apply)</span>
+    @if (selectedServiceIds.size > 0) {
+    <span class="multiselect-count-badge" style="margin-left:8px">{{ selectedServiceIds.size }} selected</span>
+    }
+  </label>
+  <div class="reg-services-chip-grid">
+    @for (svc of serviceList; track svc.id) {
+    <button type="button" class="reg-svc-chip" [class.reg-svc-chip--selected]="isServiceSelected(svc.id)"
+      (click)="toggleService(svc.id)">
+      <svg class="reg-svc-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      {{ svc.serviceName }}
+    </button>
+    }
+    @if (serviceList.length === 0) {
+    <span class="form-label-hint">Loading services...</span>
+    }
+  </div>
 </div>
 
 <!-- Buttons -->

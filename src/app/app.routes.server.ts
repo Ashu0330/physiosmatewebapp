@@ -1,9 +1,21 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  // ─── Client-only Routes (booking flow) ─────────────────────────────────────
+  // ─── Client-only Routes (auth & booking flow) ─────────────────────────────
   {
     path: 'booking/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'register',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'login',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'signup',
     renderMode: RenderMode.Client,
   },
 

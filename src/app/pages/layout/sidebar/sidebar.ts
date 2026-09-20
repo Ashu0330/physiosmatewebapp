@@ -19,22 +19,28 @@ export class Sidebar extends BaseComponent implements OnInit, OnChanges {
   @Input() parentMenuId: number | null = null;
 
   async ngOnInit(): Promise<void> {
-    if (!this.menulist || this.menulist.length === 0) {
+    if (this.parentMenuId !== null) {
       await this.GetAllMenu();
     }
   }
 
-
   async ngOnChanges(changes: SimpleChanges): Promise<void> {
 
-    if (changes['parentMenuId'] && !changes['parentMenuId'].firstChange) {
+    if (
+      changes['parentMenuId'] &&
+      this.parentMenuId !== null
+    ) {
       await this.GetAllMenu();
     }
   }
 
   async GetAllMenu(): Promise<void> {
-    const parentId = this.parentMenuId ?? '';
-    const res = await this.apiService.Get<MenusModel[]>(`${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${parentId}`);
+
+    if (this.parentMenuId === null) {
+      this.menulist = [];
+      return;
+    }
+    const res = await this.apiService.Get<MenusModel[]>(`${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${this.parentMenuId}`);
     this.menulist = res.isSuccess ? (res.data ?? []) : [];
   }
 
@@ -54,13 +60,20 @@ export class Sidebar extends BaseComponent implements OnInit, OnChanges {
 
 
   isSidebarActive(): boolean {
-    return this.menulist.some(menu =>
-      this.router.isActive(menu.path, {
+    if (this.menulist.length === 0) {
+      return false;
+    }
+    return this.menulist.some(menu => {
+      if (!menu.path) {
+        return false;
+      }
+      return this.router.isActive(menu.path, {
         paths: 'exact',
         queryParams: 'ignored',
         matrixParams: 'ignored',
         fragment: 'ignored'
-      })
-    );
+      });
+
+    });
   }
 }

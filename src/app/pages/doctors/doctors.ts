@@ -2,6 +2,9 @@ import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { BaseComponent } from '../../helper/base-component';
+import { PractitionerModel } from '../../models/practitioner.model';
+import { ApiEndPoints } from '../../helper/api-endpoints';
 
 export interface Doctor {
   id: string;
@@ -50,9 +53,10 @@ export interface ClinicItem {
   templateUrl: './doctors.html',
   styleUrl: './doctors.css',
 })
-export class Doctors implements OnInit {
+export class Doctors extends BaseComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  PractitionerList: PractitionerModel[]
+
 
   // Distinguishes Doctor Mode vs Clinic Mode
   readonly isClinic = signal<boolean>(false);
@@ -96,7 +100,7 @@ export class Doctors implements OnInit {
   readonly appLinkSent = signal<boolean>(false);
 
   // Booking Modal State (for Doctors)
-  readonly bookingDoctor = signal<Doctor | null>(null);
+  readonly bookingDoctor = signal<PractitionerModel | null>(null);
   readonly selectedSlot = signal<string>('10:00 AM');
   readonly bookingSuccess = signal<boolean>(false);
 
@@ -335,6 +339,7 @@ export class Doctors implements OnInit {
 
   ngOnInit(): void {
     this.detectMode();
+    this.GetAllDoctors()
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.detectMode();
@@ -406,7 +411,7 @@ export class Doctors implements OnInit {
     }
   }
 
-  openBooking(doctor: Doctor): void {
+  openBooking(doctor: PractitionerModel): void {
     this.bookingDoctor.set(doctor);
     this.bookingSuccess.set(false);
   }
@@ -420,5 +425,10 @@ export class Doctors implements OnInit {
     setTimeout(() => {
       this.closeBooking();
     }, 2000);
+  }
+  async GetAllDoctors(): Promise<void> {
+    debugger;
+    const res = await this.apiService.Post<PractitionerModel[]>(ApiEndPoints.GetPractitioners);
+    this.PractitionerList = res.isSuccess ? (res.data ?? []) : []
   }
 }

@@ -34,6 +34,13 @@ export const ApiEndPoints = {
     RemoveSavedPractitioner: 'User/RemoveSavedPractitioner',
     AddUserSubscription: 'User/AddUserSubscription',
     GetUserSubscription: 'User/GetUserSubscription',
+    GetUserProfile: 'User/GetProfile',
+    GetPatientProfile: 'User/GetProfile',
+    GetPractitionerProfile: 'Explore/GetPractitionerById',
+    GetClinicProfile: 'Clinic/GetClinicProfile',
+    UpdateProfile: 'User/UpdateProfile',
+    UpdatePractitioner: 'Practitioner/AddPractitioner',
+    UpdateClinic: 'Clinic/AddClinic',
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
@@ -52,7 +59,7 @@ export const ApiEndPoints = {
     // ── Master Data ────────────────────────────────────────────────────────────────
     GetAllRoles: 'Master/GetAllRoles',
     GetAllSpecialization: 'Master/GetAllSpecialization',
-    GetAllServices: 'Master/GetAllServices',
+    GetAllServices: 'Master/GetAllService',
     GetAllLanguage: 'Master/GetAllLanguage',
     GetAllQualification: 'Master/GetAllQualification',
     GetAllState: 'Master/GetAllState',

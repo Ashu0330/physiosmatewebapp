@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { Doctordashboard } from './doctordashboard/doctordashboard';
+import { Settings } from '../settings/settings';
 
 const routes: Routes = [
   { path: '',                component: Doctordashboard },
@@ -12,6 +13,7 @@ const routes: Routes = [
   { path: 'Consultations',   component: Doctordashboard },
   { path: 'appointments',    component: Doctordashboard },
   { path: 'Appointments',    component: Doctordashboard },
+  { path: 'settings',        component: Settings },
 ];
 
 @NgModule({

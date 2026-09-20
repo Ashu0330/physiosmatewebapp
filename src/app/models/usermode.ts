@@ -1,28 +1,6 @@
-export class roles {
-    id: number = 0;
-    roleName: string = '';
-    description: string = '';
-    displayTitle: string = '';
-    iconClass: string = '';
-    iconName: string = '';
-}
 
-export class qualification {
-    id: number = 0;
-    qualificationName: string = '';
-}
 
-export class language {
-    id: number = 0;
-    name: string = '';
-}
 
-export class specialization {
-    id: number = 0;
-    name: string = '';
-    isActive: boolean = false;
-    icon: string = '';
-}
 
 export class MyBooking {
     bookingId: number = 0;
@@ -135,3 +113,124 @@ export class DayPlan {
     focus: string = '';
     exercises: DayExercise[] = [];
 }
+
+
+export class UserProfileModel {
+    id: number;
+    fullName: string;
+    email: string;
+    mobile: string;
+    gender: string;
+    dob: string;
+    city: string | null;
+    state: string | null;
+    profileImageUrl: string | null;
+    isEmailVerified: boolean;
+    isMobileVerified: boolean;
+    isProfileCompleted: boolean;
+    createdAt: string;
+}
+
+// ── Shared Sub-Models ────────────────────────────────────────────────────────
+
+export class PractitionerServiceModel {
+    id: number = 0;
+    practitionerId: number | null = null;
+    clinicId: number | null = null;
+    serviceId: number | null = null;
+    serviceName: string | null = null;
+}
+
+export class LanguageModel {
+    id: number = 0;
+    practitionerId: number = 0;
+    clinicId: number = 0;
+    languageId: number = 0;
+    languageName: string | null = null;
+}
+
+export class QualificationModel {
+    id: number = 0;
+    practitionerId: number | null = null;
+    qualificationId: number | null = null;
+    instituteId: number | null = null;
+    qualificationName: string | null = null;
+    instituteName: string | null = null;
+}
+
+
+
+
+export class PractitionerProfileModel {
+    id: number = 0;
+    practitionerId: number = 0;
+    fullName: string | null = null;
+    profileImage: string | null = null;
+    userId: number | null = null;
+    clinicId: number | null = null;
+    specializationId: number | null = null;
+    experienceYears: number | null = null;
+    savedPractitioner: boolean = false;
+    about: string | null = null;
+    consultationFee: number | null = null;
+    avgRating: number | null = null;
+    totalReviews: number | null = null;
+    isVerified: boolean | null = null;
+    isActive: boolean | null = null;
+    clinicName: string | null = null;
+    specialization: string | null = null;
+    isProfileCompleted: boolean = false;
+    services: PractitionerServiceModel[] = [];
+    languages: LanguageModel[] = [];
+    qualifications: QualificationModel[] = [];
+}
+
+// ── Clinic Profile ────────────────────────────────────────────────────────────
+
+export class ClinicPractitionerModel {
+    practitionerId: number = 0;
+    userId: number = 0;
+    fullName: string | null = null;
+    profileImage: string | null = null;
+    specializationId: number | null = null;
+    specialization: string | null = null;
+    experienceYears: number | null = null;
+    consultationFee: number | null = null;
+    avgRating: number | null = null;
+    totalReviews: number | null = null;
+    isVerified: boolean | null = null;
+    isActive: boolean | null = null;
+}
+
+export class ClinicMediaModel {
+    id: number = 0;
+    imageUrl: string | null = null;
+}
+
+export class expertiesModel {
+    id: number = 0;
+    name: string | null = null;
+}
+
+export class ClinicProfileModel {
+    id: number = 0;
+    clinicName: string | null = null;
+    logoUrl: string | null = null;
+    bannerImageUrl: string | null = null;
+    about: string | null = null;
+    address: string | null = null;
+    city: string | null = null;
+    state: string | null = null;
+    phone: string | null = null;
+    email: string | null = null;
+    avgRating: number | null = null;
+    totalReviews: number | null = null;
+    isVerified: boolean | null = null;
+    isActive: boolean | null = null;
+    services: PractitionerServiceModel[] = [];
+    languages: LanguageModel[] = [];
+    expertise: expertiesModel[] = [];
+    clinicGallery: ClinicMediaModel[] = [];
+    practitioners: ClinicPractitionerModel[] = [];
+}
+

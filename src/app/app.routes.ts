@@ -11,6 +11,7 @@ import { Condition } from './pages/specilization-condition/condition/condition';
 import { ConditionDetail } from './pages/specilization-condition/condition-detail/condition-detail';
 import { Articles } from './pages/articles/articles';
 import { ArticleDetail } from './pages/articles/article-detail/article-detail';
+import { Settings } from './pages/settings/settings';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -53,13 +54,16 @@ export const routes: Routes = [
 
       // ─── Doctor Dashboard — single entry, routes handled inside DoctorDashboardRoutingModule
       { path: 'doctor-dashboard', loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule) },
+
+      // ─── Global Settings Page ───────────────────────────────────────────────
+      { path: 'settings', component: Settings },
     ],
   },
 
   // ─── Standalone Authentication Routes ────────────────────────────────────
   { path: 'login', component: AuthPageComponent },
   { path: 'signup', component: AuthPageComponent },
-  { path: 'register', component: RegisterComponent },
+  { path: 'register', component: AuthPageComponent },
 
   // ─── Booking Route ────────────────────────────────────────────────────────
   { path: 'booking/consultancy/:providerId', component: BookingAuthComponent },

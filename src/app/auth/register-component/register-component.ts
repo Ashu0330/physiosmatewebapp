@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
-import { mastermodel } from '../../models/mastermodel';
+import { mastermodel, qualification, ServiceItem } from '../../models/mastermodel';
 import { role } from '../../helper/utilities';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
@@ -28,8 +28,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   @ViewChild('clinicMediaInput') clinicMediaInput!: ElementRef<HTMLInputElement>;
 
   specializationList: mastermodel[] = [];
-  qualificationList: mastermodel[] = [];
+  qualificationList: qualification[] = [];
   languageList: mastermodel[] = [];
+  serviceList: ServiceItem[] = [];
   stateList: any[] = [];
   cityList: any[] = [];
 
@@ -39,6 +40,26 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   selectedSpecializations: number[] = [];
   selectedQualifications: number[] = [];
   selectedLanguages: number[] = [];
+  selectedServiceIds = new Set<number>();
+
+  handleBackToAuth(): void {
+    this.clearDraft();
+    this.authService.clearPendingVerification();
+    this.backToAuth.emit();
+  }
+
+  toggleService(id: number): void {
+    if (this.selectedServiceIds.has(id)) {
+      this.selectedServiceIds.delete(id);
+    } else {
+      this.selectedServiceIds.add(id);
+    }
+    this.saveDraft();
+  }
+
+  isServiceSelected(id: number): boolean {
+    return this.selectedServiceIds.has(id);
+  }
   openDropdown: 'specialization' | 'qualification' | 'language' | null = null;
   specializationSearch = '';
   qualificationSearch = '';
@@ -85,15 +106,20 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   async GetAllQualification(): Promise<void> {
-    const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllQualification);
-    this.qualificationList = res.isSuccess ? (res.data ?? []) : [];
-    this.qualificationMap = new Map(this.qualificationList.map(x => [x.id, x.name ?? '']));
+    const res = await this.apiService.Get<qualification[]>(ApiEndPoints.GetAllQualification);
+    this.qualificationList = res.isSuccess && res.data?.length ? res.data : [];
+    this.qualificationMap = new Map(this.qualificationList.map(x => [x.id, x.qualificationName]));
   }
 
   async GetAllLanguages(): Promise<void> {
     const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllLanguage);
     this.languageList = res.isSuccess ? (res.data ?? []) : [];
     this.languageMap = new Map(this.languageList.map(x => [x.id, x.name ?? '']));
+  }
+
+  async GetAllServices(): Promise<void> {
+    const res = await this.apiService.Get<ServiceItem[]>(ApiEndPoints.GetAllServices);
+    this.serviceList = res.isSuccess ? (res.data ?? []) : [];
   }
 
   async GetAllStates(): Promise<void> {
@@ -103,13 +129,80 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
 
   async ngOnInit(): Promise<void> {
+    const pending = this.authService.getPendingVerification();
+    if (!this.verifiedEmail && pending?.email) {
+      this.verifiedEmail = pending.email;
+    }
+    if (pending?.user) {
+      this.registeredUser = pending.user;
+    }
     this.initForms();
     await Promise.all([
       this.GetAllQualification(),
       this.GetAllSpecialization(),
       this.GetAllLanguages(),
-      this.GetAllStates()
+      this.GetAllStates(),
+      this.GetAllServices(),
     ]);
+    await this.loadDraft();
+  }
+
+  saveDraft(): void {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      const draft = {
+        currentStep: this.currentStep,
+        userType: this.userType,
+        basicForm: this.basicForm?.value,
+        doctorForm: this.doctorForm?.value,
+        clinicForm: this.clinicForm?.value,
+        selectedSpecializations: this.selectedSpecializations,
+        selectedQualifications: this.selectedQualifications,
+        selectedLanguages: this.selectedLanguages,
+        selectedServiceIds: [...this.selectedServiceIds],
+      };
+      sessionStorage.setItem('physios_register_draft', JSON.stringify(draft));
+    } catch { }
+  }
+
+  async loadDraft(): Promise<void> {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      const saved = sessionStorage.getItem('physios_register_draft');
+      if (!saved) return;
+      const draft = JSON.parse(saved);
+      if (draft.userType) {
+        this.userType = draft.userType;
+      }
+      if (draft.currentStep) {
+        this.currentStep = draft.currentStep;
+      }
+      if (draft.basicForm && this.basicForm) {
+        this.basicForm.patchValue(draft.basicForm);
+        if (draft.basicForm.state) {
+          await this.loadCitiesForState(draft.basicForm.state, 'basic', draft.basicForm.city);
+        }
+      }
+      if (draft.doctorForm && this.doctorForm) {
+        this.doctorForm.patchValue(draft.doctorForm);
+      }
+      if (draft.clinicForm && this.clinicForm) {
+        this.clinicForm.patchValue(draft.clinicForm);
+        if (draft.clinicForm.state) {
+          await this.loadCitiesForState(draft.clinicForm.state, 'clinic', draft.clinicForm.city);
+        }
+      }
+      if (draft.selectedSpecializations?.length) this.selectedSpecializations = draft.selectedSpecializations;
+      if (draft.selectedQualifications?.length) this.selectedQualifications = draft.selectedQualifications;
+      if (draft.selectedLanguages?.length) this.selectedLanguages = draft.selectedLanguages;
+      if (draft.selectedServiceIds?.length) this.selectedServiceIds = new Set(draft.selectedServiceIds);
+    } catch { }
+  }
+
+  clearDraft(): void {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('physios_register_draft');
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -129,13 +222,12 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     this.clinicMediaPreviews.forEach(p => URL.revokeObjectURL(p.url));
   }
 
-
-
   initForms(): void {
+    const defaultEmail = this.verifiedEmail || this.authService.getPendingVerification()?.email || '';
     this.basicForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       mobile: [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email: [this.verifiedEmail || '', [Validators.required, Validators.email]],
+      email: [defaultEmail, [Validators.required, Validators.email]],
       userType: ['user', [Validators.required]],
       gender: ['male', [Validators.required]],
       dob: ['', [Validators.required]],
@@ -160,30 +252,47 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       establishedYear: [null, [Validators.required, Validators.min(1900), Validators.max(new Date().getFullYear())]],
       consultancyFees: [0, [Validators.required, Validators.min(0)]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email: [this.verifiedEmail || '', [Validators.required, Validators.email]],
+      email: [defaultEmail, [Validators.required, Validators.email]],
       state: [null, [Validators.required]],
       city: [null, [Validators.required]],
       pincode: ['', [Validators.required, Validators.pattern(/^[0-9]{6}$/)]],
       address: ['', [Validators.required]],
       description: [''],
     });
+
+    this.basicForm.valueChanges.subscribe(() => this.saveDraft());
+    this.doctorForm.valueChanges.subscribe(() => this.saveDraft());
+    this.clinicForm.valueChanges.subscribe(() => this.saveDraft());
   }
-
-
 
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
     this.userType = type;
     this.basicForm.patchValue({ userType: type });
     this.registeredUser = null;
+    this.saveDraft();
   }
 
   setGender(gender: string): void {
     this.basicForm.patchValue({ gender });
+    this.saveDraft();
   }
 
   onDobChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.value) return;
+    this.saveDraft();
+  }
+
+  async loadCitiesForState(stateId: number, target: 'basic' | 'clinic', cityIdToSet?: any): Promise<void> {
+    const res = await this.apiService.Get<any[]>(`${ApiEndPoints.GetAllCity}?stateId=${stateId}`);
+    this.cityList = res.isSuccess ? (res.data ?? []) : [];
+    if (cityIdToSet != null) {
+      if (target === 'basic') {
+        this.basicForm?.patchValue({ city: cityIdToSet });
+      } else {
+        this.clinicForm?.patchValue({ city: cityIdToSet });
+      }
+    }
   }
 
   async onStateChange(event: Event, target: 'basic' | 'clinic'): Promise<void> {
@@ -198,8 +307,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.clinicForm.patchValue({ city: null });
     }
 
-    const res = await this.apiService.Get<any[]>(`${ApiEndPoints.GetAllCity}?stateId=${stateId}`);
-    this.cityList = res.isSuccess ? (res.data ?? []) : [];
+    await this.loadCitiesForState(stateId, target);
+    this.saveDraft();
   }
 
 
@@ -339,6 +448,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     this.doctorForm.patchValue({
       specializationId: this.selectedSpecializations[0] || null
     });
+    this.saveDraft();
   }
 
   isSpecializationSelected(id: number): boolean {
@@ -351,6 +461,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (idx !== -1) {
       this.selectedSpecializations.splice(idx, 1);
       this.doctorForm.patchValue({ specializationId: this.selectedSpecializations[0] || null });
+      this.saveDraft();
     }
   }
 
@@ -358,6 +469,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (event) event.stopPropagation();
     this.selectedSpecializations = [];
     this.doctorForm.patchValue({ specializationId: null });
+    this.saveDraft();
   }
 
   getSpecializationName(id: number): string {
@@ -378,6 +490,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     } else {
       this.selectedQualifications.splice(idx, 1);
     }
+    this.saveDraft();
   }
 
   isQualificationSelected(id: number): boolean {
@@ -387,22 +500,28 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   removeQualification(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     const idx = this.selectedQualifications.indexOf(id);
-    if (idx !== -1) this.selectedQualifications.splice(idx, 1);
+    if (idx !== -1) {
+      this.selectedQualifications.splice(idx, 1);
+      this.saveDraft();
+    }
   }
 
   clearQualifications(event?: MouseEvent): void {
     if (event) event.stopPropagation();
     this.selectedQualifications = [];
+    this.saveDraft();
   }
 
   getQualificationName(id: number): string {
     return this.qualificationMap.get(id) ?? '';
   }
 
-  get filteredQualifications(): mastermodel[] {
+  get filteredQualifications(): qualification[] {
     if (!this.qualificationSearch.trim()) return this.qualificationList;
     const term = this.qualificationSearch.toLowerCase().trim();
-    return this.qualificationList.filter(q => q.name?.toLowerCase().includes(term));
+    return this.qualificationList.filter(q =>
+      (q.qualificationName || (q as any).name || '').toLowerCase().includes(term)
+    );
   }
 
 
@@ -413,6 +532,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     } else {
       this.selectedLanguages.splice(idx, 1);
     }
+    this.saveDraft();
   }
 
   isLanguageSelected(id: number): boolean {
@@ -422,12 +542,16 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   removeLanguage(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     const idx = this.selectedLanguages.indexOf(id);
-    if (idx !== -1) this.selectedLanguages.splice(idx, 1);
+    if (idx !== -1) {
+      this.selectedLanguages.splice(idx, 1);
+      this.saveDraft();
+    }
   }
 
   clearLanguages(event?: MouseEvent): void {
     if (event) event.stopPropagation();
     this.selectedLanguages = [];
+    this.saveDraft();
   }
 
   getLanguageName(id: number): string {
@@ -478,6 +602,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   prevStep(): void {
     this.currentStep = 1;
+    this.saveDraft();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -489,8 +614,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     try {
       const b = this.basicForm.value;
       const form = new FormData();
-      const cityname = this.cityList.find((c: any) => c.id === b.city)?.name;
-      const statename = this.stateList.find((c: any) => c.id === b.state)?.name;
+      debugger
+      const cityname = this.cityList.find((c: any) => c.id === Number(b.city))?.name;
+      const statename = this.stateList.find((c: any) => c.id === Number(b.state))?.name;
 
       form.append('fullName', b.fullName);
       form.append('email', b.email);
@@ -516,6 +642,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
         this.authService.saveUserSession(user, user?.token);
 
         if (this.userType === 'user' || user?.roleId === role.patient) {
+          this.clearDraft();
+          this.authService.clearPendingVerification();
           this.registrationSuccess.emit();
           this.alert.toastSuccess(AppMessage.RegistrationSuccess);
           this.router.navigate(['/']);
@@ -526,6 +654,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
             this.clinicForm.patchValue({ email: b.email, phone: b.mobile });
           }
           this.currentStep = 2;
+          this.saveDraft();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -560,12 +689,16 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const payload = {
         userId,
         specializationId: this.selectedSpecializations[0] || null,
-        selectedSpecializations: this.selectedSpecializations,
-        selectedQualifications: this.selectedQualifications,
+        services: [...this.selectedServiceIds].map(id => ({ serviceId: id })),
+        qualifications: this.selectedQualifications.map(id => ({
+          qualificationId: id
+        })),
         experienceYears: d.experienceYears,
         consultationFee: d.consultationFee,
         institute: d.institute,
-        selectedLanguages: this.selectedLanguages,
+        languages: this.selectedLanguages.map(id => ({
+          languageId: id
+        })),
         about: d.about,
         registrationNumber: d.registrationNumber,
       };
@@ -573,6 +706,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const res = await this.apiService.Post<any>(ApiEndPoints.AddPractitioner, payload);
 
       if (res.isSuccess) {
+        this.clearDraft();
+        this.authService.clearPendingVerification();
         this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
         this.registrationSuccess.emit();
         this.router.navigate(['/doctor-dashboard']);
@@ -616,10 +751,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       if (this.clinicLogoFile) formData.append('logoFile', this.clinicLogoFile);
       if (this.clinicBannerFile) formData.append('bannerImageFile', this.clinicBannerFile);
       this.clinicMediaFiles.forEach(f => formData.append('clinicMedia', f));
+      // Append selected services
+      [...this.selectedServiceIds].forEach(id => formData.append('serviceIds', id.toString()));
 
       const res = await this.apiService.PostForm<any>(ApiEndPoints.AddClinic, formData);
 
       if (res.isSuccess) {
+        this.clearDraft();
+        this.authService.clearPendingVerification();
         this.alert.toastSuccess('Clinic registration submitted successfully!');
         this.registrationSuccess.emit();
         this.router.navigate(['/clinics']);

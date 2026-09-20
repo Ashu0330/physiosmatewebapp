@@ -22,12 +22,30 @@ export class AuthPageComponent extends BaseComponent implements OnInit {
   verifiedEmail = '';
 
   ngOnInit(): void {
-    const url = this.router.url;
-    if (url.includes('/signup')) {
-      this.authMode = 'signup';
+    const isBrowser = typeof window !== 'undefined';
+    const currentPath = isBrowser ? window.location.pathname : this.router.url;
+    const isRegisterRoute = currentPath.includes('/register') || this.route.snapshot.routeConfig?.path === 'register';
+    const pending = this.authService.getPendingVerification();
+
+    if (pending?.isOtpVerified && pending?.email) {
+      this.isOtpVerified = true;
+      this.verifiedEmail = pending.email;
+      if (!isRegisterRoute) {
+        this.router.navigate(['/register'], { replaceUrl: true });
+      }
     } else {
-      this.authMode = 'login';
+      if (isRegisterRoute) {
+        // Direct access to /register without verified OTP -> redirect to login
+        this.router.navigate(['/login'], { replaceUrl: true });
+        return;
+      }
+      if (currentPath.includes('/signup') || this.router.url.includes('/signup')) {
+        this.authMode = 'signup';
+      } else {
+        this.authMode = 'login';
+      }
     }
+
     const paramReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     if (paramReturnUrl) {
       this.returnUrl = paramReturnUrl;
@@ -37,19 +55,36 @@ export class AuthPageComponent extends BaseComponent implements OnInit {
   onModeChange(mode: 'login' | 'signup'): void {
     this.authMode = mode;
     this.isOtpVerified = false;
+    this.authService.clearPendingVerification();
   }
 
   onOtpVerified(data: { email: string }): void {
     this.verifiedEmail = data.email;
     this.isOtpVerified = true;
+    this.authService.setPendingVerification({ email: data.email, isOtpVerified: true });
+    const isBrowser = typeof window !== 'undefined';
+    const currentPath = isBrowser ? window.location.pathname : this.router.url;
+    if (!currentPath.includes('/register')) {
+      this.router.navigate(['/register'], { replaceUrl: true });
+    }
   }
 
   onBackToAuth(): void {
     this.isOtpVerified = false;
+    this.verifiedEmail = '';
+    this.authService.clearPendingVerification();
+    this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   onAuthSuccess(): void {
-    this.router.navigateByUrl(this.returnUrl);
+    this.authService.clearPendingVerification();
+    if (this.returnUrl && this.returnUrl !== '/') {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
+
+    this.router.navigate(['/']);
+
   }
 }
 

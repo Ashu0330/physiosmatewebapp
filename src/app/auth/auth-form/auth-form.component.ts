@@ -125,10 +125,39 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
 
       if (res.data?.isProfileCompleted) {
         this.authService.saveUserSession(res.data, res.data.token);
-        this.authSuccess.emit();
+        this.authService.clearPendingVerification();
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('physios_register_draft');
+        }
+
+        if (this.bookingContext) {
+          this.authSuccess.emit();
+        } else {
+          const roleId = res.data?.roleId ?? this.authService.getRoleId();
+          if (roleId === 2) {
+            this.router.navigate(['/doctor-dashboard']);
+          } else if (roleId === 3) {
+            this.router.navigate(['/clinics']);
+          } else {
+            this.router.navigate(['/user-dashboard']);
+          }
+        }
+        return;
       }
 
-      this.otpVerified.emit({ email: this.signupForm.value.email });
+      // Profile is NOT completed -> save pending state and proceed to registration
+      const email = this.signupForm.value.email;
+      this.authService.setPendingVerification({
+        email: email,
+        isOtpVerified: true,
+        isProfileCompleted: false,
+        user: res.data
+      });
+      if (res.data?.token) {
+        this.authService.saveUserSession(res.data, res.data.token);
+      }
+
+      this.otpVerified.emit({ email: email });
 
     } finally {
       this.isLoading = false;

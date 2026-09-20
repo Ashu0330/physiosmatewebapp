@@ -1264,3 +1264,68 @@
   }
 }
 
+/* ── Services Offered Chip Multi-Select ────────────────────────────────── */
+.reg-services-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0 4px;
+}
+
+.reg-svc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  font-family: inherit;
+  user-select: none;
+}
+
+.reg-svc-chip:hover {
+  border-color: var(--primary-color, #0f766e);
+  color: var(--primary-color, #0f766e);
+  background: var(--primary-light, #f0fdfa);
+}
+
+.reg-svc-chip--selected {
+  background: var(--primary-light, #f0fdfa);
+  border-color: var(--primary-color, #0f766e);
+  color: var(--primary-dark, #0d5f58);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.12);
+}
+
+.reg-svc-check {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+  color: var(--primary-color, #0f766e);
+  flex-shrink: 0;
+}
+
+.reg-svc-chip--selected .reg-svc-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.multiselect-count-badge {
+  display: inline-block;
+  background: var(--primary-color, #0f766e);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  vertical-align: middle;
+}

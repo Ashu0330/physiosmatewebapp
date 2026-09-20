@@ -367,21 +367,21 @@
         </article>
         }
         } @else {
-        @for (doc of doctorsList(); track doc.id) {
+        @for (doc of PractitionerList; track doc.practitionerId) {
         <article class="physios-doc-card">
           <!-- Col 1: Avatar Column with View Profile Link Below -->
           <div class="physios-doc-avatar-col">
             <div class="physios-doc-avatar-wrapper">
-              <img [src]="doc.photo" [alt]="doc.name" class="physios-doc-img" />
+              <img [src]="doc.profileImage" [alt]="doc.fullName" class="physios-doc-img" />
             </div>
           </div>
 
           <!-- Col 2: Info & Details Column -->
           <div class="physios-doc-info-col">
             <h2 class="physios-doc-name">
-              <a [routerLink]="['/doctor-detail', doc.id]">{{ doc.name }}</a>
-              <div class="physios-doc-spec">({{ doc.specialist }})
-                @if (doc.prime) {
+              <a [routerLink]="['/doctor-detail', doc.practitionerId]">{{ doc.fullName }}</a>
+              <div class="physios-doc-spec">({{ doc.specialization }})
+                @if (doc.isVerified) {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clip-path="url(#clip0_281_661)">
                     <path
@@ -408,15 +408,15 @@
                     d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
                   </path>
                 </svg>
-                <span>{{ doc.ratingPercent }}%</span>
+                <span>{{ doc.avgRating }}%</span>
               </span>
-              <p [routerLink]="['/doctor-detail', doc.id]" class="physios-stories-link">
-                {{ doc.patientStoriesCount }} reviews
+              <p [routerLink]="['/doctor-detail', doc.practitionerId]" class="physios-stories-link">
+                {{ doc.totalReviews }} reviews
               </p>
             </div>
             <div class="physios-doc-clinic-row">
-              <span class="physios-doc-location">{{ doc.location }}</span>
-              <span class="physios-doc-clinic">{{ doc.clinicName }}</span>
+              <span class="physios-doc-location">{{ doc.city }}-{{doc.state}}</span>
+              <span class="physios-doc-clinic">{{doc.clinicName}}</span>
             </div>
             <div class="physios-doc-footer">
               <div class="physios-doc-fee-row">
@@ -430,7 +430,7 @@
                   <path d="M9 13c6.667 0 6.667-10 0-10" />
                 </svg>
                 <span class="physios-doc-fee">
-                  <b> ₹{{ doc.fee }} </b> Consultation fee
+                  <b> ₹{{ doc.consultationFee }} </b> Consultation fee
                 </span>
               </div>
               <div class="physios-doc-exp">
@@ -463,7 +463,7 @@
               </button>
 
               <!-- View Profile Outline Button -->
-              <a [routerLink]="['/doctor-detail', doc.id]" class="btn_3">
+              <a [routerLink]="['/doctor-detail', doc.practitionerId]" class="btn_3">
                 View Profile
               </a>
             </div>
@@ -520,7 +520,7 @@
     <div class="physios-modal-body">
       @if (!bookingSuccess()) {
       <div class="physios-modal-fee-alert">
-        <span>Consultation Fee: <strong>₹{{ doc.fee }}</strong> (Pay at Clinic, No Booking Fee)</span>
+        <span>Consultation Fee: <strong>₹{{ doc.consultationFee }}</strong> (Pay at Clinic, No Booking Fee)</span>
       </div>
 
       <div class="physios-modal-section-title">Select Appointment Slot</div>

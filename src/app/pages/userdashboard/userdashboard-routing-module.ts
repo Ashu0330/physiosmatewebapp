@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserDashboard } from './user-dashboard/user-dashboard';
+import { Settings } from '../settings/settings';
 
 const routes: Routes = [
   { path: '',                     component: UserDashboard },  // /user-dashboard
@@ -10,6 +11,7 @@ const routes: Routes = [
   { path: 'online-consultations', component: UserDashboard },  // /user-dashboard/online-consultations
   { path: 'subscriptions',        component: UserDashboard },  // /user-dashboard/subscriptions
   { path: 'payments',             component: UserDashboard },  // /user-dashboard/payments
+  { path: 'settings',             component: Settings },
 ];
 
 @NgModule({

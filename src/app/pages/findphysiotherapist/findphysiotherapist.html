@@ -249,25 +249,27 @@
       </button>
 
       <div class="fp-cards-grid fp-doctors-grid">
-        @for (doc of featuredDoctors; track doc.name) {
+        @for (doc of featuredDoctors; track doc.practitionerId) {
         <div class="fp-doctor-card">
           <!-- Doctor Portrait -->
           <div class="fp-doctor-img-wrap">
-            <img [src]="doc.image" [alt]="doc.name" class="fp-doctor-img" />
+            <img [src]="doc.image" [alt]="doc.fullName" class="fp-doctor-img" />
           </div>
 
           <!-- Doctor Details -->
           <div class="fp-doctor-info">
-            <h3 class="fp-doctor-name">{{ doc.name }}</h3>
-            <p class="fp-doctor-spec">{{ doc.specialty }}</p>
+            <h3 class="fp-doctor-name">{{ doc.fullName }}</h3>
+            <p class="fp-doctor-spec">{{ doc.specialization }}</p>
 
             <!-- Star Rating Row -->
             <div class="fp-doctor-rating">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
               </svg>
-              <span class="fp-rating-val">{{ doc.rating }}</span>
-              <span class="fp-rating-count">({{ doc.reviewsCount }} reviews)</span>
+              <span class="fp-rating-val">{{ doc.avgRating }}</span>
+              <span class="fp-rating-count">({{ doc.totalReviews }} reviews)</span>
             </div>
 
             <!-- Tags -->
@@ -390,7 +392,9 @@
           } @else if (step.iconType === 'heart') {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
           </svg>
           }
         </div>
@@ -435,7 +439,8 @@
         <!-- Quote Icon -->
         <div class="fp-quote-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color, #10A896)">
-            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+            <path
+              d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
           </svg>
         </div>
 
@@ -451,7 +456,9 @@
           </div>
           <div class="fp-stars-row">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+              </polygon>
             </svg>
             <span class="fp-user-rating">{{ t.rating }}</span>
           </div>
@@ -473,7 +480,8 @@
       <div class="fp-app-badges">
         <a href="https://play.google.com" target="_blank" rel="noopener" class="fp-store-badge">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3.609 1.814L13.792 12 3.61 22.186c-.37-.202-.61-.599-.61-1.056V2.87c0-.457.24-.854.61-1.056zM15.207 13.414l2.42 2.42-12.87 7.432 10.45-9.852zm0-2.828L4.757.734l12.87 7.432-2.42 2.42zm1.414 1.414l3.774 2.18c1.08.625 1.08 1.644 0 2.268l-3.774 2.18-2.122-2.122 2.122-2.506z"/>
+            <path
+              d="M3.609 1.814L13.792 12 3.61 22.186c-.37-.202-.61-.599-.61-1.056V2.87c0-.457.24-.854.61-1.056zM15.207 13.414l2.42 2.42-12.87 7.432 10.45-9.852zm0-2.828L4.757.734l12.87 7.432-2.42 2.42zm1.414 1.414l3.774 2.18c1.08.625 1.08 1.644 0 2.268l-3.774 2.18-2.122-2.122 2.122-2.506z" />
           </svg>
           <div>
             <span class="fp-store-sub">GET IT ON</span>
@@ -482,7 +490,8 @@
         </a>
         <a href="https://apple.com" target="_blank" rel="noopener" class="fp-store-badge">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.62-.75 1.04-1.8 0.93-2.84-.9.04-1.99.6-2.64 1.35-.58.65-1.08 1.71-.95 2.73 1 .08 2.04-.49 2.66-1.24z"/>
+            <path
+              d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.62-.75 1.04-1.8 0.93-2.84-.9.04-1.99.6-2.64 1.35-.58.65-1.08 1.71-.95 2.73 1 .08 2.04-.49 2.66-1.24z" />
           </svg>
           <div>
             <span class="fp-store-sub">Download on the</span>
@@ -528,7 +537,8 @@
           <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
           <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path>
           <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
-          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15">
+          </path>
         </svg>
         } @else if (vp.iconType === 'walk') {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
@@ -550,7 +560,9 @@
         } @else if (vp.iconType === 'heart') {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+          </path>
         </svg>
         }
       </div>

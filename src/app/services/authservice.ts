@@ -81,12 +81,21 @@ export class Authservice {
   }
 
   clearPendingVerification() {
-    localStorage.removeItem('pendingVerification');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('pendingVerification');
+    }
   }
   getUserName() {
     const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
     if (user) {
       return JSON.parse(user).fullName;
+    }
+    return null;
+  }
+  getRoleId() {
+    const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (user) {
+      return JSON.parse(user).roleId;
     }
     return null;
   }
@@ -116,6 +125,26 @@ export class Authservice {
     if (typeof localStorage === 'undefined') return null;
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
+  }
+
+  getCurrentProfessionalId(): any {
+    const roleid = this.getRoleId();
+    const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (user) {
+      const parsedUser = JSON.parse(user);
+      if (roleid === 1) {
+        return parsedUser.Id;
+      }
+      else if (roleid === 2) {
+        return parsedUser.practitionerId;
+      }
+      else if (roleid === 3) {
+        return parsedUser.clinicId;
+      }
+    }
+    else {
+      return null;
+    }
   }
 
   saveUserSession(userData: any, token?: string): void {
