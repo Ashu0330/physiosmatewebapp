@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal, Signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
@@ -7,45 +7,9 @@ import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
+import { PractitionerDetailedData } from '../../models/practitioner.model';
 
-export interface PlanBenefit {
-  id: number;
-  planId: number;
-  planType?: number;
-  benefitText: string;
-  displayOrder: number;
-}
 
-export interface RehabPlan {
-  id: number;
-  planName: string;
-  totalSessions: number;
-  validityDays: number;
-  price: number;
-  isPopular: boolean;
-  isActive: boolean;
-  providerType: string;
-  providerId: number;
-  expertiseId: number;
-  benefits: PlanBenefit[];
-}
-
-export interface UserSubscription {
-  id: number;
-  userId: number;
-  patientId: number;
-  planId: number;
-  practitionerId: number;
-  clinicId: number | null;
-  totalSessions: number;
-  usedSessions: number;
-  remainingSessions: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  amount: number;
-  paymentStatus: string;
-}
 
 export interface TimeSlot {
   id: number;
@@ -111,13 +75,13 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   readonly searchQuery = signal<string>('Physiotherapist');
   readonly isCityOpen = signal<boolean>(false);
   readonly popularCities = ['Jaipur', 'Kota', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Pune'];
+  doctorDetail = signal<PractitionerDetailedData | null>(null);
 
 
 
   async GetDoctorById(PractitionerId: number) {
-    debugger
-    let data = await this.apiService.Get<any>(`${ApiEndPoints.GetPractitionerById}?PractitionerId=${PractitionerId}`)
-    console.log(data)
+    let res = await this.apiService.Get<PractitionerDetailedData>(`${ApiEndPoints.GetPractitionerById}?PractitionerId=${PractitionerId}`)
+    this.doctorDetail.set(res.data ?? null)
   }
 
 
@@ -230,78 +194,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   ]);
 
   // Rehab Plans Data JSON
-  readonly rehabPlans = signal<RehabPlan[]>([
-    {
-      id: 12,
-      planName: '10-Session Rehab Plan',
-      totalSessions: 10,
-      validityDays: 60,
-      price: 4500.0,
-      isPopular: true,
-      isActive: true,
-      providerType: 'Practitioner',
-      providerId: 1,
-      expertiseId: 3,
-      benefits: [
-        {
-          id: 1,
-          planId: 12,
-          planType: 1,
-          benefitText: 'Personalized rehab exercise chart',
-          displayOrder: 1
-        },
-        {
-          id: 2,
-          planId: 12,
-          planType: 1,
-          benefitText: 'Weekly progress assessment',
-          displayOrder: 2
-        }
-      ]
-    }
-  ]);
 
-  // User Purchased Plan JSON
-  readonly activeSubscription = signal<UserSubscription | null>({
-    id: 55,
-    userId: 24,
-    patientId: 18,
-    planId: 12,
-    practitionerId: 1,
-    clinicId: null,
-    totalSessions: 10,
-    usedSessions: 2,
-    remainingSessions: 8,
-    startDate: '2026-08-15T00:00:00',
-    endDate: '2026-10-14T00:00:00',
-    status: 'Active',
-    amount: 4500.0,
-    paymentStatus: 'Paid'
-  });
-
-  // Surgeries & Treatments List
-  readonly treatmentsList = signal<TreatmentItem[]>([
-    { id: 1, name: 'Geriatric Physiotherapy Consultation' },
-    { id: 2, name: 'Tailbone Pain (Coccydynia)' },
-    { id: 3, name: 'Ribs Pain' },
-    { id: 4, name: 'Osteopathic Physiotherapy' },
-    { id: 5, name: 'Kegel Exercises' },
-    { id: 6, name: 'Buttock Pain' },
-    { id: 7, name: 'Orthopaedic Physiotherapy' },
-    { id: 8, name: 'Nerve and Muscle Disorders' },
-    { id: 9, name: 'Sports Injury Rehabilitation' },
-    { id: 10, name: 'Spine & Posture Alignment' },
-    { id: 11, name: 'Post-Surgical Joint Rehab' },
-    { id: 12, name: 'Cervical Spondylosis Therapy' }
-  ]);
-
-  readonly treatmentSearchQuery = signal<string>('');
-
-  readonly filteredTreatments = computed(() => {
-    const q = this.treatmentSearchQuery().toLowerCase().trim();
-    if (!q) return this.treatmentsList();
-    return this.treatmentsList().filter(t => t.name.toLowerCase().includes(q));
-  });
 
   // Mode flag: Doctor vs Clinic Detail
   readonly isClinic = signal<boolean>(false);
@@ -581,29 +474,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.bookingSuccess.set(false);
   }
 
-  buyPlan(plan: RehabPlan): void {
-    if (!this.authService.isLoggedIn()) {
-      const paramId = this.route.snapshot.paramMap.get('id') || '1';
-      const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitioner.id || 1;
-      this.bookingService.savePendingSlot({
-        providerId: Number(providerId) || 1,
-        providerName: this.practitioner.name,
-        providerSpecialty: `Rehab Plan: ${plan.planName}`,
-        providerImage: this.practitioner.photoUrl,
-        clinicName: this.practitioner.clinicName,
-        clinicAddress: this.practitioner.clinicAddress,
-        consultationFee: plan.price,
-        selectedDay: `${plan.totalSessions} Sessions Plan`,
-        selectedTime: `${plan.validityDays} Days Validity`
-      });
-      this.router.navigate(['/booking/consultancy', providerId]);
-      return;
-    }
-    this.confirmAppointmentDirectly(
-      { label: `Plan: ${plan.planName}`, dateStr: `${plan.totalSessions} Sessions` },
-      `₹${plan.price}`
-    );
-  }
 
   toggleCity(): void {
     this.isCityOpen.update(v => !v);

@@ -1,6 +1,7 @@
 import {
-  Component,ElementRef,EventEmitter,HostListener,Input,OnChanges,OnDestroy,OnInit,Output,SimpleChanges,
-  inject,signal,computed,viewChild,} from '@angular/core';
+  Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges,
+  inject, signal, computed, viewChild,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { mastermodel, qualification, ServiceItem } from '../../models/mastermodel';
@@ -679,6 +680,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
           this.saveDraft();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+      } else {
+        debugger
+        this.alert.toastError(res.message);
       }
     } finally {
       this.isSubmitting.set(false);
@@ -691,6 +695,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
+    debugger
     if (this.selectedSpecializations().length === 0) {
       this.alert.toastError('Please select at least one specialization.');
       return;
@@ -726,13 +731,19 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       };
 
       const res = await this.apiService.Post<any>(ApiEndPoints.AddPractitioner, payload);
-
+      debugger
       if (res.isSuccess) {
+        user.practitionerId = res.data;
+        localStorage.setItem('user', JSON.stringify(user));
         this.clearDraft();
         this.authService.clearPendingVerification();
         this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
         this.registrationSuccess.emit();
         this.router.navigate(['/doctor-dashboard']);
+      }
+      else {
+        debugger
+        this.alert.toastError(res.message);
       }
     } finally {
       this.isSubmitting.set(false);

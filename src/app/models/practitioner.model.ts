@@ -52,7 +52,7 @@ export interface PractitionerQualification {
   id?: number;
   practitionerId?: number;
   degree?: string;
-  degreeName?: string;
+  qualificationName?: string;
   institution?: string;
   university?: string;
   passingYear?: string | number;
@@ -118,7 +118,6 @@ export interface PractitionerDetailedData {
   services: PractitionerServiceItem[];
   languages: PractitionerLanguage[];
   qualifications: PractitionerQualification[];
-  subscriptionPlans: PractitionerSubscriptionPlan[];
 }
 
 export interface SavedPractitioner {

@@ -1,5 +1,3 @@
-
-
 <!-- Breadcrumb Strip -->
 <div class="physios-breadcrumb-strip">
   <div class="physios-detail-container">
@@ -8,11 +6,12 @@
       <span class="breadcrumb-separator">&gt;</span>
       <a routerLink="/doctors" class="breadcrumb-link">{{ selectedCity() }}</a>
       <span class="breadcrumb-separator">&gt;</span>
-      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">Physiotherapist</a>
+      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">{{ doctorDetail()?.specialization
+        }}</a>
       <span class="breadcrumb-separator">&gt;</span>
       <span class="breadcrumb-link">Mansarovar</span>
       <span class="breadcrumb-separator">&gt;</span>
-      <span class="breadcrumb-current">{{ practitioner.name }}</span>
+      <span class="breadcrumb-current">{{ doctorDetail()?.fullName }}</span>
     </nav>
   </div>
 </div>
@@ -29,40 +28,43 @@
         <div class="hero-card-inner">
           <!-- Doctor Photo -->
           <div class="doctor-photo-wrap">
-            <img [src]="practitioner.photoUrl" [alt]="practitioner.name" class="doctor-photo" />
+            <img [src]="doctorDetail()?.profileImage" [alt]="doctorDetail()?.fullName" class="doctor-photo" />
           </div>
 
           <!-- Doctor Meta Info -->
           <div class="doctor-meta-block">
             <div class="doctor-title-row">
               <h1 class="doctor-name">
-                {{ practitioner.name }} <span class="doctor-spec-title">{{ practitioner.specialtyTitle }}</span>
+                {{ doctorDetail()?.fullName }} <span class="doctor-spec-title">{{ doctorDetail()?.specialization
+                  }}</span>
               </h1>
             </div>
+            <div class="doctor-degree">
+              @for (item of doctorDetail()?.qualifications; track $index) {
+              <p>{{ item.qualificationName }}</p>
+              }
+            </div>
 
-            <p class="doctor-degree">{{ practitioner.degree }}</p>
-
-            <p class="doctor-specialization">{{ practitioner.specializations }}</p>
+            <p class="doctor-specialization">{{ doctorDetail()?.specialization }}</p>
             <p class="doctor-experience">
-              {{ practitioner.experienceOverall }} Years Experience Overall ({{ practitioner.experienceSpecialist }}
+              {{ doctorDetail()?.experienceYears }} Years Experience Overall ({{ doctorDetail()?.specialization
+              }}
               years as specialist)
             </p>
 
             <!-- Thumbs up rating badge -->
             <div class="doctor-rating-pill">
               <span class="thumbs-icon">👍</span>
-              <span class="rating-pct">{{ practitioner.ratingScorePercent }}%</span>
-              <span class="patients-count">({{ practitioner.patientStoriesCount }} patients)</span>
+              <span class="rating-pct">{{ doctorDetail()?.avgRating }}%</span>
+              <span class="patients-count">({{ doctorDetail()?.totalReviews }} patients)</span>
             </div>
 
             <!-- Doctor Intro Headline -->
-            <h2 class="doctor-headline">{{ practitioner.headline }}</h2>
+            <!-- <h2 class="doctor-headline">{{ doctorDetail()?.about }}</h2> -->
 
             <!-- Detailed Doctor Bio Paragraphs -->
             <div class="doctor-bio-content">
-              @for (p of practitioner.bioParagraphs; track p) {
-              <p>{{ p }}</p>
-              }
+              {{ doctorDetail()?.about }}
             </div>
           </div>
         </div>
@@ -83,84 +85,7 @@
       </nav>
 
       <!-- 3. Section: Info (#info) -->
-      <section id="info" class="physios-detail-section">
-        <div class="section-card clinic-info-card">
-          <div class="clinic-location-header">
-            <span class="clinic-area-title">{{ practitioner.clinicAddress.split(',').pop()?.trim() || 'Mansarovar,
-              Jaipur' }}</span>
-          </div>
 
-          <div class="clinic-info-body">
-            <!-- Left Info Block -->
-            <div class="clinic-main-details">
-              <h3 class="clinic-name">{{ practitioner.clinicName }}</h3>
-
-              <!-- Ratings -->
-              <div class="clinic-rating-row">
-                <div class="clinic-stars">
-                  <span class="star-score">{{ practitioner.clinicRating }}</span>
-                  <span class="star-icon">★★★★★</span>
-                </div>
-                <div class="clinic-excellence-badge">
-                  <span class="diamond-icon">◆</span>
-                  <span>{{ practitioner.clinicExcellenceScore }} (Clinic Excellence Rating)</span>
-                </div>
-              </div>
-
-              <!-- Address & Landmark -->
-              <div class="clinic-address-block">
-                <p class="address-text">{{ practitioner.clinicAddress }}</p>
-                <a href="https://maps.google.com" target="_blank" class="directions-link">Get Directions</a>
-              </div>
-
-              <!-- Clinic Photo Gallery Thumbnails -->
-              <div class="clinic-gallery-row">
-                <h4 class="gallery-title">Clinic Photos &amp; Videos</h4>
-                <div class="gallery-thumbs-list">
-                  @for (photo of clinicPhotos; track photo.url; let i = $index) {
-                  <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption"
-                    class="gallery-thumb-item">
-                    <img [src]="photo.url" [alt]="photo.caption" class="gallery-img" />
-                  </a>
-                  }
-                  <div class="gallery-thumb-more" (click)="scrollToSection('photos')">
-                    <span>+6</span>
-                  </div>
-                </div>
-                <a href="javascript:void(0)" class="view-media-link" (click)="scrollToSection('photos')">View All
-                  Media</a>
-              </div>
-            </div>
-
-            <!-- Right Timings & Fee Block -->
-            <div class="clinic-timing-fee-box">
-              <div class="timing-rows-wrap">
-                <div class="timing-item">
-                  <span class="timing-days">Mon - Sat</span>
-                  <span class="timing-hours">09:00 AM - 01:00 PM<br />02:00 PM - 06:00 PM</span>
-                </div>
-                <div class="timing-item">
-                  <span class="timing-days">Sun</span>
-                  <span class="timing-hours">10:00 AM - 02:00 PM</span>
-                </div>
-              </div>
-
-              <div class="fee-display-box">
-                <span class="fee-currency">₹{{ practitioner.consultationFee }}</span>
-                <div class="prime-verify-pill">
-                  <span class="prime-badge-bold">Prime</span>
-                  <span class="prime-check-mark">✔</span>
-                  <span class="prime-details-text">Verified details</span>
-                </div>
-              </div>
-
-              <a type="button" class="btn_3" (click)="bookConsultancy()">
-                Book Consultancy
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- 4. Section: Stories / Patient Reviews (#stories) -->
       <section id="stories" class="physios-detail-section">
@@ -221,7 +146,6 @@
         </div>
       </section>
 
-      <!-- 5. EXTRA SECTION: Associated Doctors (#doctors) - Only in Clinic Mode -->
       @if (isClinic()) {
       <section id="doctors" class="physios-detail-section">
         <div class="section-card associated-doctors-card">
@@ -282,7 +206,7 @@
               </div>
 
               <!-- Col 3: Availability, Fee & Action -->
-           
+
             </article>
             }
           </div>
@@ -294,21 +218,12 @@
       <section id="treatments" class="physios-detail-section">
         <div class="section-card treatments-card">
           <div class="treatments-header-row">
-            <h3 class="section-header-title">{{ treatmentsList().length }} Surgeries &amp; Treatments</h3>
+            <h3 class="section-header-title">{{ doctorDetail()?.services?.length }} Services &amp; Treatments</h3>
 
-            <div class="treatments-search-box">
-              <svg class="search-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" placeholder="Search surgeries &amp; treatments" [ngModel]="treatmentSearchQuery()"
-                (ngModelChange)="treatmentSearchQuery.set($event)" class="treatment-input" />
-            </div>
           </div>
 
           <div class="treatments-grid">
-            @for (t of filteredTreatments(); track t.id) {
+            @for (t of doctorDetail()?.services; track t.id) {
             <div class="treatment-item-card">
               <div class="treatment-icon-circle">
                 <!-- Stethoscope SVG -->
@@ -321,7 +236,7 @@
                   <circle cx="20" cy="10" r="2"></circle>
                 </svg>
               </div>
-              <span class="treatment-name">{{ t.name }}</span>
+              <span class="treatment-name">{{ t.serviceName }}</span>
             </div>
             }
           </div>
