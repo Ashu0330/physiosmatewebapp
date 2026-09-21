@@ -39,6 +39,7 @@ export const serverRoutes: ServerRoute[] = [
     path: 'condition/:id',
     renderMode: RenderMode.Server,
   },
+
   {
     path: 'condition-detail/:id',
     renderMode: RenderMode.Server,
@@ -65,6 +66,10 @@ export const serverRoutes: ServerRoute[] = [
   },
   {
     path: 'doctor/:id',
+    renderMode: RenderMode.Server,
+  },
+  {
+    path: 'find-doctors',
     renderMode: RenderMode.Server,
   },
   {

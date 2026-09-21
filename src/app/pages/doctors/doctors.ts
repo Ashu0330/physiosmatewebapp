@@ -427,8 +427,21 @@ export class Doctors extends BaseComponent implements OnInit {
     }, 2000);
   }
   async GetAllDoctors(): Promise<void> {
-    debugger;
-    const res = await this.apiService.Post<PractitionerModel[]>(ApiEndPoints.GetPractitioners);
-    this.PractitionerList = res.isSuccess ? (res.data ?? []) : []
+    console.log('GetAllDoctors started');
+
+    try {
+      const res = await this.apiService.Post<any[]>(
+        ApiEndPoints.GetPractitioners
+      );
+
+      console.log('GetAllDoctors response:', res);
+
+      this.PractitionerList = res.isSuccess
+        ? (res.data ?? [])
+        : [];
+
+    } catch (error) {
+      console.error('GetAllDoctors ERROR:', error);
+    }
   }
 }
