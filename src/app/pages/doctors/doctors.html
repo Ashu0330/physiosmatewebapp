@@ -35,7 +35,8 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" class="physios-search-field" placeholder="Search doctors, clinics, hospitals, etc."
+        <input type="text" class="physios-search-field"
+          [placeholder]="isClinic() ? 'Search clinics by name, specialty, or treatment...' : 'Search doctors, clinics, hospitals, etc.'"
           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
       </div>
     </div>
@@ -54,6 +55,114 @@
 <div class="physios-filter-ribbon">
   <div class="physios-filter-container">
     <div class="physios-filter-left">
+      @if (isClinic()) {
+      <!-- Specialty Filter -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('specialty')">
+          <span>Specialty</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        @if (activeDropdown() === 'specialty') {
+        <div class="physios-filter-menu">
+          <button type="button" class="physios-filter-option" [class.selected]="selectedSpecialty() === 'all'"
+            (click)="selectSpecialty('all')">
+            All Specialties
+          </button>
+          @for (spec of specialtiesList; track spec) {
+          @if (spec !== 'All') {
+          <button type="button" class="physios-filter-option" [class.selected]="selectedSpecialty() === spec"
+            (click)="selectSpecialty(spec)">
+            {{ spec }}
+          </button>
+          }
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Facilities Filter -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('facilities')">
+          <span>Facilities</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        @if (activeDropdown() === 'facilities') {
+        <div class="physios-filter-menu">
+          <button type="button" class="physios-filter-option" [class.selected]="selectedAmenity() === 'all'"
+            (click)="selectAmenity('all')">
+            All Facilities
+          </button>
+          <button type="button" class="physios-filter-option"
+            [class.selected]="selectedAmenity() === 'Modern Equipment'" (click)="selectAmenity('Modern Equipment')">
+            Modern Equipment
+          </button>
+          <button type="button" class="physios-filter-option"
+            [class.selected]="selectedAmenity() === 'Parking Available'" (click)="selectAmenity('Parking Available')">
+            Parking Available
+          </button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedAmenity() === 'Accessible'"
+            (click)="selectAmenity('Accessible')">
+            Accessible
+          </button>
+          <button type="button" class="physios-filter-option"
+            [class.selected]="selectedAmenity() === 'Home Visit Available'"
+            (click)="selectAmenity('Home Visit Available')">
+            Home Visit Available
+          </button>
+        </div>
+        }
+      </div>
+
+      <!-- All Filters -->
+      <div class="physios-filter-dropdown-wrapper">
+        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('all')">
+          <span>All Filters</span>
+          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Right: Sort By -->
+      <div class="physios-filter-right">
+        <div class="physios-filter-dropdown-wrapper">
+          <button type="button" class="physios-filter-btn sort-btn" (click)="toggleDropdown('sort')">
+            <span class="sort-label">Sort By</span>
+            <span class="sort-val">
+              @if (sortBy() === 'relevance') { Relevance }
+              @else if (sortBy() === 'rating') { Rating (High to Low) }
+              @else if (sortBy() === 'price-low') { Consultation Fee (Low to High) }
+              @else if (sortBy() === 'price-high') { Consultation Fee (High to Low) }
+              @else if (sortBy() === 'reviews') { Most Reviewed }
+            </span>
+            <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
+              <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+          @if (activeDropdown() === 'sort') {
+          <div class="physios-filter-menu right-aligned">
+            <button type="button" class="physios-filter-option" (click)="setSortBy('relevance')">Relevance</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('popularity')">Popularity</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('rating')">Rating (High to
+              Low)</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('reviews')">Most Reviewed</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('price-low')">Consultation Fee (Low
+              to High)</button>
+            <button type="button" class="physios-filter-option" (click)="setSortBy('price-high')">Consultation Fee (High
+              to Low)</button>
+          </div>
+          }
+        </div>
+      </div>
+      } @else {
       <!-- Gender Filter -->
       <div class="physios-filter-dropdown-wrapper">
         <button type="button" class="physios-filter-btn" (click)="toggleDropdown('gender')">
@@ -71,26 +180,6 @@
             (click)="setGenderFilter('male')">Male Doctor</button>
           <button type="button" class="physios-filter-option" [class.selected]="selectedGender() === 'female'"
             (click)="setGenderFilter('female')">Female Doctor</button>
-        </div>
-        }
-      </div>
-
-      <!-- Patient Stories Filter -->
-      <div class="physios-filter-dropdown-wrapper">
-        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('stories')">
-          <span>Patient Stories</span>
-          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
-            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </button>
-        @if (activeDropdown() === 'stories') {
-        <div class="physios-filter-menu">
-          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('all')">All Stories</button>
-          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('15')">15+ Patient
-            Stories</button>
-          <button type="button" class="physios-filter-option" (click)="setStoriesFilter('30')">30+ Patient
-            Stories</button>
         </div>
         }
       </div>
@@ -129,9 +218,6 @@
         </button>
       </div>
 
-      <!-- Tooltip Badge -->
-
-
       <!-- Right: Sort By -->
       <div class="physios-filter-right">
         <div class="physios-filter-dropdown-wrapper">
@@ -157,235 +243,307 @@
           }
         </div>
       </div>
+      }
     </div>
   </div>
+</div>
 
-  <!-- 2. Main Page Content Layout -->
-  <div class="physios-doctors-container">
-    <div class="physios-doctors-layout">
+<!-- 2. Main Page Content Layout -->
+<div class="physios-doctors-container">
+  <div class="physios-doctors-layout">
 
-      <!-- Left Column: Doctor Listing -->
-      <main class="physios-doctors-main">
-        <!-- Results Header -->
-        <div class="physios-results-header">
-          <h1 class="physios-results-title">29 {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
-          <div class="physios-verified-subtext">
-            <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="9 12 12 15 16 10"></polyline>
-            </svg>
-            <span>Book appointments with minimum wait-time & verified doctor details</span>
-          </div>
+    <!-- Left Column: Doctor / Clinic Listing -->
+    <main class="physios-doctors-main">
+      <!-- Results Header -->
+      <div class="physios-results-header">
+        @if (isClinic()) {
+        <h1 class="physios-results-title">{{ filteredClinics().length }} Physiotherapy Clinics available in {{
+          selectedCity() }}</h1>
+        <div class="physios-verified-subtext">
+          <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="9 12 12 15 16 10"></polyline>
+          </svg>
+          <span>Verified physiotherapy clinics with experienced specialists &amp; modern facilities</span>
         </div>
-
-        <!-- Doctor Cards List -->
-        <div class="physios-doctor-cards-list">
-          @for (doc of doctorsList(); track doc.id) {
-          <article class="physios-doc-card">
-            <!-- Col 1: Avatar Column with View Profile Link Below -->
-            <div class="physios-doc-avatar-col">
-              <div class="physios-doc-avatar-wrapper">
-                <img [src]="doc.photo" [alt]="doc.name" class="physios-doc-img" />
-              </div>
-            </div>
-
-            <!-- Col 2: Info & Details Column -->
-            <div class="physios-doc-info-col">
-              <h2 class="physios-doc-name">
-                <a [routerLink]="['/doctor-detail', doc.id]">{{ doc.name }}</a>
-                <div class="physios-doc-spec">({{ doc.specialist }})
-                   @if (doc.prime) {
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g clip-path="url(#clip0_281_661)">
-                      <path
-                        d="M2.56484 5.74657C2.46754 5.30825 2.48248 4.85246 2.60828 4.42146C2.73408 3.99046 2.96667 3.5982 3.28449 3.28105C3.6023 2.9639 3.99505 2.73213 4.42631 2.60723C4.85758 2.48233 5.3134 2.46835 5.75151 2.56657C5.99265 2.18944 6.32484 1.87907 6.71748 1.66409C7.11011 1.44911 7.55054 1.33643 7.99818 1.33643C8.44581 1.33643 8.88624 1.44911 9.27887 1.66409C9.67151 1.87907 10.0037 2.18944 10.2448 2.56657C10.6836 2.46792 11.1402 2.48184 11.5722 2.60704C12.0041 2.73225 12.3974 2.96466 12.7154 3.28267C13.0334 3.60068 13.2658 3.99395 13.391 4.4259C13.5162 4.85786 13.5302 5.31446 13.4315 5.75324C13.8086 5.99437 14.119 6.32657 14.334 6.7192C14.549 7.11183 14.6617 7.55227 14.6617 7.9999C14.6617 8.44754 14.549 8.88797 14.334 9.2806C14.119 9.67323 13.8086 10.0054 13.4315 10.2466C13.5297 10.6847 13.5157 11.1405 13.3908 11.5718C13.2659 12.003 13.0342 12.3958 12.717 12.7136C12.3999 13.0314 12.0076 13.264 11.5766 13.3898C11.1456 13.5156 10.6898 13.5305 10.2515 13.4332C10.0107 13.8118 9.67823 14.1235 9.28493 14.3394C8.89162 14.5554 8.45019 14.6686 8.00151 14.6686C7.55282 14.6686 7.11139 14.5554 6.71809 14.3394C6.32479 14.1235 5.99233 13.8118 5.75151 13.4332C5.3134 13.5315 4.85758 13.5175 4.42631 13.3926C3.99505 13.2677 3.6023 13.0359 3.28449 12.7188C2.96667 12.4016 2.73408 12.0093 2.60828 11.5783C2.48248 11.1473 2.46754 10.6916 2.56484 10.2532C2.18481 10.0127 1.87178 9.68002 1.65487 9.28605C1.43796 8.89207 1.32422 8.44964 1.32422 7.9999C1.32422 7.55016 1.43796 7.10773 1.65487 6.71376C1.87178 6.31979 2.18481 5.98707 2.56484 5.74657Z"
-                        stroke="#10A896" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
-                      <path
-                        d="M5.8948 12V4.72727H8.76412C9.31573 4.72727 9.78566 4.83262 10.1739 5.04332C10.5622 5.25166 10.8581 5.54167 11.0617 5.91335C11.2677 6.28267 11.3707 6.70881 11.3707 7.19176C11.3707 7.67472 11.2665 8.10085 11.0582 8.47017C10.8498 8.83949 10.548 9.12713 10.1526 9.3331C9.75962 9.53906 9.28377 9.64205 8.72505 9.64205H6.89622V8.4098H8.47647C8.7724 8.4098 9.01625 8.3589 9.20801 8.2571C9.40214 8.15294 9.54655 8.00971 9.64125 7.82741C9.73831 7.64276 9.78684 7.43087 9.78684 7.19176C9.78684 6.95028 9.73831 6.73958 9.64125 6.55966C9.54655 6.37737 9.40214 6.23651 9.20801 6.13707C9.01388 6.03527 8.76767 5.98438 8.46937 5.98438H7.43244V12H5.8948Z"
-                        fill="#10A896" />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_281_661">
-                        <rect width="16" height="16" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                  }
-                </div>
-              </h2>
-              <!-- Rating & Patient Stories -->
-              <div class="physios-doc-metrics-row">
-                <span class="physios-rating-pill">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
-                    </path>
-                  </svg>
-                  <span>{{ doc.ratingPercent }}%</span>
-                </span>
-                <p [routerLink]="['/doctor-detail', doc.id]" class="physios-stories-link">
-                  {{ doc.patientStoriesCount }} reviews
-                </p>
-                @if (doc.isVerified) {
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="#10A896" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                  class="lucide lucide-shield-check-icon lucide-shield-check">
-                  <path
-                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                }
-              </div>
-              <div class="physios-doc-clinic-row">
-                <span class="physios-doc-location">{{ doc.location }}</span>
-                <span class="physios-doc-clinic">{{ doc.clinicName }}</span>
-              </div>
-              <div class="physios-doc-footer">
-                <div class="physios-doc-fee-row">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="#10A896" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-indian-rupee-icon lucide-indian-rupee">
-                    <path d="M6 3h12" />
-                    <path d="M6 8h12" />
-                    <path d="m6 13 8.5 8" />
-                    <path d="M6 13h3" />
-                    <path d="M9 13c6.667 0 6.667-10 0-10" />
-                  </svg>
-                  <span class="physios-doc-fee">
-                    <b> ₹{{ doc.fee }} </b> Consultation fee
-                  </span>
-                </div>
-                <div class="physios-doc-exp">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="#10A896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-briefcase-medical-icon lucide-briefcase-medical">
-                    <path d="M12 11v4" />
-                    <path d="M14 13h-4" />
-                    <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                    <path d="M18 6v14" />
-                    <path d="M6 6v14" />
-                    <rect width="20" height="14" x="2" y="6" rx="2" />
-                  </svg>
-                  <div>
-                    <b>{{ doc.experienceYears }} years</b> Experience
-                  </div>
-                </div>
-              </div>
-              <!-- Col 3: Actions Column (Contact Clinic + View Profile) -->
-              <div class="physios-doc-action-col">
-                <!-- Contact Clinic Primary Button -->
-                <button type="button" class="physios-btn-contact-clinic-solid" (click)="openBooking(doc)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                    </path>
-                  </svg>
-                  <span>Contact Clinic</span>
-                </button>
-
-                <!-- View Profile Outline Button -->
-                <a [routerLink]="['/doctor-detail', doc.id]" class="btn_3">
-                  View Profile
-                </a>
-              </div>
-              <!-- Col 3: Actions Column (Contact Clinic + View Profile) -->
-              <div class="physios-doc-action-col">
-                <!-- Contact Clinic Primary Button -->
-                <button type="button" class="physios-btn-contact-clinic-solid" (click)="openBooking(doc)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                    </path>
-                  </svg>
-                  <span>Contact Clinic</span>
-                </button>
-
-                <!-- View Profile Outline Button -->
-                <a [routerLink]="['/doctor-detail', doc.id]" class="physios-btn-view-profile-outline">
-                  View Profile
-                </a>
-              </div>
-            </div>
-
-          </article>
-          }
-        </div>
-      </main>
-
-      <!-- Right Column: Sidebar Widgets -->
-      <aside class="physios-doctors-sidebar">
-        <!-- 3. Brand Trust Widget -->
-        <div class="physios-sidebar-trust-card">
-          <div class="physios-trust-header">
-            <div class="physios-trust-icon">★</div>
-            <div class="physios-trust-title">
-              <span class="physios-brand-text">Physiosmate</span>
-              <span class="physios-brand-sub">India's #1 healthcare platform</span>
-            </div>
-          </div>
-        </div>
-        <!-- 2. Get Free App Widget -->
-        <div class="physios-sidebar-app-card">
-          <h3 class="physios-app-title">Get the free Physiosmate App</h3>
-          <div class="physios-app-form">
-            <input type="tel" class="physios-app-input" placeholder="Enter your mobile number"
-              [ngModel]="mobileNumber()" (ngModelChange)="mobileNumber.set($event)" />
-            <button type="button" class="physios-btn-send-link" (click)="sendAppLink()">
-              Send App Link
-            </button>
-          </div>
-          @if (appLinkSent()) {
-          <div class="physios-app-success">Link sent successfully!</div>
-          }
-        </div>
-
-      </aside>
-
-    </div>
-  </div>
-
-  <!-- 3. Interactive Booking Modal -->
-  @if (bookingDoctor(); as doc) {
-  <div class="physios-modal-overlay" (click)="closeBooking()">
-    <div class="physios-modal-box" (click)="$event.stopPropagation()">
-      <div class="physios-modal-header">
-        <div>
-          <h3 class="physios-modal-title">Contact Clinic / Book Visit</h3>
-          <p class="physios-modal-doc">{{ doc.name }} • {{ doc.clinicName }}</p>
-        </div>
-        <button type="button" class="physios-modal-close" (click)="closeBooking()">✕</button>
-      </div>
-
-      <div class="physios-modal-body">
-        @if (!bookingSuccess()) {
-        <div class="physios-modal-fee-alert">
-          <span>Consultation Fee: <strong>₹{{ doc.fee }}</strong> (Pay at Clinic, No Booking Fee)</span>
-        </div>
-
-        <div class="physios-modal-section-title">Select Appointment Slot</div>
-        <div class="physios-slot-grid">
-          @for (slot of ['09:30 AM', '10:00 AM', '11:15 AM', '02:30 PM', '04:00 PM', '06:00 PM']; track slot) {
-          <button type="button" class="physios-slot-btn" [class.active]="selectedSlot() === slot"
-            (click)="selectedSlot.set(slot)">
-            {{ slot }}
-          </button>
-          }
-        </div>
-
-        <button type="button" class="physios-btn-confirm-booking" (click)="confirmBooking()">
-          Confirm Appointment for {{ selectedSlot() }}
-        </button>
         } @else {
-        <div class="physios-booking-success-state">
-          <div class="physios-success-check">✓</div>
-          <h4>Appointment Confirmed!</h4>
-          <p>Your visit with {{ doc.name }} has been scheduled for {{ selectedSlot() }}.</p>
+        <h1 class="physios-results-title">29 {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
+        <div class="physios-verified-subtext">
+          <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="9 12 12 15 16 10"></polyline>
+          </svg>
+          <span>Book appointments with minimum wait-time &amp; verified doctor details</span>
         </div>
         }
       </div>
+
+      <!-- Cards List -->
+      <div class="physios-doctor-cards-list">
+        @if (isClinic()) {
+        <!-- Clinic Cards (Strictly No Distance / km away) -->
+        @for (clinic of filteredClinics(); track clinic.id) {
+        <article class="physios-clinic-card" id="clinic-card-{{ clinic.id }}">
+          <!-- Col 1: Clinic Image -->
+          <div class="physios-clinic-img-col">
+            <div class="physios-clinic-img-wrapper">
+              <img [src]="clinic.image" [alt]="clinic.name" class="physios-clinic-img" />
+              @if (clinic.isVerified) {
+              <div class="physios-clinic-verified-badge" title="Verified Clinic">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                </svg>
+                <span>VERIFIED</span>
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Col 2: Clinic Details -->
+          <div class="physios-clinic-info-col">
+            <!-- Clinic Name -->
+            <h2 class="physios-clinic-name">
+              <a [routerLink]="['/clinic-detail', clinic.id]">{{ clinic.name }}</a>
+              <span class="physios-clinic-tag">Physiotherapy Clinic</span>
+            </h2>
+
+            <!-- Rating & Reviews -->
+            <div class="physios-clinic-rating-row">
+              <span class="physios-rating-badge">
+                ★ {{ clinic.rating }}
+              </span>
+              <span class="physios-reviews-count">({{ clinic.reviewsCount }} Patient Stories)</span>
+            </div>
+
+            <!-- Location (Strictly no distance/km away) -->
+            <div class="physios-clinic-location-row">
+              <svg class="physios-loc-pin-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span class="physios-loc-text">{{ clinic.location }}</span>
+            </div>
+
+            <!-- Specialties Tags -->
+            <div class="physios-clinic-specs-row">
+              @for (spec of clinic.specialties; track spec) {
+              <span class="physios-spec-pill">{{ spec }}</span>
+              }
+            </div>
+
+            <!-- Amenities / Highlights -->
+            <div class="physios-clinic-amenities-row">
+              @for (amenity of clinic.amenities; track amenity.label) {
+              <span class="physios-amenity-chip">
+                <svg class="physios-chip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>{{ amenity.label }}</span>
+              </span>
+              }
+            </div>
+          </div>
+
+          <!-- Col 3: Pricing & Action Buttons -->
+          <div class="physios-clinic-action-col">
+            <div class="physios-clinic-fee-box">
+              <span class="physios-fee-sub">Consultation Fee</span>
+              <span class="physios-fee-price">₹{{ clinic.price }}</span>
+            </div>
+
+            <div class="physios-clinic-cta-group">
+              <a [routerLink]="['/clinic-detail', clinic.id]" class="physios-btn-contact-clinic-solid">
+                Call Now
+              </a>
+              <a [routerLink]="['/clinic-detail', clinic.id]" class="btn_3">
+                View Clinic Details
+              </a>
+            </div>
+          </div>
+        </article>
+        }
+        } @else {
+        @for (doc of PractitionerList; track doc.practitionerId) {
+        <article class="physios-doc-card">
+          <!-- Col 1: Avatar Column with View Profile Link Below -->
+          <div class="physios-doc-avatar-col">
+            <div class="physios-doc-avatar-wrapper">
+              <img [src]="doc.profileImage" [alt]="doc.fullName" class="physios-doc-img" />
+            </div>
+          </div>
+
+          <!-- Col 2: Info & Details Column -->
+          <div class="physios-doc-info-col">
+            <h2 class="physios-doc-name">
+              <a [routerLink]="['/doctor-detail', doc.practitionerId]">{{ doc.fullName }}</a>
+              <div class="physios-doc-spec">({{ doc.specialization }})
+                @if (doc.isVerified) {
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clip-path="url(#clip0_281_661)">
+                    <path
+                      d="M2.56484 5.74657C2.46754 5.30825 2.48248 4.85246 2.60828 4.42146C2.73408 3.99046 2.96667 3.5982 3.28449 3.28105C3.6023 2.9639 3.99505 2.73213 4.42631 2.60723C4.85758 2.48233 5.3134 2.46835 5.75151 2.56657C5.99265 2.18944 6.32484 1.87907 6.71748 1.66409C7.11011 1.44911 7.55054 1.33643 7.99818 1.33643C8.44581 1.33643 8.88624 1.44911 9.27887 1.66409C9.67151 1.87907 10.0037 2.18944 10.2448 2.56657C10.6836 2.46792 11.1402 2.48184 11.5722 2.60704C12.0041 2.73225 12.3974 2.96466 12.7154 3.28267C13.0334 3.60068 13.2658 3.99395 13.391 4.4259C13.5162 4.85786 13.5302 5.31446 13.4315 5.75324C13.8086 5.99437 14.119 6.32657 14.334 6.7192C14.549 7.11183 14.6617 7.55227 14.6617 7.9999C14.6617 8.44754 14.549 8.88797 14.334 9.2806C14.119 9.67323 13.8086 10.0054 13.4315 10.2466C13.5297 10.6847 13.5157 11.1405 13.3908 11.5718C13.2659 12.003 13.0342 12.3958 12.717 12.7136C12.3999 13.0314 12.0076 13.264 11.5766 13.3898C11.1456 13.5156 10.6898 13.5305 10.2515 13.4332C10.0107 13.8118 9.67823 14.1235 9.28493 14.3394C8.89162 14.5554 8.45019 14.6686 8.00151 14.6686C7.55282 14.6686 7.11139 14.5554 6.71809 14.3394C6.32479 14.1235 5.99233 13.8118 5.75151 13.4332C5.3134 13.5315 4.85758 13.5175 4.42631 13.3926C3.99505 13.2677 3.6023 13.0359 3.28449 12.7188C2.96667 12.4016 2.73408 12.0093 2.60828 11.5783C2.48248 11.1473 2.46754 10.6916 2.56484 10.2532C2.18481 10.0127 1.87178 9.68002 1.65487 9.28605C1.43796 8.89207 1.32422 8.44964 1.32422 7.9999C1.32422 7.55016 1.43796 7.10773 1.65487 6.71376C1.87178 6.31979 2.18481 5.98707 2.56484 5.74657Z"
+                      stroke="#10A896" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M5.8948 12V4.72727H8.76412C9.31573 4.72727 9.78566 4.83262 10.1739 5.04332C10.5622 5.25166 10.8581 5.54167 11.0617 5.91335C11.2677 6.28267 11.3707 6.70881 11.3707 7.19176C11.3707 7.67472 11.2665 8.10085 11.0582 8.47017C10.8498 8.83949 10.548 9.12713 10.1526 9.3331C9.75962 9.53906 9.28377 9.64205 8.72505 9.64205H6.89622V8.4098H8.47647C8.7724 8.4098 9.01625 8.3589 9.20801 8.2571C9.40214 8.15294 9.54655 8.00971 9.64125 7.82741C9.73831 7.64276 9.78684 7.43087 9.78684 7.19176C9.78684 6.95028 9.73831 6.73958 9.64125 6.55966C9.54655 6.37737 9.40214 6.23651 9.20801 6.13707C9.01388 6.03527 8.76767 5.98438 8.46937 5.98438H7.43244V12H5.8948Z"
+                      fill="#10A896" />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_281_661">
+                      <rect width="16" height="16" fill="white" />
+                    </clipPath>
+                  </defs>
+                </svg>
+                }
+              </div>
+            </h2>
+            <!-- Rating & Patient Stories -->
+            <div class="physios-doc-metrics-row">
+              <span class="physios-rating-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
+                  </path>
+                </svg>
+                <span>{{ doc.avgRating }}%</span>
+              </span>
+              <p [routerLink]="['/doctor-detail', doc.practitionerId]" class="physios-stories-link">
+                {{ doc.totalReviews }} reviews
+              </p>
+            </div>
+            <div class="physios-doc-clinic-row">
+              <span class="physios-doc-location">{{ doc.city }}-{{doc.state}}</span>
+              <span class="physios-doc-clinic">{{doc.clinicName}}</span>
+            </div>
+            <div class="physios-doc-footer">
+              <div class="physios-doc-fee-row">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="#10A896" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-indian-rupee-icon lucide-indian-rupee">
+                  <path d="M6 3h12" />
+                  <path d="M6 8h12" />
+                  <path d="m6 13 8.5 8" />
+                  <path d="M6 13h3" />
+                  <path d="M9 13c6.667 0 6.667-10 0-10" />
+                </svg>
+                <span class="physios-doc-fee">
+                  <b> ₹{{ doc.consultationFee }} </b> Consultation fee
+                </span>
+              </div>
+              <div class="physios-doc-exp">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="#10A896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-briefcase-medical-icon lucide-briefcase-medical">
+                  <path d="M12 11v4" />
+                  <path d="M14 13h-4" />
+                  <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  <path d="M18 6v14" />
+                  <path d="M6 6v14" />
+                  <rect width="20" height="14" x="2" y="6" rx="2" />
+                </svg>
+                <div>
+                  <b>{{ doc.experienceYears }} years</b> Experience
+                </div>
+              </div>
+            </div>
+            <!-- Actions Column (Contact Clinic + View Profile) -->
+            <div class="physios-doc-action-col">
+              <!-- Contact Clinic Primary Button -->
+              <button type="button" class="physios-btn-contact-clinic-solid" (click)="openBooking(doc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                  </path>
+                </svg>
+                <span>Contact Doctor</span>
+              </button>
+
+              <!-- View Profile Outline Button -->
+              <a [routerLink]="['/doctor-detail', doc.practitionerId]" class="btn_3">
+                View Profile
+              </a>
+            </div>
+          </div>
+        </article>
+        }
+        }
+      </div>
+    </main>
+
+    <!-- Right Column: Sidebar Widgets -->
+    <aside class="physios-doctors-sidebar">
+      <!-- 3. Brand Trust Widget -->
+      <div class="physios-sidebar-trust-card">
+        <div class="physios-trust-header">
+          <div class="physios-trust-title">
+            <span class="physios-brand-text">Physiosmate</span>
+            <span class="physios-brand-sub">India's #1 healthcare platform</span>
+          </div>
+        </div>
+      </div>
+      <!-- 2. Get Free App Widget -->
+      <div class="physios-sidebar-app-card">
+        <h3 class="physios-app-title">Get the free Physiosmate App</h3>
+        <div class="physios-app-form">
+          <input type="tel" class="physios-app-input" placeholder="Enter your mobile number" [ngModel]="mobileNumber()"
+            (ngModelChange)="mobileNumber.set($event)" />
+          <button type="button" class="physios-btn-send-link" (click)="sendAppLink()">
+            Send App Link
+          </button>
+        </div>
+        @if (appLinkSent()) {
+        <div class="physios-app-success">Link sent successfully!</div>
+        }
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+
+<!-- 3. Interactive Booking Modal -->
+@if (bookingDoctor(); as doc) {
+<div class="physios-modal-overlay" (click)="closeBooking()">
+  <div class="physios-modal-box" (click)="$event.stopPropagation()">
+    <div class="physios-modal-header">
+      <div>
+        <h3 class="physios-modal-title">Contact Clinic / Book Visit</h3>
+        <p class="physios-modal-doc">{{ doc.name }} • {{ doc.clinicName }}</p>
+      </div>
+      <button type="button" class="physios-modal-close" (click)="closeBooking()">✕</button>
+    </div>
+
+    <div class="physios-modal-body">
+      @if (!bookingSuccess()) {
+      <div class="physios-modal-fee-alert">
+        <span>Consultation Fee: <strong>₹{{ doc.consultationFee }}</strong> (Pay at Clinic, No Booking Fee)</span>
+      </div>
+
+      <div class="physios-modal-section-title">Select Appointment Slot</div>
+      <div class="physios-slot-grid">
+        @for (slot of ['09:30 AM', '10:00 AM', '11:15 AM', '02:30 PM', '04:00 PM', '06:00 PM']; track slot) {
+        <button type="button" class="physios-slot-btn" [class.active]="selectedSlot() === slot"
+          (click)="selectedSlot.set(slot)">
+          {{ slot }}
+        </button>
+        }
+      </div>
+
+      <button type="button" class="physios-btn-confirm-booking" (click)="confirmBooking()">
+        Confirm Appointment for {{ selectedSlot() }}
+      </button>
+      } @else {
+      <div class="physios-booking-success-state">
+        <div class="physios-success-check">✓</div>
+        <h4>Appointment Confirmed!</h4>
+        <p>Your visit with {{ doc.name }} has been scheduled for {{ selectedSlot() }}.</p>
+      </div>
+      }
     </div>
   </div>
-  }
+</div>
+}

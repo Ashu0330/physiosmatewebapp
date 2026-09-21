@@ -1,0 +1,21 @@
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { UserDashboard } from './user-dashboard/user-dashboard';
+import { Settings } from '../settings/settings';
+
+const routes: Routes = [
+  { path: '',                     component: UserDashboard },  // /user-dashboard
+  { path: 'appointments',         component: UserDashboard },  // /user-dashboard/appointments
+  { path: 'medical-records',      component: UserDashboard },  // /user-dashboard/medical-records
+  { path: 'consultations',        component: UserDashboard },  // /user-dashboard/consultations
+  { path: 'online-consultations', component: UserDashboard },  // /user-dashboard/online-consultations
+  { path: 'subscriptions',        component: UserDashboard },  // /user-dashboard/subscriptions
+  { path: 'payments',             component: UserDashboard },  // /user-dashboard/payments
+  { path: 'settings',             component: Settings },
+];
+
+@NgModule({
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule],
+})
+export class UserdashboardRoutingModule { }

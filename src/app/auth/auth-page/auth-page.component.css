@@ -85,7 +85,12 @@
 
 .auth-card-frame {
   width: 100%;
-  max-width: 480px;
+  max-width: 600px;
+  transition: max-width 0.25s ease;
+}
+
+.auth-card-frame--register {
+  max-width: 780px;
 }
 
 /* Trust Badges */

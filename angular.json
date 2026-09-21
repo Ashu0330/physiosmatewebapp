@@ -30,6 +30,8 @@
               }
             ],
             "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/swiper/swiper-bundle.css",
               "src/styles.css"
             ],
             "server": "src/main.server.ts",
@@ -48,8 +50,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "40kB",
-                  "maximumError": "100kB"
+                  "maximumWarning": "60kB",
+                  "maximumError": "150kB"
                 }
               ],
               "outputHashing": "all"

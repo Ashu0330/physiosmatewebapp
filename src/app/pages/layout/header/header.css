@@ -1,2 +1,22 @@
 @import '../../../../assets/styles/variable.css';
 @import '../../../../assets/styles/custom.css';
+
+.physios-profile-item-svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.physios-profile-item-svg svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+  transition: opacity 0.13s ease;
+}
+
+.physios-profile-item:hover .physios-profile-item-svg svg {
+  opacity: 1;
+}

@@ -1,0 +1,964 @@
+/* =========================================================
+ * Condition Detail Page Styles
+ * Powered strictly by design tokens from variable.css
+ * ========================================================= */
+
+:host {
+  display: block;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+  color: var(--text-body, #334155);
+  background-color: var(--bg-page, #F8FAFC);
+  min-height: 100vh;
+}
+
+.cd-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* =========================================================
+ * 1. Top Search Bar Pill
+ * ========================================================= */
+.cd-top-search-wrap {
+  padding: 1.25rem 1rem 0.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color, #E2E8F0);
+}
+
+.cd-search-pill {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: var(--radius-pill, 9999px);
+  background: #ffffff;
+  padding: 0 14px;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cd-search-pill:focus-within {
+  border-color: var(--primary-color, #10A896);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.14);
+}
+
+.cd-city-box {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.cd-city-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main, #0F172A);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.cd-city-btn:hover {
+  background-color: var(--primary-light, #E8F8F5);
+}
+
+.cd-pin-svg {
+  color: var(--primary-dark, #087F76);
+  flex-shrink: 0;
+}
+
+.cd-city-name {
+  white-space: nowrap;
+}
+
+.cd-chevron-svg {
+  color: var(--text-muted, #64748B);
+  transition: transform 0.2s ease;
+}
+
+.cd-chevron-svg.rotated {
+  transform: rotate(180deg);
+}
+
+.cd-city-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 190px;
+  background: #ffffff;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-sm, 8px);
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.08));
+  padding: 6px 0;
+  z-index: 1050;
+}
+
+.cd-city-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  color: var(--text-body, #334155);
+  cursor: pointer;
+  display: block;
+  transition: background-color 0.12s ease;
+}
+
+.cd-city-item:hover,
+.cd-city-item.active {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  font-weight: 600;
+}
+
+.cd-search-divider {
+  width: 1px;
+  height: 22px;
+  background-color: var(--green-divider, #E9FAF9);
+  margin: 0 12px;
+  flex-shrink: 0;
+}
+
+.cd-input-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cd-search-icon {
+  color: var(--text-muted, #64748B);
+  flex-shrink: 0;
+}
+
+.cd-search-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.86rem;
+  color: var(--text-main, #0F172A);
+}
+
+.cd-search-field::placeholder {
+  color: var(--text-muted, #64748B);
+}
+
+.cd-clear-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #64748B);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.cd-clear-btn:hover {
+  color: var(--text-main, #0F172A);
+}
+
+/* =========================================================
+ * 2. Minimal Header (Strictly NO Hero Banner)
+ * ========================================================= */
+.cd-header-strip {
+  background: #ffffff;
+  padding: 1.5rem 0 1.25rem;
+  border-bottom: 1px solid var(--green-border, #D5F3EF);
+}
+
+.cd-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748B);
+  margin-bottom: 0.85rem;
+}
+
+.cd-bc-link {
+  color: var(--text-muted, #64748B);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.cd-bc-link:hover {
+  color: var(--primary-dark, #087F76);
+}
+
+.cd-bc-sep {
+  display: flex;
+  align-items: center;
+  color: var(--text-subtle, #94A3B8);
+}
+
+.cd-bc-current {
+  color: var(--primary-dark, #087F76);
+  font-weight: 600;
+}
+
+.cd-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cd-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cd-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  border: 1px solid var(--green-border, #D5F3EF);
+  padding: 3px 9px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cd-read-time {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748B);
+}
+
+.cd-main-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-main, #0F172A);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.cd-main-tagline {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary-color, #10A896);
+  margin: 0;
+}
+
+/* =========================================================
+ * 3. Section Tabs Navigation (Sticky Bar)
+ * ========================================================= */
+.cd-tabs-wrapper {
+  position: sticky;
+  top: 0px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color, #E2E8F0);
+  z-index: 900;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.cd-tabs-scroll {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.cd-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.cd-tab-item {
+  position: relative;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+  padding: 0.95rem 0.2rem;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.cd-tab-item:hover {
+  color: var(--primary-dark, #087F76);
+}
+
+.cd-tab-item.active {
+  color: var(--primary-color, #10A896);
+  font-weight: 700;
+}
+
+.cd-tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--primary-color, #10A896);
+  border-radius: 3px 3px 0 0;
+}
+
+/* =========================================================
+ * 4. Main Layout & Sections
+ * ========================================================= */
+.cd-main-wrapper {
+  padding: 2.5rem 0 5rem;
+}
+
+.cd-section {
+  margin-bottom: 3.5rem;
+  scroll-margin-top: 130px;
+}
+
+.cd-section-header {
+  margin-bottom: 1.5rem;
+}
+
+.cd-section-heading {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 0.4rem 0;
+  letter-spacing: -0.015em;
+}
+
+.cd-section-subtitle {
+  font-size: 0.94rem;
+  color: var(--text-muted, #64748B);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* =========================================================
+ * Overview Section ("What is Back Pain?") + Quick Facts
+ * ========================================================= */
+.cd-overview-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 2.25rem;
+  align-items: stretch;
+}
+
+.cd-overview-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.cd-overview-text {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: var(--text-body, #334155);
+  margin: 0 0 1.25rem 0;
+}
+
+/* Highlight Quote Callout Card */
+.cd-quote-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  background: var(--primary-subtle, #F0FDFA);
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-left: 4px solid var(--primary-color, #10A896);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.25rem 1.4rem;
+  margin-top: auto;
+}
+
+.cd-quote-icon-wrap {
+  color: var(--primary-color, #10A896);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cd-quote-text {
+  font-size: 0.92rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--primary-deep, #094741);
+  margin: 0;
+}
+
+/* Quick Facts Card */
+.cd-facts-card {
+  background: #F0FDFA;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem 1.6rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cd-facts-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 1.25rem 0;
+}
+
+.cd-facts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.cd-fact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.cd-fact-icon-wrap {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid var(--primary-color, #10A896);
+  color: var(--primary-dark, #087F76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cd-fact-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-body, #334155);
+  font-weight: 500;
+  padding-top: 5px;
+}
+
+/* =========================================================
+ * Common Causes Section (6 Icon Cards)
+ * ========================================================= */
+.cd-causes-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+}
+
+.cd-cause-card {
+  background: #ffffff;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cd-cause-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary-color, #10A896);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.05));
+}
+
+.cd-cause-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cd-cause-card:hover .cd-cause-icon-wrap {
+  background: var(--primary-color, #10A896);
+  color: #ffffff;
+}
+
+.cd-cause-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 0.4rem 0;
+  line-height: 1.25;
+}
+
+.cd-cause-desc {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted, #64748B);
+  margin: 0;
+}
+
+/* =========================================================
+ * Who Can Get Back Pain? Section (5 Icon Cards)
+ * ========================================================= */
+.cd-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.15rem;
+}
+
+.cd-audience-card {
+  background: #ffffff;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.35rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cd-audience-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--secondary-color, #5CCFCB);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.05));
+}
+
+.cd-audience-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--aqua-light, #E9FAF9);
+  color: var(--primary-dark, #087F76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.cd-audience-card:hover .cd-audience-icon-wrap {
+  background: var(--primary-color, #10A896);
+  color: #ffffff;
+}
+
+.cd-audience-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 0.35rem 0;
+}
+
+.cd-audience-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748B);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* =========================================================
+ * Clinical Info Grids (Symptoms, Treatments, Prevention)
+ * ========================================================= */
+.cd-clinical-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.15rem;
+}
+
+.cd-clinical-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.35rem 1.4rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cd-clinical-card:hover {
+  border-color: var(--primary-color, #10A896);
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
+}
+
+.cd-card-treatment {
+  background: #fafefd;
+  border-color: var(--green-border, #D5F3EF);
+}
+
+.cd-clinical-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.cd-clinical-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  margin: 0;
+}
+
+.cd-clinical-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-body, #334155);
+  margin: 0;
+}
+
+/* =========================================================
+ * Doctors Section ("Find the Best Physiotherapists")
+ * ========================================================= */
+.cd-doctors-section {
+  background: #ffffff;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-xl, 20px);
+  padding: 2.25rem 2rem;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.03));
+}
+
+.cd-doctors-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.cd-view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px solid var(--primary-color, #10A896);
+  color: var(--primary-dark, #087F76);
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cd-view-all-btn:hover {
+  background: var(--primary-color, #10A896);
+  color: #ffffff;
+}
+
+.cd-doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.cd-doc-card {
+  background: #ffffff;
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.5rem 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cd-doc-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-color, #10A896);
+  box-shadow: var(--shadow-card, 0 10px 30px -5px rgba(15, 23, 42, 0.08));
+}
+
+.cd-doc-avatar-wrap {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 3px solid var(--primary-light, #E8F8F5);
+  margin-bottom: 0.9rem;
+}
+
+.cd-doc-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.cd-doc-verified-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--primary-color, #10A896);
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cd-doc-name {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 0.2rem 0;
+  line-height: 1.25;
+}
+
+.cd-doc-spec {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748B);
+  margin: 0 0 0.65rem 0;
+}
+
+.cd-doc-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  margin-bottom: 0.75rem;
+}
+
+.cd-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cd-rating-val {
+  font-weight: 700;
+  color: var(--text-main, #0F172A);
+}
+
+.cd-review-count {
+  color: var(--text-muted, #64748B);
+}
+
+.cd-doc-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.6rem 0;
+  border-top: 1px dashed var(--green-border, #D5F3EF);
+  border-bottom: 1px dashed var(--green-border, #D5F3EF);
+  margin-bottom: 0.85rem;
+}
+
+.cd-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-body, #334155);
+}
+
+.cd-info-row svg {
+  color: var(--primary-dark, #087F76);
+  flex-shrink: 0;
+}
+
+.cd-doc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 1.15rem;
+  min-height: 28px;
+}
+
+.cd-doc-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.cd-btn-full {
+  width: 100%;
+}
+
+/* =========================================================
+ * Bottom CTA Consultation Banner
+ * ========================================================= */
+.cd-cta-section {
+  margin-bottom: 1rem;
+}
+
+.cd-cta-banner {
+  background: linear-gradient(135deg, #E8F8F5 0%, #F0FDFA 50%, #E9FAF9 100%);
+  border: 1px solid var(--green-border, #D5F3EF);
+  border-radius: var(--radius-xl, 20px);
+  padding: 2.25rem 2.5rem;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
+}
+
+.cd-cta-title {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-main, #0F172A);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.25;
+}
+
+.cd-cta-desc {
+  font-size: 0.92rem;
+  color: var(--text-body, #334155);
+  margin: 0 0 1.25rem 0;
+  line-height: 1.5;
+}
+
+.cd-cta-btn {
+  box-shadow: var(--shadow-button, 0 4px 14px rgba(16, 168, 150, 0.28));
+}
+
+.cd-cta-center {
+  display: flex;
+  justify-content: center;
+}
+
+.cd-cta-doc-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+}
+
+.cd-cta-quote-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.cd-cta-quote-icon {
+  font-family: serif;
+  font-size: 3rem;
+  line-height: 0.8;
+  color: var(--primary-color, #10A896);
+  flex-shrink: 0;
+}
+
+.cd-cta-quote-text {
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary-dark, #087F76);
+  line-height: 1.4;
+  margin: 0;
+  font-style: italic;
+}
+
+/* =========================================================
+ * Responsive Breakpoints
+ * ========================================================= */
+@media (max-width: 1024px) {
+  .cd-causes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cd-audience-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cd-doctors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cd-cta-banner {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .cd-cta-center {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .cd-main-title {
+    font-size: 1.75rem;
+  }
+
+  .cd-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-clinical-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-causes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cd-audience-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cd-doctors-section {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .cd-doctors-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cd-cta-banner {
+    grid-template-columns: 1fr;
+    padding: 1.75rem 1.25rem;
+    text-align: center;
+  }
+
+  .cd-cta-quote-box {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 500px) {
+  .cd-doctors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-causes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-audience-grid {
+    grid-template-columns: 1fr;
+  }
+}

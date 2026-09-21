@@ -1,0 +1,576 @@
+<!-- =========================================================
+     1. Top Search Bar (Centered Floating Pill)
+     ========================================================= -->
+<div class="fp-search-bar-wrap">
+  <div class="physios-search-wrapper fp-search-wrapper">
+    <!-- City Box -->
+    <div class="physios-city-box">
+      <button type="button" class="physios-city-btn" (click)="toggleCity()">
+        <svg class="physios-pin-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="physios-city-text">{{ selectedCity }}</span>
+        <svg class="fp-chevron-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      @if (isCityOpen) {
+      <div class="physios-city-dropdown">
+        @for (c of popularCities; track c) {
+        <button type="button" class="physios-city-item" [class.active]="selectedCity === c" (click)="selectCity(c)">
+          {{ c }}
+        </button>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Vertical Divider -->
+    <div class="physios-search-divider"></div>
+
+    <!-- Search Input Field -->
+    <div class="physios-input-box">
+      <input type="text" class="physios-search-field fp-search-field"
+        placeholder="Search by physiotherapist name, specialty, or condition..." [(ngModel)]="searchQuery" />
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     2. Hero Section (Full-Width Banner Matching Screenshot)
+     ========================================================= -->
+<section class="fp-hero-banner-full">
+  <div class="fp-hero-container">
+    <!-- Left: Content & Badges -->
+    <div class="fp-hero-content">
+      <span class="fp-hero-eyebrow">{{ heroContent.eyebrow }}</span>
+      <h1 class="fp-hero-title">{{ heroContent.title }}</h1>
+      <h2 class="fp-hero-subtitle">{{ heroContent.subtitle }}</h2>
+      <p class="fp-hero-desc">{{ heroContent.description }}</p>
+
+      <!-- Trust Badges -->
+      <div class="fp-hero-badges">
+        <!-- Badge 1: Verified Physiotherapists -->
+        <div class="fp-badge-item">
+          <div class="fp-badge-icon">
+            <svg width="30" height="30" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" fill="var(--primary-color, #10A896)" />
+              <path d="M8.5 14.5l3.5 3.5 7.5-7.5" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="fp-badge-text">
+            <span class="fp-badge-line1">Verified</span>
+            <span class="fp-badge-line2">Physiotherapists</span>
+          </div>
+        </div>
+
+        <!-- Badge 2: Top Clinics Near You -->
+        <div class="fp-badge-item">
+          <div class="fp-badge-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-dark, #087F76)"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"></path>
+              <path d="M5 21V7l8-4v18"></path>
+              <path d="M19 21V11l-6-4"></path>
+              <line x1="9" y1="9" x2="9" y2="9.01"></line>
+              <line x1="9" y1="13" x2="9" y2="13.01"></line>
+              <line x1="9" y1="17" x2="9" y2="17.01"></line>
+            </svg>
+          </div>
+          <div class="fp-badge-text">
+            <span class="fp-badge-line1">Top Clinics</span>
+            <span class="fp-badge-line2">Near You</span>
+          </div>
+        </div>
+
+        <!-- Badge 3: Easy Online Booking -->
+        <div class="fp-badge-item">
+          <div class="fp-badge-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-dark, #087F76)"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <circle cx="8" cy="14" r="1" fill="currentColor"></circle>
+              <circle cx="12" cy="14" r="1" fill="currentColor"></circle>
+              <circle cx="16" cy="14" r="1" fill="currentColor"></circle>
+              <circle cx="8" cy="18" r="1" fill="currentColor"></circle>
+              <circle cx="12" cy="18" r="1" fill="currentColor"></circle>
+              <circle cx="16" cy="18" r="1" fill="currentColor"></circle>
+            </svg>
+          </div>
+          <div class="fp-badge-text">
+            <span class="fp-badge-line1">Easy Online</span>
+            <span class="fp-badge-line2">Booking</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Doctor Patient Treatment Photo -->
+    <div class="fp-hero-visual-col">
+      <div class="fp-hero-photo-box">
+        <img [src]="heroContent.heroImage" alt="Physiotherapist assisting patient with arm rehabilitation"
+          class="fp-hero-photo" />
+      </div>
+    </div>
+
+    <!-- Right: Quote Accent -->
+    <div class="fp-hero-quote-col">
+      <div class="fp-hero-accent-quote">
+        <span class="fp-quote-line">{{ heroContent.accentText.line1 }}</span>
+        <span class="fp-quote-line">{{ heroContent.accentText.line2 }}</span>
+        <span class="fp-quote-line">{{ heroContent.accentText.line3 }}</span>
+        <svg class="fp-quote-swoosh" viewBox="0 0 130 14" fill="none">
+          <path d="M4 11C35 3 95 3 126 9" stroke="var(--secondary-color, #5CCFCB)" stroke-width="3"
+            stroke-linecap="round" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     Main Content Wrapper (Max-width 1240px)
+     ========================================================= -->
+<div class="fp-main-content">
+  <!-- =========================================================
+       3. Explore by Condition Section
+       ========================================================= -->
+  <section class="fp-section">
+    <div class="fp-section-header">
+      <div>
+        <h2 class="fp-section-title">Explore by Condition</h2>
+        <p class="fp-section-sub">Find the right care for your specific needs</p>
+      </div>
+      <a routerLink="/conditions" class="fp-view-all-btn">
+        View All Conditions
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="fp-cards-grid">
+      @for (c of conditions; track c.title) {
+      <a [routerLink]="c.route" class="fp-cond-card">
+        <div class="fp-cond-visual" [style.background-color]="c.bgColor">
+          <img [src]="c.image" [alt]="c.title" class="fp-cond-img" />
+        </div>
+        <div class="fp-cond-body">
+          <span class="fp-cond-title">{{ c.title }}</span>
+          <div class="fp-round-arrow-btn" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </a>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. Browse by Focus Area Section
+       ========================================================= -->
+  <section class="fp-section">
+    <div class="fp-section-header">
+      <div>
+        <h2 class="fp-section-title">Browse by Focus Area</h2>
+        <p class="fp-section-sub">Discover physiotherapists based on your health goals</p>
+      </div>
+      <a routerLink="/doctors" class="fp-view-all-btn">
+        View All Specialties
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="fp-cards-grid">
+      @for (f of focusAreas; track f.title) {
+      <a [routerLink]="f.route" class="fp-cond-card">
+        <div class="fp-cond-visual fp-focus-visual">
+          <img [src]="f.image" [alt]="f.title" class="fp-cond-img" />
+        </div>
+        <div class="fp-cond-body">
+          <span class="fp-cond-title">{{ f.title }}</span>
+          <div class="fp-round-arrow-btn" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </a>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       5. Featured Physiotherapists Section
+       ========================================================= -->
+  <section class="fp-section fp-physio-section">
+    <div class="fp-section-header">
+      <div>
+        <h2 class="fp-section-title">Featured Physiotherapists</h2>
+        <p class="fp-section-sub">Top-rated and verified experts near you</p>
+      </div>
+      <a routerLink="/doctors" class="fp-view-all-btn">
+        View All Physiotherapists
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Doctor Cards Row with Nav Arrows -->
+    <div class="fp-carousel-container">
+      <button type="button" class="fp-carousel-nav-btn fp-carousel-prev" aria-label="Previous">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="fp-cards-grid fp-doctors-grid">
+        @for (doc of featuredDoctors; track doc.practitionerId) {
+        <div class="fp-doctor-card">
+          <!-- Doctor Portrait -->
+          <div class="fp-doctor-img-wrap">
+            <img [src]="doc.image" [alt]="doc.fullName" class="fp-doctor-img" />
+          </div>
+
+          <!-- Doctor Details -->
+          <div class="fp-doctor-info">
+            <h3 class="fp-doctor-name">{{ doc.fullName }}</h3>
+            <p class="fp-doctor-spec">{{ doc.specialization }}</p>
+
+            <!-- Star Rating Row -->
+            <div class="fp-doctor-rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
+              </svg>
+              <span class="fp-rating-val">{{ doc.avgRating }}</span>
+              <span class="fp-rating-count">({{ doc.totalReviews }} reviews)</span>
+            </div>
+
+            <!-- Tags -->
+            <div class="fp-doctor-tags">
+              @for (tag of doc.tags; track tag) {
+              <span class="fp-tag">{{ tag }}</span>
+              }
+            </div>
+
+            <!-- Location -->
+            <div class="fp-doctor-location">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>{{ doc.location }}</span>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+
+      <button type="button" class="fp-carousel-nav-btn fp-carousel-next" aria-label="Next">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       6. Dual Promo Banners (Consultation Desk & Home Visit)
+       ========================================================= -->
+  <section class="fp-promo-grid">
+    <!-- Banner 1: Consultation Desk -->
+    <div class="fp-promo-banner fp-promo-mint">
+      <div class="fp-promo-text">
+        <span class="fp-promo-tag">INTRODUCING CONSULTATION DESK</span>
+        <h3 class="fp-promo-heading">Don't self medicate. Talk to a physiotherapist in less than 2 minutes.</h3>
+        <a routerLink="/doctors" class="fp-promo-btn">
+          Consult Now
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+      <div class="fp-promo-img-wrap">
+        <img src="assets/images/physio_book_consultation.jpg" alt="Doctor Consultation" class="fp-promo-img" />
+      </div>
+    </div>
+
+    <!-- Banner 2: Home Visit Physiotherapy -->
+    <div class="fp-promo-banner fp-promo-blue">
+      <div class="fp-promo-text">
+        <span class="fp-promo-tag fp-tag-blue">HOME VISIT PHYSIOTHERAPY</span>
+        <h3 class="fp-promo-heading">Tired of waiting in a queue? Get physiotherapy at home.</h3>
+        <p class="fp-promo-sub">Book a verified physiotherapist for home visits near you.</p>
+        <a routerLink="/doctors" class="fp-promo-btn">
+          Book Home Visit
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+      <div class="fp-promo-img-wrap">
+        <img src="assets/images/physio_home_care.jpg" alt="Home Visit Care" class="fp-promo-img" />
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       7. How It Works Section
+       ========================================================= -->
+  <section class="fp-section fp-how-it-works">
+    <div class="fp-section-header fp-steps-header">
+      <div>
+        <h2 class="fp-section-title">How It Works</h2>
+        <p class="fp-section-sub">Get expert physiotherapy care in just a few easy steps</p>
+      </div>
+      <div class="fp-steps-accent">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+          <path d="M21 3v5h-5"></path>
+        </svg>
+        <span class="fp-accent-script">Better care is just a few steps away!</span>
+      </div>
+    </div>
+
+    <div class="fp-steps-row">
+      @for (step of steps; track step.num; let last = $last) {
+      <div class="fp-step-card">
+        <div class="fp-step-icon-wrap">
+          @if (step.iconType === 'search') {
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          } @else if (step.iconType === 'book') {
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          } @else if (step.iconType === 'consult') {
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          } @else if (step.iconType === 'heart') {
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
+          </svg>
+          }
+        </div>
+        <h4 class="fp-step-title">{{ step.num }}. {{ step.title }}</h4>
+        <p class="fp-step-desc">{{ step.description }}</p>
+      </div>
+
+      @if (!last) {
+      <div class="fp-step-divider">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--border-muted, #CBD5E1)"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+      }
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       8. What Our Patients Say (Testimonials)
+       ========================================================= -->
+  <section class="fp-section">
+    <div class="fp-section-header">
+      <div>
+        <h2 class="fp-section-title">What Our Patients Say</h2>
+        <p class="fp-section-sub">Real stories from people who moved better with Physiosmate</p>
+      </div>
+      <a routerLink="/doctors" class="fp-view-all-btn">
+        View All Reviews
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+
+    <div class="fp-testimonials-grid">
+      @for (t of testimonials; track t.name) {
+      <div class="fp-testimonial-card">
+        <!-- Quote Icon -->
+        <div class="fp-quote-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color, #10A896)">
+            <path
+              d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+          </svg>
+        </div>
+
+        <p class="fp-testimonial-text">"{{ t.quote }}"</p>
+
+        <div class="fp-testimonial-footer">
+          <div class="fp-user-info">
+            <img [src]="t.avatar" [alt]="t.name" class="fp-user-avatar" />
+            <div>
+              <h4 class="fp-user-name">{{ t.name }}</h4>
+              <span class="fp-user-city">{{ t.city }}</span>
+            </div>
+          </div>
+          <div class="fp-stars-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+              </polygon>
+            </svg>
+            <span class="fp-user-rating">{{ t.rating }}</span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       9. Download App Section
+       ========================================================= -->
+  <section class="fp-app-section">
+    <div class="fp-app-left">
+      <h2 class="fp-app-title">Download the Free Physiosmate App</h2>
+      <p class="fp-app-desc">
+        Book appointments, manage your visits, access exercise plans and get expert care — anytime, anywhere.
+      </p>
+      <div class="fp-app-badges">
+        <a href="https://play.google.com" target="_blank" rel="noopener" class="fp-store-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M3.609 1.814L13.792 12 3.61 22.186c-.37-.202-.61-.599-.61-1.056V2.87c0-.457.24-.854.61-1.056zM15.207 13.414l2.42 2.42-12.87 7.432 10.45-9.852zm0-2.828L4.757.734l12.87 7.432-2.42 2.42zm1.414 1.414l3.774 2.18c1.08.625 1.08 1.644 0 2.268l-3.774 2.18-2.122-2.122 2.122-2.506z" />
+          </svg>
+          <div>
+            <span class="fp-store-sub">GET IT ON</span>
+            <span class="fp-store-name">Google Play</span>
+          </div>
+        </a>
+        <a href="https://apple.com" target="_blank" rel="noopener" class="fp-store-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.62-.75 1.04-1.8 0.93-2.84-.9.04-1.99.6-2.64 1.35-.58.65-1.08 1.71-.95 2.73 1 .08 2.04-.49 2.66-1.24z" />
+          </svg>
+          <div>
+            <span class="fp-store-sub">Download on the</span>
+            <span class="fp-store-name">App Store</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="fp-app-center">
+      <div class="fp-phone-mockup">
+        <img src="assets/images/physio_find_doctor.jpg" alt="Physiosmate App Screen" class="fp-phone-img" />
+      </div>
+    </div>
+
+    <div class="fp-app-right">
+      <ul class="fp-features-list">
+        @for (feat of appFeatures; track feat) {
+        <li class="fp-feature-item">
+          <div class="fp-feature-check">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="fp-feature-name">{{ feat }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       10. Bottom Value Props Bar
+       ========================================================= -->
+  <section class="fp-value-props-bar">
+    @for (vp of valueProps; track vp.title) {
+    <div class="fp-vp-item">
+      <div class="fp-vp-icon">
+        @if (vp.iconType === 'hand') {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
+          <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path>
+          <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
+          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15">
+          </path>
+        </svg>
+        } @else if (vp.iconType === 'walk') {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="5" r="2"></circle>
+          <path d="m10 22 4-7-2-4 3-4-2-2-4 3-2 5 3 2"></path>
+        </svg>
+        } @else if (vp.iconType === 'dumbbell') {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m6.5 6.5 11 11"></path>
+          <path d="m21 21-1-1"></path>
+          <path d="m3 3 1 1"></path>
+          <path d="m18 22 4-4"></path>
+          <path d="m2 6 4-4"></path>
+          <path d="m3 10 7-7"></path>
+          <path d="m14 21 7-7"></path>
+        </svg>
+        } @else if (vp.iconType === 'heart') {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #10A896)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+          </path>
+        </svg>
+        }
+      </div>
+      <div class="fp-vp-text">
+        <h4 class="fp-vp-title">{{ vp.title }}</h4>
+        <p class="fp-vp-sub">{{ vp.subtitle }}</p>
+      </div>
+    </div>
+    }
+  </section>
+</div>

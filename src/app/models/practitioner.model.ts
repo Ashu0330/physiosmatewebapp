@@ -71,6 +71,31 @@ export interface PractitionerSubscriptionPlan {
   features?: string[];
 }
 
+export class PractitionerModel {
+  name: string;
+  specialty: string;
+  rating: number;
+  reviewsCount: number;
+  tags: string[];
+  location: string;
+  city: string;
+  state: string;
+  image: string;
+  about: string;
+  avgRating: number;
+  clinicId: number | null;
+  clinicName: string | null;
+  consultationFee: number;
+  experienceYears: number;
+  fullName: string;
+  isVerified: boolean;
+  practitionerId: number;
+  profileImage: string;
+  specialization: string;
+  specializationId: number;
+  totalReviews: number;
+}
+
 export interface PractitionerDetailedData {
   id: number;
   practitionerId: number;

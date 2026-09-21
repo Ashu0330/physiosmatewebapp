@@ -1,0 +1,694 @@
+<div class="consultations-panel">
+
+  <!-- ── TOP HEADER ────────────────────────────────────────────────────────── -->
+  <div class="consultations-header">
+    <div class="header-titles">
+      <h3 class="panel-title">Clinical Consultations & Prescriptions</h3>
+      <p class="panel-subtitle">Record clinical assessments, diagnoses, auto-calculate fees, and issue therapy
+        prescriptions.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-new-walkin" (click)="clearConsultation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        New Walk-in Encounter
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ── MAIN WORKSPACE: TWO-COLUMN LAYOUT (70% Form / 30% Clinical Quick Select) ── -->
+  <div class="consultation-two-col-layout">
+
+    <!-- ── LEFT/CENTER (70%): CLINICAL ENCOUNTER FORM ────────────────────────── -->
+    <main class="consultancy-main-col">
+      <!-- ── FULL-WIDTH TOP PATIENT FILTER & SEARCH BAR ────────────────────────── -->
+      <div class="top-patient-filter-bar">
+        <div class="top-filter-inner">
+          <div class="top-search-field-wrap">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="top-patient-search-input"
+              placeholder="Search patient by name, mobile, code, city..." [ngModel]="patientSearchQuery()"
+              (ngModelChange)="patientSearchQuery.set($event); isSearchDropdownOpen.set(true)"
+              (focus)="isSearchDropdownOpen.set(true)" />
+
+            @if (patientSearchQuery()) {
+            <button type="button" class="btn-clear-top-search" (click)="patientSearchQuery.set('')">&times;</button>
+            }
+
+            <!-- Live Patient Autocomplete Dropdown -->
+            @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
+            <div class="top-patient-dropdown">
+              <div class="dropdown-header">
+                <span>{{ filteredPatients().length }} Patients Matched</span>
+                <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
+              </div>
+              <div class="dropdown-scroll-list">
+                @for (p of filteredPatients(); track p.id) {
+                <div class="dropdown-patient-item" (click)="selectPatient(p)">
+                  <div class="dd-avatar">
+                    <span>{{ getInitials(p.fullName) }}</span>
+                  </div>
+                  <div class="dd-info">
+                    <div class="dd-name-row">
+                      <span class="dd-name">{{ p.fullName }}</span>
+                      <span class="dd-code">{{ p.patientCode || p.id }}</span>
+                    </div>
+                    <div class="dd-meta">
+                      <span>{{ p.age }} yrs • {{ p.gender }}</span>
+                      <span>{{ p.mobile || p.phone }}</span>
+                      @if (p.city) {
+                      <span>• {{ p.city }}</span>
+                      }
+                    </div>
+                  </div>
+                  @if (selectedPatientId() === p.id) {
+                  <span class="dd-selected-badge">Active</span>
+                  }
+                </div>
+                } @empty {
+                <div class="dd-empty">No patients match "{{ patientSearchQuery() }}"</div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Quick Recent Patient Selector Chips -->
+          <!-- <div class="quick-patient-pills-row">
+        <span class="quick-pill-label">Quick Pick:</span>
+        <div class="quick-pills-wrap">
+          @for (p of patients.slice(0, 5); track p.id) {
+            <button
+              type="button"
+              class="quick-select-pill"
+              [class.active]="selectedPatientId() === p.id"
+              (click)="selectPatient(p)">
+              <span class="dot-status"></span>
+              {{ p.fullName }} <span class="code-light">({{ p.patientCode }})</span>
+            </button>
+          }
+        </div>
+      </div> -->
+        </div>
+      </div>
+      @if (!selectedPatient()) {
+      <!-- No Patient Selected Prompt State -->
+      <div class="no-patient-selected-card">
+        <div class="no-pt-icon-badge">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <polyline points="17 11 19 13 23 9"></polyline>
+          </svg>
+        </div>
+        <h4 class="no-pt-title">Select a Patient to Record Consultation</h4>
+        <p class="no-pt-desc">
+          Use the top search bar to find any registered patient by name, mobile number, patient code, or city to begin
+          recording this clinical encounter.
+        </p>
+        <div class="no-pt-quick-grid">
+          @for (p of patients.slice(0, 4); track p.id) {
+          <button type="button" class="no-pt-card-btn" (click)="selectPatient(p)">
+            <div class="npc-avatar">{{ getInitials(p.fullName) }}</div>
+            <div class="npc-info">
+              <span class="npc-name">{{ p.fullName }}</span>
+              <span class="npc-meta">{{ p.patientCode }} • {{ p.age }} yrs</span>
+            </div>
+          </button>
+          }
+        </div>
+      </div>
+      } @else {
+      <form class="consultancy-form-card" (ngSubmit)="onSaveConsultation()">
+
+        <!-- ── FULL PATIENT PROFILE CARD (Top of Form) ── -->
+        <div class="patient-full-card">
+          <div class="pf-main-row">
+            <div class="pf-avatar">
+              @if (selectedPatient()!.photoUrl) {
+              <img [src]="selectedPatient()!.photoUrl" alt="Patient Photo" class="pf-avatar-img" />
+              } @else {
+              <span>{{ getInitials(selectedPatient()!.fullName) }}</span>
+              }
+            </div>
+
+            <div class="pf-info-block">
+              <div class="pf-title-row">
+                <h4 class="pf-name">{{ selectedPatient()!.fullName }}</h4>
+                <span class="pf-code">{{ selectedPatient()!.patientCode }}</span>
+                <span class="pf-status-badge">Active Patient</span>
+              </div>
+
+              <div class="pf-meta-row">
+                <span>{{ selectedPatient()!.age }} yrs</span>
+                <span class="bullet">•</span>
+                <span>{{ selectedPatient()!.gender }}</span>
+                <span class="bullet">•</span>
+                <span>{{ selectedPatient()!.mobile || selectedPatient()!.phone }}</span>
+                @if (selectedPatient()!.email) {
+                <span class="bullet">•</span>
+                <span>{{ selectedPatient()!.email }}</span>
+                }
+              </div>
+
+              @if (selectedPatient()!.address || selectedPatient()!.city) {
+              <div class="pf-address-row">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>
+                  {{ selectedPatient()!.address ? selectedPatient()!.address + ', ' : '' }}
+                  {{ selectedPatient()!.city ? selectedPatient()!.city + ', ' : '' }}
+                  {{ selectedPatient()!.state || '' }}
+                </span>
+              </div>
+              }
+            </div>
+
+            <div class="pf-action-buttons">
+              <button type="button" class="btn-change-patient" (click)="clearConsultation()"
+                title="Switch to another patient">
+                Change Patient
+              </button>
+              <button type="button" class="btn-view-pt" (click)="onViewPatientProfile()"
+                title="View full patient history">
+                View Profile
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- SECTION 2: Clinical Examination & Symptoms                         -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="sec-heading-row">
+            <span class="sec-number">1</span>
+            <div>
+              <h5 class="sec-title">Clinical Examination & Diagnosis</h5>
+              <span class="sec-desc">Symptoms onset, pain severity rating, and clinical provisional diagnosis</span>
+            </div>
+          </div>
+
+          <!-- Chief Complaint -->
+          <div class="form-group">
+            <label class="form-label" for="c-chief">Chief Complaint & Pain Onset</label>
+            <textarea id="c-chief" name="cChief" rows="2" class="form-textarea"
+              placeholder="Describe current pain location, radiating pattern, onset duration, and aggravating factors..."
+              [(ngModel)]="formData.chiefComplaint"></textarea>
+          </div>
+
+          <!-- Provisional Diagnosis & Pain Severity -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="c-provisional">Provisional Diagnosis</label>
+              <input id="c-provisional" name="cProvisional" type="text" class="form-input"
+                placeholder="Select from right panel or type (e.g. Lumbar Disc Herniation)"
+                [(ngModel)]="formData.provisionalDiagnosis" />
+            </div>
+
+            <!-- Pain Severity Rating Chips -->
+            <div class="form-group">
+              <label class="form-label">Pain Severity Level (NPRS 1-10)</label>
+              <div class="pain-severity-group">
+                <button type="button" class="severity-btn mild" [class.active]="formData.painSeverity === 'Mild'"
+                  (click)="setPainSeverity('Mild')">
+                  <span class="dot"></span> Mild (1-3)
+                </button>
+                <button type="button" class="severity-btn moderate"
+                  [class.active]="formData.painSeverity === 'Moderate'" (click)="setPainSeverity('Moderate')">
+                  <span class="dot"></span> Moderate (4-6)
+                </button>
+                <button type="button" class="severity-btn severe" [class.active]="formData.painSeverity === 'Severe'"
+                  (click)="setPainSeverity('Severe')">
+                  <span class="dot"></span> Severe (7-10)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vitals Row -->
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label" for="c-bp">Blood Pressure (BP)</label>
+              <input id="c-bp" name="cBp" type="text" class="form-input" placeholder="120/80 mmHg"
+                [(ngModel)]="formData.bp" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-pulse">Pulse / Heart Rate</label>
+              <input id="c-pulse" name="cPulse" type="text" class="form-input" placeholder="74 bpm"
+                [(ngModel)]="formData.pulse" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-rom">ROM / Flexibility Restriction</label>
+              <input id="c-rom" name="cRom" type="text" class="form-input"
+                placeholder="e.g. Lumbar flexion restricted by 40%" [(ngModel)]="formData.romNotes" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- SECTION 3: Treatment Given & Rehabilitation Plan                   -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="sec-heading-row">
+            <span class="sec-number">3</span>
+            <div>
+              <h5 class="sec-title">Treatment Given & Rehabilitation Plan</h5>
+              <span class="sec-desc">Clinical modalities administered today, assigned protocol, and follow-up</span>
+            </div>
+          </div>
+
+          <!-- Treatment Given during Encounter -->
+          <div class="form-group">
+            <label class="form-label" for="c-treatment-given">Treatment Given During This Encounter</label>
+            <textarea id="c-treatment-given" name="cTreatmentGiven" rows="2" class="form-textarea treatment-highlight"
+              placeholder="Document modalities applied (e.g. IFT, Ultrasound, Dry Needling, Manual Joint Mobilization, Myofascial Release, Core Activation Drills)..."
+              [(ngModel)]="formData.treatmentGiven"></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="c-plan">Prescribed Care Plan Protocol</label>
+              <select id="c-plan" name="cPlan" class="form-select" [(ngModel)]="formData.recommendedPlan">
+                @for (plan of planTemplates; track plan) {
+                <option [value]="plan">{{ plan }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="c-next-date">Next Review / Follow-Up Date</label>
+              <input id="c-next-date" name="cNextDate" type="date" class="form-input"
+                [(ngModel)]="formData.nextFollowUpDate" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="c-advice">Clinical Advice & Home Exercise Prescription</label>
+            <textarea id="c-advice" name="cAdvice" rows="3" class="form-textarea"
+              placeholder="e.g. Prone McKenzie press-ups (10 reps, 3x daily). Apply ice packs for 15 minutes after session..."
+              [(ngModel)]="formData.clinicalAdvice"></textarea>
+          </div>
+        </div>
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- SECTION 1: Consultation Specs & Pricing                            -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="sec-heading-row">
+            <span class="sec-number">3</span>
+            <div>
+              <h5 class="sec-title">Consultation Specs & Pricing</h5>
+              <span class="sec-desc">Consultation type, session mode, and encounter billing fee</span>
+            </div>
+          </div>
+
+          <div class="form-grid-4">
+            <!-- Consultancy Fee -->
+            <div class="form-group">
+              <label class="form-label" for="c-fee">Consultancy Fee (₹) <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="currency-symbol">₹</span>
+                <input id="c-fee" name="cFee" type="number" class="form-input with-prefix" placeholder="500"
+                  [(ngModel)]="formData.fee" required />
+              </div>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="form-group">
+              <label class="form-label" for="c-pay-status">Payment Status</label>
+              <select id="c-pay-status" name="cPayStatus" class="form-select" [(ngModel)]="formData.paymentStatus">
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending Collection</option>
+                <option value="Waived">Waived (Free Inquiry / Doctor Courtesy)</option>
+              </select>
+            </div>
+
+            <!-- Consultation Type -->
+            <div class="form-group">
+              <label class="form-label" for="c-type">Consultation Type</label>
+              <select id="c-type" name="cType" class="form-select" [(ngModel)]="formData.consultationType">
+                <option value="Initial Assessment">Initial Assessment</option>
+                <option value="Follow-up Visit">Follow-up Visit</option>
+              </select>
+            </div>
+
+            <!-- Visit Mode -->
+            <div class="form-group">
+              <label class="form-label" for="c-mode">Visit Mode</label>
+              <select id="c-mode" name="cMode" class="form-select" [(ngModel)]="formData.visitMode">
+                <option value="In-Clinic">In-Clinic (Center)</option>
+                <option value="Home Visit">Home Visit (Domiciliary)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- Form Actions Bar -->
+        <div class="form-actions-bar">
+          <button type="button" class="btn-reset" (click)="clearConsultation()">
+            Reset Encounter
+          </button>
+          <button type="submit" class="btn-submit-consultation">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Save Consultation Record
+          </button>
+        </div>
+
+      </form>
+      }
+    </main>
+
+    <!-- ── RIGHT COLUMN (30%): CLINICAL QUICK SELECT (Conditions & Precautions) ── -->
+    <aside class="quick-select-sidebar">
+      <div class="quick-select-card">
+
+        <!-- Sidebar Header -->
+        <div class="qs-header">
+          <h4 class="qs-title">Clinical Quick Select</h4>
+          <span class="qs-sub">Reusable templates to speed up consultation</span>
+        </div>
+
+        <!-- 1. CONDITIONS SECTION -->
+        <div class="qs-section">
+          <div class="qs-section-title-row">
+            <span class="qs-section-title">Conditions</span>
+          </div>
+
+          <!-- Search Condition -->
+          <div class="qs-search-box">
+            <svg class="qs-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="qs-search-input" placeholder="Search condition..." [ngModel]="conditionSearch()"
+              (ngModelChange)="conditionSearch.set($event)" />
+            @if (conditionSearch()) {
+            <button type="button" class="btn-clear-mini" (click)="conditionSearch.set('')">&times;</button>
+            }
+          </div>
+
+          <!-- Add Condition Button / Inline Form -->
+          @if (!showAddCondition) {
+          <button type="button" class="btn-add-condition-trigger" (click)="showAddCondition = true">
+            + Add Condition
+          </button>
+          } @else {
+          <div class="inline-add-row">
+            <input type="text" class="inline-add-input" placeholder="Type condition name..."
+              [(ngModel)]="newConditionInput" (keydown.enter)="addCustomCondition()" />
+            <button type="button" class="btn-inline-save" (click)="addCustomCondition()">Save</button>
+            <button type="button" class="btn-inline-cancel"
+              (click)="showAddCondition = false; newConditionInput = ''">&times;</button>
+          </div>
+          }
+
+          <!-- Conditions List -->
+          <div class="conditions-items-list">
+            @for (cond of filteredConditions(); track cond) {
+            <div class="condition-item-card"
+              [class.selected]="selectedCondition() === cond || formData.provisionalDiagnosis === cond"
+              (click)="selectCondition(cond)">
+              <span class="cond-name">{{ cond }}</span>
+              <span class="cond-add-icon">
+                @if (selectedCondition() === cond || formData.provisionalDiagnosis === cond) {
+                ✓
+                } @else {
+                +
+                }
+              </span>
+            </div>
+            } @empty {
+            <div class="qs-empty-msg">No conditions match "{{ conditionSearch() }}".</div>
+            }
+          </div>
+        </div>
+
+        <div class="qs-divider"></div>
+
+        <!-- 2. PRECAUTION NOTES SECTION -->
+        <div class="qs-section">
+          <div class="qs-section-title-row">
+            <div>
+              <span class="qs-section-title">Precaution Notes</span>
+              <span class="qs-section-desc">Select common clinical precautions</span>
+            </div>
+          </div>
+
+          <!-- Search Precaution Notes -->
+          <div class="qs-search-box">
+            <svg class="qs-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="qs-search-input" placeholder="Search precautions..."
+              [ngModel]="precautionSearch()" (ngModelChange)="precautionSearch.set($event)" />
+            @if (precautionSearch()) {
+            <button type="button" class="btn-clear-mini" (click)="precautionSearch.set('')">&times;</button>
+            }
+          </div>
+
+          <!-- Add Precaution Note Button / Inline Form -->
+          @if (!showAddPrecaution) {
+          <button type="button" class="btn-add-condition-trigger" (click)="showAddPrecaution = true">
+            + Add Precaution Note
+          </button>
+          } @else {
+          <div class="inline-add-row">
+            <input type="text" class="inline-add-input" placeholder="Type precaution note..."
+              [(ngModel)]="newPrecautionInput" (keydown.enter)="addCustomPrecaution()" />
+            <button type="button" class="btn-inline-save" (click)="addCustomPrecaution()">Save</button>
+            <button type="button" class="btn-inline-cancel"
+              (click)="showAddPrecaution = false; newPrecautionInput = ''">&times;</button>
+          </div>
+          }
+
+          <!-- Precautions Checkbox Cards List -->
+          <div class="precautions-checkbox-list">
+            @for (prec of filteredPrecautions(); track prec) {
+            <label class="precaution-check-card" [class.checked]="isPrecautionSelected(prec)">
+              <input type="checkbox" class="custom-check-input" [checked]="isPrecautionSelected(prec)"
+                (change)="togglePrecaution(prec)" />
+              <span class="prec-text">{{ prec }}</span>
+            </label>
+            } @empty {
+            <div class="qs-empty-msg">No precautions match "{{ precautionSearch() }}".</div>
+            }
+          </div>
+        </div>
+
+        <!-- 3. SELECTED PILLS SUMMARY -->
+        @if (selectedCondition() || selectedPrecautions().length > 0) {
+        <div class="qs-selected-block">
+          <span class="selected-label">Selected</span>
+          <div class="selected-chips-wrap">
+            @if (selectedCondition()) {
+            <span class="selected-chip condition-chip">
+              {{ selectedCondition() }}
+              <button type="button" class="chip-remove" (click)="removeSelectedCondition()"
+                aria-label="Remove condition">&times;</button>
+            </span>
+            }
+            @for (p of selectedPrecautions(); track p) {
+            <span class="selected-chip precaution-chip">
+              {{ p }}
+              <button type="button" class="chip-remove" (click)="removeSelectedPrecaution(p)"
+                aria-label="Remove precaution">&times;</button>
+            </span>
+            }
+          </div>
+        </div>
+        }
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ── BOTTOM SECTION: RECENT CONSULTATIONS LEDGER ───────────────────────── -->
+  <div class="recent-consultations-section">
+    <div class="ledger-header">
+      <div>
+        <h4 class="ledger-title">Recent Clinical Consultations</h4>
+        <span class="ledger-subtitle">History of recorded assessments, diagnoses, and issued prescriptions</span>
+      </div>
+      <span class="ledger-count-badge">{{ recentConsultations.length }} Consultations Logged</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="consultations-table">
+        <thead>
+          <tr>
+            <th>Consultation Code</th>
+            <th>Date & Time</th>
+            <th>Patient Name</th>
+            <th>Type & Mode</th>
+            <th>Provisional Diagnosis</th>
+            <th>Fee & Payment</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of recentConsultations; track c.id) {
+          <tr>
+            <td>
+              <span class="code-badge">{{ c.consultationCode }}</span>
+            </td>
+            <td>
+              <div class="date-cell">
+                <span class="d-date">{{ c.date }}</span>
+                <span class="d-time">{{ c.time }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="patient-cell">
+                <span class="p-fullname">{{ c.patientName }}</span>
+                <span class="p-sub">{{ c.patientCode }} • {{ c.age }}y / {{ c.gender }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="type-cell">
+                <span class="type-badge">{{ c.consultationType }}</span>
+                <span class="mode-tag">{{ c.visitMode }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="diag-cell">
+                <span class="diag-text">{{ c.provisionalDiagnosis }}</span>
+                <span class="pain-pill" [class]="c.painSeverity.toLowerCase()">{{ c.painSeverity }} Pain</span>
+              </div>
+            </td>
+            <td>
+              <div class="fee-cell">
+                <span class="fee-amount">₹{{ c.fee }}</span>
+                <span class="pay-badge" [class]="c.paymentStatus.toLowerCase()">{{ c.paymentStatus }}</span>
+              </div>
+            </td>
+            <td>
+              <button type="button" class="btn-slip" (click)="viewSlip(c)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Slip
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MODAL: CLINICAL CONSULTATION & PRESCRIPTION SLIP ───────────────────── -->
+  @if (showSlipModal && selectedConsultationForSlip) {
+  <div class="slip-modal-backdrop" (click)="closeSlipModal()">
+    <div class="slip-modal-card" (click)="$event.stopPropagation()">
+
+      <!-- Modal Top Bar -->
+      <div class="slip-modal-top">
+        <span class="modal-title">Consultation Slip & Medical Advice</span>
+        <div class="modal-top-actions">
+          <button type="button" class="btn-print-slip" (click)="printCurrentSlip()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print Prescription Slip
+          </button>
+          <button type="button" class="btn-close-modal" (click)="closeSlipModal()">&times;</button>
+        </div>
+      </div>
+
+      <!-- Printable Slip Document -->
+      <div class="slip-document-print" id="printable-consultation-slip">
+        <div class="slip-header">
+          <div class="brand-row">
+            <div>
+              <h3 class="clinic-brand">PHYSIOSMATE CLINICAL NETWORK</h3>
+              <span class="clinic-sub">Department of Musculoskeletal & Sports Physiotherapy</span>
+            </div>
+            <div class="slip-ref-box">
+              <span class="ref-label">CONSULTATION REF</span>
+              <span class="ref-val">{{ selectedConsultationForSlip.consultationCode }}</span>
+            </div>
+          </div>
+          <div class="slip-divider"></div>
+        </div>
+
+        <!-- Patient & Date Banner -->
+        <div class="slip-grid-2">
+          <div>
+            <p><strong>Patient Name:</strong> {{ selectedConsultationForSlip.patientName }}</p>
+            <p><strong>Age / Gender:</strong> {{ selectedConsultationForSlip.age }} Yrs / {{
+              selectedConsultationForSlip.gender }}</p>
+            <p><strong>Contact:</strong> {{ selectedConsultationForSlip.phone }}</p>
+          </div>
+          <div class="text-right">
+            <p><strong>Date & Time:</strong> {{ selectedConsultationForSlip.date }} at {{
+              selectedConsultationForSlip.time }}</p>
+            <p><strong>Mode:</strong> {{ selectedConsultationForSlip.visitMode }} ({{
+              selectedConsultationForSlip.consultationType }})</p>
+            <p><strong>Fee Paid:</strong> ₹{{ selectedConsultationForSlip.fee }} ({{
+              selectedConsultationForSlip.paymentStatus }})</p>
+          </div>
+        </div>
+
+        <div class="slip-divider"></div>
+
+        <!-- Clinical Diagnosis -->
+        <div class="slip-section">
+          <h5 class="slip-sec-title">CLINICAL FINDINGS & DIAGNOSIS</h5>
+          <p><strong>Chief Complaint:</strong> {{ selectedConsultationForSlip.chiefComplaint }}</p>
+          <p><strong>Provisional Diagnosis:</strong> {{ selectedConsultationForSlip.provisionalDiagnosis }}</p>
+          @if (selectedConsultationForSlip.bp || selectedConsultationForSlip.pulse) {
+          <p><strong>Vitals:</strong> BP: {{ selectedConsultationForSlip.bp || '120/80' }} | Pulse: {{
+            selectedConsultationForSlip.pulse || '72' }} | Pain Rating: {{ selectedConsultationForSlip.painSeverity }}
+          </p>
+          }
+        </div>
+
+        <div class="slip-divider"></div>
+
+        <!-- Therapy Prescription -->
+        <div class="slip-section">
+          <h5 class="slip-sec-title">REHABILITATION PROTOCOL & HOME ADVICE</h5>
+          <p><strong>Assigned Care Plan:</strong> {{ selectedConsultationForSlip.recommendedPlan || 'Custom Care Plan'
+            }}</p>
+          @if (selectedConsultationForSlip.treatmentGiven) {
+          <p><strong>Treatment Administered Today:</strong> {{ selectedConsultationForSlip.treatmentGiven }}</p>
+          }
+          <div class="advice-box">
+            {{ selectedConsultationForSlip.clinicalAdvice }}
+          </div>
+          @if (selectedConsultationForSlip.nextFollowUpDate) {
+          <p class="followup-text"><strong>Review Appointment:</strong> {{ selectedConsultationForSlip.nextFollowUpDate
+            }}</p>
+          }
+        </div>
+
+        <div class="slip-footer">
+          <span>Verified by PhysiosMate Certified Physiotherapy Practitioner</span>
+          <span class="digital-seal">Electronically Generated Clinical Record</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  }
+
+</div>

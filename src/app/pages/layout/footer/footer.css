@@ -101,18 +101,18 @@
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.physios-footer-brand-logo:hover {
+/* .physios-footer-brand-logo:hover {
   opacity: 0.92;
   transform: scale(1.02);
-}
+} */
 
-.physios-footer-dot {
+/* .physios-footer-dot {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
   background-color: var(--footer-dot, #5CCFCB);
-}
+} */
 
 .physios-footer-brand-text {
   font-family: var(--font-heading), sans-serif;
@@ -131,7 +131,7 @@
   font-family: var(--font-body), sans-serif;
   font-size: 0.82rem;
   font-weight: 400;
-  color: var(--footer-subtext, #9cb0c6);
+  color: #333;
   margin: 0;
   letter-spacing: 0.01em;
 }

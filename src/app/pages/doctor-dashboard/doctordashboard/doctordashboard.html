@@ -1,0 +1,487 @@
+<div class="physios-drive-page">
+  <div class="physios-drive-box">
+
+    <!-- Top Header Row (Matching Patient Drive Topbar) -->
+    <div class="physios-drive-topbar">
+      <div class="topbar-left">
+        <h1 class="drive-heading">Doctor Console</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="user-profile-header">
+
+          <div class="user-details">
+            <span class="user-name">Welcome - {{ doctorName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Body: Left Sidebar + Right Content -->
+    <div class="physios-drive-body">
+
+      <!-- Left Sidebar Navigation (shared role-specific sidebar component) -->
+
+      <!-- Right Content Area -->
+      <main class="physios-content">
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 1. DIRECT OVERVIEW TAB IN SAME COMPONENT (as explicitly requested) -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'dashboard') {
+        <div class="doctor-overview-panel">
+
+          <!-- Overview Header with Time Period Filter -->
+          <div class="overview-header-row">
+            <div class="header-titles">
+              <h3 class="overview-title">Clinical Practice Overview</h3>
+              <p class="overview-subtitle">Real-time KPIs, appointment completion rates, and practice performance
+                metrics.</p>
+            </div>
+            <div class="header-actions-wrap">
+              <!-- Period Filter Group: Day, This Week, Month, Lifetime -->
+              <!-- Custom Period Dropdown -->
+              <div class="cpd-wrap">
+                <!-- Trigger -->
+                <button type="button" class="cpd-trigger" [class.cpd-open]="isPeriodDropdownOpen"
+                  (click)="togglePeriodDropdown($event)" aria-haspopup="listbox"
+                  [attr.aria-expanded]="isPeriodDropdownOpen" aria-label="Select time period">
+                  <span class="cpd-trigger-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </span>
+                  <span class="cpd-trigger-label">{{ selectedPeriodLabel }}</span>
+                  <span class="cpd-trigger-chevron" [class.rotated]="isPeriodDropdownOpen">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </span>
+                </button>
+
+                <!-- Dropdown Panel -->
+                @if (isPeriodDropdownOpen) {
+                <div class="cpd-panel" role="listbox" aria-label="Time period options">
+                  @for (filter of periodFilters; track filter.id) {
+                  <button type="button" class="cpd-option" [class.cpd-option-active]="selectedPeriod === filter.id"
+                    role="option" [attr.aria-selected]="selectedPeriod === filter.id"
+                    (click)="selectPeriodOption(filter.id, $event)">
+                    <span class="cpd-option-dot"></span>
+                    <span class="cpd-option-label">{{ filter.label }}</span>
+                    @if (selectedPeriod === filter.id) {
+                    <span class="cpd-option-check">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+                    }
+                  </button>
+                  }
+                </div>
+                }
+              </div>
+
+              <button type="button" class="btn-primary-action" (click)="selectTab('add-patient')">
+                + Add Patient
+              </button>
+            </div>
+          </div>
+
+          <!-- 10 Clinical & Practice KPI Cards (Appointments, Patients, Revenue, Rating) -->
+          <div class="kpi-cards-wrapper">
+
+            <!-- Row 1: Appointments & Completion Rate -->
+            <div class="kpi-grid-5">
+
+              <!-- 1. Total Appointments -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Total Appointments</span>
+                  <div class="metric-icon-box icon-teal">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number">{{ stats.totalAppointments }}</span>
+                  <span class="metric-meta">Total booked & scheduled</span>
+                </div>
+              </div>
+
+              <!-- 2. Completed Appointments -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Completed</span>
+                  <div class="metric-icon-box icon-green">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
+                  <span class="metric-meta">Successfully completed</span>
+                </div>
+              </div>
+
+              <!-- 3. Pending Appointments -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Pending</span>
+                  <div class="metric-icon-box icon-amber">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
+                  <span class="metric-meta">Awaiting session</span>
+                </div>
+              </div>
+
+              <!-- 4. Cancelled Appointments -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Cancelled</span>
+                  <div class="metric-icon-box icon-slate">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
+                  <span class="metric-meta">Rescheduled / void</span>
+                </div>
+              </div>
+
+              <!-- 5. Completion Rate -->
+              <div class="metric-card highlight-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Completion Rate</span>
+                  <div class="metric-icon-box icon-cyan">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                      <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
+                  <div class="kpi-rate-bar">
+                    <div class="kpi-rate-fill" [style.width.%]="stats.completionRate"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Row 2: Patients, Financials & Patient Rating -->
+            <div class="kpi-grid-5">
+
+              <!-- 6. Active Patients -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Active Patients</span>
+                  <div class="metric-icon-box icon-blue">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-blue">{{ stats.activePatients }}</span>
+                  <span class="metric-meta">Under rehabilitation</span>
+                </div>
+              </div>
+
+              <!-- 7. New Patients -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">New Patients</span>
+                  <div class="metric-icon-box icon-purple">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="8.5" cy="7" r="4"></circle>
+                      <line x1="20" y1="8" x2="20" y2="14"></line>
+                      <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-purple">{{ stats.newPatients }}</span>
+                  <span class="metric-meta">First-time consultations</span>
+                </div>
+              </div>
+
+              <!-- 8. Revenue -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Revenue</span>
+                  <div class="metric-icon-box icon-green">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
+                  <span class="metric-meta">Consultations & therapy</span>
+                </div>
+              </div>
+
+              <!-- 9. Pending Payments -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Pending Payments</span>
+                  <div class="metric-icon-box icon-rose">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                      <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
+                    stats.pendingPayments | number:'1.2-2' }}</span>
+                  <span class="metric-meta">{{ stats.pendingPaymentCount }} Pending invoice(s)</span>
+                </div>
+              </div>
+
+              <!-- 10. Average Rating & Reviews -->
+              <div class="metric-card">
+                <div class="metric-top">
+                  <span class="metric-card-label">Average Rating</span>
+                  <div class="metric-icon-box icon-gold">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                      </polygon>
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-bottom">
+                  <span class="metric-number text-gold">
+                    {{ stats.averageRating > 0 ? (stats.averageRating | number:'1.1-2') : '4.9' }} <small
+                      class="star-sym">&#9733;</small>
+                  </span>
+                  <span class="metric-meta">{{ stats.totalReviews }} Patient review(s)</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Today's Schedule Section -->
+          <div class="dashboard-section-card">
+            <div class="section-card-header">
+              <div>
+                <h4 class="section-heading">Today's Appointment Schedule</h4>
+                <span class="section-sub">Real-time consultation & physical therapy sessions</span>
+              </div>
+              <button type="button" class="link-btn-flat" (click)="selectTab('patients')">
+                View All Patients &rarr;
+              </button>
+            </div>
+
+            <div class="schedule-table-container">
+              <table class="minimal-table">
+                <thead>
+                  <tr>
+                    <th>Time Slot</th>
+                    <th>Patient Details</th>
+                    <th>Diagnosis / Condition</th>
+                    <th>Session Milestone</th>
+                    <th>Visit Mode</th>
+                    <th>Status</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (apt of todayAppointments; track apt.id) {
+                  <tr>
+                    <!-- Time -->
+                    <td>
+                      <div class="time-block">
+                        <span class="time-primary">{{ apt.timeSlot }}</span>
+                        <span class="time-sub">{{ apt.date }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Patient Info -->
+                    <td>
+                      <div class="pt-profile-row">
+                        <div class="pt-avatar">
+                          {{ getInitials(apt.patientName) }}
+                        </div>
+                        <div class="pt-text">
+                          <span class="pt-name">{{ apt.patientName }}</span>
+                          <span class="pt-code">{{ apt.patientId }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Condition -->
+                    <td>
+                      <span class="condition-name">{{ apt.condition }}</span>
+                    </td>
+
+                    <!-- Session Progress -->
+                    <td>
+                      <div class="session-counter-pill">
+                        Session {{ apt.sessionNumber }} of {{ apt.totalSessions }}
+                      </div>
+                    </td>
+
+                    <!-- Visit Mode -->
+                    <td>
+                      <span class="mode-tag" [class.video]="apt.visitType === 'Video Call'">
+                        @if (apt.visitType === 'Video Call') {
+                        Video Call
+                        } @else {
+                        In-Clinic
+                        }
+                      </span>
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td>
+                      <span class="apt-status-pill" [class.scheduled]="apt.status === 'Scheduled'"
+                        [class.in-progress]="apt.status === 'In-Progress'"
+                        [class.completed]="apt.status === 'Completed'">
+                        {{ apt.status }}
+                      </span>
+                    </td>
+
+                    <!-- Interactive Action Button -->
+                    <td class="text-right">
+                      @if (apt.status === 'Scheduled') {
+                      <button type="button" class="btn-status-action start"
+                        (click)="updateAppointmentStatus(apt.id, 'In-Progress')">
+                        Start Session
+                      </button>
+                      } @else if (apt.status === 'In-Progress') {
+                      <button type="button" class="btn-status-action complete"
+                        (click)="updateAppointmentStatus(apt.id, 'Completed')">
+                        Mark Done ✓
+                      </button>
+                      } @else {
+                      <span class="completed-text">✓ Finalized</span>
+                      }
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Active Treatment Plans Quick Preview -->
+          <!-- <div class="dashboard-section-card">
+            <div class="section-card-header">
+              <div>
+                <h4 class="section-heading">Ongoing Patient Rehabilitation Plans</h4>
+                <span class="section-sub">Current protocols underway and recovery milestones</span>
+              </div>
+              <button type="button" class="link-btn-flat" (click)="selectTab('treatment-plans')">
+                Manage All Plans &rarr;
+              </button>
+            </div>
+
+            <div class="quick-plans-grid">
+              @for (plan of treatmentPlans; track plan.id) {
+              <div class="quick-plan-card" (click)="selectTab('treatment-plans')">
+                <div class="q-plan-top">
+                  <div class="q-plan-left">
+                    <span class="q-plan-code">{{ plan.planCode }}</span>
+                    <h5 class="q-plan-title">{{ plan.title }}</h5>
+                    <span class="q-plan-patient">Patient: <strong>{{ plan.patientName }}</strong></span>
+                  </div>
+                  <div class="q-plan-badge">
+                    <span class="plan-status-badge" [class.in-prog]="plan.statusType === 'in-progress'"
+                      [class.pending]="plan.statusType === 'pending'">
+                      {{ plan.status }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="q-plan-progress">
+                  <div class="q-progress-bar">
+                    <div class="q-bar-fill" [style.width.%]="plan.progressPercent"></div>
+                  </div>
+                  <div class="q-progress-meta">
+                    <span>{{ plan.completedSessions }} of {{ plan.totalSessions }} Sessions</span>
+                    <strong class="teal-text">{{ plan.progressPercent }}% Recovered</strong>
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+          </div> -->
+
+        </div>
+        }
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 2. ADD PATIENT COMPONENT                                           -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'add-patient') {
+        <app-addpatient (patientAdded)="onPatientAdded($event)"
+          (startConsultationWith)="onStartConsultationWith($event)" (cancel)="selectTab('patients')" />
+        }
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 3. PATIENTS DIRECTORY COMPONENT                                    -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'patients') {
+        <app-patients [patients]="patients" (navigateToAdd)="selectTab('add-patient')"
+          (navigateToPlans)="selectTab('treatment-plans')" />
+        }
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 4. TREATMENT PLANS COMPONENT                                       -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'treatment-plans') {
+        <app-treatmentplans [treatmentPlans]="treatmentPlans" (navigateToAdd)="selectTab('add-patient')" />
+        }
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 5. CONSULTATIONS COMPONENT                                         -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'Consultations') {
+        <app-consultations [patients]="patients" [preSelectedPatientId]="preSelectedPatientId()"
+          (consultationAdded)="onConsultationAdded($event)" (viewPatientProfile)="onViewPatientProfile($event)" />
+        }
+
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- 6. APPOINTMENTS & INQUIRIES COMPONENT                              -->
+        <!-- ────────────────────────────────────────────────────────────────── -->
+        @if (activeTab === 'Appointments') {
+        <app-doctor-appointments [patients]="patients" [appointments]="todayAppointments"
+          (appointmentAdded)="onAppointmentAdded($event)" />
+        }
+
+      </main>
+    </div>
+
+  </div>
+</div>

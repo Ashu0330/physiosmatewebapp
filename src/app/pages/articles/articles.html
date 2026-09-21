@@ -1,0 +1,358 @@
+<div class="articles-page-wrapper">
+  <div class="articles-container">
+    <!-- Header Section -->
+    <div class="articles-header-row">
+      <div class="articles-header-left">
+        <h1 class="articles-main-title">Health Articles</h1>
+        <p class="articles-subtitle">
+          Trusted health information from physiotherapy and healthcare experts.
+        </p>
+      </div>
+
+      <!-- Promo banner card on top-right (as seen in the design) -->
+      <div class="articles-promo-banner" routerLink="/find-doctors">
+        <div class="promo-text-wrap">
+          <span class="promo-sub">For a Healthier</span>
+          <span class="promo-title">Tomorrow</span>
+          <div class="promo-accent-bar"></div>
+        </div>
+        <div class="promo-img-wrap">
+          <img
+            src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=250&q=80"
+            alt="Healthier Tomorrow"
+            class="promo-img"
+            (error)="onImgError($event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="articles-search-card">
+      <div class="search-input-group">
+        <svg
+          class="search-lens-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          class="search-field-input"
+          placeholder="Search health articles (e.g. knee pain, back pain, exercises...)"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          (keyup.enter)="onSearchSubmit()"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="search-clear-btn"
+            (click)="clearSearch()"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        class="search-action-btn"
+        (click)="onSearchSubmit()"
+      >
+        Search
+      </button>
+    </div>
+
+    <!-- Category Filter Pills Bar -->
+    <div class="categories-scroll-wrapper">
+      <div class="categories-list">
+        @for (cat of categories; track cat) {
+          <button
+            type="button"
+            class="category-pill-btn"
+            [class.active]="activeCategory() === cat"
+            (click)="setCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Featured Article Section -->
+    @if (isFeaturedVisible()) {
+      <section class="featured-article-section">
+        <h2 class="articles-section-heading">Featured Article</h2>
+        <div class="featured-card-wrapper">
+          <div class="featured-card-media">
+            <img
+              [src]="featuredArticle.image"
+              [alt]="featuredArticle.title"
+              class="featured-card-img"
+              (error)="onImgError($event)"
+            />
+          </div>
+          <div class="featured-card-content">
+            <div>
+              <span class="article-category-badge">{{ featuredArticle.tag }}</span>
+              <h3 class="featured-card-title">{{ featuredArticle.title }}</h3>
+              <p class="featured-card-description">{{ featuredArticle.description }}</p>
+            </div>
+
+            <div class="featured-card-footer">
+              <div class="featured-author-block">
+                <img
+                  [src]="featuredArticle.author.avatar"
+                  [alt]="featuredArticle.author.name"
+                  class="author-avatar-img"
+                  (error)="onAvatarError($event)"
+                />
+                <div class="author-text-info">
+                  <span class="author-name-text">{{ featuredArticle.author.name }}</span>
+                  <span class="author-role-text">{{ featuredArticle.author.role }}</span>
+                </div>
+                <span class="meta-dot-divider">•</span>
+                <span class="meta-date-read">{{ featuredArticle.date }} &bull; {{ featuredArticle.readTime }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="article-read-btn"
+                (click)="openArticle(featuredArticle)"
+              >
+                <span>Read Article</span>
+                <svg
+                  class="read-arrow-icon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Latest Articles Section -->
+    <section class="latest-articles-section">
+      <div class="latest-section-header">
+        <h2 class="articles-section-heading">Latest Articles</h2>
+        <div class="sort-control-wrap">
+          <label for="articleSortSelect" class="sort-label">Sort by</label>
+          <div class="sort-select-container">
+            <select
+              id="articleSortSelect"
+              class="custom-sort-select"
+              [value]="sortBy()"
+              (change)="onSortChange($event)"
+            >
+              <option value="Latest">Latest</option>
+              <option value="Oldest">Oldest</option>
+              <option value="Read Time">Read Time</option>
+            </select>
+            <svg
+              class="sort-chevron-icon"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Articles Grid -->
+      @if (filteredArticles().length > 0) {
+        <div class="articles-grid-layout">
+          @for (article of filteredArticles(); track article.id) {
+            <article class="article-grid-card">
+              <div class="article-card-media">
+                <img
+                  [src]="article.image"
+                  [alt]="article.title"
+                  class="article-card-img"
+                  loading="lazy"
+                  (error)="onImgError($event)"
+                />
+              </div>
+
+              <div class="article-card-body">
+                <span class="article-category-badge">{{ article.tag }}</span>
+                <h3 class="article-card-title" [title]="article.title">{{ article.title }}</h3>
+
+                <div class="article-card-author-row">
+                  <img
+                    [src]="article.author.avatar"
+                    [alt]="article.author.name"
+                    class="card-avatar-img"
+                    (error)="onAvatarError($event)"
+                  />
+                  <div class="card-author-meta">
+                    <span class="card-author-name">{{ article.author.name }}</span>
+                    <span class="card-date-read">{{ article.date }} &bull; {{ article.readTime }}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="article-read-btn article-card-btn"
+                  (click)="openArticle(article)"
+                >
+                  <span>Read Article</span>
+                  <svg
+                    class="read-arrow-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      } @else if (!isFeaturedVisible()) {
+        <!-- Empty State -->
+        <div class="empty-results-box">
+          <div class="empty-icon-circle">
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--primary-color, #10A896)"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+          </div>
+          <h3 class="empty-heading">No health articles found</h3>
+          <p class="empty-desc">
+            We couldn't find any articles matching "{{ searchQuery() }}" in "{{ activeCategory() }}".
+            Try searching for a different condition or reset your filters.
+          </p>
+          <div class="empty-actions">
+            <button
+              type="button"
+              class="search-action-btn empty-reset-btn"
+              (click)="clearSearch(); setCategory('All')"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+
+  <!-- Article Detail Modal / Reader Drawer -->
+  @if (isModalOpen() && selectedArticle(); as currentArticle) {
+    <div class="article-modal-backdrop" (click)="closeModal()">
+      <div class="article-modal-card" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="closeModal()"
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
+
+        <div class="modal-scroll-body">
+          <div class="modal-banner-img-wrap">
+            <img
+              [src]="currentArticle.image"
+              [alt]="currentArticle.title"
+              class="modal-banner-img"
+              (error)="onImgError($event)"
+            />
+            <span class="modal-badge-float">{{ currentArticle.tag }}</span>
+          </div>
+
+          <div class="modal-inner-content">
+            <h2 class="modal-article-title">{{ currentArticle.title }}</h2>
+
+            <div class="modal-author-strip">
+              <img
+                [src]="currentArticle.author.avatar"
+                [alt]="currentArticle.author.name"
+                class="modal-author-avatar"
+                (error)="onAvatarError($event)"
+              />
+              <div class="modal-author-details">
+                <span class="modal-author-name">{{ currentArticle.author.name }}</span>
+                <span class="modal-author-role">{{ currentArticle.author.role || 'Physiotherapist' }}</span>
+              </div>
+              <span class="modal-meta-tag">{{ currentArticle.date }} &bull; {{ currentArticle.readTime }}</span>
+            </div>
+
+            <p class="modal-lead-desc">{{ currentArticle.description }}</p>
+
+            <div class="modal-paragraphs">
+              @if (currentArticle.content && currentArticle.content.length > 0) {
+                @for (para of currentArticle.content; track $index) {
+                  <p class="modal-paragraph">{{ para }}</p>
+                }
+              } @else {
+                <p class="modal-paragraph">
+                  Clinical physiotherapy interventions offer specialized rehabilitation programs aimed at
+                  restoring joint mobility, easing acute and chronic discomfort, and improving muscle functional capacity.
+                </p>
+                <p class="modal-paragraph">
+                  Always consult with a licensed physiotherapist before initiating any high-load rehabilitation or mobility regimen.
+                </p>
+              }
+            </div>
+
+            <div class="modal-consult-cta">
+              <div class="consult-cta-text">
+                <h4>Need Personalized Treatment?</h4>
+                <p>Book a direct 1-on-1 consultation with verified physiotherapy experts.</p>
+              </div>
+              <a
+                routerLink="/find-doctors"
+                (click)="closeModal()"
+                class="consult-cta-btn"
+              >
+                Find Specialists
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

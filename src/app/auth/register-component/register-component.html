@@ -1,0 +1,1012 @@
+<div class="register-container">
+  <!-- Top Navigation & Stepper Header -->
+  <div class="register-header">
+    <div class="header-top-row">
+      <button type="button" class="back-link-btn" (click)="currentStep === 1 ? handleBackToAuth() : prevStep()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>{{ currentStep === 1 ? 'Back to Verification' : 'Back to Basic Details' }}</span>
+      </button>
+
+      <div class="step-pill">
+        <span class="step-dot"></span>
+        <span class="step-text">
+          {{ userType === 'user' ? 'Step 1 of 1' : (currentStep === 1 ? 'Step 1 of 2: Basic Details' : 'Step 2 of 2:
+          Profile Details') }}
+        </span>
+      </div>
+    </div>
+
+    <h2 class="register-title">
+      {{ currentStep === 1 ? 'Complete Your Account Profile' : (userType === 'doctor' ? 'Doctor Professional Profile' :
+      'Clinic Facility Information') }}
+    </h2>
+    <p class="register-subtitle">
+      {{ currentStep === 1
+      ? 'Enter your details below to set up your PhysiosMate profile.'
+      : (userType === 'doctor'
+      ? 'Provide your clinical credentials and expertise for patient consultations.'
+      : 'Register your clinic profile to list services and manage appointments.') }}
+    </p>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       STEP 1 — Basic Details (all user types)
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (currentStep === 1) {
+  <form [formGroup]="basicForm" (ngSubmit)="onNextOrSubmit()" class="register-form" novalidate>
+
+    <!-- Profile Image Upload -->
+    <div class="form-group">
+      <div class="profile-upload-row">
+        <div class="profile-avatar-wrap" (click)="triggerImageUpload()">
+          @if (profileImagePreview) {
+          <img [src]="profileImagePreview" alt="Profile preview" class="profile-avatar-img" />
+          } @else {
+          <div class="profile-avatar-placeholder">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          }
+          <div class="profile-avatar-overlay">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+
+        <input #profileImageInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
+          (change)="onProfileImageChange($event)" />
+      </div>
+    </div>
+
+    <!-- Account Type -->
+    <div class="form-group">
+      <label class="form-label">Select Account Type <span class="required-star">*</span></label>
+      <div class="gender-pills account-type-pills">
+        <button type="button" class="gender-pill account-type-pill" id="account-type-user"
+          [class.active]="basicForm.get('userType')?.value === 'user'" (click)="setUserType('user')">
+          Patient
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-doctor"
+          [class.active]="basicForm.get('userType')?.value === 'doctor'" (click)="setUserType('doctor')">
+          Doctor
+        </button>
+        <button type="button" class="gender-pill account-type-pill" id="account-type-clinic"
+          [class.active]="basicForm.get('userType')?.value === 'clinic'" (click)="setUserType('clinic')">
+          Clinic
+        </button>
+      </div>
+    </div>
+
+    <!-- Full Name + Mobile -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="reg-name" class="form-label">Full Name <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <input id="reg-name" type="text" formControlName="fullName" placeholder="e.g. Dr. / Mr. / Ms. Full Name"
+            class="form-input"
+            [class.is-invalid]="basicForm.get('fullName')?.invalid && basicForm.get('fullName')?.touched" />
+        </div>
+        @if (basicForm.get('fullName')?.invalid && basicForm.get('fullName')?.touched) {
+        <span class="field-error">Please enter your full name (at least 2 characters)</span>
+        }
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="reg-email" class="form-label">Email Address <span class="required-star">*</span></label>
+      <div class="input-wrapper">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        <input id="reg-email" type="email" formControlName="email" placeholder="e.g. name@example.com"
+          class="form-input" [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
+      </div>
+      @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
+      <span class="field-error">Please enter a valid email address</span>
+      }
+    </div>
+
+    <!-- Gender -->
+    <div class="form-group">
+      <label class="form-label">Gender <span class="required-star">*</span></label>
+      <div class="gender-pills">
+        <button type="button" class="gender-pill" id="gender-male"
+          [class.active]="basicForm.get('gender')?.value === 'male'" (click)="setGender('male')">
+          <span>♂</span> Male
+        </button>
+        <button type="button" class="gender-pill" id="gender-female"
+          [class.active]="basicForm.get('gender')?.value === 'female'" (click)="setGender('female')">
+          <span>♀</span> Female
+        </button>
+        <button type="button" class="gender-pill" id="gender-other"
+          [class.active]="basicForm.get('gender')?.value === 'other'" (click)="setGender('other')">
+          <span>⚧</span> Other
+        </button>
+      </div>
+    </div>
+
+    <!-- DOB -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="reg-dob" class="form-label">Date of Birth <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
+            [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
+        </div>
+        @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
+        <span class="field-error">Please select your date of birth</span>
+        }
+      </div>
+      <div class="form-group">
+        <div class="label-with-badge">
+          <label for="reg-mobile" class="form-label">Mobile Number <span class="required-star">*</span></label>
+        </div>
+        <div class="input-wrapper phone-wrapper">
+          <span class="phone-prefix">+91</span>
+          <input id="reg-mobile" type="tel" formControlName="mobile" placeholder="10-digit mobile number" maxlength="10"
+            class="form-input"
+            [class.is-invalid]="basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched" />
+        </div>
+        @if (basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched) {
+        <span class="field-error">Please enter a valid 10-digit mobile number</span>
+        }
+      </div>
+    </div>
+
+    <!-- State + City -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="reg-state" class="form-label">State <span class="required-star">*</span></label>
+        <select id="reg-state" formControlName="state" class="form-select" (change)="onStateChange($event, 'basic')"
+          [class.is-invalid]="basicForm.get('state')?.invalid && basicForm.get('state')?.touched">
+          <option [value]="null" disabled selected>Select state</option>
+          @for (s of stateList; track s.id) {
+          <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+        @if (basicForm.get('state')?.invalid && basicForm.get('state')?.touched) {
+        <span class="field-error">Please select your state</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="reg-city" class="form-label">City <span class="required-star">*</span></label>
+        <select id="reg-city" formControlName="city" class="form-select"
+          [class.is-invalid]="basicForm.get('city')?.invalid && basicForm.get('city')?.touched"
+          [attr.disabled]="cityList.length === 0 ? true : null">
+          <option [value]="null" disabled selected>{{ cityList.length === 0 ? 'Select state first' : 'Select city' }}
+          </option>
+          @for (c of cityList; track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+        @if (basicForm.get('city')?.invalid && basicForm.get('city')?.touched) {
+        <span class="field-error">Please select your city</span>
+        }
+      </div>
+    </div>
+
+    <!-- Password + Confirm -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="reg-password" class="form-label">Create Password <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input id="reg-password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+            placeholder="Min. 6 characters" class="form-input"
+            [class.is-invalid]="basicForm.get('password')?.invalid && basicForm.get('password')?.touched" />
+          <button type="button" class="toggle-pwd-btn" (click)="togglePassword()" tabindex="-1"
+            aria-label="Toggle password visibility">
+            @if (showPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
+          </button>
+        </div>
+        @if (basicForm.get('password')?.invalid && basicForm.get('password')?.touched) {
+        <span class="field-error">Password must be at least 6 characters</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="reg-confirm-password" class="form-label">Confirm Password <span
+            class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input id="reg-confirm-password" [type]="showConfirmPassword ? 'text' : 'password'"
+            formControlName="confirmPassword" placeholder="Re-enter password" class="form-input"
+            [class.is-invalid]="basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched" />
+          <button type="button" class="toggle-pwd-btn" (click)="toggleConfirmPassword()" tabindex="-1"
+            aria-label="Toggle confirm password visibility">
+            @if (showConfirmPassword) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+            } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            }
+          </button>
+        </div>
+        @if (basicForm.get('confirmPassword')?.invalid && basicForm.get('confirmPassword')?.touched) {
+        <span class="field-error">Please confirm your password</span>
+        }
+      </div>
+    </div>
+
+    <!-- Terms & Conditions -->
+    <div class="form-group terms-group">
+      <label class="terms-label" for="terms-checkbox">
+        <input id="terms-checkbox" type="checkbox" formControlName="termsAccepted" class="terms-checkbox" />
+        <span class="terms-custom-box">
+          <svg *ngIf="basicForm.get('termsAccepted')?.value" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <polyline points="2,6 5,9 10,3" stroke="white" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="terms-text">I agree to Terms &amp; Conditions</span>
+      </label>
+      @if (basicForm.get('termsAccepted')?.invalid && basicForm.get('termsAccepted')?.touched) {
+      <span class="field-error">You must accept the Terms &amp; Conditions to continue</span>
+      }
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" id="reg-submit-btn" class="submit-btn register-action-btn" [disabled]="isSubmitting">
+      @if (isSubmitting) {
+      <span class="spinner"></span>
+      <span>Creating Account...</span>
+      } @else {
+      <span>
+        {{ userType === 'user' ? 'Complete User Registration ✓' : (userType === 'doctor' ? 'Next: Doctor Profile Details
+        →' : 'Next: Clinic Details →') }}
+      </span>
+      }
+    </button>
+
+    <div class="switch-footer">
+      <span>Already have an account?</span>
+      <button type="button" class="switch-link" (click)="backToAuth.emit()">Sign In</button>
+    </div>
+  </form>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       STEP 2 — Doctor / Practitioner Profile
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (currentStep === 2 && userType === 'doctor') {
+  <form [formGroup]="doctorForm" (ngSubmit)="submitDoctorRegistration()" class="register-form" novalidate>
+
+    <!-- Specializations (Multi-Select Dropdown) -->
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'specialization'">
+      <label class="form-label">Specializations <span class="required-star">*</span>
+        <span class="form-label-hint">(select one or more)</span>
+      </label>
+      <div class="multiselect-trigger-box" id="specialization-select-trigger"
+        (click)="toggleDropdown('specialization', $event)"
+        [class.is-invalid]="selectedSpecializations.length === 0 && doctorForm.touched">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v4a3 3 0 0 0 3 3h1M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+        </svg>
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedSpecializations.length === 0">
+          @if (selectedSpecializations.length === 0) {
+          Select specialization(s)...
+          } @else if (selectedSpecializations.length === 1) {
+          {{ getSpecializationName(selectedSpecializations[0]) }}
+          } @else {
+          {{ selectedSpecializations.length }} specializations selected
+          }
+        </span>
+        @if (selectedSpecializations.length > 0) {
+        <span class="multiselect-count-badge">{{ selectedSpecializations.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearSpecializations($event)"
+          title="Clear all">✕</button>
+        }
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'specialization'" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      <!-- Dropdown Panel -->
+      @if (openDropdown === 'specialization') {
+      <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
+        <div class="dropdown-search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search specializations..." class="dropdown-search-input"
+            [value]="specializationSearch" (input)="specializationSearch = $any($event.target).value" />
+          @if (specializationSearch) {
+          <button type="button" class="clear-search-btn" (click)="specializationSearch = ''">✕</button>
+          }
+        </div>
+
+        <div class="dropdown-options-list">
+          @for (item of filteredSpecializations; track item.id) {
+          <label class="dropdown-option-item" [class.selected]="isSpecializationSelected(item.id)">
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isSpecializationSelected(item.id)"
+              (change)="toggleSpecialization(item.id)" />
+            <span class="custom-checkbox">
+              @if (isSpecializationSelected(item.id)) {
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              }
+            </span>
+            <span class="option-label-text">{{ item.name }}</span>
+          </label>
+          } @empty {
+          <div class="dropdown-no-results">No specialization found</div>
+          }
+        </div>
+
+        <div class="dropdown-panel-footer">
+          <span class="footer-count">{{ selectedSpecializations.length }} selected</span>
+          <button type="button" class="footer-done-btn" (click)="closeAllDropdowns()">Done</button>
+        </div>
+      </div>
+      }
+
+      <!-- Selected Tags Row -->
+      @if (selectedSpecializations.length > 0) {
+      <div class="selected-tags-container">
+        @for (id of selectedSpecializations; track id) {
+        <span class="selected-tag-pill">
+          {{ getSpecializationName(id) }}
+          <button type="button" class="tag-remove-btn" (click)="removeSpecialization(id, $event)"
+            title="Remove">✕</button>
+        </span>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Qualifications (Multi-Select Dropdown) -->
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'qualification'">
+      <label class="form-label">Qualifications <span class="required-star">*</span>
+        <span class="form-label-hint">(select one or more)</span>
+      </label>
+      <div class="multiselect-trigger-box" id="qualification-select-trigger"
+        (click)="toggleDropdown('qualification', $event)"
+        [class.is-invalid]="selectedQualifications.length === 0 && doctorForm.touched">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c3 3 9 3 12 0v-5" />
+        </svg>
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedQualifications.length === 0">
+          @if (selectedQualifications.length === 0) {
+          Select qualification(s)...
+          } @else if (selectedQualifications.length === 1) {
+          {{ getQualificationName(selectedQualifications[0]) }}
+          } @else {
+          {{ selectedQualifications.length }} qualifications selected
+          }
+        </span>
+        @if (selectedQualifications.length > 0) {
+        <span class="multiselect-count-badge">{{ selectedQualifications.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearQualifications($event)"
+          title="Clear all">✕</button>
+        }
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'qualification'" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      <!-- Dropdown Panel -->
+      @if (openDropdown === 'qualification') {
+      <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
+        <div class="dropdown-search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search qualifications..." class="dropdown-search-input"
+            [value]="qualificationSearch" (input)="qualificationSearch = $any($event.target).value" />
+          @if (qualificationSearch) {
+          <button type="button" class="clear-search-btn" (click)="qualificationSearch = ''">✕</button>
+          }
+        </div>
+
+        <div class="dropdown-options-list">
+          @for (item of filteredQualifications; track item.id) {
+          <label class="dropdown-option-item" [class.selected]="isQualificationSelected(item.id)">
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isQualificationSelected(item.id)"
+              (change)="toggleQualification(item.id)" />
+            <span class="custom-checkbox">
+              @if (isQualificationSelected(item.id)) {
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              }
+            </span>
+            <span class="option-label-text">{{ item.qualificationName }}</span>
+          </label>
+          } @empty {
+          <div class="dropdown-no-results">No qualification found</div>
+          }
+        </div>
+
+        <div class="dropdown-panel-footer">
+          <span class="footer-count">{{ selectedQualifications.length }} selected</span>
+          <button type="button" class="footer-done-btn" (click)="closeAllDropdowns()">Done</button>
+        </div>
+      </div>
+      }
+
+      <!-- Selected Tags Row -->
+      @if (selectedQualifications.length > 0) {
+      <div class="selected-tags-container">
+        @for (id of selectedQualifications; track id) {
+        <span class="selected-tag-pill">
+          {{ getQualificationName(id) }}
+          <button type="button" class="tag-remove-btn" (click)="removeQualification(id, $event)"
+            title="Remove">✕</button>
+        </span>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Registration Number -->
+    <div class="form-group">
+      <label for="doc-reg-no" class="form-label">State / Council License No. <span
+          class="required-star">*</span></label>
+      <div class="input-wrapper">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <input id="doc-reg-no" type="text" formControlName="registrationNumber"
+          placeholder="e.g. DCP-14528 or MCI/2024/0012" class="form-input"
+          [class.is-invalid]="doctorForm.get('registrationNumber')?.invalid && doctorForm.get('registrationNumber')?.touched" />
+      </div>
+      @if (doctorForm.get('registrationNumber')?.invalid && doctorForm.get('registrationNumber')?.touched) {
+      <span class="field-error">Please enter a valid license number (alphanumeric)</span>
+      }
+    </div>
+
+    <!-- Experience + Consultation Fee -->
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="doc-exp" class="form-label">Years of Experience <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <input id="doc-exp" type="number" formControlName="experienceYears" placeholder="e.g. 5" min="0"
+            class="form-input" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="doc-fee" class="form-label">Consultation Fee (₹) <span class="required-star">*</span></label>
+        <div class="input-wrapper">
+          <span class="fee-prefix">₹</span>
+          <input id="doc-fee" type="number" formControlName="consultationFee" placeholder="600"
+            class="form-input fee-input" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Institute / College -->
+    <div class="form-group">
+      <label for="doc-institute" class="form-label">Institution / College <span class="required-star">*</span></label>
+      <div class="input-wrapper">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M3 21h18"></path>
+          <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+          <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"></path>
+        </svg>
+        <input id="doc-institute" type="text" formControlName="institute"
+          placeholder="e.g. AIIMS Delhi / Seth GS Medical College" class="form-input"
+          [class.is-invalid]="doctorForm.get('institute')?.invalid && doctorForm.get('institute')?.touched" />
+      </div>
+      @if (doctorForm.get('institute')?.invalid && doctorForm.get('institute')?.touched) {
+      <span class="field-error">Please enter your institution / college name</span>
+      }
+    </div>
+
+    <!-- Languages (Multi-Select Dropdown) -->
+    <div class="form-group custom-multiselect" [class.is-open]="openDropdown === 'language'">
+      <label class="form-label">Languages Spoken
+        <span class="form-label-hint">(select all that apply)</span>
+      </label>
+      <div class="multiselect-trigger-box" id="language-select-trigger" (click)="toggleDropdown('language', $event)">
+        <svg class="select-lead-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span class="multiselect-trigger-text" [class.is-placeholder]="selectedLanguages.length === 0">
+          @if (selectedLanguages.length === 0) {
+          Select language(s)...
+          } @else if (selectedLanguages.length === 1) {
+          {{ getLanguageName(selectedLanguages[0]) }}
+          } @else {
+          {{ selectedLanguages.length }} languages selected
+          }
+        </span>
+        @if (selectedLanguages.length > 0) {
+        <span class="multiselect-count-badge">{{ selectedLanguages.length }}</span>
+        <button type="button" class="multiselect-clear-btn" (click)="clearLanguages($event)"
+          title="Clear all">✕</button>
+        }
+        <svg class="chevron-icon" [class.rotated]="openDropdown === 'language'" width="16" height="16"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+
+      <!-- Dropdown Panel -->
+      @if (openDropdown === 'language') {
+      <div class="multiselect-dropdown-panel" (click)="$event.stopPropagation()">
+        <div class="dropdown-search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search languages..." class="dropdown-search-input" [value]="languageSearch"
+            (input)="languageSearch = $any($event.target).value" />
+          @if (languageSearch) {
+          <button type="button" class="clear-search-btn" (click)="languageSearch = ''">✕</button>
+          }
+        </div>
+
+        <div class="dropdown-options-list">
+          @for (item of filteredLanguages; track item.id) {
+          <label class="dropdown-option-item" [class.selected]="isLanguageSelected(item.id)">
+            <input type="checkbox" class="dropdown-checkbox" [checked]="isLanguageSelected(item.id)"
+              (change)="toggleLanguage(item.id)" />
+            <span class="custom-checkbox">
+              @if (isLanguageSelected(item.id)) {
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              }
+            </span>
+            <span class="option-label-text">{{ item.name }}</span>
+          </label>
+          } @empty {
+          <div class="dropdown-no-results">No language found</div>
+          }
+        </div>
+
+        <div class="dropdown-panel-footer">
+          <span class="footer-count">{{ selectedLanguages.length }} selected</span>
+          <button type="button" class="footer-done-btn" (click)="closeAllDropdowns()">Done</button>
+        </div>
+      </div>
+      }
+
+      <!-- Selected Tags Row -->
+      @if (selectedLanguages.length > 0) {
+      <div class="selected-tags-container">
+        @for (id of selectedLanguages; track id) {
+        <span class="selected-tag-pill">
+          {{ getLanguageName(id) }}
+          <button type="button" class="tag-remove-btn" (click)="removeLanguage(id, $event)" title="Remove">✕</button>
+        </span>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- About / Bio -->
+    <div class="form-group">
+      <label for="doc-about" class="form-label">About Your Clinical Background &amp; Expertise</label>
+      <textarea id="doc-about" formControlName="about" rows="3"
+        placeholder="Brief summary of your specialization, clinical techniques, rehabilitation approach..."
+        class="form-textarea">
+      </textarea>
+    </div>
+
+    <!-- Services Offered (chip multi-select) -->
+    <div class="form-group">
+      <label class="form-label">Services Offered
+        <span class="form-label-hint">(select all that apply)</span>
+        @if (selectedServiceIds.size > 0) {
+        <span class="multiselect-count-badge" style="margin-left:8px">{{ selectedServiceIds.size }} selected</span>
+        }
+      </label>
+      <div class="reg-services-chip-grid">
+        @for (svc of serviceList; track svc.id) {
+        <button type="button" class="reg-svc-chip" [class.reg-svc-chip--selected]="isServiceSelected(svc.id)"
+          (click)="toggleService(svc.id)">
+          <svg class="reg-svc-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          {{ svc.serviceName }}
+        </button>
+        }
+        @if (serviceList.length === 0) {
+        <span class="form-label-hint">Loading services...</span>
+        }
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-group-row">
+      <button type="button" class="secondary-btn" (click)="prevStep()">← Back to Step 1</button>
+      <button type="submit" id="doc-submit-btn" class="submit-btn" [disabled]="isSubmitting">
+        @if (isSubmitting) {
+        <span class="spinner"></span>
+        <span>Registering Doctor...</span>
+        } @else {
+        <span>Complete Doctor Registration ✓</span>
+        }
+      </button>
+    </div>
+  </form>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       STEP 2 — Clinic / Rehab Center
+  ════════════════════════════════════════════════════════════════════ -->
+  @if (currentStep === 2 && userType === 'clinic') {
+  <form [formGroup]="clinicForm" (ngSubmit)="submitClinicRegistration()" class="register-form" novalidate>
+
+    <!-- ── Clinic Logo Upload ───────────────────────────────────────── -->
+    <div class="form-group">
+      <label class="form-label">Clinic Logo <span class="form-label-hint">(optional)</span></label>
+      <div class="clinic-logo-upload-row">
+        <div class="clinic-logo-avatar-wrap" (click)="triggerClinicLogoUpload()">
+          @if (clinicLogoPreview) {
+          <img [src]="clinicLogoPreview" alt="Clinic logo preview" class="clinic-logo-avatar-img" />
+          } @else {
+          <div class="clinic-logo-placeholder">
+            <!-- Building / clinic icon -->
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 21h18" />
+              <path d="M5 21V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14" />
+              <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" />
+              <rect x="9" y="9" width="2" height="2" rx="0.5" />
+              <rect x="13" y="9" width="2" height="2" rx="0.5" />
+            </svg>
+          </div>
+          }
+          <div class="clinic-logo-overlay">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
+        </div>
+        <div class="profile-upload-info">
+          <button type="button" class="upload-btn" (click)="triggerClinicLogoUpload()">
+            {{ clinicLogoPreview ? 'Change Logo' : 'Upload Logo' }}
+          </button>
+          <span class="upload-hint">Square image — JPG, PNG up to 5 MB</span>
+        </div>
+        <input #clinicLogoInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
+          (change)="onClinicLogoChange($event)" />
+      </div>
+    </div>
+
+    <!-- ── Clinic Banner Upload ─────────────────────────────────────── -->
+    <div class="form-group">
+      <label class="form-label">Banner Image <span class="form-label-hint">(optional)</span></label>
+      <div class="clinic-banner-upload-area" (click)="triggerClinicBannerUpload()">
+        @if (clinicBannerPreview) {
+        <img [src]="clinicBannerPreview" alt="Clinic banner preview" class="clinic-banner-preview-img" />
+        <div class="clinic-banner-change-overlay">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span>Change Banner</span>
+        </div>
+        } @else {
+        <div class="clinic-banner-empty-state">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <span class="clinic-banner-empty-text">Click to upload clinic banner</span>
+          <span class="clinic-banner-empty-hint">Recommended: 1200 × 400 px — JPG, PNG up to 10 MB</span>
+        </div>
+        }
+      </div>
+      <input #clinicBannerInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden-file-input"
+        (change)="onClinicBannerChange($event)" />
+    </div>
+
+    <!-- ── Clinic Media Gallery ─────────────────────────────────────── -->
+    <div class="form-group">
+      <div class="clinic-media-label-row">
+        <label class="form-label">Clinic Photos / Gallery
+          <span class="form-label-hint">(optional — up to {{ CLINIC_MEDIA_MAX }} images)</span>
+        </label>
+        @if (clinicMediaFiles.length > 0) {
+        <span class="clinic-media-count-badge">{{ clinicMediaFiles.length }} / {{ CLINIC_MEDIA_MAX }}</span>
+        }
+      </div>
+
+      <!-- Upload trigger (hidden when at cap) -->
+      @if (clinicMediaFiles.length < CLINIC_MEDIA_MAX) { <div class="clinic-media-upload-trigger"
+        (click)="triggerClinicMediaUpload()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+        <span class="clinic-media-trigger-text">Add clinic photos</span>
+        <span class="clinic-media-trigger-hint">JPG, PNG — {{ CLINIC_MEDIA_MAX - clinicMediaFiles.length }} slots
+          remaining</span>
+    </div>
+    }
+
+    <!-- Preview grid -->
+    @if (clinicMediaPreviews.length > 0) {
+    <div class="clinic-media-grid">
+      @for (item of clinicMediaPreviews; track item.url; let i = $index) {
+      <div class="clinic-media-tile">
+        <img [src]="item.url" [alt]="item.name" class="clinic-media-tile-img" />
+        <button type="button" class="clinic-media-remove-btn" (click)="removeClinicMedia(i)" title="Remove photo">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <line x1="1" y1="1" x2="11" y2="11" />
+            <line x1="11" y1="1" x2="1" y2="11" />
+          </svg>
+        </button>
+        <div class="clinic-media-tile-name">{{ item.name }}</div>
+      </div>
+      }
+    </div>
+
+    <!-- Count bar + clear all -->
+    <div class="clinic-media-count-bar">
+      <span>{{ clinicMediaPreviews.length }} photo{{ clinicMediaPreviews.length !== 1 ? 's' : '' }} added</span>
+      <button type="button" class="clinic-media-clear-btn" (click)="clearAllClinicMedia()">Clear all</button>
+    </div>
+    }
+
+    <input #clinicMediaInput type="file" accept="image/jpeg,image/png,image/webp" multiple class="hidden-file-input"
+      (change)="onClinicMediaChange($event)" />
+</div>
+
+<!-- Clinic Name -->
+<div class="form-group">
+  <label for="clinic-name" class="form-label">Clinic / Center Name <span class="required-star">*</span></label>
+  <div class="input-wrapper">
+    <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2">
+      <path d="M3 21h18"></path>
+      <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+    </svg>
+    <input id="clinic-name" type="text" formControlName="clinicName"
+      placeholder="e.g. Apex Physiotherapy & Rehabilitation Center" class="form-input"
+      [class.is-invalid]="clinicForm.get('clinicName')?.invalid && clinicForm.get('clinicName')?.touched" />
+  </div>
+  @if (clinicForm.get('clinicName')?.invalid && clinicForm.get('clinicName')?.touched) {
+  <span class="field-error">Please enter the clinic name</span>
+  }
+</div>
+
+<!-- Established Year + Consultancy Fees -->
+<div class="form-grid-2">
+  <div class="form-group">
+    <label for="clinic-est-year" class="form-label">Established Year <span class="required-star">*</span></label>
+    <div class="input-wrapper">
+      <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <input id="clinic-est-year" type="number" formControlName="establishedYear" placeholder="e.g. 2015" min="1900"
+        [max]="2026" class="form-input"
+        [class.is-invalid]="clinicForm.get('establishedYear')?.invalid && clinicForm.get('establishedYear')?.touched" />
+    </div>
+    @if (clinicForm.get('establishedYear')?.invalid && clinicForm.get('establishedYear')?.touched) {
+    <span class="field-error">Please enter a valid established year</span>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="clinic-fees" class="form-label">Consultancy Fees (₹) <span class="required-star">*</span></label>
+    <div class="input-wrapper">
+      <span class="fee-prefix">₹</span>
+      <input id="clinic-fees" type="number" formControlName="consultancyFees" placeholder="500"
+        class="form-input fee-input" />
+    </div>
+  </div>
+</div>
+
+<!-- Clinic Phone + Email -->
+<div class="form-grid-2">
+  <div class="form-group">
+    <label for="clinic-phone" class="form-label">Clinic Phone <span class="required-star">*</span></label>
+    <div class="input-wrapper phone-wrapper">
+      <span class="phone-prefix">+91</span>
+      <input id="clinic-phone" type="tel" formControlName="phone" placeholder="10-digit number" maxlength="10"
+        class="form-input" [class.is-invalid]="clinicForm.get('phone')?.invalid && clinicForm.get('phone')?.touched" />
+    </div>
+    @if (clinicForm.get('phone')?.invalid && clinicForm.get('phone')?.touched) {
+    <span class="field-error">Please enter a valid 10-digit number</span>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="clinic-email" class="form-label">Clinic Email <span class="required-star">*</span></label>
+    <div class="input-wrapper">
+      <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+        <polyline points="22,6 12,13 2,6"></polyline>
+      </svg>
+      <input id="clinic-email" type="email" formControlName="email" placeholder="clinic@example.com" class="form-input"
+        [class.is-invalid]="clinicForm.get('email')?.invalid && clinicForm.get('email')?.touched" />
+    </div>
+    @if (clinicForm.get('email')?.invalid && clinicForm.get('email')?.touched) {
+    <span class="field-error">Please enter a valid email</span>
+    }
+  </div>
+</div>
+
+<!-- Clinic Address -->
+<div class="form-group">
+  <label for="clinic-address" class="form-label">Clinic Street Address <span class="required-star">*</span></label>
+  <textarea id="clinic-address" formControlName="address" rows="2"
+    placeholder="Shop / Unit No., Building Name, Street Landmark" class="form-textarea"
+    [class.is-invalid]="clinicForm.get('address')?.invalid && clinicForm.get('address')?.touched">
+      </textarea>
+  @if (clinicForm.get('address')?.invalid && clinicForm.get('address')?.touched) {
+  <span class="field-error">Please enter the clinic address</span>
+  }
+</div>
+
+<!-- State + City + Pincode -->
+<div class="form-grid-3">
+  <div class="form-group">
+    <label for="clinic-state" class="form-label">State <span class="required-star">*</span></label>
+    <select id="clinic-state" formControlName="state" class="form-select" (change)="onStateChange($event, 'clinic')"
+      [class.is-invalid]="clinicForm.get('state')?.invalid && clinicForm.get('state')?.touched">
+      <option [value]="null" disabled selected>Select state</option>
+      @for (s of stateList; track s.id) {
+      <option [value]="s.id">{{ s.name }}</option>
+      }
+    </select>
+    @if (clinicForm.get('state')?.invalid && clinicForm.get('state')?.touched) {
+    <span class="field-error">Required</span>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="clinic-city" class="form-label">City <span class="required-star">*</span></label>
+    <select id="clinic-city" formControlName="city" class="form-select"
+      [class.is-invalid]="clinicForm.get('city')?.invalid && clinicForm.get('city')?.touched"
+      [attr.disabled]="cityList.length === 0 ? true : null">
+      <option [value]="null" disabled selected>{{ cityList.length === 0 ? 'Select state first' : 'Select city'
+        }}</option>
+      @for (c of cityList; track c.id) {
+      <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+    @if (clinicForm.get('city')?.invalid && clinicForm.get('city')?.touched) {
+    <span class="field-error">Required</span>
+    }
+  </div>
+
+  <div class="form-group">
+    <label for="clinic-pincode" class="form-label">Pincode <span class="required-star">*</span></label>
+    <input id="clinic-pincode" type="text" formControlName="pincode" maxlength="6" placeholder="400001"
+      class="form-input"
+      [class.is-invalid]="clinicForm.get('pincode')?.invalid && clinicForm.get('pincode')?.touched" />
+    @if (clinicForm.get('pincode')?.invalid && clinicForm.get('pincode')?.touched) {
+    <span class="field-error">6-digit pincode required</span>
+    }
+  </div>
+</div>
+
+<!-- Description -->
+<div class="form-group">
+  <label for="clinic-description" class="form-label">Clinic Description</label>
+  <textarea id="clinic-description" formControlName="description" rows="3"
+    placeholder="Describe your clinic's specialty, services offered, available equipment and facilities..."
+    class="form-textarea">
+      </textarea>
+</div>
+
+<!-- Services Offered (chip multi-select) -->
+<div class="form-group">
+  <label class="form-label">Services &amp; Treatments Offered
+    <span class="form-label-hint">(select all that apply)</span>
+    @if (selectedServiceIds.size > 0) {
+    <span class="multiselect-count-badge" style="margin-left:8px">{{ selectedServiceIds.size }} selected</span>
+    }
+  </label>
+  <div class="reg-services-chip-grid">
+    @for (svc of serviceList; track svc.id) {
+    <button type="button" class="reg-svc-chip" [class.reg-svc-chip--selected]="isServiceSelected(svc.id)"
+      (click)="toggleService(svc.id)">
+      <svg class="reg-svc-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      {{ svc.serviceName }}
+    </button>
+    }
+    @if (serviceList.length === 0) {
+    <span class="form-label-hint">Loading services...</span>
+    }
+  </div>
+</div>
+
+<!-- Buttons -->
+<div class="btn-group-row">
+  <button type="button" class="secondary-btn" (click)="prevStep()">← Back to Step 1</button>
+  <button type="submit" id="clinic-submit-btn" class="submit-btn" [disabled]="isSubmitting">
+    @if (isSubmitting) {
+    <span class="spinner"></span>
+    <span>Registering Clinic...</span>
+    } @else {
+    <span>Complete Clinic Registration ✓</span>
+    }
+  </button>
+</div>
+</form>
+}
+</div>

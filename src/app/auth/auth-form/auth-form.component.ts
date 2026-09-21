@@ -1,169 +1,180 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
-import { SweetAlertService } from '../../services/sweet-alert.service';
+import { ApiEndPoints } from '../../helper/api-endpoints';
+import { AppMessage } from '../../helper/app-message';
+import { SharedModule } from '../../shared/shared-module';
+import { BaseComponent } from '../../helper/base-component';
 
 @Component({
   selector: 'app-auth-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [SharedModule],
   templateUrl: './auth-form.component.html',
   styleUrl: './auth-form.component.css'
 })
-export class AuthFormComponent implements OnInit {
-  @Input() mode: 'login' | 'signup' = 'login';
+export class AuthFormComponent extends BaseComponent implements OnInit, OnDestroy {
+  @Input() mode: 'login' | 'signup' = 'signup';
   @Input() bookingContext: boolean = false;
   @Input() providerName?: string;
 
   @Output() authSuccess = new EventEmitter<void>();
   @Output() modeChange = new EventEmitter<'login' | 'signup'>();
+  @Output() otpVerified = new EventEmitter<{ email: string }>();
 
   private fb = inject(FormBuilder);
-  private authService = inject(Authservice);
-  private alert = inject(SweetAlertService);
+  protected override authService = inject(Authservice);
 
-  loginForm!: FormGroup;
   signupForm!: FormGroup;
-
-  showPassword = false;
-  showSignupPassword = false;
   isLoading = false;
   errorMessage = '';
+
+  isSignupOtpSending = false;
+  signupOtpSent = false;
+  signupOtpCountdown = 0;
+  private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     this.initForms();
   }
 
-  initForms(): void {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(4)]],
-      rememberMe: [true]
-    });
+  ngOnDestroy(): void {
+    if (this.signupOtpTimer) clearInterval(this.signupOtpTimer);
+  }
 
+  initForms(): void {
     this.signupForm = this.fb.group({
-      fullName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       terms: [true, [Validators.requiredTrue]]
     });
   }
 
-  togglePassword(): void {
-    this.showPassword = !this.showPassword;
-  }
+  // ── Send OTP ────────────────────────────────────────────────────────────────
 
-  toggleSignupPassword(): void {
-    this.showSignupPassword = !this.showSignupPassword;
-  }
-
-  switchMode(newMode: 'login' | 'signup'): void {
-    this.mode = newMode;
-    this.errorMessage = '';
-    this.modeChange.emit(newMode);
-  }
-
-  onLogin(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+  async sendSignupOtp(): Promise<void> {
+    const emailCtrl = this.signupForm.get('email');
+    if (!emailCtrl || emailCtrl.invalid) {
+      emailCtrl?.markAsTouched();
+      this.alert.toastError('Please enter a valid email address.');
       return;
     }
-    debugger;
-    this.isLoading = true;
+
+    this.isSignupOtpSending = true;
     this.errorMessage = '';
 
-    const payload = {
-      email: this.loginForm.value.email.trim(),
-      password: this.loginForm.value.password
-    };
+    try {
+      const email = emailCtrl.value.trim();
 
-    console.log('Calling login API:', payload);
+      const formData = new FormData();
+      formData.append('Email', email);
+      formData.append('IsLogin', 'true');
+      formData.append('IsSignIn', 'true');
 
-    this.authService.login(payload).subscribe({
-      next: (res: any) => {
-        console.log('SUCCESS:', res);
+      const res = await this.apiService.PostForm<any>(ApiEndPoints.Register, formData);
 
-        this.isLoading = false;
-
-        if (res && (res.isSuccess || res.token || res.data)) {
-          const user = res.data || res;
-          const token = user.token || res.token;
-
-          this.authService.saveUserSession(user, token);
-          this.alert.toastSuccess('Welcome back to PhysiosMate!');
-          this.authSuccess.emit();
-        } else {
-          this.errorMessage =
-            res.message || 'Login failed. Please verify your credentials.';
-
-          this.alert.toastError(this.errorMessage);
-        }
-      },
-
-      error: (err: any) => {
-        console.error('LOGIN ERROR:', err);
-
-        this.isLoading = false;
-
-        const msg =
-          err.error?.message ||
-          err.message ||
-          'Unable to connect to server. Please try again.';
-
-        this.errorMessage = msg;
-        this.alert.toastError(msg);
+      if (!res.isSuccess) {
+        this.alert.toastError(res.message || 'Unable to send OTP. Please try again.');
+        return;
       }
-    });
+
+      this.signupOtpSent = true;
+
+      if (res.data?.id) {
+        this.authService.setPendingUserId(res.data.id);
+      }
+
+      this.alert.toastSuccess(AppMessage.OtpSent);
+      this.startSignupOtpCountdown();
+
+    } finally {
+      this.isSignupOtpSending = false;
+    }
   }
 
-  onSignup(): void {
-    if (this.signupForm.invalid) {
-      this.signupForm.markAllAsTouched();
+  // ── Verify OTP ─────────────────────────────────────────────────────────────
+
+  async verifyOtp(): Promise<void> {
+    const otpCtrl = this.signupForm.get('otp');
+    if (!otpCtrl || otpCtrl.invalid) {
+      otpCtrl?.markAsTouched();
+      this.alert.toastError('Please enter the 6-digit OTP sent to your email.');
       return;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
 
-    const val = this.signupForm.value;
-    const payload = {
-      fullName: val.fullName.trim(),
-      email: val.email.trim(),
-      mobile: val.mobile.trim(),
-      password: val.password,
-      roleId: 3 // Patient / User
-    };
+    try {
+      const model = {
+        otpCode: this.signupForm.value.otp,
+        oTPType: 'Email',
+        email: this.signupForm.value.email,
+        userid: this.authService.getPendingUserId() ?? this.authService.getuserid()
+      };
 
-    this.authService.register(payload).subscribe({
-      next: (res: any) => {
-        this.isLoading = false;
-        if (res && (res.isSuccess || res.data || res.token)) {
-          const user = res.data || res;
-          const token = user.token || res.token || 'demo-jwt-token';
-          this.authService.saveUserSession(user, token);
-          this.alert.toastSuccess('Account created successfully!');
+      const res = await this.apiService.Post<any>(ApiEndPoints.VerifyOtp, model);
+
+      if (!res.isSuccess) {
+        this.alert.toastError(res.message || 'OTP verification failed. Please try again.');
+        return;
+      }
+
+      this.authService.clearPendingUserId();
+      this.alert.toastSuccess(AppMessage.OtpVerified);
+
+      if (res.data?.isProfileCompleted) {
+        this.authService.saveUserSession(res.data, res.data.token);
+        this.authService.clearPendingVerification();
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('physios_register_draft');
+        }
+
+        if (this.bookingContext) {
           this.authSuccess.emit();
         } else {
-          this.errorMessage = res.message || 'Registration failed. Please try again.';
-          this.alert.toastError(this.errorMessage);
+          const roleId = res.data?.roleId ?? this.authService.getRoleId();
+          if (roleId === 2) {
+            this.router.navigate(['/doctor-dashboard']);
+          } else if (roleId === 3) {
+            this.router.navigate(['/clinics']);
+          } else {
+            this.router.navigate(['/user-dashboard']);
+          }
         }
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        const msg = err.error?.message || err.message || 'Registration failed. Please check your details.';
-        this.errorMessage = msg;
-        this.alert.toastError(msg);
+        return;
       }
-    });
+
+      // Profile is NOT completed -> save pending state and proceed to registration
+      const email = this.signupForm.value.email;
+      this.authService.setPendingVerification({
+        email: email,
+        isOtpVerified: true,
+        isProfileCompleted: false,
+        user: res.data
+      });
+      if (res.data?.token) {
+        this.authService.saveUserSession(res.data, res.data.token);
+      }
+
+      this.otpVerified.emit({ email: email });
+
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  // Quick Demo Login helper for convenience during review/testing
-  fillDemoCredentials(): void {
-    this.loginForm.patchValue({
-      email: 'patient@physiosmate.com',
-      password: 'password123'
-    });
+  // ── OTP countdown timer ────────────────────────────────────────────────────
+
+  startSignupOtpCountdown(): void {
+    this.signupOtpCountdown = 30;
+    if (this.signupOtpTimer) clearInterval(this.signupOtpTimer);
+    this.signupOtpTimer = setInterval(() => {
+      this.signupOtpCountdown--;
+      if (this.signupOtpCountdown <= 0) {
+        clearInterval(this.signupOtpTimer!);
+        this.signupOtpTimer = null;
+      }
+    }, 1000);
   }
 }

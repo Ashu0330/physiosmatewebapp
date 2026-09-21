@@ -12,8 +12,22 @@ export class Authservice {
 
   constructor(private http: HttpClient) { }
 
+  // ── In-memory pending user ID (OTP verification step only) ────────────────
+  private pendingUserId: number | string | null = null;
+
+  setPendingUserId(id: number | string | null): void {
+    this.pendingUserId = id;
+  }
+
+  getPendingUserId(): number | string | null {
+    return this.pendingUserId;
+  }
+
+  clearPendingUserId(): void {
+    this.pendingUserId = null;
+  }
+
   login(model: any) {
-    debugger
     return this.http.post<apiresponse<authmodel>>(environment.baseUrl + 'Auth/Login', model);
   }
 
@@ -67,12 +81,21 @@ export class Authservice {
   }
 
   clearPendingVerification() {
-    localStorage.removeItem('pendingVerification');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('pendingVerification');
+    }
   }
   getUserName() {
     const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
     if (user) {
       return JSON.parse(user).fullName;
+    }
+    return null;
+  }
+  getRoleId() {
+    const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (user) {
+      return JSON.parse(user).roleId;
     }
     return null;
   }
@@ -83,6 +106,8 @@ export class Authservice {
     }
     return null;
   }
+
+
 
   isLoggedIn(): boolean {
     if (typeof localStorage === 'undefined') return false;
@@ -102,8 +127,29 @@ export class Authservice {
     return userStr ? JSON.parse(userStr) : null;
   }
 
+  getCurrentProfessionalId(): any {
+    const roleid = this.getRoleId();
+    const user = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
+    if (user) {
+      const parsedUser = JSON.parse(user);
+      if (roleid === 1) {
+        return parsedUser.Id;
+      }
+      else if (roleid === 2) {
+        return parsedUser.practitionerId;
+      }
+      else if (roleid === 3) {
+        return parsedUser.clinicId;
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
   saveUserSession(userData: any, token?: string): void {
     if (typeof localStorage === 'undefined') return;
+    this.clearPendingUserId();
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
@@ -115,6 +161,7 @@ export class Authservice {
   }
 
   logout(): void {
+    this.clearPendingUserId();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
