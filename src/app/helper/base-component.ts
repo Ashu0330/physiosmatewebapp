@@ -1,4 +1,4 @@
-import { DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Loader } from '../services/loader';
 import { SweetAlertService } from '../services/sweet-alert.service';
@@ -13,6 +13,7 @@ export abstract class BaseComponent {
     protected apiService = inject(ApiService);
     protected router = inject(Router);
     protected destroyRef = inject(DestroyRef);
+    protected cdr = inject(ChangeDetectorRef);
 
     public pagination = {
         currentPage: 1,

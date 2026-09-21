@@ -268,7 +268,7 @@
           <span>Verified physiotherapy clinics with experienced specialists &amp; modern facilities</span>
         </div>
         } @else {
-        <h1 class="physios-results-title">29 {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
+        <h1 class="physios-results-title">{{ PractitionerList().length }} {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
         <div class="physios-verified-subtext">
           <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -367,7 +367,7 @@
         </article>
         }
         } @else {
-        @for (doc of PractitionerList; track doc.practitionerId) {
+        @for (doc of PractitionerList(); track doc.practitionerId) {
         <article class="physios-doc-card">
           <!-- Col 1: Avatar Column with View Profile Link Below -->
           <div class="physios-doc-avatar-col">
@@ -512,7 +512,7 @@
     <div class="physios-modal-header">
       <div>
         <h3 class="physios-modal-title">Contact Clinic / Book Visit</h3>
-        <p class="physios-modal-doc">{{ doc.name }} • {{ doc.clinicName }}</p>
+        <p class="physios-modal-doc">{{ doc.fullName || doc.name }} • {{ doc.clinicName }}</p>
       </div>
       <button type="button" class="physios-modal-close" (click)="closeBooking()">✕</button>
     </div>
@@ -540,7 +540,7 @@
       <div class="physios-booking-success-state">
         <div class="physios-success-check">✓</div>
         <h4>Appointment Confirmed!</h4>
-        <p>Your visit with {{ doc.name }} has been scheduled for {{ selectedSlot() }}.</p>
+        <p>Your visit with {{ doc.fullName || doc.name }} has been scheduled for {{ selectedSlot() }}.</p>
       </div>
       }
     </div>

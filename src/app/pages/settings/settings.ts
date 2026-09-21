@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BaseComponent } from '../../helper/base-component';
@@ -50,28 +50,35 @@ export class Settings extends BaseComponent implements OnInit {
   private fb = inject(FormBuilder);
   form: FormGroup;
 
-  activeTab: SettingsTab = 'profile';
-  doctorName = '';
-  isSaving = false;
+  // ── Signals ───────────────────────────────────────────────────────────────
+  readonly activeTab = signal<SettingsTab>('profile');
+  readonly doctorName = signal('');
+  readonly isSaving = signal(false);
+  readonly isSavingPersonal = signal(false);
+  readonly isSavingProfessional = signal(false);
 
-  // ── Photo Upload State ───────────────────────────────────────────────────
-  photoPreview: string | null = null;
+  // ── Photo Upload State ────────────────────────────────────────────────────
+  readonly photoPreview = signal<string | null>(null);
   photoFile: File | null = null;
 
   // ── Services Multi-Select (role 2 & 3) ───────────────────────────────────
-  serviceList: ServiceItem[] = [];
-  selectedServiceIds = new Set<number>();
+  readonly serviceList = signal<ServiceItem[]>([]);
+  readonly selectedServiceIds = signal(new Set<number>());
 
   toggleService(id: number): void {
-    if (this.selectedServiceIds.has(id)) {
-      this.selectedServiceIds.delete(id);
-    } else {
-      this.selectedServiceIds.add(id);
-    }
+    this.selectedServiceIds.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }
 
   isServiceSelected(id: number): boolean {
-    return this.selectedServiceIds.has(id);
+    return this.selectedServiceIds().has(id);
   }
 
   /** Current user's role id: 1=Patient, 2=Practitioner, 3=Clinic */
@@ -82,6 +89,7 @@ export class Settings extends BaseComponent implements OnInit {
 
 
   // ── Tab 2: Notification Settings ─────────────────────────────────────────
+  // Kept as plain object — used with [(ngModel)] two-way binding in template
   notifications = {
     // Clinical Alerts
     newBookings: true,
@@ -103,6 +111,7 @@ export class Settings extends BaseComponent implements OnInit {
   };
 
   // ── Tab 3: Security & Credentials ─────────────────────────────────────────
+  // Kept as plain object — used with [(ngModel)] two-way binding in template
   security = {
     currentPassword: '',
     newPassword: '',
@@ -113,7 +122,7 @@ export class Settings extends BaseComponent implements OnInit {
     twoFactorEnabled: true,
   };
 
-  activeSessions: ActiveSession[] = [
+  readonly activeSessions = signal<ActiveSession[]>([
     {
       id: 'sess-01',
       device: 'Windows 11 PC',
@@ -141,9 +150,10 @@ export class Settings extends BaseComponent implements OnInit {
       lastActive: '3 days ago',
       isCurrent: false,
     },
-  ];
+  ]);
 
   // ── Tab 4: Help Center & Support ─────────────────────────────────────────
+  // Kept as plain object — used with [(ngModel)] two-way binding in template
   faqSearchQuery = '';
   ticketForm = {
     subject: '',
@@ -152,7 +162,7 @@ export class Settings extends BaseComponent implements OnInit {
     message: '',
   };
 
-  faqs: FaqItem[] = [
+  readonly faqs = signal<FaqItem[]>([
     {
       question: 'How do I add and register a new patient in the Doctor Console?',
       answer:
@@ -188,9 +198,10 @@ export class Settings extends BaseComponent implements OnInit {
       category: 'Data Security',
       isOpen: false,
     },
-  ];
+  ]);
 
   // ── Tab 5: Practice & Clinic Preferences ─────────────────────────────────
+  // Kept as plain object — used with [(ngModel)] two-way binding in template
   preferences = {
     defaultSessionDuration: '45',
     bufferTime: '10',
@@ -206,6 +217,7 @@ export class Settings extends BaseComponent implements OnInit {
   };
 
   // ── Tab 6: Delete Account Safeguards ──────────────────────────────────────
+  // Kept as plain object — used with [(ngModel)] two-way binding in template
   deleteAccountForm = {
     reason: '',
     feedback: '',
@@ -222,7 +234,7 @@ export class Settings extends BaseComponent implements OnInit {
     // Seed photo preview from cached user session
     const user = this.currentUser;
     if (user?.profilePictureUrl) {
-      this.photoPreview = user.profilePictureUrl;
+      this.photoPreview.set(user.profilePictureUrl);
     }
 
     // Check query params for initial tab selection (e.g. ?tab=notifications)
@@ -239,14 +251,14 @@ export class Settings extends BaseComponent implements OnInit {
           'delete-account',
         ].includes(tab)
       ) {
-        this.activeTab = tab;
+        this.activeTab.set(tab);
       }
     });
   }
 
   // ── Tab Navigation ───────────────────────────────────────────────────────
   selectTab(tab: SettingsTab): void {
-    this.activeTab = tab;
+    this.activeTab.set(tab);
     // Update query params cleanly without full page refresh
     this.router.navigate([], {
       relativeTo: this.route,
@@ -284,23 +296,21 @@ export class Settings extends BaseComponent implements OnInit {
     this.photoFile = file;
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
-      this.photoPreview = e.target?.result as string;
+      this.photoPreview.set(e.target?.result as string);
       this.alert.toastSuccess('Profile photo uploaded. Click Save to apply.');
     };
     reader.readAsDataURL(file);
   }
 
   removePhoto(): void {
-    this.photoPreview = null;
+    this.photoPreview.set(null);
     this.photoFile = null;
     this.alert.toastInfo('Photo removed.');
   }
 
   // ── Save Personal Info (all roles) ──────────────────────────────────────
-  isSavingPersonal = false;
-
   async savePersonalInfo(): Promise<void> {
-    this.isSavingPersonal = true;
+    this.isSavingPersonal.set(true);
     try {
       const form = new FormData();
       const data = this.form.value;
@@ -319,25 +329,25 @@ export class Settings extends BaseComponent implements OnInit {
       const res = await this.apiService.Post<boolean>(ApiEndPoints.UpdateProfile, form);
       if (res.isSuccess) {
         const name: string = data.fullName;
-        this.doctorName = this.roleId === 2
-          ? (name.startsWith('Dr.') ? name : `Dr. ${name}`)
-          : name;
+        this.doctorName.set(
+          this.roleId === 2
+            ? (name.startsWith('Dr.') ? name : `Dr. ${name}`)
+            : name
+        );
         this.alert.toastSuccess('Personal information updated successfully!');
       } else {
         this.alert.toastError(res.message || 'Failed to update personal info.');
       }
     } finally {
-      this.isSavingPersonal = false;
+      this.isSavingPersonal.set(false);
     }
   }
 
   // ── Save Professional Info (role 2 & 3 only) ────────────────────────────
-  isSavingProfessional = false;
-
   async saveProfessionalInfo(): Promise<void> {
-    this.isSavingProfessional = true;
+    this.isSavingProfessional.set(true);
     // Build services array from selected IDs
-    const services = [...this.selectedServiceIds].map(id => ({ serviceId: id }));
+    const services = [...this.selectedServiceIds()].map(id => ({ serviceId: id }));
 
     try {
       if (this.roleId === 2) {
@@ -367,14 +377,14 @@ export class Settings extends BaseComponent implements OnInit {
         };
         const res = await this.apiService.Post<boolean>(ApiEndPoints.UpdateClinic, payload);
         if (res.isSuccess) {
-          this.doctorName = this.form.get('clinicName')?.value || this.doctorName;
+          this.doctorName.set(this.form.get('clinicName')?.value || this.doctorName());
           this.alert.toastSuccess('Clinic details updated successfully!');
         } else {
           this.alert.toastError(res.message || 'Failed to update clinic details.');
         }
       }
     } finally {
-      this.isSavingProfessional = false;
+      this.isSavingProfessional.set(false);
     }
   }
 
@@ -442,7 +452,7 @@ export class Settings extends BaseComponent implements OnInit {
       'Cancel'
     );
     if (confirm.isConfirmed) {
-      this.activeSessions = this.activeSessions.filter((s) => s.id !== id);
+      this.activeSessions.update(sessions => sessions.filter((s) => s.id !== id));
       this.alert.toastSuccess('Device session terminated.');
     }
   }
@@ -455,26 +465,30 @@ export class Settings extends BaseComponent implements OnInit {
       'Cancel'
     );
     if (confirm.isConfirmed) {
-      this.activeSessions = this.activeSessions.filter((s) => s.isCurrent);
+      this.activeSessions.update(sessions => sessions.filter((s) => s.isCurrent));
       this.alert.toastSuccess('All other sessions terminated successfully.');
     }
   }
 
   // ── Help Center Accordion & Ticket ───────────────────────────────────────
   toggleFaq(index: number): void {
-    this.faqs[index].isOpen = !this.faqs[index].isOpen;
+    this.faqs.update(items => {
+      const updated = [...items];
+      updated[index] = { ...updated[index], isOpen: !updated[index].isOpen };
+      return updated;
+    });
   }
 
-  get filteredFaqs(): FaqItem[] {
+  readonly filteredFaqs = computed(() => {
     const q = this.faqSearchQuery.toLowerCase().trim();
-    if (!q) return this.faqs;
-    return this.faqs.filter(
+    if (!q) return this.faqs();
+    return this.faqs().filter(
       (f) =>
         f.question.toLowerCase().includes(q) ||
         f.answer.toLowerCase().includes(q) ||
         f.category.toLowerCase().includes(q)
     );
-  }
+  });
 
   submitSupportTicket(): void {
     if (!this.ticketForm.subject.trim() || !this.ticketForm.message.trim()) {
@@ -503,17 +517,15 @@ export class Settings extends BaseComponent implements OnInit {
     }, 1500);
   }
 
-  get isDeleteFormValid(): boolean {
-    return (
-      this.deleteAccountForm.agreeConsequences &&
-      this.deleteAccountForm.confirmText.trim().toUpperCase() === 'DELETE' &&
-      this.deleteAccountForm.currentPassword.trim().length > 0 &&
-      this.deleteAccountForm.reason.trim().length > 0
-    );
-  }
+  readonly isDeleteFormValid = computed(() =>
+    this.deleteAccountForm.agreeConsequences &&
+    this.deleteAccountForm.confirmText.trim().toUpperCase() === 'DELETE' &&
+    this.deleteAccountForm.currentPassword.trim().length > 0 &&
+    this.deleteAccountForm.reason.trim().length > 0
+  );
 
   async deleteAccount(): Promise<void> {
-    if (!this.isDeleteFormValid) {
+    if (!this.isDeleteFormValid()) {
       this.alert.toastWarning(
         'Please complete all verification steps, type "DELETE", and check the agreement.'
       );
@@ -603,8 +615,8 @@ export class Settings extends BaseComponent implements OnInit {
     this.CreateForm();
     this.form.patchValue(res.data);
     const name: string = res.data.fullName ?? '';
-    this.doctorName = name || this.currentUser?.fullName || '';
-    if (res.data.profileImageUrl) this.photoPreview = res.data.profileImageUrl;
+    this.doctorName.set(name || this.currentUser?.fullName || '');
+    if (res.data.profileImageUrl) this.photoPreview.set(res.data.profileImageUrl);
   }
 
   async GetPractitionerProfile(): Promise<void> {
@@ -626,12 +638,12 @@ export class Settings extends BaseComponent implements OnInit {
       isActive: res.data.isActive,
       isProfileCompleted: res.data.isProfileCompleted,
     });
-    this.selectedServiceIds = new Set(
+    this.selectedServiceIds.set(new Set(
       (res.data.services ?? []).map(s => s.serviceId!).filter(id => id != null)
-    );
+    ));
     const name: string = this.form.get('fullName')?.value ?? '';
-    this.doctorName = name.startsWith('Dr.') ? name : name ? `Dr. ${name}` : '';
-    if (res.data.profileImage) this.photoPreview = res.data.profileImage;
+    this.doctorName.set(name.startsWith('Dr.') ? name : name ? `Dr. ${name}` : '');
+    if (res.data.profileImage) this.photoPreview.set(res.data.profileImage);
   }
 
   /** Loads clinic professional data — called AFTER GetPatientProfile for role 3 */
@@ -649,11 +661,11 @@ export class Settings extends BaseComponent implements OnInit {
       isActive: res.data.isActive,
     });
     // Pre-select already saved services
-    this.selectedServiceIds = new Set(
+    this.selectedServiceIds.set(new Set(
       (res.data.services ?? []).map(s => s.serviceId!).filter(id => id != null)
-    );
-    this.doctorName = res.data.clinicName ?? this.doctorName;
-    if (res.data.logoUrl) this.photoPreview = res.data.logoUrl;
+    ));
+    this.doctorName.set(res.data.clinicName ?? this.doctorName());
+    if (res.data.logoUrl) this.photoPreview.set(res.data.logoUrl);
   }
 
   /** Fetches the master list of all available services */
@@ -662,7 +674,7 @@ export class Settings extends BaseComponent implements OnInit {
     if (roleId !== 2 && roleId !== 3) return; // only needed for professional roles
     const res = await this.apiService.Get<ServiceItem[]>(ApiEndPoints.GetAllServices);
     if (res.isSuccess && res.data) {
-      this.serviceList = res.data;
+      this.serviceList.set(res.data);
     }
   }
 }

@@ -1,10 +1,12 @@
-import { Component, signal, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID } from '@angular/core';
+import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
+import { BaseComponent } from '../../helper/base-component';
+import { ApiEndPoints } from '../../helper/api-endpoints';
 
 export interface PlanBenefit {
   id: number;
@@ -85,10 +87,8 @@ export interface TreatmentItem {
   templateUrl: './doctordetail.html',
   styleUrl: './doctordetail.css',
 })
-export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
-  private router = inject(Router);
+export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
-  private authService = inject(Authservice);
   private bookingService = inject(BookingService);
   private platformId = inject(PLATFORM_ID);
   private elRef = inject(ElementRef);
@@ -111,6 +111,15 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
   readonly searchQuery = signal<string>('Physiotherapist');
   readonly isCityOpen = signal<boolean>(false);
   readonly popularCities = ['Jaipur', 'Kota', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Pune'];
+
+
+
+  async GetDoctorById(PractitionerId: number) {
+    debugger
+    let data = await this.apiService.Get<any>(`${ApiEndPoints.GetPractitionerById}?PractitionerId=${PractitionerId}`)
+    console.log(data)
+  }
+
 
   // Doctor profile summary data
   readonly practitioner = {
@@ -401,7 +410,15 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     { url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80', caption: 'Rehab Equipment' }
   ];
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+
+    const id = this.route.snapshot.paramMap.get('id');
+
+    console.log('Practitioner ID:', id);
+
+    if (id) {
+      await this.GetDoctorById(Number(id));
+    }
     const isClinicRoute =
       this.route.snapshot.data['isClinic'] === true ||
       this.router.url.includes('clinic') ||

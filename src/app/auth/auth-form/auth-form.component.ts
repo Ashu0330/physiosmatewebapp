@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { ApiEndPoints } from '../../helper/api-endpoints';
@@ -26,12 +26,14 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   protected override authService = inject(Authservice);
 
   signupForm!: FormGroup;
-  isLoading = false;
-  errorMessage = '';
 
-  isSignupOtpSending = false;
-  signupOtpSent = false;
-  signupOtpCountdown = 0;
+  // ── Signals for zoneless change detection ──────────────────────────────────
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal('');
+  readonly isSignupOtpSending = signal(false);
+  readonly signupOtpSent = signal(false);
+  readonly signupOtpCountdown = signal(0);
+
   private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
@@ -60,8 +62,8 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       return;
     }
 
-    this.isSignupOtpSending = true;
-    this.errorMessage = '';
+    this.isSignupOtpSending.set(true);
+    this.errorMessage.set('');
 
     try {
       const email = emailCtrl.value.trim();
@@ -78,7 +80,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
         return;
       }
 
-      this.signupOtpSent = true;
+      this.signupOtpSent.set(true);
 
       if (res.data?.id) {
         this.authService.setPendingUserId(res.data.id);
@@ -88,7 +90,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       this.startSignupOtpCountdown();
 
     } finally {
-      this.isSignupOtpSending = false;
+      this.isSignupOtpSending.set(false);
     }
   }
 
@@ -102,8 +104,8 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     try {
       const model = {
@@ -160,20 +162,21 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       this.otpVerified.emit({ email: email });
 
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
   // ── OTP countdown timer ────────────────────────────────────────────────────
 
   startSignupOtpCountdown(): void {
-    this.signupOtpCountdown = 30;
+    this.signupOtpCountdown.set(30);
     if (this.signupOtpTimer) clearInterval(this.signupOtpTimer);
     this.signupOtpTimer = setInterval(() => {
-      this.signupOtpCountdown--;
-      if (this.signupOtpCountdown <= 0) {
+      this.signupOtpCountdown.update(v => v - 1);
+      if (this.signupOtpCountdown() <= 0) {
         clearInterval(this.signupOtpTimer!);
         this.signupOtpTimer = null;
+        this.signupOtpCountdown.set(0);
       }
     }, 1000);
   }

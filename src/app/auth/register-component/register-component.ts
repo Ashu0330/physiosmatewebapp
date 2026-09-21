@@ -1,4 +1,6 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import {
+  Component,ElementRef,EventEmitter,HostListener,Input,OnChanges,OnDestroy,OnInit,Output,SimpleChanges,
+  inject,signal,computed,viewChild,} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { mastermodel, qualification, ServiceItem } from '../../models/mastermodel';
@@ -21,26 +23,94 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
 
-  // ── @ViewChild file inputs (replaces document.getElementById) ──────────────
-  @ViewChild('profileImageInput') profileImageInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('clinicLogoInput') clinicLogoInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('clinicBannerInput') clinicBannerInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('clinicMediaInput') clinicMediaInput!: ElementRef<HTMLInputElement>;
+  // ── Signal-based view children for file inputs ────────────────────────────
+  readonly profileImageInput = viewChild<ElementRef<HTMLInputElement>>('profileImageInput');
+  readonly clinicLogoInput = viewChild<ElementRef<HTMLInputElement>>('clinicLogoInput');
+  readonly clinicBannerInput = viewChild<ElementRef<HTMLInputElement>>('clinicBannerInput');
+  readonly clinicMediaInput = viewChild<ElementRef<HTMLInputElement>>('clinicMediaInput');
 
-  specializationList: mastermodel[] = [];
-  qualificationList: qualification[] = [];
-  languageList: mastermodel[] = [];
-  serviceList: ServiceItem[] = [];
-  stateList: any[] = [];
-  cityList: any[] = [];
+  // ── Master Data Signals ───────────────────────────────────────────────────
+  readonly specializationList = signal<mastermodel[]>([]);
+  readonly qualificationList = signal<qualification[]>([]);
+  readonly languageList = signal<mastermodel[]>([]);
+  readonly serviceList = signal<ServiceItem[]>([]);
+  readonly stateList = signal<any[]>([]);
+  readonly cityList = signal<any[]>([]);
 
   private specializationMap = new Map<number, string>();
   private qualificationMap = new Map<number, string>();
   private languageMap = new Map<number, string>();
-  selectedSpecializations: number[] = [];
-  selectedQualifications: number[] = [];
-  selectedLanguages: number[] = [];
-  selectedServiceIds = new Set<number>();
+
+  // ── Selection Signals ─────────────────────────────────────────────────────
+  readonly selectedSpecializations = signal<number[]>([]);
+  readonly selectedQualifications = signal<number[]>([]);
+  readonly selectedLanguages = signal<number[]>([]);
+  readonly selectedServiceIds = signal<Set<number>>(new Set<number>());
+
+  // ── Dropdown & Search Signals ─────────────────────────────────────────────
+  readonly openDropdown = signal<'specialization' | 'qualification' | 'language' | null>(null);
+  readonly specializationSearch = signal<string>('');
+  readonly qualificationSearch = signal<string>('');
+  readonly languageSearch = signal<string>('');
+
+  // ── File & Preview Signals ────────────────────────────────────────────────
+  readonly profileImageFile = signal<File | null>(null);
+  readonly profileImagePreview = signal<string | null>(null);
+
+  readonly clinicLogoFile = signal<File | null>(null);
+  readonly clinicLogoPreview = signal<string | null>(null);
+
+  readonly clinicBannerFile = signal<File | null>(null);
+  readonly clinicBannerPreview = signal<string | null>(null);
+
+  readonly clinicMediaFiles = signal<File[]>([]);
+  readonly clinicMediaPreviews = signal<{ url: string; name: string }[]>([]);
+
+  readonly CLINIC_MEDIA_MAX = 10;
+  private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+  private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
+
+  private fb = inject(FormBuilder);
+  protected override authService = inject(Authservice);
+
+  // ── Flow & Form Signals ───────────────────────────────────────────────────
+  readonly currentStep = signal<1 | 2>(1);
+  readonly userType = signal<'user' | 'doctor' | 'clinic'>('user');
+  readonly registeredUser = signal<any>(null);
+
+  readonly showPassword = signal<boolean>(false);
+  readonly showConfirmPassword = signal<boolean>(false);
+  readonly isSubmitting = signal<boolean>(false);
+  readonly errorMessage = signal<string>('');
+
+  basicForm!: FormGroup;
+  doctorForm!: FormGroup;
+  clinicForm!: FormGroup;
+
+  // ── Computed Filtered Lists ───────────────────────────────────────────────
+  readonly filteredSpecializations = computed(() => {
+    const term = this.specializationSearch().toLowerCase().trim();
+    const list = this.specializationList();
+    if (!term) return list;
+    return list.filter(s => s.name?.toLowerCase().includes(term));
+  });
+
+  readonly filteredQualifications = computed(() => {
+    const term = this.qualificationSearch().toLowerCase().trim();
+    const list = this.qualificationList();
+    if (!term) return list;
+    return list.filter(q =>
+      (q.qualificationName || (q as any).name || '').toLowerCase().includes(term)
+    );
+  });
+
+  readonly filteredLanguages = computed(() => {
+    const term = this.languageSearch().toLowerCase().trim();
+    const list = this.languageList();
+    if (!term) return list;
+    return list.filter(l => l.name?.toLowerCase().includes(term));
+  });
 
   handleBackToAuth(): void {
     this.clearDraft();
@@ -49,84 +119,52 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   toggleService(id: number): void {
-    if (this.selectedServiceIds.has(id)) {
-      this.selectedServiceIds.delete(id);
-    } else {
-      this.selectedServiceIds.add(id);
-    }
+    this.selectedServiceIds.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
     this.saveDraft();
   }
 
   isServiceSelected(id: number): boolean {
-    return this.selectedServiceIds.has(id);
+    return this.selectedServiceIds().has(id);
   }
-  openDropdown: 'specialization' | 'qualification' | 'language' | null = null;
-  specializationSearch = '';
-  qualificationSearch = '';
-  languageSearch = '';
-  profileImageFile: File | null = null;
-  profileImagePreview: string | null = null;
-
-  clinicLogoFile: File | null = null;
-  clinicLogoPreview: string | null = null;
-
-  clinicBannerFile: File | null = null;
-  clinicBannerPreview: string | null = null;
-
-  clinicMediaFiles: File[] = [];
-  clinicMediaPreviews: { url: string; name: string }[] = [];
-
-  readonly CLINIC_MEDIA_MAX = 10;
-
-  private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-  private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
-
-  private fb = inject(FormBuilder);
-  protected override authService = inject(Authservice);
-
-  currentStep: 1 | 2 = 1;
-  userType: 'user' | 'doctor' | 'clinic' = 'user';
-  registeredUser: any = null;
-
-  showPassword = false;
-  showConfirmPassword = false;
-  isSubmitting = false;
-  errorMessage = '';
-
-  basicForm!: FormGroup;
-  doctorForm!: FormGroup;
-  clinicForm!: FormGroup;
-
 
   async GetAllSpecialization(): Promise<void> {
     const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllSpecialization);
-    this.specializationList = res.isSuccess ? (res.data ?? []) : [];
-    this.specializationMap = new Map(this.specializationList.map(x => [x.id, x.name ?? '']));
+    const list = res.isSuccess ? (res.data ?? []) : [];
+    this.specializationList.set(list);
+    this.specializationMap = new Map(list.map(x => [x.id, x.name ?? '']));
   }
 
   async GetAllQualification(): Promise<void> {
     const res = await this.apiService.Get<qualification[]>(ApiEndPoints.GetAllQualification);
-    this.qualificationList = res.isSuccess && res.data?.length ? res.data : [];
-    this.qualificationMap = new Map(this.qualificationList.map(x => [x.id, x.qualificationName]));
+    const list = res.isSuccess && res.data?.length ? res.data : [];
+    this.qualificationList.set(list);
+    this.qualificationMap = new Map(list.map(x => [x.id, x.qualificationName]));
   }
 
   async GetAllLanguages(): Promise<void> {
     const res = await this.apiService.Get<mastermodel[]>(ApiEndPoints.GetAllLanguage);
-    this.languageList = res.isSuccess ? (res.data ?? []) : [];
-    this.languageMap = new Map(this.languageList.map(x => [x.id, x.name ?? '']));
+    const list = res.isSuccess ? (res.data ?? []) : [];
+    this.languageList.set(list);
+    this.languageMap = new Map(list.map(x => [x.id, x.name ?? '']));
   }
 
   async GetAllServices(): Promise<void> {
     const res = await this.apiService.Get<ServiceItem[]>(ApiEndPoints.GetAllServices);
-    this.serviceList = res.isSuccess ? (res.data ?? []) : [];
+    this.serviceList.set(res.isSuccess ? (res.data ?? []) : []);
   }
 
   async GetAllStates(): Promise<void> {
     const res = await this.apiService.Get<any[]>(ApiEndPoints.GetAllState);
-    this.stateList = res.isSuccess ? (res.data ?? []) : [];
+    this.stateList.set(res.isSuccess ? (res.data ?? []) : []);
   }
-
 
   async ngOnInit(): Promise<void> {
     const pending = this.authService.getPendingVerification();
@@ -134,7 +172,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.verifiedEmail = pending.email;
     }
     if (pending?.user) {
-      this.registeredUser = pending.user;
+      this.registeredUser.set(pending.user);
     }
     this.initForms();
     await Promise.all([
@@ -151,15 +189,15 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (typeof sessionStorage === 'undefined') return;
     try {
       const draft = {
-        currentStep: this.currentStep,
-        userType: this.userType,
+        currentStep: this.currentStep(),
+        userType: this.userType(),
         basicForm: this.basicForm?.value,
         doctorForm: this.doctorForm?.value,
         clinicForm: this.clinicForm?.value,
-        selectedSpecializations: this.selectedSpecializations,
-        selectedQualifications: this.selectedQualifications,
-        selectedLanguages: this.selectedLanguages,
-        selectedServiceIds: [...this.selectedServiceIds],
+        selectedSpecializations: this.selectedSpecializations(),
+        selectedQualifications: this.selectedQualifications(),
+        selectedLanguages: this.selectedLanguages(),
+        selectedServiceIds: [...this.selectedServiceIds()],
       };
       sessionStorage.setItem('physios_register_draft', JSON.stringify(draft));
     } catch { }
@@ -172,10 +210,10 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       if (!saved) return;
       const draft = JSON.parse(saved);
       if (draft.userType) {
-        this.userType = draft.userType;
+        this.userType.set(draft.userType);
       }
       if (draft.currentStep) {
-        this.currentStep = draft.currentStep;
+        this.currentStep.set(draft.currentStep);
       }
       if (draft.basicForm && this.basicForm) {
         this.basicForm.patchValue(draft.basicForm);
@@ -192,10 +230,10 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
           await this.loadCitiesForState(draft.clinicForm.state, 'clinic', draft.clinicForm.city);
         }
       }
-      if (draft.selectedSpecializations?.length) this.selectedSpecializations = draft.selectedSpecializations;
-      if (draft.selectedQualifications?.length) this.selectedQualifications = draft.selectedQualifications;
-      if (draft.selectedLanguages?.length) this.selectedLanguages = draft.selectedLanguages;
-      if (draft.selectedServiceIds?.length) this.selectedServiceIds = new Set(draft.selectedServiceIds);
+      if (draft.selectedSpecializations?.length) this.selectedSpecializations.set(draft.selectedSpecializations);
+      if (draft.selectedQualifications?.length) this.selectedQualifications.set(draft.selectedQualifications);
+      if (draft.selectedLanguages?.length) this.selectedLanguages.set(draft.selectedLanguages);
+      if (draft.selectedServiceIds?.length) this.selectedServiceIds.set(new Set(draft.selectedServiceIds));
     } catch { }
   }
 
@@ -216,10 +254,13 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   ngOnDestroy(): void {
-    if (this.profileImagePreview) URL.revokeObjectURL(this.profileImagePreview);
-    if (this.clinicLogoPreview) URL.revokeObjectURL(this.clinicLogoPreview);
-    if (this.clinicBannerPreview) URL.revokeObjectURL(this.clinicBannerPreview);
-    this.clinicMediaPreviews.forEach(p => URL.revokeObjectURL(p.url));
+    const pPrev = this.profileImagePreview();
+    if (pPrev) URL.revokeObjectURL(pPrev);
+    const lPrev = this.clinicLogoPreview();
+    if (lPrev) URL.revokeObjectURL(lPrev);
+    const bPrev = this.clinicBannerPreview();
+    if (bPrev) URL.revokeObjectURL(bPrev);
+    this.clinicMediaPreviews().forEach(p => URL.revokeObjectURL(p.url));
   }
 
   initForms(): void {
@@ -266,9 +307,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
-    this.userType = type;
+    this.userType.set(type);
     this.basicForm.patchValue({ userType: type });
-    this.registeredUser = null;
+    this.registeredUser.set(null);
     this.saveDraft();
   }
 
@@ -285,7 +326,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   async loadCitiesForState(stateId: number, target: 'basic' | 'clinic', cityIdToSet?: any): Promise<void> {
     const res = await this.apiService.Get<any[]>(`${ApiEndPoints.GetAllCity}?stateId=${stateId}`);
-    this.cityList = res.isSuccess ? (res.data ?? []) : [];
+    this.cityList.set(res.isSuccess ? (res.data ?? []) : []);
     if (cityIdToSet != null) {
       if (target === 'basic') {
         this.basicForm?.patchValue({ city: cityIdToSet });
@@ -300,7 +341,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     const stateId = +select.value;
     if (!stateId) return;
 
-    this.cityList = [];
+    this.cityList.set([]);
     if (target === 'basic') {
       this.basicForm.patchValue({ city: null });
     } else {
@@ -310,7 +351,6 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     await this.loadCitiesForState(stateId, target);
     this.saveDraft();
   }
-
 
   private validateImageFile(file: File, maxSizeBytes: number = this.MAX_IMAGE_SIZE_BYTES): boolean {
     if (!this.ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -325,10 +365,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     return true;
   }
 
-
-
   triggerImageUpload(): void {
-    this.profileImageInput?.nativeElement.click();
+    this.profileImageInput()?.nativeElement.click();
   }
 
   onProfileImageChange(event: Event): void {
@@ -337,15 +375,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (!file) return;
     if (!this.validateImageFile(file)) return;
 
-    if (this.profileImagePreview) URL.revokeObjectURL(this.profileImagePreview);
-    this.profileImageFile = file;
-    this.profileImagePreview = URL.createObjectURL(file);
+    const prev = this.profileImagePreview();
+    if (prev) URL.revokeObjectURL(prev);
+    this.profileImageFile.set(file);
+    this.profileImagePreview.set(URL.createObjectURL(file));
   }
 
-
-
   triggerClinicLogoUpload(): void {
-    this.clinicLogoInput?.nativeElement.click();
+    this.clinicLogoInput()?.nativeElement.click();
   }
 
   onClinicLogoChange(event: Event): void {
@@ -354,15 +391,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (!file) return;
     if (!this.validateImageFile(file)) return;
 
-    if (this.clinicLogoPreview) URL.revokeObjectURL(this.clinicLogoPreview);
-    this.clinicLogoFile = file;
-    this.clinicLogoPreview = URL.createObjectURL(file);
+    const prev = this.clinicLogoPreview();
+    if (prev) URL.revokeObjectURL(prev);
+    this.clinicLogoFile.set(file);
+    this.clinicLogoPreview.set(URL.createObjectURL(file));
   }
 
-
-
   triggerClinicBannerUpload(): void {
-    this.clinicBannerInput?.nativeElement.click();
+    this.clinicBannerInput()?.nativeElement.click();
   }
 
   onClinicBannerChange(event: Event): void {
@@ -371,15 +407,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     if (!file) return;
     if (!this.validateImageFile(file, this.MAX_BANNER_SIZE_BYTES)) return;
 
-    if (this.clinicBannerPreview) URL.revokeObjectURL(this.clinicBannerPreview);
-    this.clinicBannerFile = file;
-    this.clinicBannerPreview = URL.createObjectURL(file);
+    const prev = this.clinicBannerPreview();
+    if (prev) URL.revokeObjectURL(prev);
+    this.clinicBannerFile.set(file);
+    this.clinicBannerPreview.set(URL.createObjectURL(file));
   }
 
-
-
   triggerClinicMediaUpload(): void {
-    this.clinicMediaInput?.nativeElement.click();
+    this.clinicMediaInput()?.nativeElement.click();
   }
 
   onClinicMediaChange(event: Event): void {
@@ -387,7 +422,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     const incoming = Array.from(input.files || []);
     if (!incoming.length) return;
 
-    const remaining = this.CLINIC_MEDIA_MAX - this.clinicMediaFiles.length;
+    const remaining = this.CLINIC_MEDIA_MAX - this.clinicMediaFiles().length;
     const validFiles: File[] = [];
 
     for (const file of incoming) {
@@ -400,24 +435,32 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       }
     }
 
+    const currentFiles = [...this.clinicMediaFiles()];
+    const currentPreviews = [...this.clinicMediaPreviews()];
     validFiles.forEach(file => {
-      this.clinicMediaFiles.push(file);
-      this.clinicMediaPreviews.push({ url: URL.createObjectURL(file), name: file.name });
+      currentFiles.push(file);
+      currentPreviews.push({ url: URL.createObjectURL(file), name: file.name });
     });
+    this.clinicMediaFiles.set(currentFiles);
+    this.clinicMediaPreviews.set(currentPreviews);
 
     input.value = '';
   }
 
   removeClinicMedia(index: number): void {
-    URL.revokeObjectURL(this.clinicMediaPreviews[index].url);
-    this.clinicMediaFiles.splice(index, 1);
-    this.clinicMediaPreviews.splice(index, 1);
+    const previews = [...this.clinicMediaPreviews()];
+    const files = [...this.clinicMediaFiles()];
+    if (previews[index]) URL.revokeObjectURL(previews[index].url);
+    files.splice(index, 1);
+    previews.splice(index, 1);
+    this.clinicMediaFiles.set(files);
+    this.clinicMediaPreviews.set(previews);
   }
 
   clearAllClinicMedia(): void {
-    this.clinicMediaPreviews.forEach(p => URL.revokeObjectURL(p.url));
-    this.clinicMediaFiles = [];
-    this.clinicMediaPreviews = [];
+    this.clinicMediaPreviews().forEach(p => URL.revokeObjectURL(p.url));
+    this.clinicMediaFiles.set([]);
+    this.clinicMediaPreviews.set([]);
   }
 
   @HostListener('document:click', ['$event'])
@@ -430,44 +473,44 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   toggleDropdown(type: 'specialization' | 'qualification' | 'language', event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdown = this.openDropdown === type ? null : type;
+    this.openDropdown.update(cur => cur === type ? null : type);
   }
 
   closeAllDropdowns(): void {
-    this.openDropdown = null;
+    this.openDropdown.set(null);
   }
 
-
   toggleSpecialization(id: number): void {
-    const idx = this.selectedSpecializations.indexOf(id);
-    if (idx === -1) {
-      this.selectedSpecializations.push(id);
-    } else {
-      this.selectedSpecializations.splice(idx, 1);
-    }
+    this.selectedSpecializations.update(list => {
+      const idx = list.indexOf(id);
+      const updated = [...list];
+      if (idx === -1) {
+        updated.push(id);
+      } else {
+        updated.splice(idx, 1);
+      }
+      return updated;
+    });
     this.doctorForm.patchValue({
-      specializationId: this.selectedSpecializations[0] || null
+      specializationId: this.selectedSpecializations()[0] || null
     });
     this.saveDraft();
   }
 
   isSpecializationSelected(id: number): boolean {
-    return this.selectedSpecializations.includes(id);
+    return this.selectedSpecializations().includes(id);
   }
 
   removeSpecialization(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    const idx = this.selectedSpecializations.indexOf(id);
-    if (idx !== -1) {
-      this.selectedSpecializations.splice(idx, 1);
-      this.doctorForm.patchValue({ specializationId: this.selectedSpecializations[0] || null });
-      this.saveDraft();
-    }
+    this.selectedSpecializations.update(list => list.filter(x => x !== id));
+    this.doctorForm.patchValue({ specializationId: this.selectedSpecializations()[0] || null });
+    this.saveDraft();
   }
 
   clearSpecializations(event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    this.selectedSpecializations = [];
+    this.selectedSpecializations.set([]);
     this.doctorForm.patchValue({ specializationId: null });
     this.saveDraft();
   }
@@ -476,39 +519,33 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     return this.specializationMap.get(id) ?? '';
   }
 
-  get filteredSpecializations(): mastermodel[] {
-    if (!this.specializationSearch.trim()) return this.specializationList;
-    const term = this.specializationSearch.toLowerCase().trim();
-    return this.specializationList.filter(s => s.name?.toLowerCase().includes(term));
-  }
-
-
   toggleQualification(id: number): void {
-    const idx = this.selectedQualifications.indexOf(id);
-    if (idx === -1) {
-      this.selectedQualifications.push(id);
-    } else {
-      this.selectedQualifications.splice(idx, 1);
-    }
+    this.selectedQualifications.update(list => {
+      const idx = list.indexOf(id);
+      const updated = [...list];
+      if (idx === -1) {
+        updated.push(id);
+      } else {
+        updated.splice(idx, 1);
+      }
+      return updated;
+    });
     this.saveDraft();
   }
 
   isQualificationSelected(id: number): boolean {
-    return this.selectedQualifications.includes(id);
+    return this.selectedQualifications().includes(id);
   }
 
   removeQualification(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    const idx = this.selectedQualifications.indexOf(id);
-    if (idx !== -1) {
-      this.selectedQualifications.splice(idx, 1);
-      this.saveDraft();
-    }
+    this.selectedQualifications.update(list => list.filter(x => x !== id));
+    this.saveDraft();
   }
 
   clearQualifications(event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    this.selectedQualifications = [];
+    this.selectedQualifications.set([]);
     this.saveDraft();
   }
 
@@ -516,41 +553,33 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     return this.qualificationMap.get(id) ?? '';
   }
 
-  get filteredQualifications(): qualification[] {
-    if (!this.qualificationSearch.trim()) return this.qualificationList;
-    const term = this.qualificationSearch.toLowerCase().trim();
-    return this.qualificationList.filter(q =>
-      (q.qualificationName || (q as any).name || '').toLowerCase().includes(term)
-    );
-  }
-
-
   toggleLanguage(id: number): void {
-    const idx = this.selectedLanguages.indexOf(id);
-    if (idx === -1) {
-      this.selectedLanguages.push(id);
-    } else {
-      this.selectedLanguages.splice(idx, 1);
-    }
+    this.selectedLanguages.update(list => {
+      const idx = list.indexOf(id);
+      const updated = [...list];
+      if (idx === -1) {
+        updated.push(id);
+      } else {
+        updated.splice(idx, 1);
+      }
+      return updated;
+    });
     this.saveDraft();
   }
 
   isLanguageSelected(id: number): boolean {
-    return this.selectedLanguages.includes(id);
+    return this.selectedLanguages().includes(id);
   }
 
   removeLanguage(id: number, event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    const idx = this.selectedLanguages.indexOf(id);
-    if (idx !== -1) {
-      this.selectedLanguages.splice(idx, 1);
-      this.saveDraft();
-    }
+    this.selectedLanguages.update(list => list.filter(x => x !== id));
+    this.saveDraft();
   }
 
   clearLanguages(event?: MouseEvent): void {
     if (event) event.stopPropagation();
-    this.selectedLanguages = [];
+    this.selectedLanguages.set([]);
     this.saveDraft();
   }
 
@@ -558,15 +587,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     return this.languageMap.get(id) ?? '';
   }
 
-  get filteredLanguages(): mastermodel[] {
-    if (!this.languageSearch.trim()) return this.languageList;
-    const term = this.languageSearch.toLowerCase().trim();
-    return this.languageList.filter(l => l.name?.toLowerCase().includes(term));
-  }
-
-
-  togglePassword(): void { this.showPassword = !this.showPassword; }
-  toggleConfirmPassword(): void { this.showConfirmPassword = !this.showConfirmPassword; }
+  togglePassword(): void { this.showPassword.update(v => !v); }
+  toggleConfirmPassword(): void { this.showConfirmPassword.update(v => !v); }
 
   onNextOrSubmit(): void {
     if (this.basicForm.invalid) {
@@ -580,18 +602,19 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       return;
     }
 
-    if (this.registeredUser) {
-      if (this.userType === 'user' || this.registeredUser?.roleId === role.patient) {
+    const regUser = this.registeredUser();
+    if (regUser) {
+      if (this.userType() === 'user' || regUser?.roleId === role.patient) {
         this.registrationSuccess.emit();
         this.alert.toastSuccess(AppMessage.RegistrationSuccess);
         this.router.navigate(['/']);
       } else {
-        if (this.userType === 'doctor') {
+        if (this.userType() === 'doctor') {
           this.doctorForm.patchValue({ email: bVal.email });
-        } else if (this.userType === 'clinic') {
+        } else if (this.userType() === 'clinic') {
           this.clinicForm.patchValue({ email: bVal.email, phone: bVal.mobile });
         }
-        this.currentStep = 2;
+        this.currentStep.set(2);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       return;
@@ -601,22 +624,20 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   prevStep(): void {
-    this.currentStep = 1;
+    this.currentStep.set(1);
     this.saveDraft();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-
   async submitUserRegistration(): Promise<void> {
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
 
     try {
       const b = this.basicForm.value;
       const form = new FormData();
-      debugger
-      const cityname = this.cityList.find((c: any) => c.id === Number(b.city))?.name;
-      const statename = this.stateList.find((c: any) => c.id === Number(b.state))?.name;
+      const cityname = this.cityList().find((c: any) => c.id === Number(b.city))?.name;
+      const statename = this.stateList().find((c: any) => c.id === Number(b.state))?.name;
 
       form.append('fullName', b.fullName);
       form.append('email', b.email);
@@ -628,38 +649,39 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       form.append('city', cityname || '');
 
       let roleId = role.patient;
-      if (this.userType === 'doctor') roleId = role.doctor;
-      else if (this.userType === 'clinic') roleId = role.clinic;
+      if (this.userType() === 'doctor') roleId = role.doctor;
+      else if (this.userType() === 'clinic') roleId = role.clinic;
       form.append('roleId', roleId.toString());
 
-      if (this.profileImageFile) form.append('file', this.profileImageFile);
+      const profileImg = this.profileImageFile();
+      if (profileImg) form.append('file', profileImg);
 
       const res = await this.apiService.PostForm<any>(ApiEndPoints.Register, form);
 
       if (res.isSuccess) {
         const user = res.data;
-        this.registeredUser = user;
+        this.registeredUser.set(user);
         this.authService.saveUserSession(user, user?.token);
 
-        if (this.userType === 'user' || user?.roleId === role.patient) {
+        if (this.userType() === 'user' || user?.roleId === role.patient) {
           this.clearDraft();
           this.authService.clearPendingVerification();
           this.registrationSuccess.emit();
           this.alert.toastSuccess(AppMessage.RegistrationSuccess);
           this.router.navigate(['/']);
         } else {
-          if (this.userType === 'doctor') {
+          if (this.userType() === 'doctor') {
             this.doctorForm.patchValue({ email: b.email });
-          } else if (this.userType === 'clinic') {
+          } else if (this.userType() === 'clinic') {
             this.clinicForm.patchValue({ email: b.email, phone: b.mobile });
           }
-          this.currentStep = 2;
+          this.currentStep.set(2);
           this.saveDraft();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
     } finally {
-      this.isSubmitting = false;
+      this.isSubmitting.set(false);
     }
   }
 
@@ -669,34 +691,34 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
-    if (this.selectedSpecializations.length === 0) {
+    if (this.selectedSpecializations().length === 0) {
       this.alert.toastError('Please select at least one specialization.');
       return;
     }
-    if (this.selectedQualifications.length === 0) {
+    if (this.selectedQualifications().length === 0) {
       this.alert.toastError('Please select at least one qualification.');
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
 
     try {
       const d = this.doctorForm.value;
-      const user = this.registeredUser || this.authService.getCurrentUser();
+      const user = this.registeredUser() || this.authService.getCurrentUser();
       const userId = user?.id || this.authService.getuserid();
 
       const payload = {
         userId,
-        specializationId: this.selectedSpecializations[0] || null,
-        services: [...this.selectedServiceIds].map(id => ({ serviceId: id })),
-        qualifications: this.selectedQualifications.map(id => ({
+        specializationId: this.selectedSpecializations()[0] || null,
+        services: [...this.selectedServiceIds()].map(id => ({ serviceId: id })),
+        qualifications: this.selectedQualifications().map(id => ({
           qualificationId: id
         })),
         experienceYears: d.experienceYears,
         consultationFee: d.consultationFee,
         institute: d.institute,
-        languages: this.selectedLanguages.map(id => ({
+        languages: this.selectedLanguages().map(id => ({
           languageId: id
         })),
         about: d.about,
@@ -713,7 +735,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
         this.router.navigate(['/doctor-dashboard']);
       }
     } finally {
-      this.isSubmitting = false;
+      this.isSubmitting.set(false);
     }
   }
 
@@ -724,17 +746,17 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
+    this.errorMessage.set('');
 
     try {
       const c = this.clinicForm.value;
-      const user = this.registeredUser || this.authService.getCurrentUser();
+      const user = this.registeredUser() || this.authService.getCurrentUser();
       const userId = user?.id || this.authService.getuserid();
 
       const formData = new FormData();
-      const city = this.cityList.find((ci: any) => ci.id === c.city)?.name;
-      const stateName = this.stateList.find((si: any) => si.id === c.state)?.name;
+      const city = this.cityList().find((ci: any) => ci.id === c.city)?.name;
+      const stateName = this.stateList().find((si: any) => si.id === c.state)?.name;
 
       if (userId) formData.append('ownerUserId', userId.toString());
       formData.append('clinicName', c.clinicName);
@@ -747,12 +769,18 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       formData.append('pincode', c.pincode);
       formData.append('address', c.address);
       formData.append('description', c.description || '');
-      if (this.profileImageFile) formData.append('file', this.profileImageFile);
-      if (this.clinicLogoFile) formData.append('logoFile', this.clinicLogoFile);
-      if (this.clinicBannerFile) formData.append('bannerImageFile', this.clinicBannerFile);
-      this.clinicMediaFiles.forEach(f => formData.append('clinicMedia', f));
-      // Append selected services
-      [...this.selectedServiceIds].forEach(id => formData.append('serviceIds', id.toString()));
+
+      const pImg = this.profileImageFile();
+      if (pImg) formData.append('file', pImg);
+
+      const cLogo = this.clinicLogoFile();
+      if (cLogo) formData.append('logoFile', cLogo);
+
+      const cBanner = this.clinicBannerFile();
+      if (cBanner) formData.append('bannerImageFile', cBanner);
+
+      this.clinicMediaFiles().forEach(f => formData.append('clinicMedia', f));
+      [...this.selectedServiceIds()].forEach(id => formData.append('serviceIds', id.toString()));
 
       const res = await this.apiService.PostForm<any>(ApiEndPoints.AddClinic, formData);
 
@@ -764,7 +792,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
         this.router.navigate(['/clinics']);
       }
     } finally {
-      this.isSubmitting = false;
+      this.isSubmitting.set(false);
     }
   }
 }
