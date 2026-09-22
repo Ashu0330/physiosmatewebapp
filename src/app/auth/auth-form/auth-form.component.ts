@@ -22,7 +22,6 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   @Output() modeChange = new EventEmitter<'login' | 'signup'>();
   @Output() otpVerified = new EventEmitter<{ email: string }>();
 
-  private fb = inject(FormBuilder);
   protected override authService = inject(Authservice);
 
   signupForm!: FormGroup;

@@ -1,6 +1,6 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormGroup, FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { BaseComponent } from '../../helper/base-component';
 import { PractitionerModel } from '../../models/practitioner.model';
@@ -38,10 +38,10 @@ export interface ClinicItem {
   styleUrl: './doctors.css',
 })
 export class Doctors extends BaseComponent implements OnInit {
+  form: FormGroup;
   private route = inject(ActivatedRoute);
   readonly PractitionerList = signal<PractitionerModel[]>([]);
   readonly isLoading = signal<boolean>(true);
-
 
   // Distinguishes Doctor Mode vs Clinic Mode
   readonly isClinic = signal<boolean>(false);
@@ -50,6 +50,7 @@ export class Doctors extends BaseComponent implements OnInit {
   readonly selectedCity = signal<string>('Gumanpura, Kota');
   readonly searchQuery = signal<string>('');
   readonly isCityOpen = signal<boolean>(false);
+
 
   readonly popularCities = [
     'Gumanpura, Kota',
@@ -251,7 +252,14 @@ export class Doctors extends BaseComponent implements OnInit {
 
     return list;
   });
-
+  createform() {
+    this.form = this.fb.group({
+      rating: [''],
+      review: [''],
+      practitionerId: [''],
+      clinicId: [''],
+    })
+  }
   ngOnInit(): void {
     this.detectMode();
     this.GetAllDoctors()

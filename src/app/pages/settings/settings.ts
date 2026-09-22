@@ -47,7 +47,6 @@ export interface FaqItem {
 })
 export class Settings extends BaseComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
   form: FormGroup;
 
   // ── Signals ───────────────────────────────────────────────────────────────

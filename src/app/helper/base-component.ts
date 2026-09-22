@@ -5,6 +5,7 @@ import { SweetAlertService } from '../services/sweet-alert.service';
 import { Authservice } from '../services/authservice';
 import { ApiService } from '../services/api.service';
 import { AppMessage } from './app-message';
+import { FormBuilder } from '@angular/forms';
 
 export abstract class BaseComponent {
     protected loader = inject(Loader);
@@ -14,6 +15,7 @@ export abstract class BaseComponent {
     protected router = inject(Router);
     protected destroyRef = inject(DestroyRef);
     protected cdr = inject(ChangeDetectorRef);
+    protected fb = inject(FormBuilder);
 
     public pagination = {
         currentPage: 1,

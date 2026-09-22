@@ -288,7 +288,6 @@ export interface BookingState {
 export class ReviewModel {
   PractitionerId: number;
   PractitioName: string;
-  providerImage?: string | null;
   clinicName?: string | null;
   clinicId?: number | null;
   rating?: number | null;

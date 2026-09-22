@@ -72,7 +72,6 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
   private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
 
-  private fb = inject(FormBuilder);
   protected override authService = inject(Authservice);
 
   // ── Flow & Form Signals ───────────────────────────────────────────────────
