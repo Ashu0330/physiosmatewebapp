@@ -445,7 +445,6 @@
 }
 
 .physios-btn-contact-clinic-solid {
-  width: 175px;
   height: 38px;
   background: var(--primary-color, #10A896);
   color: #ffffff;
@@ -460,6 +459,7 @@
   gap: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.15s ease;
+  width: 135px;
 }
 
 .physios-btn-contact-clinic-solid:hover {
@@ -495,12 +495,10 @@
  * Doctor Card Skeleton Loading & Shimmer Animation
  * ========================================================= */
 .physios-shimmer {
-  background: linear-gradient(
-    90deg,
-    #f1f5f9 0%,
-    #e2e8f0 50%,
-    #f1f5f9 100%
-  );
+  background: linear-gradient(90deg,
+      #f1f5f9 0%,
+      #e2e8f0 50%,
+      #f1f5f9 100%);
   background-size: 200% 100%;
   animation: physiosShimmer 1.5s ease-in-out infinite;
 }
@@ -509,6 +507,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -1034,7 +1033,7 @@
   border-radius: 12px;
   padding: 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 22px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -1097,10 +1096,7 @@
   color: #0f172a;
   margin: 0;
   line-height: 1.3;
-  display: flex;
-  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .physios-clinic-name a {
@@ -1199,8 +1195,6 @@
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
-  align-self: stretch;
-  min-width: 150px;
   text-align: right;
 }
 
@@ -1225,45 +1219,32 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 100%;
 }
 
-/* .physios-btn-book-clinic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-color, #10A896);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 9px 16px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background 0.15s ease;
-  white-space: nowrap;
+.list_wrapper {
+  display: flex;
+  gap: 20px;
 }
 
-.physios-btn-book-clinic:hover {
-  background: var(--primary-dark, #087F76);
-} */
-/* 
-.physios-btn-view-clinic {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
+@media (max-width: 992px) {
+  .list_wrapper {
+    flex-direction: column;
+    gap: 8px;
+  }
 
-.physios-btn-view-clinic:hover {
-  border-color: var(--primary-color, #10A896);
-  color: var(--primary-color, #10A896);
-} */
+  .physios-clinic-action-col {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .physios-clinic-cta-group {
+    flex-direction: row;
+  }
+
+  .physios-clinic-fee-box {
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+  }
+
+}

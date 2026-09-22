@@ -306,70 +306,72 @@
               }
             </div>
           </div>
+          <div class="list_wrapper">
+            <!-- Col 2: Clinic Details -->
+            <div class="physios-clinic-info-col">
+              <!-- Clinic Name -->
+              <h2 class="physios-clinic-name">
+                <a [routerLink]="['/clinic-detail', clinic.id]">{{ clinic.name }}</a><br>
+                <span class="physios-clinic-tag">Physiotherapy Clinic</span>
+              </h2>
 
-          <!-- Col 2: Clinic Details -->
-          <div class="physios-clinic-info-col">
-            <!-- Clinic Name -->
-            <h2 class="physios-clinic-name">
-              <a [routerLink]="['/clinic-detail', clinic.id]">{{ clinic.name }}</a>
-              <span class="physios-clinic-tag">Physiotherapy Clinic</span>
-            </h2>
+              <!-- Rating & Reviews -->
+              <div class="physios-clinic-rating-row">
+                <span class="physios-rating-badge">
+                  ★ {{ clinic.rating }}
+                </span>
+                <span class="physios-reviews-count">({{ clinic.reviewsCount }} Patient Stories)</span>
+              </div>
 
-            <!-- Rating & Reviews -->
-            <div class="physios-clinic-rating-row">
-              <span class="physios-rating-badge">
-                ★ {{ clinic.rating }}
-              </span>
-              <span class="physios-reviews-count">({{ clinic.reviewsCount }} Patient Stories)</span>
-            </div>
-
-            <!-- Location (Strictly no distance/km away) -->
-            <div class="physios-clinic-location-row">
-              <svg class="physios-loc-pin-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <span class="physios-loc-text">{{ clinic.location }}</span>
-            </div>
-
-            <!-- Specialties Tags -->
-            <div class="physios-clinic-specs-row">
-              @for (spec of clinic.specialties; track spec) {
-              <span class="physios-spec-pill">{{ spec }}</span>
-              }
-            </div>
-
-            <!-- Amenities / Highlights -->
-            <div class="physios-clinic-amenities-row">
-              @for (amenity of clinic.amenities; track amenity.label) {
-              <span class="physios-amenity-chip">
-                <svg class="physios-chip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
+              <!-- Location (Strictly no distance/km away) -->
+              <div class="physios-clinic-location-row">
+                <svg class="physios-loc-pin-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
                 </svg>
-                <span>{{ amenity.label }}</span>
-              </span>
-              }
+                <span class="physios-loc-text">{{ clinic.location }}</span>
+              </div>
+
+              <!-- Specialties Tags -->
+              <div class="physios-clinic-specs-row">
+                @for (spec of clinic.specialties; track spec) {
+                <span class="physios-spec-pill">{{ spec }}</span>
+                }
+              </div>
+
+              <!-- Amenities / Highlights -->
+              <div class="physios-clinic-amenities-row">
+                @for (amenity of clinic.amenities; track amenity.label) {
+                <span class="physios-amenity-chip">
+                  <svg class="physios-chip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>{{ amenity.label }}</span>
+                </span>
+                }
+              </div>
+            </div>
+
+            <!-- Col 3: Pricing & Action Buttons -->
+            <div class="physios-clinic-action-col">
+              <div class="physios-clinic-fee-box">
+                <span class="physios-fee-sub">Consultation Fee</span>
+                <span class="physios-fee-price">₹{{ clinic.price }}</span>
+              </div>
+
+              <div class="physios-clinic-cta-group">
+                <a [routerLink]="['/clinic-detail', clinic.id]" class="physios-btn-contact-clinic-solid">
+                  Call Now
+                </a>
+                <a [routerLink]="['/clinic-detail', clinic.id]" class="btn_3">
+                  View Clinic Details
+                </a>
+              </div>
             </div>
           </div>
 
-          <!-- Col 3: Pricing & Action Buttons -->
-          <div class="physios-clinic-action-col">
-            <div class="physios-clinic-fee-box">
-              <span class="physios-fee-sub">Consultation Fee</span>
-              <span class="physios-fee-price">₹{{ clinic.price }}</span>
-            </div>
-
-            <div class="physios-clinic-cta-group">
-              <a [routerLink]="['/clinic-detail', clinic.id]" class="physios-btn-contact-clinic-solid">
-                Call Now
-              </a>
-              <a [routerLink]="['/clinic-detail', clinic.id]" class="btn_3">
-                View Clinic Details
-              </a>
-            </div>
-          </div>
         </article>
         }
         } @else {

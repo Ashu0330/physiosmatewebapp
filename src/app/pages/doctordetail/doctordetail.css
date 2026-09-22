@@ -103,6 +103,7 @@
   padding: 1.75rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
 }
 
 .hero-card-inner {
@@ -540,6 +541,63 @@
 /* =========================================================
  * 4. Section: Stories / Patient Reviews (#stories)
  * ========================================================= */
+.review-rating-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.rating-picker-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.star-rating-stars {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 6px;
+}
+
+.star-rating-stars input[type="radio"] {
+  display: none;
+}
+
+.star-rating-stars label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  user-select: none;
+}
+
+.star-rating-stars label .star-icon {
+  width: 24px;
+  height: 24px;
+  fill: #f1f5f9;
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: block;
+}
+
+.star-rating-stars label:hover .star-icon {
+  transform: scale(1.22);
+}
+
+.star-rating-stars label:hover .star-icon,
+.star-rating-stars label:hover ~ label .star-icon,
+.star-rating-stars input[type="radio"]:checked ~ label .star-icon {
+  fill: #ffc107;
+  stroke: #eab308;
+}
+
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -1785,4 +1843,10 @@
 .doc-fee-label {
   font-size: 0.72rem;
   color: #64748b;
+}
+
+.saved_icon{
+  position: absolute;
+  right: 0px;
+  top: -1px;
 }
