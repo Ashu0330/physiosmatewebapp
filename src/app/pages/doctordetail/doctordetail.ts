@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal, Signal } from '@angular/core';
+import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule, FormGroup, Validators } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
@@ -7,7 +7,7 @@ import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
-import { PractitionerDetailedData } from '../../models/practitioner.model';
+import { PractitionerDetailedData, PractitionerReview } from '../../models/practitioner.model';
 import { SharedModule } from '../../shared/shared-module';
 
 
@@ -25,19 +25,7 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
-export interface PractitionerReview {
-  id: number;
-  userId: number;
-  userName: string;
-  practitionerId: number;
-  clinicId: number | null;
-  rating: number;
-  review: string;
-  visitedFor?: string;
-  timeAgo?: string;
-  tags?: string[];
-  clinicReply?: string;
-}
+
 
 export interface TreatmentItem {
   id: number;
@@ -61,13 +49,118 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   // Review Form
   reviewForm!: FormGroup;
   isSubmittingReview = signal<boolean>(false);
+  practitionerId: number = 0;
+  async ngOnInit(): Promise<void> {
 
-  createReviewForm(practitionerId: number = 0): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
+
+    console.log('Practitioner ID:', id);
+
+    // Initialise review form with the practitioner id from route
+    this.GetDoctorById();
+    this.createReviewForm();
+    await this.GetReviews();
+
+    const isClinicRoute =
+      this.route.snapshot.data['isClinic'] === true ||
+      this.router.url.includes('clinic') ||
+      (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
+    this.isClinic.set(isClinicRoute);
+
+    if (typeof window !== 'undefined') {
+      this.updateActiveSectionFromScroll();
+    }
+
+    // Check if redirected from booking auth with confirmed status
+    this.route.queryParams.subscribe(params => {
+      if (params['bookingConfirmed'] === 'true') {
+        const pending = this.bookingService.getPendingSlot();
+        const dayLabel = pending?.selectedDay || `${this.dayList[1].label} (${this.dayList[1].dateStr})`;
+        const slotTime = pending?.selectedTime || this.selectedSlotTime();
+
+        this.confirmAppointmentDirectly(
+          { label: dayLabel, dateStr: '' },
+          slotTime,
+          pending?.bookingId
+        );
+
+        // Clear query parameters cleanly from URL without reloading
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
+  }
+
+  // Predefined Visit Reasons for Review
+  readonly predefinedVisitReasons = [
+    'Knee Pain',
+    'Back Pain',
+    'Neck & Shoulder Pain',
+    'Sports Injury',
+    'Post-Op Rehab',
+    'Frozen Shoulder',
+    'Sciatica',
+    'Arthritis',
+    'Posture Correction'
+  ];
+  readonly selectedVisitReasons = signal<string[]>([]);
+  readonly showCustomVisit = signal<boolean>(false);
+  readonly customVisitText = signal<string>('');
+
+  toggleVisitReason(reason: string): void {
+    this.selectedVisitReasons.update(current => {
+      const exists = current.includes(reason);
+      const updated = exists ? current.filter(r => r !== reason) : [...current, reason];
+      this.syncVisitedForControl(updated, this.customVisitText());
+      return updated;
+    });
+  }
+
+  isVisitReasonSelected(reason: string): boolean {
+    return this.selectedVisitReasons().includes(reason);
+  }
+
+  toggleCustomVisit(): void {
+    this.showCustomVisit.update(v => {
+      const next = !v;
+      if (!next) {
+        this.customVisitText.set('');
+        this.syncVisitedForControl(this.selectedVisitReasons(), '');
+      }
+      return next;
+    });
+  }
+
+  onCustomVisitChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.customVisitText.set(val);
+    this.syncVisitedForControl(this.selectedVisitReasons(), val);
+  }
+
+  private syncVisitedForControl(selected: string[], custom: string): void {
+    const all = [...selected];
+    if (custom && custom.trim()) {
+      all.push(custom.trim());
+    }
+    const combined = all.join(', ');
+    this.reviewForm.patchValue({ visitedFor: combined });
+  }
+
+  createReviewForm(): void {
     this.reviewForm = this.fb.group({
       rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
       review: ['', [Validators.required, Validators.minLength(3)]],
-      practitionerId: [practitionerId, [Validators.required]],
+      practitionerId: [this.practitionerId, [Validators.required]],
+      visitedFor: [''],
+      isRecommended: [true],
     });
+    this.selectedVisitReasons.set([]);
+    this.showCustomVisit.set(false);
+    this.customVisitText.set('');
   }
 
   async AddReview(): Promise<void> {
@@ -82,13 +175,30 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
     this.isSubmittingReview.set(true);
     try {
+      const formVal = this.reviewForm.value;
+      const payload = {
+        ...formVal,
+        practitionerId: this.practitionerId,
+        review1: formVal.review,
+        isRecommended: !!formVal.isRecommended,
+        visitedFor: formVal.visitedFor?.trim() || null
+      };
       const res = await this.apiService.Post<boolean>(
         ApiEndPoints.AddReview,
-        this.reviewForm.value
+        payload
       );
       if (res.isSuccess) {
         this.showSuccess(res.message || 'Review submitted successfully!');
-        this.reviewForm.patchValue({ rating: 5, review: '' });
+        this.reviewForm.patchValue({
+          rating: 0,
+          review: '',
+          visitedFor: '',
+          isRecommended: true
+        });
+        this.selectedVisitReasons.set([]);
+        this.showCustomVisit.set(false);
+        this.customVisitText.set('');
+        await this.GetReviews();
       } else {
         this.showError(res.message || 'Failed to submit review.');
       }
@@ -97,6 +207,14 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
   }
 
+  async GetReviews() {
+
+    let res = await this.apiService.Get<any>(ApiEndPoints.GetPractitionerReviews + "?id=" + this.practitionerId);
+    if (res.isSuccess) {
+      debugger
+      this.reviews.set(res.data);
+    }
+  }
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
     doctorSpecialty: string;
@@ -119,8 +237,9 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
 
 
-  async GetDoctorById(PractitionerId: number) {
-    let res = await this.apiService.Get<PractitionerDetailedData>(`${ApiEndPoints.GetPractitionerById}?PractitionerId=${PractitionerId}`)
+  async GetDoctorById() {
+
+    let res = await this.apiService.Get<PractitionerDetailedData>(ApiEndPoints.GetPractitionerById + "?PractitionerId=" + this.practitionerId)
     this.doctorDetail.set(res.data ?? null)
   }
 
@@ -214,6 +333,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       rating: 5,
       review: 'Dr. Sarah was extremely attentive and helped relieve my chronic back pain after just a few sessions. Highly recommended!',
       visitedFor: 'Arthritis Physiotherapy, Osteoarthritis Physiotherapy, Knee Pain Physiotherapy',
+      isRecommended: true,
       timeAgo: 'Recent',
       tags: ['Doctor friendliness', 'Explanation of the health issue', 'Treatment satisfaction', 'Value for money', 'Wait time'],
       clinicReply: 'Thank You !! We wish you Good health & Happiness in life.'
@@ -227,6 +347,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       rating: 4,
       review: 'Very professional and knowledgeable therapist. Clear explanation of exercises.',
       visitedFor: 'Frozen Shoulder Physiotherapy & Posture Correction',
+      isRecommended: true,
       timeAgo: '2 weeks ago',
       tags: ['Doctor friendliness', 'Treatment satisfaction', 'Great exercises'],
       clinicReply: 'Thank you for your warm feedback! Glad you are feeling much better.'
@@ -343,51 +464,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     { url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80', caption: 'Rehab Equipment' }
   ];
 
-  async ngOnInit(): Promise<void> {
-
-    const id = this.route.snapshot.paramMap.get('id');
-    const practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
-
-    console.log('Practitioner ID:', id);
-
-    // Initialise review form with the practitioner id from route
-    this.createReviewForm(Number(practitionerId) || 0);
-
-    if (id) {
-      await this.GetDoctorById(Number(id));
-    }
-    const isClinicRoute =
-      this.route.snapshot.data['isClinic'] === true ||
-      this.router.url.includes('clinic') ||
-      (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
-    this.isClinic.set(isClinicRoute);
-
-    if (typeof window !== 'undefined') {
-      this.updateActiveSectionFromScroll();
-    }
-
-    // Check if redirected from booking auth with confirmed status
-    this.route.queryParams.subscribe(params => {
-      if (params['bookingConfirmed'] === 'true') {
-        const pending = this.bookingService.getPendingSlot();
-        const dayLabel = pending?.selectedDay || `${this.dayList[1].label} (${this.dayList[1].dateStr})`;
-        const slotTime = pending?.selectedTime || this.selectedSlotTime();
-
-        this.confirmAppointmentDirectly(
-          { label: dayLabel, dateStr: '' },
-          slotTime,
-          pending?.bookingId
-        );
-
-        // Clear query parameters cleanly from URL without reloading
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: {},
-          replaceUrl: true
-        });
-      }
-    });
-  }
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {

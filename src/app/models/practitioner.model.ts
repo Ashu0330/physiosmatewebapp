@@ -284,6 +284,27 @@ export interface BookingState {
   selectedTime?: string;
   bookingId?: string;
 }
+export interface PractitionerReview {
+  id: number;
+  userId: number;
+  userName: string;
+  providerType?: string;
+  providerId?: number;
+  practitionerId?: number;
+  clinicId?: number | null;
+  rating: number;
+  review: string;
+  review1?: string;
+  visitedFor?: string;
+  isRecommended?: boolean | null;
+  timeAgo?: string;
+  createdDate?: string | Date;
+  updatedDate?: string | Date;
+  tags?: string[];
+  clinicReply?: string;
+  providerReply?: string;
+  providerReplyDate?: string | Date;
+}
 
 export class ReviewModel {
   PractitionerId: number;
