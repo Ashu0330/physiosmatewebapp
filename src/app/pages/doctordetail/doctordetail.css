@@ -160,10 +160,9 @@
 
 
 .doctor-degree {
-  font-size: 0.88rem;
-  color: #475569;
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 
@@ -1641,6 +1640,7 @@
   height: 100%;
   object-fit: cover;
 }
+
 /* 
 .doc-prime-badge {
   position: absolute;

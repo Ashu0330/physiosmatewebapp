@@ -302,6 +302,7 @@
 .physios-doc-avatar-wrapper {
   border-radius: 10px;
   overflow: hidden;
+  max-height: 170px;
 }
 
 .physios-doc-img {
