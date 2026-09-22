@@ -592,8 +592,8 @@
 }
 
 .star-rating-stars label:hover .star-icon,
-.star-rating-stars label:hover ~ label .star-icon,
-.star-rating-stars input[type="radio"]:checked ~ label .star-icon {
+.star-rating-stars label:hover~label .star-icon,
+.star-rating-stars input[type="radio"]:checked~label .star-icon {
   fill: #ffc107;
   stroke: #eab308;
 }
@@ -1845,8 +1845,119 @@
   color: #64748b;
 }
 
-.saved_icon{
+.saved_icon {
   position: absolute;
   right: 0px;
   top: -1px;
+}
+
+.add-review-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.add-review-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reviewer-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reviewer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #E9FAF9;
+  color: #087F76;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reviewer-avatar-wrap h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.reviewer-avatar-wrap p {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.review_textarea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.review_textarea textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 95px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.review_btns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.review_btns label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.review_btns input {
+  accent-color: #10A896;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.review_btns button {
+  background: #10A896;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.18s ease;
 }
