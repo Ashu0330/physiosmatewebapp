@@ -252,14 +252,7 @@ export class Doctors extends BaseComponent implements OnInit {
 
     return list;
   });
-  createform() {
-    this.form = this.fb.group({
-      rating: [''],
-      review: [''],
-      practitionerId: [''],
-      clinicId: [''],
-    })
-  }
+
   ngOnInit(): void {
     this.detectMode();
     this.GetAllDoctors()
@@ -371,16 +364,5 @@ export class Doctors extends BaseComponent implements OnInit {
       this.isLoading.set(false);
     }
   }
-  async AddeReview() {
-    let data = this.form.value;
-    const res = await this.apiService.Post<any[]>(
-      ApiEndPoints.AddReview, data
-    );
-    if (res.isSuccess) {
-      this.alert.toastSuccess(res.message);
-      this.form.reset();
-    } else {
-      this.alert.toastError(res.message);
-    }
-  }
+
 }

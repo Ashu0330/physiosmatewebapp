@@ -1,6 +1,6 @@
 import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal, Signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, FormGroup, Validators } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { Authservice } from '../../services/authservice';
 import { ExploreService } from '../../services/explore.service';
@@ -8,6 +8,7 @@ import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { PractitionerDetailedData } from '../../models/practitioner.model';
+import { SharedModule } from '../../shared/shared-module';
 
 
 
@@ -47,7 +48,7 @@ export interface TreatmentItem {
 @Component({
   selector: 'app-doctordetail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [SharedModule, RouterLink],
   templateUrl: './doctordetail.html',
   styleUrl: './doctordetail.css',
 })
@@ -56,6 +57,45 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   private bookingService = inject(BookingService);
   private platformId = inject(PLATFORM_ID);
   private elRef = inject(ElementRef);
+
+  // Review Form
+  reviewForm!: FormGroup;
+  isSubmittingReview = signal<boolean>(false);
+
+  createReviewForm(practitionerId: number = 0): void {
+    this.reviewForm = this.fb.group({
+      rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
+      review: ['', [Validators.required, Validators.minLength(3)]],
+      practitionerId: [practitionerId, [Validators.required]],
+    });
+  }
+
+  async AddReview(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.showError('Please log in to submit a review.');
+      return;
+    }
+    if (this.reviewForm.invalid) {
+      this.reviewForm.markAllAsTouched();
+      this.showError('Please fill rating and review before submitting.');
+      return;
+    }
+    this.isSubmittingReview.set(true);
+    try {
+      const res = await this.apiService.Post<boolean>(
+        ApiEndPoints.AddReview,
+        this.reviewForm.value
+      );
+      if (res.isSuccess) {
+        this.showSuccess(res.message || 'Review submitted successfully!');
+        this.reviewForm.patchValue({ rating: 5, review: '' });
+      } else {
+        this.showError(res.message || 'Failed to submit review.');
+      }
+    } finally {
+      this.isSubmittingReview.set(false);
+    }
+  }
 
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
@@ -306,8 +346,12 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   async ngOnInit(): Promise<void> {
 
     const id = this.route.snapshot.paramMap.get('id');
+    const practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
 
     console.log('Practitioner ID:', id);
+
+    // Initialise review form with the practitioner id from route
+    this.createReviewForm(Number(practitionerId) || 0);
 
     if (id) {
       await this.GetDoctorById(Number(id));
