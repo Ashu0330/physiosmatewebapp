@@ -168,6 +168,9 @@
     margin-top: 3rem;
   }
 }
+.ym-cpy{
+  color: white;
+}
 
 @media (max-width: 420px) {
   .physios-footer-grid {

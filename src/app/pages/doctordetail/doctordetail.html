@@ -68,6 +68,13 @@
             </div>
           </div>
         </div>
+        <a href="javascript:void(0)" class="saved_icon">
+          <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="35" height="35" viewBox="0 0 50 50">
+            <path
+              d="M 12.8125 2 C 12.335938 2.089844 11.992188 2.511719 12 3 L 12 47 C 11.996094 47.359375 12.1875 47.691406 12.496094 47.871094 C 12.804688 48.054688 13.1875 48.054688 13.5 47.875 L 25 41.15625 L 36.5 47.875 C 36.8125 48.054688 37.195313 48.054688 37.503906 47.871094 C 37.8125 47.691406 38.003906 47.359375 38 47 L 38 3 C 38 2.449219 37.550781 2 37 2 L 13 2 C 12.96875 2 12.9375 2 12.90625 2 C 12.875 2 12.84375 2 12.8125 2 Z M 14 4 L 36 4 L 36 45.25 L 25.5 39.125 C 25.191406 38.945313 24.808594 38.945313 24.5 39.125 L 14 45.25 Z">
+            </path>
+          </svg>
+        </a>
       </section>
 
       <!-- 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy) -->
@@ -93,6 +100,98 @@
           <h3 class="section-header-title">
             {{ reviews().length }} Patient Stories for {{ practitioner.name }} {{ practitioner.specialtyTitle }}
           </h3>
+
+          <!-- Add Review Section -->
+          <div class="add-review-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.75rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="reviewer-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: #E9FAF9; color: #087F76; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; border: 1px solid #D5F3EF;">
+                  {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName.charAt(0).toUpperCase() : 'U' }}
+                </div>
+                <div>
+                  <h4 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0;">
+                    {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName : 'Share Your Experience' }}
+                  </h4>
+                  <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 0 0;">
+                    {{ isLoggedIn ? 'Verified Patient Review' : 'Consulted Dr. ' + (doctorDetail()?.fullName || practitioner.name) + '? Leave a review below.' }}
+                  </p>
+                </div>
+              </div>
+
+              @if (!isLoggedIn) {
+              <a routerLink="/login" style="font-size: 0.8rem; font-weight: 600; color: #087F76; text-decoration: none;">
+                Log In &rarr;
+              </a>
+              }
+            </div>
+
+            <!-- 5 Individual Stars Rating Picker -->
+            <div class="review-rating-picker">
+              <span class="rating-picker-label">Your Rating:</span>
+              <div class="star-rating-stars" role="radiogroup" aria-label="Select Doctor Rating">
+                <input type="radio" id="doc-star5" name="doctorRating" value="5" checked />
+                <label for="doc-star5" title="5 Stars - Excellent">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star4" name="doctorRating" value="4" />
+                <label for="doc-star4" title="4 Stars - Very Good">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star3" name="doctorRating" value="3" />
+                <label for="doc-star3" title="3 Stars - Good">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star2" name="doctorRating" value="2" />
+                <label for="doc-star2" title="2 Stars - Fair">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star1" name="doctorRating" value="1" />
+                <label for="doc-star1" title="1 Star - Poor">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                </label>
+              </div>
+            </div>
+
+            <!-- Review Textarea -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <textarea
+                id="patient-review-textarea"
+                class="form-control review-input-textarea"
+                rows="4"
+                placeholder="Write your review here... How was your consultation, treatment satisfaction, and overall recovery?"
+                style="width: 100%; padding: 0.85rem 1rem; font-size: 0.88rem; font-family: inherit; line-height: 1.5; color: #1e293b; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 6px; resize: vertical; min-height: 95px; outline: none; box-sizing: border-box;"
+              ></textarea>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #334155; cursor: pointer; user-select: none;">
+                  <input type="checkbox" checked style="accent-color: #10A896; width: 15px; height: 15px; cursor: pointer;" />
+                  <span>👍 I recommend this doctor</span>
+                </label>
+
+                <button
+                  type="button"
+                  class="btn-submit-review"
+                  style="background: #10A896; color: #ffffff; border: none; border-radius: 6px; padding: 0.55rem 1.4rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.18s ease;"
+                >
+                  <span>Submit Review</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div class="reviews-list">
             @for (rev of reviews(); track rev.id) {
