@@ -5,6 +5,7 @@ import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/ro
 import { BaseComponent } from '../../helper/base-component';
 import { PractitionerModel } from '../../models/practitioner.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
+import { SharedModule } from '../../shared/shared-module';
 
 
 export interface ClinicAmenity {
@@ -32,13 +33,14 @@ export interface ClinicItem {
 @Component({
   selector: 'app-doctors',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [SharedModule],
   templateUrl: './doctors.html',
   styleUrl: './doctors.css',
 })
 export class Doctors extends BaseComponent implements OnInit {
   private route = inject(ActivatedRoute);
   readonly PractitionerList = signal<PractitionerModel[]>([]);
+  readonly isLoading = signal<boolean>(true);
 
 
   // Distinguishes Doctor Mode vs Clinic Mode
@@ -86,6 +88,7 @@ export class Doctors extends BaseComponent implements OnInit {
   readonly bookingDoctor = signal<PractitionerModel | null>(null);
   readonly selectedSlot = signal<string>('10:00 AM');
   readonly bookingSuccess = signal<boolean>(false);
+
 
 
   // Clinic Data
@@ -340,6 +343,7 @@ export class Doctors extends BaseComponent implements OnInit {
   }
   async GetAllDoctors(): Promise<void> {
     console.log('GetAllDoctors started');
+    this.isLoading.set(true);
 
     try {
       const res = await this.apiService.Post<any[]>(
@@ -354,6 +358,12 @@ export class Doctors extends BaseComponent implements OnInit {
 
     } catch (error) {
       console.error('GetAllDoctors ERROR:', error);
+      this.PractitionerList.set([]);
+    } finally {
+      this.isLoading.set(false);
     }
+  }
+  async AddeReview() {
+
   }
 }

@@ -268,7 +268,13 @@
           <span>Verified physiotherapy clinics with experienced specialists &amp; modern facilities</span>
         </div>
         } @else {
+        @if (isLoading()) {
+        <h1 class="physios-results-title">
+          <span class="physios-skeleton-count physios-shimmer"></span> {{ currentSpecialty() }} available in {{ selectedCity() }}
+        </h1>
+        } @else {
         <h1 class="physios-results-title">{{ PractitionerList().length }} {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
+        }
         <div class="physios-verified-subtext">
           <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -362,6 +368,48 @@
               <a [routerLink]="['/clinic-detail', clinic.id]" class="btn_3">
                 View Clinic Details
               </a>
+            </div>
+          </div>
+        </article>
+        }
+        } @else {
+        @if (isLoading()) {
+        @for (item of [1, 2, 3, 4]; track item) {
+        <article class="physios-doc-card physios-doc-card-skeleton" aria-busy="true" aria-label="Loading doctor details">
+          <!-- Col 1: Avatar Column Skeleton -->
+          <div class="physios-doc-avatar-col">
+            <div class="physios-doc-avatar-wrapper physios-skeleton-avatar physios-shimmer"></div>
+          </div>
+
+          <!-- Col 2: Info & Details Column Skeleton -->
+          <div class="physios-doc-info-col">
+            <div class="physios-skeleton-name-row">
+              <div class="physios-skeleton-line physios-sk-name physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-spec physios-shimmer"></div>
+            </div>
+
+            <!-- Rating & Stories Skeleton -->
+            <div class="physios-doc-metrics-row">
+              <div class="physios-skeleton-pill physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-reviews physios-shimmer"></div>
+            </div>
+
+            <!-- Clinic & Location Skeleton -->
+            <div class="physios-doc-clinic-row">
+              <div class="physios-skeleton-line physios-sk-location physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-clinic physios-shimmer"></div>
+            </div>
+
+            <!-- Fee & Experience Skeleton -->
+            <div class="physios-doc-footer">
+              <div class="physios-skeleton-line physios-sk-fee physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-exp physios-shimmer"></div>
+            </div>
+
+            <!-- Action Buttons Skeleton -->
+            <div class="physios-doc-action-col">
+              <div class="physios-skeleton-btn physios-sk-btn-solid physios-shimmer"></div>
+              <div class="physios-skeleton-btn physios-sk-btn-outline physios-shimmer"></div>
             </div>
           </div>
         </article>
@@ -469,6 +517,20 @@
             </div>
           </div>
         </article>
+        } @empty {
+        <div class="physios-empty-doctors">
+          <div class="physios-empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="17" y1="8" x2="23" y2="14" />
+              <line x1="23" y1="8" x2="17" y2="14" />
+            </svg>
+          </div>
+          <h3 class="physios-empty-title">No Practitioners Found</h3>
+          <p class="physios-empty-desc">We couldn't find any physiotherapists matching your criteria in {{ selectedCity() }}.</p>
+        </div>
+        }
         }
         }
       </div>

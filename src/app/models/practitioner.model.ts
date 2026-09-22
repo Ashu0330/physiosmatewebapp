@@ -284,3 +284,13 @@ export interface BookingState {
   selectedTime?: string;
   bookingId?: string;
 }
+
+export class ReviewModel {
+  PractitionerId: number;
+  PractitioName: string;
+  providerImage?: string | null;
+  clinicName?: string | null;
+  clinicId?: number | null;
+  rating?: number | null;
+  review: string;
+}

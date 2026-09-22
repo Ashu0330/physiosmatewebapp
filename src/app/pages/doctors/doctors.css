@@ -491,6 +491,137 @@
 }
 
 /* =========================================================
+ * Doctor Card Skeleton Loading & Shimmer Animation
+ * ========================================================= */
+.physios-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 0%,
+    #e2e8f0 50%,
+    #f1f5f9 100%
+  );
+  background-size: 200% 100%;
+  animation: physiosShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes physiosShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.physios-skeleton-count {
+  display: inline-block;
+  width: 28px;
+  height: 22px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.physios-skeleton-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.physios-skeleton-line {
+  border-radius: 4px;
+}
+
+.physios-skeleton-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.physios-sk-name {
+  width: 190px;
+  height: 22px;
+  border-radius: 5px;
+}
+
+.physios-sk-spec {
+  width: 110px;
+  height: 18px;
+  border-radius: 4px;
+}
+
+.physios-skeleton-pill {
+  width: 52px;
+  height: 22px;
+  border-radius: 4px;
+}
+
+.physios-sk-reviews {
+  width: 80px;
+  height: 16px;
+}
+
+.physios-sk-location {
+  width: 120px;
+  height: 16px;
+}
+
+.physios-sk-clinic {
+  width: 160px;
+  height: 16px;
+}
+
+.physios-sk-fee {
+  width: 140px;
+  height: 18px;
+}
+
+.physios-sk-exp {
+  width: 110px;
+  height: 18px;
+}
+
+.physios-skeleton-btn {
+  border-radius: 4px;
+  height: 38px;
+}
+
+.physios-sk-btn-solid {
+  width: 175px;
+}
+
+.physios-sk-btn-outline {
+  width: 130px;
+}
+
+/* Empty State */
+.physios-empty-doctors {
+  text-align: center;
+  padding: 48px 24px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  margin: 24px 0;
+}
+
+.physios-empty-icon {
+  margin-bottom: 12px;
+}
+
+.physios-empty-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.physios-empty-desc {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* =========================================================
  * 3. Right Sidebar Widgets
  * ========================================================= */
 .physios-doctors-sidebar {
@@ -882,7 +1013,9 @@
   }
 
   .physios-btn-contact-clinic-solid,
-  .physios-btn-view-profile-outline {
+  .physios-btn-view-profile-outline,
+  .physios-doc-card-skeleton .physios-sk-btn-solid,
+  .physios-doc-card-skeleton .physios-sk-btn-outline {
     width: 100%;
   }
 
