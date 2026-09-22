@@ -102,17 +102,17 @@
           </h3>
 
           <!-- Add Review Section -->
-          <div class="add-review-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.75rem;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div class="reviewer-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: #E9FAF9; color: #087F76; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; border: 1px solid #D5F3EF;">
+          <div class="add-review-card">
+            <div class="add-review-card-head">
+              <div class="reviewer-avatar-wrap">
+                <div class="reviewer-avatar">
                   {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName.charAt(0).toUpperCase() : 'U' }}
                 </div>
                 <div>
-                  <h4 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0;">
+                  <h4>
                     {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName : 'Share Your Experience' }}
                   </h4>
-                  <p style="font-size: 0.78rem; color: #64748b; margin: 2px 0 0 0;">
+                  <p>
                     {{ isLoggedIn ? 'Verified Patient Review' : 'Consulted Dr. ' + (doctorDetail()?.fullName || practitioner.name) + '? Leave a review below.' }}
                   </p>
                 </div>
@@ -167,26 +167,23 @@
             </div>
 
             <!-- Review Textarea -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="review_textarea">
               <textarea
                 id="patient-review-textarea"
                 class="form-control review-input-textarea"
                 rows="4"
-                placeholder="Write your review here... How was your consultation, treatment satisfaction, and overall recovery?"
-                style="width: 100%; padding: 0.85rem 1rem; font-size: 0.88rem; font-family: inherit; line-height: 1.5; color: #1e293b; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 6px; resize: vertical; min-height: 95px; outline: none; box-sizing: border-box;"
+                placeholder="Write your review here... How was your consultation, treatment satisfaction, and overall recovery?"                
               ></textarea>
 
-              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #334155; cursor: pointer; user-select: none;">
-                  <input type="checkbox" checked style="accent-color: #10A896; width: 15px; height: 15px; cursor: pointer;" />
+              <div class="review_btns">
+                <label>
+                  <input type="checkbox" checked />
                   <span>👍 I recommend this doctor</span>
                 </label>
 
                 <button
                   type="button"
-                  class="btn-submit-review"
-                  style="background: #10A896; color: #ffffff; border: none; border-radius: 6px; padding: 0.55rem 1.4rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.18s ease;"
-                >
+                  class="btn-submit-review">
                   <span>Submit Review</span>
                 </button>
               </div>
