@@ -372,6 +372,15 @@ export class Doctors extends BaseComponent implements OnInit {
     }
   }
   async AddeReview() {
-
+    let data = this.form.value;
+    const res = await this.apiService.Post<any[]>(
+      ApiEndPoints.AddReview, data
+    );
+    if (res.isSuccess) {
+      this.alert.toastSuccess(res.message);
+      this.form.reset();
+    } else {
+      this.alert.toastError(res.message);
+    }
   }
 }
