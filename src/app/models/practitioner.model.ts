@@ -284,7 +284,7 @@ export interface BookingState {
   selectedTime?: string;
   bookingId?: string;
 }
-export interface PractitionerReview {
+export class providerReview {
   id: number;
   userId: number;
   userName: string;
@@ -294,10 +294,12 @@ export interface PractitionerReview {
   clinicId?: number | null;
   rating: number;
   review: string;
+  profileImage?: string;
   review1?: string;
-  visitedFor?: string;
+  visitedFor: string;
   isRecommended?: boolean | null;
   timeAgo?: string;
+  fullName?: string;
   createdDate?: string | Date;
   updatedDate?: string | Date;
   tags?: string[];

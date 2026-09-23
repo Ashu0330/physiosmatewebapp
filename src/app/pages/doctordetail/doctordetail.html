@@ -118,7 +118,7 @@
                   </p>
                 </div>
               </div>
-             
+
             </div>
 
             <!-- 5 Individual Stars Rating Picker -->
@@ -184,16 +184,14 @@
 
               <div class="visit-chips-wrap">
                 @for (reason of predefinedVisitReasons; track reason) {
-                <button type="button" class="visit-choice-chip"
-                  [class.selected]="isVisitReasonSelected(reason)"
+                <button type="button" class="visit-choice-chip" [class.selected]="isVisitReasonSelected(reason)"
                   (click)="toggleVisitReason(reason)">
                   <span class="chip-check">{{ isVisitReasonSelected(reason) ? '✓' : '+' }}</span>
                   <span class="chip-text">{{ reason }}</span>
                 </button>
                 }
 
-                <button type="button" class="visit-choice-chip other-chip"
-                  [class.selected]="showCustomVisit()"
+                <button type="button" class="visit-choice-chip other-chip" [class.selected]="showCustomVisit()"
                   (click)="toggleCustomVisit()">
                   <span class="chip-check">{{ showCustomVisit() ? '✕' : '+' }}</span>
                   <span class="chip-text">Other Condition</span>
@@ -202,8 +200,7 @@
 
               @if (showCustomVisit()) {
               <div class="custom-visit-input-wrap">
-                <input type="text" class="form-control custom-visit-input"
-                  [value]="customVisitText()"
+                <input type="text" class="form-control custom-visit-input" [value]="customVisitText()"
                   (input)="onCustomVisitChange($event)"
                   placeholder="Type your specific condition (e.g. Tennis Elbow, Scoliosis)..." />
               </div>
@@ -226,7 +223,8 @@
               <div class="review_btns">
                 <label class="recommend-label">
                   <input type="checkbox" formControlName="isRecommended" id="recommend-check" />
-                  <span>{{ reviewForm.get('isRecommended')?.value ? '👍 I recommend this doctor' : '🤷 Not recommending' }}</span>
+                  <span>{{ reviewForm.get('isRecommended')?.value ? '👍 I recommend this doctor' : '🤷 Not recommending'
+                    }}</span>
                 </label>
 
                 <button type="button" class="btn-submit-review" (click)="AddReview()" [disabled]="isSubmittingReview()">
@@ -237,23 +235,27 @@
           </div>
 
           <div class="reviews-list">
-            @for (rev of reviews(); track rev.id) {
+            @for (rev of Review(); track rev.id) {
             <div class="review-item">
               <div class="review-header">
                 <div class="reviewer-avatar">
-                  {{ (rev.userName || 'P').charAt(0) }}
+                  @if (rev.profileImage) {
+                  <img [src]="rev.profileImage" [alt]="rev.fullName || 'Patient'" />
+                  } @else {
+                  {{ (rev.fullName || 'P').charAt(0).toUpperCase() }}
+                  }
                 </div>
                 <div class="reviewer-info">
-                  <span class="reviewer-name">{{ rev.userName || 'Patient' }} (Verified)</span>
+                  <span class="reviewer-name">{{ rev.fullName || 'Patient' }} (Verified)</span>
                   <span class="review-time">{{ rev.timeAgo || 'Recent' }}</span>
                 </div>
               </div>
 
-              @if (rev.visitedFor) {
+              <!-- @if (rev.visitedFor) {
               <p class="review-visited-for">
                 <strong>Visited For</strong> {{ rev.visitedFor }}
               </p>
-              }
+              } -->
 
               @if (rev.isRecommended !== false) {
               <div class="review-recommend">
@@ -261,13 +263,13 @@
                 <span>I recommend the doctor</span>
               </div>
               }
-
-              @if (rev.tags && rev.tags.length > 0) {
+              @if (rev.visitedFor) {
               <div class="review-tags-wrap">
-                <span class="happy-with-label">Happy with:</span>
+                <span class="happy-with-label">Visited For:</span>
+
                 <div class="tag-pills">
-                  @for (t of rev.tags; track t) {
-                  <span class="tag-pill">{{ t }}</span>
+                  @for (t of rev.visitedFor.split(','); track t) {
+                  <span class="tag-pill">{{ t.trim() }}</span>
                   }
                 </div>
               </div>
@@ -279,7 +281,8 @@
               <div class="clinic-reply-bubble">
                 <span class="reply-arrow">↳</span>
                 <div class="reply-content">
-                  <strong class="reply-author">{{ practitioner.clinicName || doctorDetail()?.fullName }} replied:</strong>
+                  <strong class="reply-author">{{ practitioner.clinicName || doctorDetail()?.fullName }}
+                    replied:</strong>
                   <p class="reply-text">{{ rev.clinicReply || rev.providerReply }}</p>
                 </div>
               </div>

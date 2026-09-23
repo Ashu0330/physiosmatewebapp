@@ -41,8 +41,8 @@ export const ApiEndPoints = {
     UpdateProfile: 'User/UpdateProfile',
     UpdatePractitioner: 'Practitioner/AddPractitioner',
     UpdateClinic: 'Clinic/AddClinic',
-    AddReview: 'Review/AddPractitionerReview',
-    GetPractitionerReviews: 'Review/GetPractitionerReviews',
+    AddReview: 'Review/AddProviderReview',
+    GetAllReviews: 'Review/GetAllReview',
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',

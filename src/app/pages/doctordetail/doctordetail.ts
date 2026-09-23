@@ -7,7 +7,7 @@ import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
-import { PractitionerDetailedData, PractitionerReview } from '../../models/practitioner.model';
+import { PractitionerDetailedData, providerReview } from '../../models/practitioner.model';
 import { SharedModule } from '../../shared/shared-module';
 
 
@@ -49,6 +49,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   // Review Form
   reviewForm!: FormGroup;
   isSubmittingReview = signal<boolean>(false);
+  Review = signal<providerReview[]>([]);
   practitionerId: number = 0;
   async ngOnInit(): Promise<void> {
 
@@ -60,7 +61,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     // Initialise review form with the practitioner id from route
     this.GetDoctorById();
     this.createReviewForm();
-    await this.GetReviews();
+    await this.GetAllReview();
 
     const isClinicRoute =
       this.route.snapshot.data['isClinic'] === true ||
@@ -162,18 +163,27 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.showCustomVisit.set(false);
     this.customVisitText.set('');
   }
+  async GetAllReview(): Promise<void> {
+    const model = {
+      PractitionerId: this.practitionerId
+    };
+    const res = await this.apiService.Post<providerReview[]>(ApiEndPoints.GetAllReviews, model);
+    this.Review.set(res.isSuccess ? (res.data ?? []) : []);
+  }
 
   async AddReview(): Promise<void> {
     if (!this.isLoggedIn) {
       this.showError('Please log in to submit a review.');
       return;
     }
+    debugger
     if (this.reviewForm.invalid) {
       this.reviewForm.markAllAsTouched();
       this.showError('Please fill rating and review before submitting.');
       return;
     }
     this.isSubmittingReview.set(true);
+    debugger
     try {
       const formVal = this.reviewForm.value;
       const payload = {
@@ -198,7 +208,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         this.selectedVisitReasons.set([]);
         this.showCustomVisit.set(false);
         this.customVisitText.set('');
-        await this.GetReviews();
+        await this.GetAllReview();
       } else {
         this.showError(res.message || 'Failed to submit review.');
       }
@@ -207,14 +217,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
   }
 
-  async GetReviews() {
 
-    let res = await this.apiService.Get<any>(ApiEndPoints.GetPractitionerReviews + "?id=" + this.practitionerId);
-    if (res.isSuccess) {
-      debugger
-      this.reviews.set(res.data);
-    }
-  }
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
     doctorSpecialty: string;
@@ -323,7 +326,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   ]);
 
   // Reviews Data JSON
-  readonly reviews = signal<PractitionerReview[]>([
+  readonly reviews = signal<providerReview[]>([
     {
       id: 15,
       userId: 42,
