@@ -173,43 +173,114 @@
               </div>
             </div>
 
-            <!-- Visited For Choice Chips -->
-            <div class="visited-for-section">
-              <div class="visited-for-header">
-                <span class="visited-for-title">
-                  Reason for Visit / Condition:
-                </span>
-                <span class="visited-for-hint">(Choose 1 or more)</span>
+            <!-- Visited For & Happy About Tabbed Section -->
+            <div class="review-feedback-tabs-section">
+              <!-- Tabs Header -->
+              <div class="review-feedback-nav">
+                <button type="button" class="review-tab-btn"
+                  [class.active]="activeReviewTab() === 'visitedFor'"
+                  (click)="setActiveReviewTab('visitedFor')">
+                  <span class="tab-icon">🏥</span>
+                  <span class="tab-label">Visited For</span>
+                  @if (selectedVisitReasons().length || (showCustomVisit() && customVisitText().trim())) {
+                  <span class="tab-count-badge">
+                    {{ selectedVisitReasons().length + (showCustomVisit() && customVisitText().trim() ? 1 : 0) }}
+                  </span>
+                  }
+                </button>
+
+                <button type="button" class="review-tab-btn"
+                  [class.active]="activeReviewTab() === 'happyAbout'"
+                  (click)="setActiveReviewTab('happyAbout')">
+                  <span class="tab-icon">✨</span>
+                  <span class="tab-label">Happy About</span>
+                  @if (selectedHappyAbout().length || (showCustomHappyAbout() && customHappyAboutText().trim())) {
+                  <span class="tab-count-badge">
+                    {{ selectedHappyAbout().length + (showCustomHappyAbout() && customHappyAboutText().trim() ? 1 : 0) }}
+                  </span>
+                  }
+                </button>
               </div>
 
-              <div class="visit-chips-wrap">
-                @for (reason of predefinedVisitReasons; track reason) {
-                <button type="button" class="visit-choice-chip" [class.selected]="isVisitReasonSelected(reason)"
-                  (click)="toggleVisitReason(reason)">
-                  <span class="chip-check">{{ isVisitReasonSelected(reason) ? '✓' : '+' }}</span>
-                  <span class="chip-text">{{ reason }}</span>
-                </button>
+              <!-- Tab 1: Visited For (Conditions) -->
+              @if (activeReviewTab() === 'visitedFor') {
+              <div class="tab-content-panel">
+                <div class="visited-for-header">
+                  <span class="visited-for-title">Reason for Visit / Condition:</span>
+                  <span class="visited-for-hint">(Choose 1 or more)</span>
+                </div>
+
+                <div class="visit-chips-wrap">
+                  @for (reason of predefinedVisitReasons; track reason) {
+                  <button type="button" class="visit-choice-chip" [class.selected]="isVisitReasonSelected(reason)"
+                    (click)="toggleVisitReason(reason)">
+                    <span class="chip-check">{{ isVisitReasonSelected(reason) ? '✓' : '+' }}</span>
+                    <span class="chip-text">{{ reason }}</span>
+                  </button>
+                  }
+
+                  <button type="button" class="visit-choice-chip other-chip" [class.selected]="showCustomVisit()"
+                    (click)="toggleCustomVisit()">
+                    <span class="chip-check">{{ showCustomVisit() ? '✕' : '+' }}</span>
+                    <span class="chip-text">Other Condition</span>
+                  </button>
+                </div>
+
+                @if (showCustomVisit()) {
+                <div class="custom-visit-input-wrap">
+                  <input type="text" class="form-control custom-visit-input" [value]="customVisitText()"
+                    (input)="onCustomVisitChange($event)"
+                    placeholder="Type your specific condition (e.g. Tennis Elbow, Scoliosis)..." />
+                </div>
                 }
 
-                <button type="button" class="visit-choice-chip other-chip" [class.selected]="showCustomVisit()"
-                  (click)="toggleCustomVisit()">
-                  <span class="chip-check">{{ showCustomVisit() ? '✕' : '+' }}</span>
-                  <span class="chip-text">Other Condition</span>
-                </button>
-              </div>
-
-              @if (showCustomVisit()) {
-              <div class="custom-visit-input-wrap">
-                <input type="text" class="form-control custom-visit-input" [value]="customVisitText()"
-                  (input)="onCustomVisitChange($event)"
-                  placeholder="Type your specific condition (e.g. Tennis Elbow, Scoliosis)..." />
+                @if (reviewForm.get('visitedFor')?.value) {
+                <div class="selected-visit-summary">
+                  <span class="summary-label">Selected:</span>
+                  <span class="summary-val">{{ reviewForm.get('visitedFor')?.value }}</span>
+                </div>
+                }
               </div>
               }
 
-              @if (reviewForm.get('visitedFor')?.value) {
-              <div class="selected-visit-summary">
-                <span class="summary-label">Selected:</span>
-                <span class="summary-val">{{ reviewForm.get('visitedFor')?.value }}</span>
+              <!-- Tab 2: Happy About (Experience) -->
+              @if (activeReviewTab() === 'happyAbout') {
+              <div class="tab-content-panel">
+                <div class="visited-for-header">
+                  <span class="visited-for-title">What were you happy with?</span>
+                  <span class="visited-for-hint">(Choose 1 or more)</span>
+                </div>
+
+                <div class="visit-chips-wrap">
+                  @for (option of predefinedHappyAbout; track option) {
+                  <button type="button" class="visit-choice-chip happy-choice-chip" [class.selected]="isHappyAboutSelected(option)"
+                    (click)="toggleHappyAbout(option)">
+                    <span class="chip-check">{{ isHappyAboutSelected(option) ? '✓' : '+' }}</span>
+                    <span class="chip-text">{{ option }}</span>
+                  </button>
+                  }
+
+                  <button type="button" class="visit-choice-chip other-chip" [class.selected]="showCustomHappyAbout()"
+                    (click)="toggleCustomHappyAbout()">
+                    <span class="chip-check">{{ showCustomHappyAbout() ? '✕' : '+' }}</span>
+                    <span class="chip-text">Other</span>
+                  </button>
+                </div>
+
+                @if (showCustomHappyAbout()) {
+                <div class="custom-visit-input-wrap">
+                  <input type="text" class="form-control custom-visit-input" [value]="customHappyAboutText()"
+                    (input)="onCustomHappyAboutChange($event)"
+                    placeholder="Type what you were happy with..." />
+                </div>
+                }
+
+                @if (reviewForm.get('happyAbout')?.value) {
+                <div class="selected-visit-summary happy-summary">
+                  <span class="summary-label">Selected:</span>
+                  <span class="summary-val">{{ reviewForm.get('happyAbout')?.value }}</span>
+                </div>
+                }
               </div>
               }
             </div>
@@ -251,11 +322,12 @@
                 </div>
               </div>
 
-              <!-- @if (rev.visitedFor) {
+              <!-- Visited For in the red highlighted area from screenshot (above recommendation) -->
+              @if (rev.visitedFor ) {
               <p class="review-visited-for">
-                <strong>Visited For</strong> {{ rev.visitedFor }}
+                <strong>Visited For</strong> {{ rev.visitedFor  }}
               </p>
-              } -->
+              }
 
               @if (rev.isRecommended !== false) {
               <div class="review-recommend">
@@ -263,13 +335,15 @@
                 <span>I recommend the doctor</span>
               </div>
               }
-              @if (rev.visitedFor) {
-              <div class="review-tags-wrap">
-                <span class="happy-with-label">Visited For:</span>
+
+              <!-- Happy About in the green tag pills section -->
+              @if (rev.happyAbout ) {
+              <div class="review-tags-wrap happy-about-wrap">
+                <span class="happy-with-label">Happy with:</span>
 
                 <div class="tag-pills">
-                  @for (t of rev.visitedFor.split(','); track t) {
-                  <span class="tag-pill">{{ t.trim() }}</span>
+                  @for (t of (rev.happyAbout).split(','); track t) {
+                  <span class="tag-pill tag-pill-happy">{{ t.trim() }}</span>
                   }
                 </div>
               </div>

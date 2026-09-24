@@ -97,6 +97,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   // Predefined Visit Reasons for Review
+  readonly activeReviewTab = signal<'visitedFor' | 'happyAbout'>('visitedFor');
+
   readonly predefinedVisitReasons = [
     'Knee Pain',
     'Back Pain',
@@ -111,6 +113,23 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   readonly selectedVisitReasons = signal<string[]>([]);
   readonly showCustomVisit = signal<boolean>(false);
   readonly customVisitText = signal<string>('');
+
+  readonly predefinedHappyAbout = [
+    'Doctor Friendliness',
+    'Explanation of Health Issue',
+    'Detailed Consultation',
+    'Treatment Satisfaction',
+    'Value for Money',
+    'Wait Time',
+    'Clinic Hygiene & Ambience'
+  ];
+  readonly selectedHappyAbout = signal<string[]>([]);
+  readonly showCustomHappyAbout = signal<boolean>(false);
+  readonly customHappyAboutText = signal<string>('');
+
+  setActiveReviewTab(tab: 'visitedFor' | 'happyAbout'): void {
+    this.activeReviewTab.set(tab);
+  }
 
   toggleVisitReason(reason: string): void {
     this.selectedVisitReasons.update(current => {
@@ -151,18 +170,63 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.reviewForm.patchValue({ visitedFor: combined });
   }
 
+  toggleHappyAbout(option: string): void {
+    this.selectedHappyAbout.update(current => {
+      const exists = current.includes(option);
+      const updated = exists ? current.filter(o => o !== option) : [...current, option];
+      this.syncHappyAboutControl(updated, this.customHappyAboutText());
+      return updated;
+    });
+  }
+
+  isHappyAboutSelected(option: string): boolean {
+    return this.selectedHappyAbout().includes(option);
+  }
+
+  toggleCustomHappyAbout(): void {
+    this.showCustomHappyAbout.update(v => {
+      const next = !v;
+      if (!next) {
+        this.customHappyAboutText.set('');
+        this.syncHappyAboutControl(this.selectedHappyAbout(), '');
+      }
+      return next;
+    });
+  }
+
+  onCustomHappyAboutChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.customHappyAboutText.set(val);
+    this.syncHappyAboutControl(this.selectedHappyAbout(), val);
+  }
+
+  private syncHappyAboutControl(selected: string[], custom: string): void {
+    const all = [...selected];
+    if (custom && custom.trim()) {
+      all.push(custom.trim());
+    }
+    const combined = all.join(', ');
+    this.reviewForm.patchValue({ happyAbout: combined });
+  }
+
   createReviewForm(): void {
     this.reviewForm = this.fb.group({
       rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
       review: ['', [Validators.required, Validators.minLength(3)]],
       practitionerId: [this.practitionerId, [Validators.required]],
       visitedFor: [''],
+      happyAbout: [''],
       isRecommended: [true],
     });
     this.selectedVisitReasons.set([]);
     this.showCustomVisit.set(false);
     this.customVisitText.set('');
+    this.selectedHappyAbout.set([]);
+    this.showCustomHappyAbout.set(false);
+    this.customHappyAboutText.set('');
+    this.activeReviewTab.set('visitedFor');
   }
+
   async GetAllReview(): Promise<void> {
     const model = {
       PractitionerId: this.practitionerId
@@ -191,7 +255,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         practitionerId: this.practitionerId,
         review1: formVal.review,
         isRecommended: !!formVal.isRecommended,
-        visitedFor: formVal.visitedFor?.trim() || null
+        visitedFor: formVal.visitedFor?.trim() || null,
+        happyAbout: formVal.happyAbout?.trim() || null,
+        VisitedFor: formVal.visitedFor?.trim() || null,
+        HappyAbout: formVal.happyAbout?.trim() || null
       };
       const res = await this.apiService.Post<boolean>(
         ApiEndPoints.AddReview,
@@ -203,11 +270,16 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           rating: 0,
           review: '',
           visitedFor: '',
+          happyAbout: '',
           isRecommended: true
         });
         this.selectedVisitReasons.set([]);
         this.showCustomVisit.set(false);
         this.customVisitText.set('');
+        this.selectedHappyAbout.set([]);
+        this.showCustomHappyAbout.set(false);
+        this.customHappyAboutText.set('');
+        this.activeReviewTab.set('visitedFor');
         await this.GetAllReview();
       } else {
         this.showError(res.message || 'Failed to submit review.');

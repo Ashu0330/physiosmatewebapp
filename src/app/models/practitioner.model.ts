@@ -296,7 +296,8 @@ export class providerReview {
   review: string;
   profileImage?: string;
   review1?: string;
-  visitedFor: string;
+  visitedFor?: string;
+  happyAbout?: string;
   isRecommended?: boolean | null;
   timeAgo?: string;
   fullName?: string;
