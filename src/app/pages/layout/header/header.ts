@@ -1,6 +1,8 @@
 import { Component, OnInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SharedModule } from '../../../shared/shared-module';
 import { environment } from '../../../environment/environment';
 import { Sidebar } from '../sidebar/sidebar';
@@ -36,13 +38,13 @@ export class Header extends BaseComponent implements OnInit {
       this.setParentMenuFromRoute();
     }
 
-    this.router.events.subscribe(() => {
-      this.closeMobileMenu();
-      if (!this.isLoggedIn) {
-        return;
-      }
-
-      this.setParentMenuFromRoute();
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+      this.closeMobileMenu();        if (!this.isLoggedIn) {
+          return;
+        }
+        this.setParentMenuFromRoute();
     });
   }
 
@@ -50,8 +52,7 @@ export class Header extends BaseComponent implements OnInit {
     this.mobileMenuOpen = !this.mobileMenuOpen;
     if (this.mobileMenuOpen) {
       this.profileDropdownOpen = false;
-      this.lockBodyScroll();
-    } else {
+      this.lockBodyScroll();      } else {
       this.unlockBodyScroll();
     }
   }
