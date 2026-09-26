@@ -1,5 +1,7 @@
 import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SharedModule } from '../../../shared/shared-module';
 import { environment } from '../../../environment/environment';
 import { Sidebar } from '../sidebar/sidebar';
@@ -29,15 +31,14 @@ export class Header extends BaseComponent implements OnInit {
       this.setParentMenuFromRoute();
     }
 
-    this.router.events.subscribe(() => {
-
-      if (!this.isLoggedIn) {
-        return;
-      }
-
-      this.setParentMenuFromRoute();
-
-    });
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+        if (!this.isLoggedIn) {
+          return;
+        }
+        this.setParentMenuFromRoute();
+      });
   }
   private setParentMenuFromRoute(): void {
 

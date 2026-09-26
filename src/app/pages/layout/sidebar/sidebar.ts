@@ -1,4 +1,4 @@
-import { Component, input, output, model, computed, effect } from '@angular/core';
+import { Component, input, output, computed, effect, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -15,9 +15,9 @@ import { MenusModel } from '../../../models/mastermodel';
   styleUrl: './sidebar.css',
 })
 export class Sidebar extends BaseComponent {
-  readonly activeTab = model<string>('');
+  readonly activeTab = signal<string>('');
   readonly tabChange = output<string>();
-  readonly menulist = model<MenusModel[]>([]);
+  readonly menulist = signal<MenusModel[]>([]);
   readonly parentMenuId = input<number | null>(null);
 
   private previousParentMenuId: number | null = null;
@@ -54,13 +54,37 @@ export class Sidebar extends BaseComponent {
     effect(() => {
       const parentId = this.parentMenuId();
       if (parentId !== null && parentId !== undefined) {
+        // Valid ID received from header — persist it and load menus
         this.previousParentMenuId = parentId;
+        this.setStoredParentId(parentId);
         this.GetAllMenu(parentId);
-      } else if (this.previousParentMenuId !== null) {
-        this.previousParentMenuId = null;
-        this.menulist.set([]);
+      } else {
+        // parentMenuId is null (e.g. on refresh before header resolves).
+        // Try restoring from localStorage safely.
+        const storedId = this.getStoredParentId();
+        if (storedId && storedId !== this.previousParentMenuId) {
+          this.previousParentMenuId = storedId;
+          this.GetAllMenu(storedId);
+        } else if (!storedId && this.previousParentMenuId !== null) {
+          this.previousParentMenuId = null;
+          this.menulist.set([]);
+        }
       }
     });
+  }
+
+  private getStoredParentId(): number | null {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('parentId');
+      return stored ? Number(stored) : null;
+    }
+    return null;
+  }
+
+  private setStoredParentId(id: number): void {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('parentId', String(id));
+    }
   }
 
   async GetAllMenu(parentId?: number | null): Promise<void> {
