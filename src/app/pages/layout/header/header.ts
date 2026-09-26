@@ -1,4 +1,5 @@
-import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Component, OnInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SharedModule } from '../../../shared/shared-module';
 import { environment } from '../../../environment/environment';
@@ -14,15 +15,21 @@ import { ApiEndPoints } from '../../../helper/api-endpoints';
   styleUrl: './header.css',
 })
 export class Header extends BaseComponent implements OnInit {
-
   menulist: MenusModel[] = [];
   selectedParentMenuId: number | null = null;
   profileDropdownOpen = false;
+  mobileMenuOpen = false;
+  mobileProvidersOpen = false;
+  mobileHelpOpen = false;
   baseImageUrl = environment.baseImageUrl;
 
   private sanitizer = inject(DomSanitizer);
+  private platformId = inject(PLATFORM_ID);
 
   async ngOnInit(): Promise<void> {
+    this.destroyRef.onDestroy(() => {
+      this.unlockBodyScroll();
+    });
 
     if (this.isLoggedIn) {
       await this.GetAllMenu();
@@ -30,29 +37,69 @@ export class Header extends BaseComponent implements OnInit {
     }
 
     this.router.events.subscribe(() => {
-
+      this.closeMobileMenu();
       if (!this.isLoggedIn) {
         return;
       }
 
       this.setParentMenuFromRoute();
-
     });
   }
-  private setParentMenuFromRoute(): void {
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+    if (this.mobileMenuOpen) {
+      this.profileDropdownOpen = false;
+      this.lockBodyScroll();
+    } else {
+      this.unlockBodyScroll();
+    }
+  }
+
+  closeMobileMenu(): void {
+    if (this.mobileMenuOpen) {
+      this.mobileMenuOpen = false;
+      this.unlockBodyScroll();
+    }
+  }
+
+  toggleMobileProviders(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.mobileProvidersOpen = !this.mobileProvidersOpen;
+  }
+
+  toggleMobileHelp(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.mobileHelpOpen = !this.mobileHelpOpen;
+  }
+
+  private lockBodyScroll(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      document.body.classList.add('overflow-hidden');
+    }
+  }
+
+  private unlockBodyScroll(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      document.body.classList.remove('overflow-hidden');
+    }
+  }
+
+  private setParentMenuFromRoute(): void {
     const currentUrl = this.router.url.split('?')[0];
 
-    const currentMenu = this.menulist.find(menu => {
-
+    const currentMenu = this.menulist.find((menu) => {
       if (!menu.path) {
         return false;
       }
 
       const menuPath = menu.path.split('?')[0];
 
-      return currentUrl === menuPath ||
-        currentUrl.startsWith(menuPath + '/');
+      return currentUrl === menuPath || currentUrl.startsWith(menuPath + '/');
     });
 
     if (currentMenu) {
@@ -69,7 +116,8 @@ export class Header extends BaseComponent implements OnInit {
   }
 
   get profilePhotoUrl(): string | null {
-    const pic = this.currentUser?.profilePictureUrl || this.currentUser?.profileImage;
+    const pic =
+      this.currentUser?.profilePictureUrl || this.currentUser?.profileImage;
     if (!pic) return null;
     if (pic.startsWith('http')) return pic;
     return this.baseImageUrl + pic;
@@ -85,7 +133,14 @@ export class Header extends BaseComponent implements OnInit {
   async toggleProfileDropdown(event: Event): Promise<void> {
     event.stopPropagation();
     this.profileDropdownOpen = !this.profileDropdownOpen;
-    if (this.profileDropdownOpen && this.isLoggedIn && (!this.menulist || this.menulist.length === 0)) {
+    if (this.profileDropdownOpen) {
+      this.closeMobileMenu();
+    }
+    if (
+      this.profileDropdownOpen &&
+      this.isLoggedIn &&
+      (!this.menulist || this.menulist.length === 0)
+    ) {
       await this.GetAllMenu();
     }
   }
@@ -95,35 +150,41 @@ export class Header extends BaseComponent implements OnInit {
     this.profileDropdownOpen = false;
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.closeMobileMenu();
+    this.profileDropdownOpen = false;
+  }
+
   selectMenuItem(item: MenusModel): void {
-    if (item.menuName == "Logout") {
+    if (item.menuName == 'Logout') {
       this.logout();
       return;
     }
     this.selectedParentMenuId = item.menuId ?? null;
     this.profileDropdownOpen = false;
-
+    this.closeMobileMenu();
   }
-
 
   navigateTo(path: string): void {
     this.profileDropdownOpen = false;
+    this.closeMobileMenu();
   }
 
   logout(): void {
     this.authService.logout();
     this.menulist = [];
     this.profileDropdownOpen = false;
+    this.closeMobileMenu();
     this.router.navigate(['/']);
   }
 
   async GetAllMenu(): Promise<void> {
-
     if (!this.isLoggedIn) {
       return;
     }
     const res = await this.apiService.Get<MenusModel[]>(
-      `${ApiEndPoints.GetAllMenu}?Type=Profile`
+      `${ApiEndPoints.GetAllMenu}?Type=Profile`,
     );
 
     this.menulist = res.isSuccess ? (res.data ?? []) : [];

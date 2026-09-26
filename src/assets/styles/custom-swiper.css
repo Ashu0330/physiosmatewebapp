@@ -25,6 +25,48 @@
   width: 100%;
 }
 
+/* =========================================================
+ * Conditions Swiper
+ * ========================================================= */
+.physios-conditions-cards-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.physios-conditions-swiper {
+  width: 100%;
+  padding: 8px 4px 12px 4px;
+  overflow: hidden;
+}
+
+.physios-conditions-swiper .swiper-wrapper {
+  display: flex;
+  box-sizing: content-box;
+}
+
+.physios-conditions-swiper .swiper-slide {
+  height: auto;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.physios-conditions-swiper .swiper-slide .physios-circle-item {
+  width: 100%;
+  max-width: 150px;
+  margin: 0 auto;
+}
+
+.physios-conditions-cards-wrapper .physios-carousel-prev,
+.physios-conditions-cards-wrapper .physios-carousel-next {
+  top: 45px;
+  transform: translateY(-50%);
+}
+
+/* =========================================================
+ * Carousel Prev/Next Buttons
+ * ========================================================= */
 .physios-carousel-prev,
 .physios-carousel-next {
   position: absolute;
@@ -66,4 +108,3 @@
   visibility: hidden;
   pointer-events: none;
 }
-

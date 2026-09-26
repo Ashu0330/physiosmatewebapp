@@ -15,8 +15,10 @@ import { Navigation } from 'swiper/modules';
 export class Home implements AfterViewInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   @ViewChild('inClinicSwiper') inClinicSwiperRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('conditionsSwiper') conditionsSwiperRef?: ElementRef<HTMLDivElement>;
 
   private swiperInstance?: Swiper;
+  private conditionsSwiperInstance?: Swiper;
 
   readonly selectedCity = signal<string>('Mumbai');
   readonly searchQuery = signal<string>('');
@@ -151,38 +153,72 @@ export class Home implements AfterViewInit, OnDestroy {
   ];
 
   ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId) && this.inClinicSwiperRef?.nativeElement) {
-      const container = this.inClinicSwiperRef.nativeElement;
-      const wrapper = container.closest('.physios-inclinic-cards-wrapper');
+    if (isPlatformBrowser(this.platformId)) {
+      // 1. In-Clinic Consultations Swiper
+      if (this.inClinicSwiperRef?.nativeElement) {
+        const container = this.inClinicSwiperRef.nativeElement;
+        const wrapper = container.closest('.physios-inclinic-cards-wrapper');
 
-      setTimeout(() => {
-        const nextBtn = wrapper?.querySelector('.physios-carousel-next') as HTMLElement;
-        const prevBtn = wrapper?.querySelector('.physios-carousel-prev') as HTMLElement;
+        setTimeout(() => {
+          const nextBtn = wrapper?.querySelector('.physios-carousel-next') as HTMLElement;
+          const prevBtn = wrapper?.querySelector('.physios-carousel-prev') as HTMLElement;
 
-        this.swiperInstance = new Swiper(container, {
-          modules: [Navigation],
-          slidesPerView: 4,
-          spaceBetween: 20,
-          observer: true,
-          observeParents: true,
-          navigation: {
-            nextEl: nextBtn,
-            prevEl: prevBtn,
-          },
-          breakpoints: {
-            0: { slidesPerView: 1, spaceBetween: 16 },
-            576: { slidesPerView: 2, spaceBetween: 16 },
-            768: { slidesPerView: 3, spaceBetween: 20 },
-            1024: { slidesPerView: 4, spaceBetween: 20 },
-          },
-        });
-      }, 0);
+          this.swiperInstance = new Swiper(container, {
+            modules: [Navigation],
+            slidesPerView: 4,
+            spaceBetween: 20,
+            observer: true,
+            observeParents: true,
+            navigation: {
+              nextEl: nextBtn,
+              prevEl: prevBtn,
+            },
+            breakpoints: {
+              0: { slidesPerView: 1, spaceBetween: 16 },
+              576: { slidesPerView: 2, spaceBetween: 16 },
+              768: { slidesPerView: 3, spaceBetween: 20 },
+              1024: { slidesPerView: 4, spaceBetween: 20 },
+            },
+          });
+        }, 0);
+      }
+
+      // 2. Conditions Swiper (6 till 1280px, 4 till 768px, 2 for mobile)
+      if (this.conditionsSwiperRef?.nativeElement) {
+        const condContainer = this.conditionsSwiperRef.nativeElement;
+        const condWrapper = condContainer.closest('.physios-conditions-cards-wrapper');
+
+        setTimeout(() => {
+          const nextBtn = condWrapper?.querySelector('.physios-carousel-next') as HTMLElement;
+          const prevBtn = condWrapper?.querySelector('.physios-carousel-prev') as HTMLElement;
+
+          this.conditionsSwiperInstance = new Swiper(condContainer, {
+            modules: [Navigation],
+            slidesPerView: 6,
+            spaceBetween: 20,
+            observer: true,
+            observeParents: true,
+            navigation: {
+              nextEl: nextBtn,
+              prevEl: prevBtn,
+            },
+            breakpoints: {
+              0: { slidesPerView: 2, spaceBetween: 16 },
+              768: { slidesPerView: 4, spaceBetween: 20 },
+              1280: { slidesPerView: 6, spaceBetween: 20 },
+            },
+          });
+        }, 0);
+      }
     }
   }
 
   ngOnDestroy(): void {
     if (this.swiperInstance) {
       this.swiperInstance.destroy(true, true);
+    }
+    if (this.conditionsSwiperInstance) {
+      this.conditionsSwiperInstance.destroy(true, true);
     }
   }
 

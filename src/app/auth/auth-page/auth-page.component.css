@@ -116,7 +116,10 @@
   color: var(--border-muted);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 769px) {
+  .auth-main-content {
+    justify-content: flex-start;
+  }
   .auth-top-bar {
     padding: 16px 20px;
   }

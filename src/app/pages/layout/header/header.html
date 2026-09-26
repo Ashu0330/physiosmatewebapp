@@ -1,15 +1,13 @@
 <header class="physios-header">
-  <input type="checkbox" id="physios-mobile-menu-toggle" class="physios-mobile-menu-input" />
-
   <div class="physios-header-inner">
     <!-- Left: Logo & Primary Nav -->
     <div class="physios-nav-left">
       <!-- Brand Logo - Physiosmate -->
-      <a routerLink="/" class="physios-brand-link" aria-label="Physiosmate Home">
+      <a routerLink="/" class="physios-brand-link" aria-label="Physiosmate Home" (click)="closeMobileMenu()">
         <span class="brand-name">physios<span class="brand-accent">mate</span></span>
       </a>
 
-      <!-- Primary Navigation Links -->
+      <!-- Primary Navigation Links (Desktop) -->
       <nav class="physios-main-nav">
         <a routerLink="/find-doctors" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
           class="physios-nav-link">
@@ -30,7 +28,7 @@
 
     <!-- Right: Utility Links & Auth Button -->
     <div class="physios-nav-right">      
-      <!-- For Providers Dropdown -->
+      <!-- For Providers Dropdown (Desktop) -->
       <div class="physios-dropdown-wrapper">
         <button type="button" class="physios-dropdown-trigger">
           <span>For Providers</span>
@@ -45,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Security & Help Dropdown -->
+      <!-- Security & Help Dropdown (Desktop) -->
       <div class="physios-dropdown-wrapper">
         <button type="button" class="physios-dropdown-trigger">
           <span>Security & help</span>
@@ -61,7 +59,7 @@
         </div>
       </div>
 
-      <!-- Auth Section: Profile avatar (logged in) OR Login button -->
+      <!-- Auth Section: Profile avatar (logged in) OR Login button (Desktop) -->
       <ng-container *ngIf="isLoggedIn; else loginBtn">
         <!-- Profile Avatar + Dropdown -->
         <div class="physios-profile-wrapper" [class.open]="profileDropdownOpen">
@@ -117,84 +115,299 @@
             @if (menulist && menulist.length > 0) {
             <div class="physios-profile-divider"></div>
             }
+
+            <a routerLink="/user-dashboard" class="physios-profile-item" role="menuitem" (click)="closeProfileDropdown()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              My Feedback
+            </a>
+            <a [routerLink]="profileRoute" class="physios-profile-item" role="menuitem" (click)="closeProfileDropdown()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              View / Update Profile
+            </a>
+            <a routerLink="/help/support" class="physios-profile-item" role="menuitem" (click)="closeProfileDropdown()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Help Center
+            </a>
+            <a routerLink="/user-dashboard" class="physios-profile-item" role="menuitem" (click)="closeProfileDropdown()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              Settings
+            </a>
+
+            <div class="physios-profile-divider"></div>
+
+            <!-- <button type="button" class="physios-profile-item physios-logout-btn" (click)="logout()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button> -->
           </div>
         </div>
       </ng-container>
 
-      <!-- Login button for guests -->
+      <!-- Login button for guests (Desktop) -->
       <ng-template #loginBtn>
         <a routerLink="/login" class="physios-btn-auth">
           Login / Signup
         </a>
       </ng-template>
+
+      <!-- Mobile Hamburger Toggle Button (Responsive <= 1024px) -->
+      <button type="button" class="physios-mobile-toggle" (click)="toggleMobileMenu()"
+        [class.active]="mobileMenuOpen"
+        [attr.aria-expanded]="mobileMenuOpen"
+        aria-controls="mobileNavOffcanvas"
+        aria-label="Toggle navigation menu">
+        <span class="hamburger-line top-line"></span>
+        <span class="hamburger-line middle-line"></span>
+        <span class="hamburger-line bottom-line"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Offcanvas Component (Responsive <= 1024px) -->
+  <div class="offcanvas offcanvas-end physios-offcanvas"
+       [class.show]="mobileMenuOpen"
+       [style.visibility]="mobileMenuOpen ? 'visible' : 'hidden'"
+       tabindex="-1"
+       id="mobileNavOffcanvas"
+       aria-labelledby="mobileNavOffcanvasLabel"
+       [attr.aria-modal]="mobileMenuOpen ? 'true' : null"
+       [attr.role]="mobileMenuOpen ? 'dialog' : null">
+    <div class="offcanvas-header physios-offcanvas-header">
+      <div class="offcanvas-title" id="mobileNavOffcanvasLabel">
+        <a routerLink="/" class="physios-brand-link" (click)="closeMobileMenu()" aria-label="Physiosmate Home">
+          <span class="brand-name">physios<span class="brand-accent">mate</span></span>
+        </a>
+      </div>
+      <button type="button" class="btn-close text-reset physios-btn-close" (click)="closeMobileMenu()" aria-label="Close"></button>
     </div>
 
-    <!-- Mobile Hamburger Toggle -->
-    <label for="physios-mobile-menu-toggle" class="physios-mobile-toggle" aria-label="Toggle navigation menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-    </label>
+    <div class="offcanvas-body physios-offcanvas-body">
+      <!-- 1. Primary Navigation (Top): Find Doctors, Find Clinics, Conditions, Articles -->
+      <div class="physios-mobile-section">
+        <nav class="physios-mobile-nav">
+          <a routerLink="/find-doctors" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+            class="physios-mobile-link" (click)="closeMobileMenu()">
+            <span class="physios-mobile-link-content">
+              <span class="physios-mobile-icon-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4.5 3h15M12 3v7a3 3 0 0 1-3 3 3 3 0 0 1-3-3V3m12 0v7a6 6 0 0 1-6 6 6 6 0 0 1-6-6"/>
+                  <path d="M12 16v3a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-1.5a1.5 1.5 0 0 0-1.5-1.5H16"/>
+                </svg>
+              </span>
+              <span class="physios-mobile-link-text">Find Doctors</span>
+            </span>            
+          </a>
+
+          <a routerLink="/find-clinics" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+            class="physios-mobile-link" (click)="closeMobileMenu()">
+            <span class="physios-mobile-link-content">
+              <span class="physios-mobile-icon-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M9 13h6M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"/>
+                </svg>
+              </span>
+              <span class="physios-mobile-link-text">Find Clinics</span>
+            </span>            
+          </a>
+
+          <a routerLink="/conditions" routerLinkActive="active"
+            class="physios-mobile-link" (click)="closeMobileMenu()">
+            <span class="physios-mobile-link-content">
+              <span class="physios-mobile-icon-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </span>
+              <span class="physios-mobile-link-text">Conditions</span>
+            </span>            
+          </a>
+
+          <a routerLink="/articles" routerLinkActive="active"
+            class="physios-mobile-link" (click)="closeMobileMenu()">
+            <span class="physios-mobile-link-content">
+              <span class="physios-mobile-icon-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                  <path d="M6 6h10M6 10h10"/>
+                </svg>
+              </span>
+              <span class="physios-mobile-link-text">Articles</span>
+            </span>            
+          </a>
+        </nav>
+      </div>
+
+      <!-- 2. Accordions: For Providers, Security & Help -->
+      <div class="physios-mobile-section">
+        <div class="physios-mobile-accordion-group">
+          <!-- For Providers Accordion -->
+          <div class="physios-mobile-accordion" [class.open]="mobileProvidersOpen">
+            <button type="button" class="physios-mobile-accordion-toggle" (click)="toggleMobileProviders($event)"
+              [attr.aria-expanded]="mobileProvidersOpen">
+              <span class="physios-mobile-link-content">
+                <span class="physios-mobile-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                  </svg>
+                </span>
+                <span class="physios-mobile-link-text">For Providers</span>
+              </span>
+              <svg class="physios-accordion-arrow" [class.rotated]="mobileProvidersOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="physios-mobile-accordion-panel" *ngIf="mobileProvidersOpen">
+              <a routerLink="/providers/join" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+                <span class="physios-sublink-bullet"></span>
+                <span>Practitioner Portal</span>
+              </a>
+              <a routerLink="/providers/clinics" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+                <span class="physios-sublink-bullet"></span>
+                <span>List Your Clinic</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Security & Help Accordion -->
+          <div class="physios-mobile-accordion" [class.open]="mobileHelpOpen">
+            <button type="button" class="physios-mobile-accordion-toggle" (click)="toggleMobileHelp($event)"
+              [attr.aria-expanded]="mobileHelpOpen">
+              <span class="physios-mobile-link-content">
+                <span class="physios-mobile-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </span>
+                <span class="physios-mobile-link-text">Security & Help</span>
+              </span>
+              <svg class="physios-accordion-arrow" [class.rotated]="mobileHelpOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="physios-mobile-accordion-panel" *ngIf="mobileHelpOpen">
+              <a routerLink="/help/security" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+                <span class="physios-sublink-bullet"></span>
+                <span>Data Security</span>
+              </a>
+              <a routerLink="/help/support" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+                <span class="physios-sublink-bullet"></span>
+                <span>Help Center & FAQs</span>
+              </a>
+              <a routerLink="/help/contact" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+                <span class="physios-sublink-bullet"></span>
+                <span>Contact Us</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Auth Section: Login / Signup (or Profile Card & Menus) -->
+      <div class="physios-mobile-auth-wrapper">
+        <ng-container *ngIf="isLoggedIn; else mobileLoginBtn">
+          <!-- Profile Card -->
+          <div class="physios-mobile-user-card">
+            <div class="physios-mobile-user-avatar">
+              <img *ngIf="profilePhotoUrl; else userInitialsMobile" [src]="profilePhotoUrl" [alt]="currentUser?.fullName" class="physios-avatar-img" />
+              <ng-template #userInitialsMobile>
+                <span class="physios-avatar-initials">{{ userInitials }}</span>
+              </ng-template>
+            </div>
+            <div class="physios-mobile-user-details">
+              <span class="physios-mobile-user-name">{{ currentUser?.fullName }}</span>
+              <span class="physios-mobile-user-contact">{{ currentUser?.mobile || currentUser?.email }}</span>
+            </div>
+          </div>
+
+          <!-- User Menu Items -->
+          <div class="physios-mobile-user-nav">
+            @for (item of menulist; track item.menuId || item.path || $index) {
+              <a [routerLink]="item.path" class="physios-mobile-sublink" (click)="selectMenuItem(item)">
+                @if (item.icon && isSvgIcon(item.icon)) {
+                  <span class="physios-profile-item-svg" [innerHTML]="getSafeIcon(item.icon)"></span>
+                } @else if (item.icon) {
+                  <i [class]="item.icon"></i>
+                } @else {
+                  <span class="physios-sublink-bullet"></span>
+                }
+                <span>{{ item.menuName }}</span>
+              </a>
+            }
+            <a routerLink="/user-dashboard" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>My Feedback</span>
+            </a>
+            <a [routerLink]="profileRoute" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>View / Update Profile</span>
+            </a>
+            <a routerLink="/help/support" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>Help Center</span>
+            </a>
+            <a routerLink="/user-dashboard" class="physios-mobile-sublink" (click)="closeMobileMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Settings</span>
+            </a>
+          </div>
+
+          <!-- Mobile Logout Button -->
+          <button type="button" class="physios-mobile-logout-btn" (click)="logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </ng-container>
+
+        <!-- Mobile Guest Login Button -->
+        <ng-template #mobileLoginBtn>
+          <a routerLink="/login" class="physios-mobile-login-btn" (click)="closeMobileMenu()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <span>Login / Signup</span>
+          </a>
+        </ng-template>
+      </div>
+    </div>
   </div>
 
-  <!-- Mobile Collapsible Drawer -->
-  <div class="physios-mobile-drawer">
-    <nav class="physios-mobile-nav">
-      <a routerLink="/find-doctors" class="physios-mobile-link">
-        <span>Find Doctors</span>
-      </a>
-      <a routerLink="/find-clinics" class="physios-mobile-link">
-        <span>Find Clinics</span>
-      </a>
-      <a routerLink="/conditions" class="physios-mobile-link">
-        <span>Conditions</span>
-      </a>
-      <a routerLink="/video-consult" class="physios-mobile-link">
-        <span>Video Consult</span>
-      </a>
-      <a routerLink="/surgeries" class="physios-mobile-link">
-        <span>Surgeries</span>
-      </a>
-
-      <div class="physios-mobile-divider"></div>
-
-      <a routerLink="/corporate/wellness" class="physios-mobile-link">
-        <span>For Corporates</span>
-        <span class="physios-badge-new">NEW</span>
-      </a>
-      <a routerLink="/providers/join" class="physios-mobile-link">
-        <span>For Providers</span>
-      </a>
-      <a routerLink="/help/support" class="physios-mobile-link">
-        <span>Security & Help</span>
-      </a>
-
-      <!-- Mobile: Profile links or Login -->
-      <ng-container *ngIf="isLoggedIn; else mobileLoginBtn">
-        <div class="physios-mobile-divider"></div>
-        @for (item of menulist; track item.menuId || item.path || $index) {
-        <a [routerLink]="item.path" class="physios-mobile-link"><span>{{ item.menuName }}</span></a>
-        }
-        @if (menulist && menulist.length > 0) {
-        <div class="physios-mobile-divider"></div>
-        }
-        <a routerLink="/user-dashboard" class="physios-mobile-link"><span>My Feedback</span></a>
-        <a [routerLink]="profileRoute" class="physios-mobile-link"><span>View / Update Profile</span></a>
-        <a routerLink="/help/support" class="physios-mobile-link"><span>Help Center</span></a>
-        <a routerLink="/user-dashboard" class="physios-mobile-link"><span>Settings</span></a>
-        <button type="button" class="physios-mobile-auth-btn physios-mobile-logout" (click)="logout()">
-          Logout
-        </button>
-      </ng-container>
-      <ng-template #mobileLoginBtn>
-        <a routerLink="/login" class="physios-mobile-auth-btn">
-          Login / Signup
-        </a>
-      </ng-template>
-    </nav>
-  </div>
+  <!-- Bootstrap Offcanvas Backdrop -->
+  <div class="offcanvas-backdrop fade show" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
 </header>
 <app-sidebar class="sidebar-container" [menulist]="menulist" [parentMenuId]="selectedParentMenuId"></app-sidebar>
