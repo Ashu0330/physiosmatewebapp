@@ -25,6 +25,7 @@ export const ApiEndPoints = {
 
     // ── Consultancy / Booking ────────────────────────────────────────────────────
     GetAvailability: 'Consultancy/GetAvailability',
+    AddAvailability: 'Availability/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
 

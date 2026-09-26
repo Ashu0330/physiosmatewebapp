@@ -1,0 +1,227 @@
+<div class="pm-page-container">
+  <!-- Top Practice Setup Banner Header -->
+  <div class="pm-header-card">
+    <div class="pm-header-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+    </div>
+    <div class="pm-header-info">
+      <h1 class="pm-title">Practice Setup</h1>
+      <p class="pm-subtitle">Manage your availability, appointment slots, treatment services, fees and more – all in one place.</p>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="pm-tabs-bar">
+    <button
+      *ngFor="let tab of tabs"
+      type="button"
+      class="pm-tab-btn"
+      [class.active]="activeTab === tab"
+      (click)="activeTab = tab">
+      <span class="pm-tab-icon" [ngSwitch]="tab">
+        <svg *ngSwitchCase="'Availability'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <svg *ngSwitchDefault width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      {{ tab }}
+    </button>
+  </div>
+
+  <!-- Tab Content: Availability -->
+  <div *ngIf="activeTab === 'Availability'" class="pm-tab-content">
+    
+    <!-- Section Header Bar -->
+    <div class="pm-section-card-header">
+      <div class="pm-section-title-wrap">
+        <div class="pm-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="pm-section-title">Consultancy Availability</h2>
+          <p class="pm-section-subtitle">Set your weekly consultation hours and manage when patients can book you.</p>
+        </div>
+      </div>
+      <button type="button" class="pm-btn-primary" (click)="toggleAddForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ showAddForm && editingSlotId === 0 ? 'Hide Form' : '+ Add Time Slot' }}
+      </button>
+    </div>
+
+    <!-- Main Grid Layout (Form + How it works) -->
+    <div class="pm-grid-layout" *ngIf="showAddForm">
+      <!-- Add/Edit Time Slot Form Card -->
+      <div class="pm-card pm-form-card">
+        <h3 class="pm-card-title">
+          {{ editingSlotId ? 'Edit Consultancy Time Slot' : 'Add Consultancy Time Slot' }}
+        </h3>
+
+        <div class="pm-form-grid">
+          <!-- Day of Week -->
+          <div class="pm-form-group">
+            <label class="pm-label">Day of Week</label>
+            <div class="pm-input-wrapper">
+              <select class="pm-select" [(ngModel)]="selectedDay">
+                <option *ngFor="let d of daysList" [value]="d.id">{{ d.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Start Time -->
+          <div class="pm-form-group">
+            <label class="pm-label">Start Time</label>
+            <div class="pm-input-wrapper">
+              <span class="pm-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <select class="pm-select pm-select-with-icon" [(ngModel)]="startTime">
+                <option *ngFor="let t of timeOptions" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- End Time -->
+          <div class="pm-form-group">
+            <label class="pm-label">End Time</label>
+            <div class="pm-input-wrapper">
+              <span class="pm-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <select class="pm-select pm-select-with-icon" [(ngModel)]="endTime">
+                <option *ngFor="let t of timeOptions" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Toggle -->
+          <div class="pm-form-group pm-toggle-group">
+            <label class="pm-label">Active</label>
+            <label class="pm-switch">
+              <input type="checkbox" [(ngModel)]="isActive" />
+              <span class="pm-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="pm-form-actions">
+          <button type="button" class="pm-btn-secondary" (click)="resetForm(); showAddForm = false;">Cancel</button>
+          <button type="button" class="pm-btn-submit" [disabled]="isSaving" (click)="onSaveSlot()">
+            <span *ngIf="isSaving" class="pm-spinner"></span>
+            {{ editingSlotId ? 'Update Slot' : 'Add Slot' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- How it Works Side Card -->
+      <div class="pm-card pm-info-card">
+        <div class="pm-info-header">
+          <span class="pm-info-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/></svg>
+          </span>
+          <h4 class="pm-info-title">How it works?</h4>
+        </div>
+        <ol class="pm-info-list">
+          <li>Add your weekly consultancy hours</li>
+          <li>Patients will be able to book appointments within these time slots</li>
+          <li>You can manage multiple slots per day</li>
+          <li>Active slots will automatically enable booking for patients</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Table Card: Your Consultancy Availability -->
+    <div class="pm-card pm-table-card">
+      <div class="pm-table-header">
+        <div class="pm-table-title-wrap">
+          <div class="pm-table-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="pm-card-title">Your Consultancy Availability</h3>
+            <p class="pm-card-subtitle">Manage your active consultation hours. Patients can book slots based on this schedule.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="pm-loading-state">
+        <div class="pm-loading-spinner"></div>
+        <p>Loading availability schedule...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && availabilitySlots.length === 0" class="pm-empty-state">
+        <div class="pm-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <h4>No Availability Slots Configured</h4>
+        <p>Add your available time slots above to allow patients to book appointments with you.</p>
+      </div>
+
+      <!-- Availability Table -->
+      <div *ngIf="!isLoading && availabilitySlots.length > 0" class="pm-table-wrapper">
+        <table class="pm-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Duration</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let slot of availabilitySlots">
+              <td class="font-medium">{{ getDayName(slot.dayOfWeek) }}</td>
+              <td>{{ formatTime(slot.startTime) }}</td>
+              <td>{{ formatTime(slot.endTime) }}</td>
+              <td class="text-muted">{{ calculateDuration(slot.startTime, slot.endTime) }}</td>
+              <td>
+                <span class="pm-badge" [class.pm-badge-active]="slot.isActive" [class.pm-badge-inactive]="!slot.isActive">
+                  {{ slot.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="pm-actions-group">
+                  <button type="button" class="pm-action-btn edit" (click)="onEditSlot(slot)" title="Edit slot">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Other Tabs Placeholder -->
+  <div *ngIf="activeTab !== 'Availability'" class="pm-tab-content">
+    <div class="pm-card pm-placeholder-card">
+      <div class="pm-empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h3>{{ activeTab }} Setup</h3>
+      <p>Configure your {{ activeTab.toLowerCase() }} options and preferences for your practice.</p>
+    </div>
+  </div>
+</div>
