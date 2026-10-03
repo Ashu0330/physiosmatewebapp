@@ -109,6 +109,7 @@
   align-items: center;
   gap: 14px;
   position: relative;
+  padding: 10px 0;
 }
 
 .physios-filter-right {
@@ -408,6 +409,7 @@
   gap: 5px;
   font-size: 13px;
   color: #334155;
+  letter-spacing: -0.01em;
 }
 
 
@@ -1019,15 +1021,42 @@
     margin-left: 0;
   }
 
-  .physios-btn-contact-clinic-solid,
+  /* .physios-btn-contact-clinic-solid, */
   .physios-btn-view-profile-outline,
   .physios-doc-card-skeleton .physios-sk-btn-solid,
   .physios-doc-card-skeleton .physios-sk-btn-outline {
     width: 100%;
   }
 
+  .physios-btn-contact-clinic-solid {
+    width: fit-content;
+  }
+
   .physios-filter-left {
     overflow-x: auto;
+  }
+/* .physios-filter-left::-webkit-scrollbar {
+    width: 10px; 
+    height: 10px; 
+} */
+
+.physios-filter-left::-webkit-scrollbar-track {
+    background: var(--primary-color); 
+    border-radius: 5px;
+}
+
+.physios-filter-left::-webkit-scrollbar-thumb {
+    background: var(--green-dark); 
+    border-radius: 5px;
+}
+  .physios-doc-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .physios-doc-avatar-col {
+    align-items: flex-start;
   }
 }
 

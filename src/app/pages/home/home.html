@@ -8,8 +8,8 @@
 
   <!-- 2. Row of 4 Cards -->
   <div class="physios-cards-section">
-    <p class="physios-cards-section-sub">Find the right physiotherapy care for your needs</p>
-    <div class="physios-cards-row">
+    <h1 class="physios-main-heading">Find the right physiotherapy care for you</h1>
+    <div class="physios-cards-row mt-md-4">
       @for (card of cards; track card.title) {
       <a [routerLink]="card.route" class="physios-card">
         <div class="physios-card-img-wrap">
