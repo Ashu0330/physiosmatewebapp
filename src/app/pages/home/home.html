@@ -1,42 +1,10 @@
 <div class="physios-home-container">
   <!-- 1. Search Bar (City Filter + Search Input) -->
-  <div class="physios-search-wrapper">
-    <!-- City Filter -->
-    <div class="physios-city-box">
-      <button type="button" class="physios-city-btn" (click)="toggleCity()">
-        <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-          <circle cx="12" cy="10" r="3"></circle>
-        </svg>
-        <span class="physios-city-text">{{ selectedCity() }}</span>
-      </button>
-
-      @if (isCityOpen()) {
-      <div class="physios-city-dropdown">
-        @for (c of popularCities; track c) {
-        <button type="button" class="physios-city-item" [class.active]="selectedCity() === c" (click)="selectCity(c)">
-          {{ c }}
-        </button>
-        }
-      </div>
-      }
-    </div>
-
-    <!-- Divider -->
-    <div class="physios-search-divider"></div>
-
-    <!-- Search Input -->
-    <div class="physios-input-box">
-      <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" class="physios-search-field" placeholder="Search doctors, clinics, hospitals, etc."
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-    </div>
-  </div>
+  <app-search-bar
+    [(selectedCity)]="selectedCity"
+    [(searchQuery)]="searchQuery"
+    [cities]="popularCities"
+  ></app-search-bar>
 
   <!-- 2. Row of 4 Cards -->
   <div class="physios-cards-section">

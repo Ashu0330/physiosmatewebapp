@@ -1,0 +1,56 @@
+<div class="physios-search-wrapper" [ngClass]="customClass()">
+  <!-- City Filter -->
+  <div class="physios-city-box">
+    <button
+      type="button"
+      class="physios-city-btn"
+      (click)="toggleCity($event)"
+      [attr.aria-expanded]="isCityOpen()"
+      aria-label="Select city"
+    >
+      <svg class="physios-pin-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+      </svg>
+      <span class="physios-city-text">{{ selectedCity() }}</span>
+    </button>
+
+    @if (isCityOpen()) {
+    <div class="physios-city-dropdown" role="listbox">
+      @for (c of cities(); track c) {
+      <button
+        type="button"
+        class="physios-city-item"
+        [class.active]="selectedCity() === c"
+        (click)="selectCity(c, $event)"
+        role="option"
+        [attr.aria-selected]="selectedCity() === c"
+      >
+        {{ c }}
+      </button>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Divider -->
+  <div class="physios-search-divider"></div>
+
+  <!-- Search Input -->
+  <div class="physios-input-box">
+    <svg class="physios-lens-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input
+      type="text"
+      class="physios-search-field"
+      [placeholder]="placeholder()"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="onSearchChange($event)"
+      (keydown.enter)="onSearchEnter()"
+    />
+  </div>
+</div>

@@ -6,6 +6,7 @@ import { BaseComponent } from '../../helper/base-component';
 import { PractitionerModel } from '../../models/practitioner.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { SharedModule } from '../../shared/shared-module';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 
 
 export interface ClinicAmenity {
@@ -33,7 +34,7 @@ export interface ClinicItem {
 @Component({
   selector: 'app-doctors',
   standalone: true,
-  imports: [SharedModule],
+  imports: [SharedModule, SearchBarComponent],
   templateUrl: './doctors.html',
   styleUrl: './doctors.css',
 })
