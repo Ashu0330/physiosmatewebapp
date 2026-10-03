@@ -98,7 +98,8 @@
       <section id="stories" class="physios-detail-section">
         <div class="section-card reviews-card">
           <h3 class="section-header-title">
-            {{ reviews().length }} Patient Stories for {{ practitioner.name }} {{ practitioner.specialtyTitle }}
+            {{ doctorDetail()?.totalReviews }} Patient Stories for {{ doctorDetail()?.fullName }} {{
+            doctorDetail()?.specialization }}
           </h3>
 
           <!-- Add Review Section -->
@@ -177,8 +178,7 @@
             <div class="review-feedback-tabs-section">
               <!-- Tabs Header -->
               <div class="review-feedback-nav">
-                <button type="button" class="review-tab-btn"
-                  [class.active]="activeReviewTab() === 'visitedFor'"
+                <button type="button" class="review-tab-btn" [class.active]="activeReviewTab() === 'visitedFor'"
                   (click)="setActiveReviewTab('visitedFor')">
                   <span class="tab-icon">🏥</span>
                   <span class="tab-label">Visited For</span>
@@ -189,14 +189,14 @@
                   }
                 </button>
 
-                <button type="button" class="review-tab-btn"
-                  [class.active]="activeReviewTab() === 'happyAbout'"
+                <button type="button" class="review-tab-btn" [class.active]="activeReviewTab() === 'happyAbout'"
                   (click)="setActiveReviewTab('happyAbout')">
                   <span class="tab-icon">✨</span>
                   <span class="tab-label">Happy About</span>
                   @if (selectedHappyAbout().length || (showCustomHappyAbout() && customHappyAboutText().trim())) {
                   <span class="tab-count-badge">
-                    {{ selectedHappyAbout().length + (showCustomHappyAbout() && customHappyAboutText().trim() ? 1 : 0) }}
+                    {{ selectedHappyAbout().length + (showCustomHappyAbout() && customHappyAboutText().trim() ? 1 : 0)
+                    }}
                   </span>
                   }
                 </button>
@@ -253,8 +253,8 @@
 
                 <div class="visit-chips-wrap">
                   @for (option of predefinedHappyAbout; track option) {
-                  <button type="button" class="visit-choice-chip happy-choice-chip" [class.selected]="isHappyAboutSelected(option)"
-                    (click)="toggleHappyAbout(option)">
+                  <button type="button" class="visit-choice-chip happy-choice-chip"
+                    [class.selected]="isHappyAboutSelected(option)" (click)="toggleHappyAbout(option)">
                     <span class="chip-check">{{ isHappyAboutSelected(option) ? '✓' : '+' }}</span>
                     <span class="chip-text">{{ option }}</span>
                   </button>
@@ -270,8 +270,7 @@
                 @if (showCustomHappyAbout()) {
                 <div class="custom-visit-input-wrap">
                   <input type="text" class="form-control custom-visit-input" [value]="customHappyAboutText()"
-                    (input)="onCustomHappyAboutChange($event)"
-                    placeholder="Type what you were happy with..." />
+                    (input)="onCustomHappyAboutChange($event)" placeholder="Type what you were happy with..." />
                 </div>
                 }
 
@@ -325,7 +324,7 @@
               <!-- Visited For in the red highlighted area from screenshot (above recommendation) -->
               @if (rev.visitedFor ) {
               <p class="review-visited-for">
-                <strong>Visited For</strong> {{ rev.visitedFor  }}
+                <strong>Visited For</strong> {{ rev.visitedFor }}
               </p>
               }
 
@@ -533,42 +532,55 @@
                   <rect x="4" y="2" width="16" height="20" rx="2" />
                 </svg>
               </span>
-              <span class="type-text">Clinic Appointment</span>
+              <span class="type-text">{{isClinic()===true?'Clinic Consultancy':'Home visit'}}</span>
             </div>
-            <span class="appointment-fee">₹{{ practitioner.consultationFee }} fee</span>
+            <span class="appointment-fee">₹{{isClinic()===true?
+              doctorDetail()?.consultationFee:doctorDetail()?.consultationFee}} fee</span>
           </div>
 
           <!-- Clinic Mini Details -->
           <div class="booking-clinic-meta">
-            <h4 class="booking-clinic-name">{{ practitioner.clinicName }}</h4>
-            <span class="clinic-loc">Mansarovar</span>
+            <h4 class="booking-clinic-name">{{doctorDetail()?.fullName}}</h4>
+            <!-- <span class="clinic-loc">{{doctorDetail()?.city}}</span> -->
           </div>
+
+          <!-- Optional Week Indicator Strip (shown when shifted to future weeks) -->
+          @if (weekOffset() > 0) {
+          <div class="week-indicator-strip">
+            <span class="week-indicator-text">Week +{{ weekOffset() }}</span>
+            <button type="button" class="btn-today-shortcut" (click)="resetToCurrentWeek()">Back to Today</button>
+          </div>
+          }
 
           <!-- Day Navigation Carousel Strip -->
           <div class="day-carousel-strip">
-            <button type="button" class="day-nav-arrow"
-              (click)="selectedDayIndex.set(selectedDayIndex() > 0 ? selectedDayIndex() - 1 : 0)"
-              aria-label="Previous Day">
+            <button type="button" class="day-nav-arrow" [disabled]="weekOffset() === 0"
+              [class.disabled]="weekOffset() === 0" (click)="prevWeek()" title="Previous Week"
+              aria-label="Previous Week">
               &lt;
             </button>
             <div class="day-tabs-slider">
-              @for (d of dayList; track d.label; let i = $index) {
+              @for (d of dayList(); track d.dateStr; let i = $index) {
               <button type="button" class="day-tab-btn" [class.active]="selectedDayIndex() === i"
-                (click)="selectDay(i)">
+                [class.no-slots]="!d.hasSlots" (click)="selectDay(i)">
                 <span class="day-title">{{ d.label }}</span>
+                <span class="day-slot-count">{{ d.hasSlots ? (d.slotCount + (d.slotCount === 1 ? ' slot' : ' slots')) :
+                  'No slots' }}</span>
               </button>
               }
             </div>
-            <button type="button" class="day-nav-arrow"
-              (click)="selectedDayIndex.set(selectedDayIndex() < dayList.length - 1 ? selectedDayIndex() + 1 : selectedDayIndex())"
-              aria-label="Next Day">
+            <button type="button" class="day-nav-arrow" (click)="nextWeek()" title="Next Week" aria-label="Next Week">
               &gt;
             </button>
           </div>
 
           <!-- Slot Content Display -->
           <div class="slot-content-body">
-            @if (!dayList[selectedDayIndex()].hasSlots) {
+            @if (isLoadingAvailability()) {
+            <div class="no-slots-alert">
+              <p class="no-slots-msg">Loading availability...</p>
+            </div>
+            } @else if (!dayList()[selectedDayIndex()]?.hasSlots) {
             <div class="no-slots-alert">
               <div class="calendar-alert-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none"
@@ -582,14 +594,15 @@
                   <circle cx="16" cy="16" r="6" />
                 </svg>
               </div>
-              <p class="no-slots-msg">No slots available for today</p>
+              <p class="no-slots-msg">No slots available for this day</p>
             </div>
             } @else {
             <!-- Morning Slots -->
+            @if (computedMorningSlots().length > 0) {
             <div class="slots-group">
               <span class="slots-group-title">Morning Slots</span>
               <div class="slots-chips-grid">
-                @for (slot of morningSlots; track slot) {
+                @for (slot of computedMorningSlots(); track slot) {
                 <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
                   (click)="selectSlot(slot)">
                   {{ slot }}
@@ -597,12 +610,14 @@
                 }
               </div>
             </div>
+            }
 
             <!-- Afternoon / Evening Slots -->
+            @if (computedAfternoonSlots().length > 0) {
             <div class="slots-group">
               <span class="slots-group-title">Afternoon / Evening Slots</span>
               <div class="slots-chips-grid">
-                @for (slot of afternoonSlots; track slot) {
+                @for (slot of computedAfternoonSlots(); track slot) {
                 <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
                   (click)="selectSlot(slot)">
                   {{ slot }}
@@ -610,6 +625,7 @@
                 }
               </div>
             </div>
+            }
 
             <button type="button" class="btn-confirm-slot" (click)="bookAppointment()">
               Book Appointment for {{ selectedSlotTime() }}

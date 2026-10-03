@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, signal } from '@angular/core';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { Availability, slots } from '../../models/practitioner.model';
+import { SharedModule } from '../../shared/shared-module';
 
 export interface AvailabilitySlot {
   id: number;
@@ -16,13 +15,13 @@ export interface AvailabilitySlot {
 @Component({
   selector: 'app-practice-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [SharedModule],
   templateUrl: './practice-management.html',
   styleUrl: './practice-management.css',
 })
 export class PracticeManagement extends BaseComponent implements OnInit {
   activeTab: string = 'Availability';
-  availabilitySlots: Availability[] = [];
+  availabilitySlots = signal<Availability[]>([]);
 
 
   tabs: string[] = [
@@ -104,18 +103,18 @@ export class PracticeManagement extends BaseComponent implements OnInit {
       if (res && res.isSuccess) {
         const raw = res.data;
         if (Array.isArray(raw)) {
-          this.availabilitySlots = raw;
+          this.availabilitySlots.set(raw);
         } else if (raw && Array.isArray(raw.slots)) {
-          this.availabilitySlots = raw.slots;
+          this.availabilitySlots.set(raw.slots);
         } else {
-          this.availabilitySlots = [];
+          this.availabilitySlots.set([]);
         }
       } else {
-        this.availabilitySlots = [];
+        this.availabilitySlots.set([]);
       }
     } catch (e) {
       console.error('Error loading availability', e);
-      this.availabilitySlots = [];
+      this.availabilitySlots.set([]);
     } finally {
       this.isLoading = false;
       this.cdr.detectChanges();
@@ -174,7 +173,7 @@ export class PracticeManagement extends BaseComponent implements OnInit {
       this.showError('Error saving slot. Please try again.');
     } finally {
       this.isSaving = false;
-      this.cdr.detectChanges();
+      // this.cdr.detectChanges();  
     }
   }
 

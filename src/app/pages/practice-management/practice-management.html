@@ -183,7 +183,7 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!isLoading && availabilitySlots.length === 0" class="pm-empty-state">
+      <div *ngIf="!isLoading && availabilitySlots().length === 0" class="pm-empty-state">
         <div class="pm-empty-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -197,7 +197,7 @@
       </div>
 
       <!-- Availability Table -->
-      <div *ngIf="!isLoading && availabilitySlots.length > 0" class="pm-table-wrapper">
+      <div *ngIf="!isLoading && availabilitySlots().length > 0" class="pm-table-wrapper">
         <table class="pm-table">
           <thead>
             <tr>
@@ -206,7 +206,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (slot of availabilitySlots; track $index) {
+            @for (slot of availabilitySlots(); track $index) {
             <tr>
               <td class="font-medium">{{ getDayName(slot.dayOfWeek) }}</td>
               <td>

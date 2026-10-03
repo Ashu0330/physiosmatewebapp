@@ -1227,30 +1227,84 @@
 }
 
 /* Day Carousel Strip */
+/* Optional Week Indicator Strip */
+.week-indicator-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #f1fbf9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.week-indicator-text {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #087F76;
+}
+
+.btn-today-shortcut {
+  background: transparent;
+  border: 1px solid #10A896;
+  color: #087F76;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-today-shortcut:hover {
+  background: #10A896;
+  color: #ffffff;
+}
+
+/* Day Carousel Strip */
 .day-carousel-strip {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+  position: relative;
 }
 
 .day-nav-arrow {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: bold;
   color: #087F76;
-  padding: 0.6rem 0.75rem;
+  padding: 0.6rem 0.65rem;
   cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.day-nav-arrow:hover:not(:disabled) {
+  background: #e6f7f5;
+  color: #055953;
+}
+
+.day-nav-arrow:disabled,
+.day-nav-arrow.disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .day-tabs-slider {
   display: flex;
   flex: 1;
   overflow-x: auto;
+  scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  gap: 2px;
 }
 
 .day-tabs-slider::-webkit-scrollbar {
@@ -1261,15 +1315,17 @@
   background: transparent;
   border: none;
   outline: none;
-  flex: 1;
-  padding: 8px 4px;
+  flex: 1 0 auto;
+  min-width: 82px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.15s ease;
-  min-width: 90px;
+  white-space: nowrap;
 }
 
 .day-title {
@@ -1280,6 +1336,16 @@
   margin-bottom: 2px;
 }
 
+.day-slot-count {
+  font-size: 0.72rem;
+  color: #10A896;
+  font-weight: 600;
+}
+
+.day-tab-btn.no-slots .day-slot-count {
+  color: #94a3b8;
+  font-weight: 500;
+}
 
 .day-tab-btn.active {
   border-bottom-color: var(--primary-color, #10A896);
@@ -1288,6 +1354,11 @@
 
 .day-tab-btn.active .day-title {
   color: var(--primary-dark, #087F76);
+}
+
+.day-tab-btn.active .day-slot-count {
+  color: var(--primary-dark, #087F76);
+  font-weight: 700;
 }
 
 /* Slot Content Body */
