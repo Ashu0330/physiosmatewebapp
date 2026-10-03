@@ -286,6 +286,7 @@ export interface BookingState {
   clinicAddress?: string | null;
   consultationFee: number;
   selectedDay?: string;
+  selectedDate?: string | Date;
   selectedTime?: string;
   bookingId?: string;
 }

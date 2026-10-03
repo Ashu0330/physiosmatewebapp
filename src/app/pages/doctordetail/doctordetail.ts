@@ -9,6 +9,7 @@ import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { Availability, PractitionerDetailedData, providerReview } from '../../models/practitioner.model';
 import { SharedModule } from '../../shared/shared-module';
+import { DateHelper } from '../../helper/utilities';
 
 // ── Interfaces ──────────────────────────────────────────────────────────────
 export interface TimeSlot {
@@ -65,32 +66,24 @@ function isTimeInFuture(timeStr: string): boolean {
 })
 export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // 1. Dependency Injections & Core Services (Constructor / Main Things)
-  // ═════════════════════════════════════════════════════════════════════════
+
   private readonly route = inject(ActivatedRoute);
   private readonly bookingService = inject(BookingService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly elRef = inject(ElementRef);
   private scrollRafId: number | null = null;
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // 2. Initialization of Variables & Signals (State, Forms & Computeds)
-  // ═════════════════════════════════════════════════════════════════════════
 
-  // ── Core Doctor & Clinic State ──
   practitionerId: number = 0;
   readonly isClinic = signal<boolean>(false);
   readonly doctorDetail = signal<PractitionerDetailedData | null>(null);
 
-  // ── Availability & Slots State (Dynamic Weekly) ──
   readonly availabilitySlots = signal<Availability[]>([]);
   readonly isLoadingAvailability = signal<boolean>(false);
   readonly weekOffset = signal<number>(0);
   readonly selectedDayIndex = signal<number>(0);
   readonly selectedSlotTime = signal<string>('09:00 AM');
 
-  // ── Review Form & Review State ──
   reviewForm!: FormGroup;
   readonly isSubmittingReview = signal<boolean>(false);
   readonly Review = signal<providerReview[]>([]);
@@ -102,7 +95,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   readonly showCustomHappyAbout = signal<boolean>(false);
   readonly customHappyAboutText = signal<string>('');
 
-  // ── Booking Confirmation State ──
   readonly bookingSuccess = signal<boolean>(false);
   readonly bookingMessage = signal<string>('');
   readonly bookingConfirmationDetails = signal<{
@@ -112,24 +104,21 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     clinicName: string;
     clinicAddress: string;
     day: string;
+    date?: string;
     time: string;
     fee: number;
     bookingRefId: string;
     patientName: string;
   } | null>(null);
 
-  // ── Associated Doctors State (when in Clinic mode) ──
   readonly selectedAssociatedDoctor = signal<any | null>(null);
 
-  // ── Navigation, Scroll Spy & Search State ──
   readonly activeSection = signal<string>('info');
   readonly selectedCity = signal<string>('Jaipur');
   readonly searchQuery = signal<string>('Physiotherapist');
   readonly isCityOpen = signal<boolean>(false);
 
-  // ── Computed Properties ──
 
-  // Scroll spy navigation tabs (dynamically includes Associated Doctors for clinics)
   readonly navTabs = computed(() => {
     const list = [
       { id: 'info', label: 'Info' },
@@ -146,7 +135,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     return list;
   });
 
-  // Dynamic 7-day carousel for the current weekOffset
   readonly dayList = computed<CarouselDay[]>(() => {
     const slots = this.availabilitySlots();
     const offset = this.weekOffset();
@@ -205,26 +193,33 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     });
   });
 
-  // Available slots for selected day
-  private readonly slotsForSelectedDay = computed(() => {
+  readonly selectedDay = computed<CarouselDay | null>(() => {
     const days = this.dayList();
     const idx = this.selectedDayIndex();
-    return days[idx]?.availableSlots || [];
+    return days[idx] ?? null;
   });
 
-  // Morning slots (AM)
+  readonly selectedDate = computed<Date | null>(() => {
+    return this.selectedDay()?.date ?? null;
+  });
+
+  readonly selectedDateFormatted = computed<string>(() => {
+    const d = this.selectedDate();
+    return d ? DateHelper.formatLocalDate(d) : '';
+  });
+
+  private readonly slotsForSelectedDay = computed(() => {
+    return this.selectedDay()?.availableSlots || [];
+  });
+
   readonly computedMorningSlots = computed(() =>
     this.slotsForSelectedDay().filter(t => t.endsWith('AM'))
   );
 
-  // Afternoon / Evening slots (PM)
   readonly computedAfternoonSlots = computed(() =>
     this.slotsForSelectedDay().filter(t => t.endsWith('PM'))
   );
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // 3. Lifecycle Hooks (OnInit, AfterViewInit, OnDestroy, HostListener)
-  // ═════════════════════════════════════════════════════════════════════════
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
     this.practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
@@ -257,9 +252,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           const pending = this.bookingService.getPendingSlot();
           const dayLabel = pending?.selectedDay || `${this.dayList()[0]?.label || 'Today'} (${this.dayList()[0]?.dateStr || ''})`;
           const slotTime = pending?.selectedTime || this.selectedSlotTime();
+          const pendingDate = pending?.selectedDate ? new Date(pending.selectedDate) : (this.dayList()[0]?.date || new Date());
 
           this.confirmAppointmentDirectly(
-            { label: dayLabel, dateStr: '' },
+            { label: dayLabel, dateStr: '', date: pendingDate },
             slotTime,
             pending?.bookingId
           );
@@ -439,17 +435,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   /** API 2: Fetch Doctor Availability Slots (Weekly / By Date) */
-  async loadAvailability(targetDate?: Date): Promise<void> {
-    this.isLoadingAvailability.set(true);
+  async loadAvailability(): Promise<void> {
     try {
-      let url = `${ApiEndPoints.GetAvailability}?practitionerId=${this.practitionerId}`;
-      if (targetDate) {
-        const yyyy = targetDate.getFullYear();
-        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(targetDate.getDate()).padStart(2, '0');
-        url += `&date=${yyyy}-${mm}-${dd}`;
-      }
-      const res = await this.apiService.Get<any>(url);
+      const pid = this.practitionerId;
+      const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?practitionerId=${pid}`);
       if (res && res.isSuccess) {
         const raw = res.data;
         if (Array.isArray(raw)) {
@@ -466,20 +455,17 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       console.error('Error loading availability', e);
       this.availabilitySlots.set([]);
     } finally {
-      this.isLoadingAvailability.set(false);
       this.cdr.detectChanges();
     }
   }
 
-  /** API 3: Fetch All Reviews for Practitioner */
   async GetAllReview(): Promise<void> {
     const res = await this.apiService.Post<providerReview[]>(ApiEndPoints.GetAllReviews, {
       PractitionerId: this.practitionerId
     });
     this.Review.set(res.isSuccess ? (res.data ?? []) : []);
   }
-
-  /** API 4: Submit a New Review for Practitioner */
+  
   async AddReview(): Promise<void> {
     if (!this.isLoggedIn) {
       this.showError('Please log in to submit a review.');
@@ -515,28 +501,22 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
   }
 
-  /** API 5: Book Consultancy Appointment */
   async BookConsultancyApi(payload: any): Promise<any> {
     return await this.apiService.Post<any>(ApiEndPoints.BookConsultancy, payload);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5.2 Dynamic Week Shift & Slot Selection Methods
-  // ─────────────────────────────────────────────────────────────────────────
   async prevWeek(): Promise<void> {
     if (this.weekOffset() <= 0) return;
     this.weekOffset.update(w => w - 1);
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + (this.weekOffset() * 7));
-    await this.loadAvailability(targetDate);
+    await this.loadAvailability();
     this.autoSelectAvailableDay();
   }
 
   async nextWeek(): Promise<void> {
     this.weekOffset.update(w => w + 1);
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + (this.weekOffset() * 7));
-    await this.loadAvailability(targetDate);
+    await this.loadAvailability();
     this.autoSelectAvailableDay();
   }
 
@@ -702,12 +682,18 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.scrollToSection('appointment-slots');
   }
 
-  async confirmAppointmentDirectly(day: { label: string; dateStr: string; fullDateStr?: string }, slotTime: string, existingRef?: string): Promise<void> {
+  async confirmAppointmentDirectly(day: { label: string; dateStr: string; fullDateStr?: string; date?: Date | string }, slotTime: string, existingRef?: string): Promise<void> {
     const user = this.authService.getCurrentUser();
     const doc = this.doctorDetail();
     const ref = existingRef || `PHY-${Math.floor(100000 + Math.random() * 900000)}`;
     const dateDisplay = day.fullDateStr || (day.dateStr ? `${day.label} (${day.dateStr})` : day.label);
     const doctorName = doc?.fullName || this.practitioner.name;
+
+    // Resolve date to Date instance and YYYY-MM-DD date format
+    const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
+      ? day.date
+      : (typeof day.date === 'string' && day.date ? new Date(day.date) : (this.selectedDate() || new Date()));
+    const formattedDate = DateHelper.formatLocalDate(resolvedDate);
 
     // Send booking to backend API
     if (this.isLoggedIn) {
@@ -715,8 +701,11 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         const payload = {
           practitionerId: this.practitionerId || doc?.practitionerId || 1,
           doctorName,
+          visitType: this.isClinic() ? 'In-Clinic' : 'Home Visit',
           bookingRefId: ref,
-          appointmentDate: day.fullDateStr || day.dateStr,
+          consultancydate: formattedDate,
+          appointmentDate: formattedDate,
+          slotDate: formattedDate,
           slotTime,
           consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
           mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
@@ -735,6 +724,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       clinicName: doc?.clinicName || this.practitioner.clinicName,
       clinicAddress: this.practitioner.clinicAddress,
       day: dateDisplay,
+      date: formattedDate,
       time: slotTime,
       fee: doc?.consultationFee ?? this.practitioner.consultationFee,
       bookingRefId: ref,
@@ -768,6 +758,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         clinicAddress: this.practitioner.clinicAddress,
         consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
         selectedDay: day.fullDateStr || `${day.label} (${day.dateStr})`,
+        selectedDate: DateHelper.formatLocalDate(day.date),
         selectedTime: this.selectedSlotTime()
       });
 
@@ -776,6 +767,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookAppointment(): void {
+    debugger
     this.bookConsultancy();
   }
 
