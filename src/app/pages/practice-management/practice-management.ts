@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
+import { Availability, slots } from '../../models/practitioner.model';
 
 export interface AvailabilitySlot {
   id: number;
@@ -21,6 +22,8 @@ export interface AvailabilitySlot {
 })
 export class PracticeManagement extends BaseComponent implements OnInit {
   activeTab: string = 'Availability';
+  availabilitySlots: Availability[] = [];
+
 
   tabs: string[] = [
     'Availability',
@@ -80,7 +83,6 @@ export class PracticeManagement extends BaseComponent implements OnInit {
 
   isLoading: boolean = false;
   isSaving: boolean = false;
-  availabilitySlots: AvailabilitySlot[] = [];
 
   get practitionerId(): number {
     const user = this.currentUser;
@@ -140,12 +142,10 @@ export class PracticeManagement extends BaseComponent implements OnInit {
       this.showError('Please select day, start time and end time.');
       return;
     }
-
     if (this.startTime >= this.endTime) {
       this.showError('End time must be after start time.');
       return;
     }
-
     this.isSaving = true;
     try {
       const payload = {
@@ -162,7 +162,7 @@ export class PracticeManagement extends BaseComponent implements OnInit {
       };
 
       const res = await this.apiService.Post<any>(ApiEndPoints.AddAvailability, payload);
-      if (res && (res.isSuccess || res.data )) {
+      if (res && (res.isSuccess || res.data)) {
         this.showSuccess('Availability slot saved successfully!');
         await this.loadAvailability();
         this.resetForm();
@@ -178,12 +178,16 @@ export class PracticeManagement extends BaseComponent implements OnInit {
     }
   }
 
-  onEditSlot(slot: AvailabilitySlot): void {
+  onEditSlot(day: Availability, slot: slots): void {
     this.editingSlotId = slot.id || 0;
-    this.selectedDay = slot.dayOfWeek;
+
+    this.selectedDay = day.dayOfWeek;
+
     this.startTime = this.normalizeTime(slot.startTime);
     this.endTime = this.normalizeTime(slot.endTime);
+
     this.isActive = slot.isActive !== false;
+
     this.showAddForm = true;
   }
 

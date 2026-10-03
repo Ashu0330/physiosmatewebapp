@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { authmodel } from '../models/authmodel';
-import { apiresponse } from '../models/apiresponse';
 import { environment } from '../environment/environment';
+import { ApiResponse } from '../models/apiresponse';
 
 @Injectable({
   providedIn: 'root',
@@ -28,11 +28,11 @@ export class Authservice {
   }
 
   login(model: any) {
-    return this.http.post<apiresponse<authmodel>>(environment.baseUrl + 'Auth/Login', model);
+    return this.http.post<ApiResponse<authmodel>>(environment.baseUrl + 'Auth/Login', model);
   }
 
   register(model: any) {
-    return this.http.post<apiresponse<authmodel>>(environment.baseUrl + 'Auth/Register', model);
+    return this.http.post<ApiResponse<authmodel>>(environment.baseUrl + 'Auth/Register', model);
   }
 
 
@@ -40,24 +40,24 @@ export class Authservice {
     const formData = new FormData();
     formData.append("Email", email);
     formData.append("IsLogin", "true");
-    return this.http.post<apiresponse<any>>(`${environment.baseUrl}Auth/Register`, formData);
+    return this.http.post<ApiResponse<any>>(`${environment.baseUrl}Auth/Register`, formData);
   }
 
 
   verifyOtp(payload: any) {
-    return this.http.post<apiresponse<any>>(environment.baseUrl + 'Auth/VerifyOtp', payload);
+    return this.http.post<ApiResponse<any>>(environment.baseUrl + 'Auth/VerifyOtp', payload);
   }
 
   resendOtp(payload: any) {
-    return this.http.post<apiresponse<any>>(environment.baseUrl + 'Auth/ResendOtp', payload);
+    return this.http.post<ApiResponse<any>>(environment.baseUrl + 'Auth/ResendOtp', payload);
   }
 
   addPractitioner(model: any) {
-    return this.http.post<apiresponse<any>>(environment.baseUrl + 'Practitioner/AddPractitioner', model);
+    return this.http.post<ApiResponse<any>>(environment.baseUrl + 'Practitioner/AddPractitioner', model);
   }
 
   addClinic(formData: FormData, params?: any) {
-    return this.http.post<apiresponse<any>>(environment.baseUrl + 'Clinic/AddClinic', formData, { params });
+    return this.http.post<ApiResponse<any>>(environment.baseUrl + 'Clinic/AddClinic', formData, { params });
   }
 
   getuserid() {

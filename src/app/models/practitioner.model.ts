@@ -1,8 +1,13 @@
-export interface ApiResponse<T> {
-  message: string;
-  isSuccess: boolean;
-  statusCode: number;
-  data: T;
+export class Availability {
+  dayName: string;
+  dayOfWeek: number;
+  slots: slots[];
+}
+export class slots {
+  endTime: string;
+  id: number;
+  isActive: boolean;
+  startTime: string;
 }
 
 export interface PractitionerSummary {

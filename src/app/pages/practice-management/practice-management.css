@@ -16,7 +16,7 @@
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-md, 12px);
   padding: 20px 24px;
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04));
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
   margin-bottom: 24px;
 }
 
@@ -113,7 +113,7 @@
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-md, 12px);
   padding: 20px 24px;
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04));
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -232,7 +232,7 @@
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-md, 12px);
   padding: 24px;
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04));
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0, 0, 0, 0.04));
 }
 
 .pm-card-title {
@@ -336,7 +336,10 @@
 .pm-slider {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #cbd5e1;
   transition: .3s;
   border-radius: 24px;
@@ -352,14 +355,14 @@
   background-color: white;
   transition: .3s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .pm-slider {
+input:checked+.pm-slider {
   background-color: var(--primary-color, #10a896);
 }
 
-input:checked + .pm-slider:before {
+input:checked+.pm-slider:before {
   transform: translateX(22px);
 }
 
@@ -591,7 +594,9 @@ input:checked + .pm-slider:before {
 }
 
 @keyframes pm-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pm-placeholder-card {
