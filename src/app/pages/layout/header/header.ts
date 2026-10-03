@@ -23,6 +23,7 @@ export class Header extends BaseComponent implements OnInit {
   mobileMenuOpen = false;
   mobileProvidersOpen = false;
   mobileHelpOpen = false;
+  mobileProfileOpen = false;
   baseImageUrl = environment.baseImageUrl;
 
   private sanitizer = inject(DomSanitizer);
@@ -60,8 +61,16 @@ export class Header extends BaseComponent implements OnInit {
   closeMobileMenu(): void {
     if (this.mobileMenuOpen) {
       this.mobileMenuOpen = false;
+      this.mobileProfileOpen = false;
       this.unlockBodyScroll();
     }
+  }
+
+  toggleMobileProfile(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.mobileProfileOpen = !this.mobileProfileOpen;
   }
 
   toggleMobileProviders(event?: Event): void {
