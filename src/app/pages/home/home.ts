@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import Swiper from 'swiper';
 import { Navigation } from 'swiper/modules';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, SearchBarComponent],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

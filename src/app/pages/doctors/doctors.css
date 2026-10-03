@@ -20,8 +20,14 @@
   gap: 28px;
 }
 
-.doctors-search-bar {
+.doctors-search-bar,
+.physios-search-bar-container app-search-bar {
   flex: 0 1 760px;
+  max-width: 760px;
+  width: 100%;
+}
+
+.doctors-search-bar {
   margin: 0 !important;
   height: 44px;
   border: 1px solid #d3d3d3;
@@ -980,7 +986,8 @@
     gap: 14px;
   }
 
-  .doctors-search-bar {
+  .doctors-search-bar,
+  .physios-search-bar-container app-search-bar {
     flex: 1 1 auto;
     width: 100%;
   }

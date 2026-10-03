@@ -1,0 +1,13 @@
+app-search-bar {
+  display: block;
+}
+
+.physios-search-wrapper.doctors-search-bar {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 !important;
+}
+
+.physios-city-dropdown {
+  z-index: 1200;
+}

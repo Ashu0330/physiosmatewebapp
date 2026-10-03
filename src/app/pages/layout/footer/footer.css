@@ -174,12 +174,12 @@
 
 @media (max-width: 420px) {
   .physios-footer-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
+    grid-template-columns: 1fr 1fr;
+    text-align: left;
   }
 
   .physios-footer-col {
-    align-items: center;
+    align-items: flex-start;
   }
 
   .physios-footer-links li a:hover {
