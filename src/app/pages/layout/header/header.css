@@ -1,6 +1,8 @@
 @import '../../../../assets/styles/variable.css';
-@import '../../../../assets/styles/custom.css';
 
+/* =========================================================
+ * Profile Item SVG Helpers
+ * ========================================================= */
 .physios-profile-item-svg {
   display: inline-flex;
   align-items: center;
@@ -19,4 +21,462 @@
 
 .physios-profile-item:hover .physios-profile-item-svg svg {
   opacity: 1;
+}
+
+/* =========================================================
+ * Mobile Hamburger Toggle Button
+ * ========================================================= */
+.physios-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.physios-mobile-toggle:hover {
+  border-color: var(--primary-color, #10A896);
+  background-color: var(--primary-light, #E8F8F5);
+}
+
+.physios-mobile-toggle .hamburger-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: #334155;
+  border-radius: 2px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease,
+              background-color 0.2s ease;
+  transform-origin: center;
+}
+
+.physios-mobile-toggle.active {
+  background-color: var(--primary-light, #E8F8F5);
+  border-color: var(--primary-color, #10A896);
+}
+
+.physios-mobile-toggle.active .hamburger-line {
+  background-color: var(--primary-dark, #087F76);
+}
+
+.physios-mobile-toggle.active .top-line {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.physios-mobile-toggle.active .middle-line {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.physios-mobile-toggle.active .bottom-line {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* =========================================================
+ * Bootstrap Offcanvas Overrides & Styling
+ * ========================================================= */
+.physios-offcanvas.offcanvas {
+  width: 100%;
+  max-width: 380px;
+  background-color: #ffffff;
+  border-left: 1px solid var(--green-border, #D5F3EF);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  z-index: 1050;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
+}
+
+.physios-offcanvas-header {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.physios-btn-close {
+  opacity: 0.65;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  padding: 0.5rem;
+}
+
+.physios-btn-close:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.physios-btn-close:focus {
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.2);
+}
+
+.physios-offcanvas-body {
+  padding: 1.25rem 1rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Bootstrap Backdrop Blur */
+.offcanvas-backdrop.fade.show {
+  z-index: 1040;
+  background-color: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 1;
+}
+
+/* Section Labels */
+.physios-mobile-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.physios-mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Mobile Nav Links */
+.physios-mobile-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  color: #1e293b;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.physios-mobile-link:hover {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+}
+
+.physios-mobile-link.active {
+  background: linear-gradient(90deg, rgba(16, 168, 150, 0.12) 0%, rgba(16, 168, 150, 0.02) 100%);
+  color: var(--primary-dark, #087F76);
+  border-left: 3px solid var(--primary-color, #10A896);
+  font-weight: 700;
+}
+
+.physios-mobile-link.active .physios-mobile-icon-box {
+  background-color: var(--primary-color, #10A896);
+  color: #ffffff;
+}
+
+.physios-mobile-link-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.physios-mobile-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.physios-mobile-link:hover .physios-mobile-icon-box {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+}
+
+.physios-mobile-link-text {
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.physios-mobile-link-chevron {
+  color: #cbd5e1;
+  transition: transform 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.physios-mobile-link:hover .physios-mobile-link-chevron {
+  transform: translateX(2px);
+  color: var(--primary-dark, #087F76);
+}
+
+/* Accordions: For Providers & Security & Help */
+.physios-mobile-accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.physios-mobile-accordion {
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.physios-mobile-accordion-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: #1e293b;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.physios-mobile-accordion-toggle:hover {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+}
+
+.physios-mobile-accordion-toggle:hover .physios-mobile-icon-box {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+}
+
+.physios-accordion-arrow {
+  color: #94a3b8;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.physios-accordion-arrow.rotated {
+  transform: rotate(180deg);
+  color: var(--primary-color, #10A896);
+}
+
+.physios-mobile-accordion-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.25rem 0 0.5rem 2.85rem;
+  animation: accordionSlideDown 0.18s ease-out;
+}
+
+@keyframes accordionSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.physios-mobile-sublink {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  transition: all 0.13s ease;
+}
+
+.physios-mobile-sublink:hover {
+  color: var(--primary-dark, #087F76);
+  background-color: var(--primary-light, #E8F8F5);
+}
+
+.physios-sublink-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.physios-mobile-sublink:hover .physios-sublink-bullet {
+  background-color: var(--primary-color, #10A896);
+  transform: scale(1.25);
+}
+
+/* Auth / Footer Section */
+.physios-mobile-auth-wrapper {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.physios-mobile-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.78rem 1rem;
+  background: linear-gradient(135deg, #087F76 0%, #10A896 100%);
+  color: #ffffff !important;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(16, 168, 150, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.physios-mobile-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 168, 150, 0.35);
+}
+
+/* Logged-in Mobile User Card */
+.physios-mobile-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-light, #E8F8F5) 0%, #f0fdfb 100%);
+  border: 1px solid var(--green-border, #D5F3EF);
+}
+
+.physios-mobile-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color, #10A896);
+  background: var(--primary-light, #E8F8F5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.physios-mobile-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.physios-mobile-user-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.physios-mobile-user-contact {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.physios-mobile-user-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.physios-mobile-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.physios-mobile-logout-btn:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =========================================================
+ * Responsive Breakpoints (max-width: 1024px)
+ * ========================================================= */
+@media (max-width: 1024px) {
+  /* Hide desktop-only elements */
+  .physios-main-nav {
+    display: none !important;
+  }
+
+  .physios-nav-right .physios-dropdown-wrapper {
+    display: none !important;
+  }
+
+  .physios-nav-right .physios-btn-auth {
+    display: none !important;
+  }
+
+  .physios-nav-right .physios-profile-wrapper {
+    display: none !important;
+  }
+
+  /* Show mobile toggle button */
+  .physios-mobile-toggle {
+    display: flex !important;
+  }
+}
+
+/* Desktop styles (> 1024px): hide offcanvas elements */
+@media (min-width: 1025px) {
+  .physios-mobile-toggle {
+    display: none !important;
+  }
+
+  .physios-offcanvas {
+    display: none !important;
+  }
+
+  .offcanvas-backdrop {
+    display: none !important;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .physios-offcanvas.offcanvas {
+    max-width: 100%;
+    border-left: none;
+  }
 }
