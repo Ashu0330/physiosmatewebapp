@@ -1,4 +1,6 @@
-import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal, ViewChild } from '@angular/core';
+import Swiper from 'swiper';
+import { Navigation } from 'swiper/modules';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { FormGroup, Validators } from '@angular/forms';
@@ -7,44 +9,16 @@ import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
-import { Availability, PractitionerDetailedData, providerReview } from '../../models/practitioner.model';
+import { Availability, CarouselDay, PractitionerDetailedData, providerReview, slots } from '../../models/practitioner.model';
 import { SharedModule } from '../../shared/shared-module';
 import { DateHelper } from '../../helper/utilities';
 
-// ── Interfaces ──────────────────────────────────────────────────────────────
-export interface TimeSlot {
-  id: number;
-  startTime: string;
-  endTime: string;
-  isActive: boolean;
-}
 
-export interface DayAvailability {
-  dayOfWeek: number;
-  dayName: string;
-  slots: TimeSlot[];
-}
-
-export interface CarouselDay {
-  date: Date;
-  label: string;
-  dateStr: string;
-  fullDateStr: string;
-  dayOfWeek: number;
-  hasSlots: boolean;
-  slotCount: number;
-  availableSlots: string[];
-}
 
 // ── Static Constants & Pure Utilities ───────────────────────────────────────
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 
-function isSameDay(d1: Date, d2: Date): boolean {
-  return d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate();
-}
 
 function isTimeInFuture(timeStr: string): boolean {
   const [timePart, period] = timeStr.split(' ');
@@ -73,6 +47,11 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   private readonly elRef = inject(ElementRef);
   private scrollRafId: number | null = null;
 
+  @ViewChild('daySwiperRef') daySwiperRef?: ElementRef<HTMLElement>;
+  @ViewChild('dayPrevBtn') dayPrevBtn?: ElementRef<HTMLElement>;
+  @ViewChild('dayNextBtn') dayNextBtn?: ElementRef<HTMLElement>;
+  private daySwiper?: Swiper;
+
 
   practitionerId: number = 0;
   readonly isClinic = signal<boolean>(false);
@@ -87,7 +66,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   reviewForm!: FormGroup;
   readonly isSubmittingReview = signal<boolean>(false);
   readonly Review = signal<providerReview[]>([]);
-  readonly activeReviewTab = signal<'visitedFor' | 'happyAbout'>('visitedFor');
   readonly selectedVisitReasons = signal<string[]>([]);
   readonly showCustomVisit = signal<boolean>(false);
   readonly customVisitText = signal<string>('');
@@ -135,91 +113,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     return list;
   });
 
-  readonly dayList = computed<CarouselDay[]>(() => {
-    const slots = this.availabilitySlots();
-    const offset = this.weekOffset();
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const baseDate = new Date(today);
-    baseDate.setDate(today.getDate() + (offset * 7));
-
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(baseDate);
-      d.setDate(baseDate.getDate() + i);
-      const jsDay = d.getDay();
-      const pmDay = jsDay === 0 ? 7 : jsDay;
-
-      const avail = slots.find((a: any) => Number(a.dayOfWeek) === pmDay);
-
-      const rawChips: string[] = [];
-      if (avail?.slots) {
-        avail.slots
-          .filter((s: any) => s.isActive !== false)
-          .forEach((s: any) => rawChips.push(...this.expandRange(s.startTime, s.endTime)));
-      }
-
-      const isCurrentDay = isSameDay(d, today);
-      const isTomorrowDay = isSameDay(d, tomorrow);
-
-      const availableSlots = isCurrentDay
-        ? rawChips.filter(isTimeInFuture)
-        : rawChips;
-
-      const slotCount = availableSlots.length;
-      const hasSlots = slotCount > 0;
-
-      let label = `${DAY_NAMES[jsDay]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
-      if (isCurrentDay) {
-        label = 'Today';
-      } else if (isTomorrowDay) {
-        label = 'Tomorrow';
-      }
-
-      const dateStr = `${DAY_NAMES[jsDay]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
-      const fullDateStr = `${DAY_NAMES[jsDay]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
-
-      return {
-        date: d,
-        label,
-        dateStr,
-        fullDateStr,
-        dayOfWeek: pmDay,
-        hasSlots,
-        slotCount,
-        availableSlots
-      };
-    });
-  });
-
-  readonly selectedDay = computed<CarouselDay | null>(() => {
-    const days = this.dayList();
-    const idx = this.selectedDayIndex();
-    return days[idx] ?? null;
-  });
-
-  readonly selectedDate = computed<Date | null>(() => {
-    return this.selectedDay()?.date ?? null;
-  });
-
-  readonly selectedDateFormatted = computed<string>(() => {
-    const d = this.selectedDate();
-    return d ? DateHelper.formatLocalDate(d) : '';
-  });
-
-  private readonly slotsForSelectedDay = computed(() => {
-    return this.selectedDay()?.availableSlots || [];
-  });
-
-  readonly computedMorningSlots = computed(() =>
-    this.slotsForSelectedDay().filter(t => t.endsWith('AM'))
-  );
-
-  readonly computedAfternoonSlots = computed(() =>
-    this.slotsForSelectedDay().filter(t => t.endsWith('PM'))
-  );
-
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
     this.practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
@@ -240,6 +133,12 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     ]);
     this.autoSelectAvailableDay();
 
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        this.daySwiper?.update();
+      }, 50);
+    }
+
     if (typeof window !== 'undefined') {
       this.updateActiveSectionFromScroll();
     }
@@ -250,15 +149,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       .subscribe(params => {
         if (params['bookingConfirmed'] === 'true') {
           const pending = this.bookingService.getPendingSlot();
-          const dayLabel = pending?.selectedDay || `${this.dayList()[0]?.label || 'Today'} (${this.dayList()[0]?.dateStr || ''})`;
-          const slotTime = pending?.selectedTime || this.selectedSlotTime();
-          const pendingDate = pending?.selectedDate ? new Date(pending.selectedDate) : (this.dayList()[0]?.date || new Date());
 
-          this.confirmAppointmentDirectly(
-            { label: dayLabel, dateStr: '', date: pendingDate },
-            slotTime,
-            pending?.bookingId
-          );
+          pending?.bookingId
 
           this.router.navigate([], {
             relativeTo: this.route,
@@ -274,10 +166,59 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       import('@fancyapps/ui').then(({ Fancybox }) => {
         Fancybox.bind(this.elRef.nativeElement, '[data-fancybox="clinic-gallery"]');
       });
+      this.initDaySwiper();
+      setTimeout(() => {
+        if (!this.daySwiper) {
+          this.initDaySwiper();
+        } else {
+          this.daySwiper.update();
+        }
+      }, 80);
+      setTimeout(() => {
+        this.daySwiper?.update();
+      }, 300);
     }
   }
 
+  private initDaySwiper(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const root = this.elRef.nativeElement;
+    const container = (this.daySwiperRef?.nativeElement || root.querySelector('.day-tabs-slider')) as HTMLElement;
+    const prevBtn = (this.dayPrevBtn?.nativeElement || root.querySelector('.day-nav-arrow-prev')) as HTMLElement;
+    const nextBtn = (this.dayNextBtn?.nativeElement || root.querySelector('.day-nav-arrow-next')) as HTMLElement;
+
+    if (!container) return;
+
+    if (this.daySwiper) {
+      this.daySwiper.destroy(true, true);
+      this.daySwiper = undefined;
+    }
+
+    this.daySwiper = new Swiper(container, {
+      modules: [Navigation],
+      slidesPerView: 4,
+      slidesPerGroup: 2,
+      spaceBetween: 8,
+      watchOverflow: true,
+      observer: true,
+      observeParents: true,
+      resizeObserver: true,
+      updateOnWindowResize: true,
+      navigation: {
+        prevEl: prevBtn,
+        nextEl: nextBtn,
+      },
+    });
+
+    requestAnimationFrame(() => {
+      this.daySwiper?.update();
+    });
+  }
+
   ngOnDestroy(): void {
+    if (this.daySwiper) {
+      this.daySwiper.destroy(true, true);
+    }
     if (typeof window !== 'undefined' && this.scrollRafId !== null) {
       window.cancelAnimationFrame(this.scrollRafId);
       this.scrollRafId = null;
@@ -300,11 +241,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     });
   }
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // 4. Dummy / Static Mock Fallback Data
-  // ═════════════════════════════════════════════════════════════════════════
 
-  // Doctor profile summary fallback data
   readonly practitioner = {
     id: 1,
     name: 'Dr. Sneha Sharma',
@@ -417,13 +354,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   // Popular Cities list
   readonly popularCities = ['Jaipur', 'Kota', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Pune'];
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // 5. Methods (Systematically Ordered)
-  // ═════════════════════════════════════════════════════════════════════════
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5.1 Backend API Methods (In Order of Use)
-  // ─────────────────────────────────────────────────────────────────────────
 
   /** API 1: Fetch Doctor or Clinic Profile Details */
   async GetDoctorById(): Promise<void> {
@@ -465,7 +396,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     });
     this.Review.set(res.isSuccess ? (res.data ?? []) : []);
   }
-  
+
   async AddReview(): Promise<void> {
     if (!this.isLoggedIn) {
       this.showError('Please log in to submit a review.');
@@ -505,46 +436,26 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     return await this.apiService.Post<any>(ApiEndPoints.BookConsultancy, payload);
   }
 
-  async prevWeek(): Promise<void> {
-    if (this.weekOffset() <= 0) return;
-    this.weekOffset.update(w => w - 1);
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + (this.weekOffset() * 7));
-    await this.loadAvailability();
-    this.autoSelectAvailableDay();
-  }
 
-  async nextWeek(): Promise<void> {
-    this.weekOffset.update(w => w + 1);
-    await this.loadAvailability();
-    this.autoSelectAvailableDay();
-  }
-
-  async resetToCurrentWeek(): Promise<void> {
-    if (this.weekOffset() === 0) return;
-    this.weekOffset.set(0);
-    await this.loadAvailability();
-    this.autoSelectAvailableDay();
-  }
 
   autoSelectAvailableDay(): void {
-    const days = this.dayList();
-    const availableIndex = days.findIndex(d => d.hasSlots);
-    const targetIdx = availableIndex >= 0 ? availableIndex : 0;
-    this.selectedDayIndex.set(targetIdx);
-    const selectedDay = days[targetIdx];
-    if (selectedDay?.hasSlots && selectedDay.availableSlots.length > 0) {
-      this.selectedSlotTime.set(selectedDay.availableSlots[0]);
-    }
+    // const days = this.dayList();
+    // const availableIndex = days.findIndex(d => d.hasSlots);
+    // const targetIdx = availableIndex >= 0 ? availableIndex : 0;
+    // this.selectedDayIndex.set(targetIdx);
+    // const selectedDay = days[targetIdx];
+    // if (selectedDay?.hasSlots && selectedDay.availableSlots.length > 0) {
+    //   this.selectedSlotTime.set(selectedDay.availableSlots[0]);
+    // }
   }
 
   selectDay(index: number): void {
     this.selectedDayIndex.set(index);
-    const days = this.dayList();
-    const day = days[index];
-    if (day?.hasSlots && day.availableSlots.length > 0) {
-      this.selectedSlotTime.set(day.availableSlots[0]);
-    }
+    // const days = this.dayList();
+    // const day = days[index];
+    // if (day?.hasSlots && day.availableSlots.length > 0) {
+    //   this.selectedSlotTime.set(day.availableSlots[0]);
+    // }
   }
 
   selectSlot(time: string): void {
@@ -605,21 +516,26 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.selectedHappyAbout.set([]);
     this.showCustomHappyAbout.set(false);
     this.customHappyAboutText.set('');
-    this.activeReviewTab.set('visitedFor');
-  }
-
-  setActiveReviewTab(tab: 'visitedFor' | 'happyAbout'): void {
-    this.activeReviewTab.set(tab);
   }
 
   toggleVisitReason(reason: string): void {
     const current = this.selectedVisitReasons();
-    const updated = current.includes(reason)
-      ? current.filter(r => r !== reason)
-      : [...current, reason];
-    this.selectedVisitReasons.set(updated);
-    this.syncReviewControl('visitedFor', updated, this.customVisitText());
+    if (current.includes(reason)) {
+      this.selectedVisitReasons.set(current.filter(r => r !== reason));
+    } else {
+      this.selectedVisitReasons.set([reason]);
+    }
+    this.syncReviewControl('visitedFor', this.selectedVisitReasons(), '');
   }
+
+  // toggleVisitReason(reason: string): void {
+  //   const current = this.selectedVisitReasons();
+  //   const updated = current.includes(reason)
+  //     ? current.filter(r => r !== reason)
+  //     : [...current, reason];
+  //   this.selectedVisitReasons.set(updated);
+  //   this.syncReviewControl('visitedFor', updated, this.customVisitText());
+  // }
 
   isVisitReasonSelected(reason: string): boolean {
     return this.selectedVisitReasons().includes(reason);
@@ -682,7 +598,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.scrollToSection('appointment-slots');
   }
 
-  async confirmAppointmentDirectly(day: { label: string; dateStr: string; fullDateStr?: string; date?: Date | string }, slotTime: string, existingRef?: string): Promise<void> {
+  async confirmAppointmentDirectly(day: any, slotTime: string, existingRef?: string): Promise<void> {
     const user = this.authService.getCurrentUser();
     const doc = this.doctorDetail();
     const ref = existingRef || `PHY-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -692,7 +608,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     // Resolve date to Date instance and YYYY-MM-DD date format
     const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
       ? day.date
-      : (typeof day.date === 'string' && day.date ? new Date(day.date) : (this.selectedDate() || new Date()));
+      : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
     const formattedDate = DateHelper.formatLocalDate(resolvedDate);
 
     // Send booking to backend API
@@ -737,11 +653,12 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookConsultancy(): void {
-    const day = this.dayList()[this.selectedDayIndex()];
-    if (!day || !day.hasSlots) {
-      this.showError('Please select a day with available slots.');
-      return;
-    }
+    const day = new Date;
+    // this.dayList()[this.selectedDayIndex()];
+    // if (!day || !day.hasSlots) {
+    //   this.showError('Please select a day with available slots.');
+    //   return;
+    // }
     const doc = this.doctorDetail();
     const paramId = this.route.snapshot.paramMap.get('id') || '1';
     const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitionerId || 1;
@@ -757,8 +674,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         clinicName: doc?.clinicName || this.practitioner.clinicName,
         clinicAddress: this.practitioner.clinicAddress,
         consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
-        selectedDay: day.fullDateStr || `${day.label} (${day.dateStr})`,
-        selectedDate: DateHelper.formatLocalDate(day.date),
+        // selectedDay: day.fullDateStr || `${day.label} (${day.dateStr})`,
+        // selectedDate: DateHelper.formatLocalDate(day.date),
         selectedTime: this.selectedSlotTime()
       });
 

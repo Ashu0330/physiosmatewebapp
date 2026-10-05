@@ -9,6 +9,16 @@ export class slots {
   isActive: boolean;
   startTime: string;
 }
+export interface CarouselDay {
+  date: Date;
+  label: string;
+  dateStr: string;
+  fullDateStr: string;
+  dayOfWeek: number;
+  hasSlots: boolean;
+  slotCount: number;
+  availableSlots: string[];
+}
 
 export interface PractitionerSummary {
   practitionerId: number;

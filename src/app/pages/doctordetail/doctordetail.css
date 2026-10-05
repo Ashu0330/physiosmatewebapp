@@ -1298,17 +1298,12 @@
 }
 
 .day-tabs-slider {
-  display: flex;
-  flex: 1;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  gap: 2px;
-}
-
-.day-tabs-slider::-webkit-scrollbar {
-  display: none;
+  display: block;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .day-tab-btn {
@@ -1368,7 +1363,12 @@
 
 .no-slots-alert {
   text-align: center;
-  padding: 1.5rem 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  min-height: 100px;
 }
 
 .calendar-alert-icon {
@@ -1379,7 +1379,12 @@
 .no-slots-msg {
   font-size: 0.82rem;
   color: #64748b;
-  margin: 0 0 1.25rem 0;
+  border: 1px solid #dee2e6;
+  padding: 0px 10px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
 }
 
 /* Slots Group */
@@ -2336,3 +2341,116 @@
   opacity: 0.65;
   cursor: not-allowed;
 }
+
+/* date calender css */
+.day-carousel-strip {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  position: relative;
+  overflow: hidden;
+  padding: 6px 4px;
+  width: 100%;
+}
+
+.day-tabs-slider.swiper {
+  display: block !important;
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: 4px 0;
+}
+
+.day-tabs-slider .swiper-wrapper {
+  display: flex;
+  box-sizing: content-box;
+  align-items: stretch;
+}
+
+.day-tabs-slider .swiper-slide {
+  height: auto;
+  display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* Preload: display 4 slides evenly before Swiper JS initializes */
+.day-tabs-slider:not(.swiper-initialized) .swiper-wrapper {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+.day-tabs-slider:not(.swiper-initialized) .swiper-slide {
+  flex: 0 0 calc((100% - 24px) / 4) !important;
+  width: calc((100% - 24px) / 4) !important;
+  max-width: calc((100% - 24px) / 4) !important;
+  min-width: 0 !important;
+}
+
+.day-tab-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  user-select: none;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.day-tab-box:hover {
+  border-color: #087F76;
+  background: #f0fdf4;
+}
+
+.day-tab-box span {
+  font-size: 11px;
+  line-height: 1.3;
+  display: block;
+  white-space: nowrap;
+}
+
+.day-tab-box span:first-child {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.day-tab-box span:last-child {
+  font-weight: 400;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.day-nav-arrow {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #087F76;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-nav-arrow.swiper-button-disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* date calender css */
