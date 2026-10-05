@@ -571,54 +571,14 @@
             </button>
             <div class="swiper day-tabs-slider" #daySwiperRef>
               <div class="swiper-wrapper">
+                @for (day of dayList(); track day.dateStr; let i = $index) {
                 <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>5th oct</span>
-                    <span>Monday</span>
+                  <div class="day-tab-box" [class.selected]="selectedDayIndex() === i" (click)="onDayClick(day, i)">
+                    <span>{{ day.dateStr }}</span>
+                    <span>{{ day.label }}</span>
                   </div>
                 </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>6th oct</span>
-                    <span>tues</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>7th oct</span>
-                    <span>wed</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>8th oct</span>
-                    <span>thurs</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>9th oct</span>
-                    <span>fri</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>10th oct</span>
-                    <span>sat</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>11th oct</span>
-                    <span>sun</span>
-                  </div>
-                </div>
-                <div class="swiper-slide">
-                  <div class="day-tab-box">
-                    <span>12th oct</span>
-                    <span>Mon</span>
-                  </div>
-                </div>
+                }
               </div>
             </div>
             <button type="button" class="day-nav-arrow day-nav-arrow-next" #dayNextBtn title="Next" aria-label="Next">
@@ -628,16 +588,27 @@
 
           <!-- Slot Content Display -->
           <div class="slot-content-body">
+            @if (selectedSlots().length > 0) {
             <div class="no-slots-alert">
-              <p class="no-slots-msg">09:30 AM – 10:00 AM</p>
-              <p class="no-slots-msg">10:30 AM – 11:30 AM</p>
-              <p class="no-slots-msg">12:00 PM – 01:00 PM</p>
+              @for (slot of selectedSlots(); track slot.id) {
+              <button type="button" class="no-slots-msg"
+                [class.selected]="selectedSlotTime() === (slot.startTime + '–' + slot.endTime)"
+                (click)="selectSlot(slot.startTime + '–' + slot.endTime)">
+                {{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }}
+              </button>
+              }
             </div>
 
-
+            @if (selectedSlotTime()) {
             <button type="button" class="btn-confirm-slot" (click)="bookAppointment()">
               Book Appointment for {{ selectedSlotTime() }}
             </button>
+            }
+            } @else {
+            <div class="no-slots-alert">
+              <p class="no-slots-msg" style="border:none; color:#94a3b8;">No slots available for this day</p>
+            </div>
+            }
 
             <!-- Call Now Action Button -->
             <a href="tel:+911412345678" class="btn-call-now">
