@@ -171,7 +171,16 @@ export class DateHelper {
         if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
         return age;
     }
+    static formatLocalDate(date: Date | string | null | undefined): string {
+        if (!date) return '';
+        const d = date instanceof Date ? date : new Date(date);
+        if (isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
 
+        return `${year}-${month}-${day}`;
+    }
     /** Formats a date to 'DD MMM YYYY' (e.g. 12 Sep 2026). */
     static formatDisplay(date: string | Date | null | undefined): string {
         if (!date) return '—';

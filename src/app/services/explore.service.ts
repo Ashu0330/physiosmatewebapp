@@ -3,7 +3,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../environment/environment';
 import {
-  ApiResponse,
   ClinicDetailedData,
   ClinicFilter,
   ClinicSummary,
@@ -11,6 +10,7 @@ import {
   PractitionerFilter,
   PractitionerSummary
 } from '../models/practitioner.model';
+import { ApiResponse } from '../models/apiresponse';
 
 @Injectable({
   providedIn: 'root',

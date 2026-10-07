@@ -1,10 +1,11 @@
-import { DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Loader } from '../services/loader';
 import { SweetAlertService } from '../services/sweet-alert.service';
 import { Authservice } from '../services/authservice';
 import { ApiService } from '../services/api.service';
 import { AppMessage } from './app-message';
+import { FormBuilder } from '@angular/forms';
 
 export abstract class BaseComponent {
     protected loader = inject(Loader);
@@ -13,6 +14,8 @@ export abstract class BaseComponent {
     protected apiService = inject(ApiService);
     protected router = inject(Router);
     protected destroyRef = inject(DestroyRef);
+    protected cdr = inject(ChangeDetectorRef);
+    protected fb = inject(FormBuilder);
 
     public pagination = {
         currentPage: 1,

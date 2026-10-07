@@ -1,98 +1,66 @@
-import { Component, signal, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink, Router, ActivatedRoute } from '@angular/router';
-import { Authservice } from '../../services/authservice';
+import { Component, computed, OnInit, AfterViewInit, OnDestroy, HostListener, inject, ElementRef, PLATFORM_ID, signal, ViewChild } from '@angular/core';
+import Swiper from 'swiper';
+import { Navigation } from 'swiper/modules';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isPlatformBrowser } from '@angular/common';
+import { FormGroup, Validators } from '@angular/forms';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
+import { BaseComponent } from '../../helper/base-component';
+import { ApiEndPoints } from '../../helper/api-endpoints';
+import { Availability, CarouselDay, PractitionerDetailedData, providerReview, slots } from '../../models/practitioner.model';
+import { SharedModule } from '../../shared/shared-module';
+import { DateHelper } from '../../helper/utilities';
 
-export interface PlanBenefit {
-  id: number;
-  planId: number;
-  planType?: number;
-  benefitText: string;
-  displayOrder: number;
-}
-
-export interface RehabPlan {
-  id: number;
-  planName: string;
-  totalSessions: number;
-  validityDays: number;
-  price: number;
-  isPopular: boolean;
-  isActive: boolean;
-  providerType: string;
-  providerId: number;
-  expertiseId: number;
-  benefits: PlanBenefit[];
-}
-
-export interface UserSubscription {
-  id: number;
-  userId: number;
-  patientId: number;
-  planId: number;
-  practitionerId: number;
-  clinicId: number | null;
-  totalSessions: number;
-  usedSessions: number;
-  remainingSessions: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  amount: number;
-  paymentStatus: string;
-}
-
-export interface TimeSlot {
-  id: number;
-  startTime: string;
-  endTime: string;
-  isActive: boolean;
-}
-
-export interface DayAvailability {
-  dayOfWeek: number;
-  dayName: string;
-  slots: TimeSlot[];
-}
-
-export interface PractitionerReview {
-  id: number;
-  userId: number;
-  userName: string;
-  practitionerId: number;
-  clinicId: number | null;
-  rating: number;
-  review: string;
-  visitedFor?: string;
-  timeAgo?: string;
-  tags?: string[];
-  clinicReply?: string;
-}
-
-export interface TreatmentItem {
-  id: number;
-  name: string;
-  category?: string;
-}
 
 @Component({
   selector: 'app-doctordetail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [SharedModule, RouterLink],
   templateUrl: './doctordetail.html',
   styleUrl: './doctordetail.css',
 })
-export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private authService = inject(Authservice);
-  private bookingService = inject(BookingService);
-  private platformId = inject(PLATFORM_ID);
-  private elRef = inject(ElementRef);
+export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit, OnDestroy {
 
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly bookingService = inject(BookingService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly elRef = inject(ElementRef);
+  private scrollRafId: number | null = null;
+
+  @ViewChild('daySwiperRef') daySwiperRef?: ElementRef<HTMLElement>;
+  @ViewChild('dayPrevBtn') dayPrevBtn?: ElementRef<HTMLElement>;
+  @ViewChild('dayNextBtn') dayNextBtn?: ElementRef<HTMLElement>;
+  private daySwiper?: Swiper;
+
+
+  practitionerId: number = 0;
+  readonly isClinic = signal<boolean>(false);
+  readonly doctorDetail = signal<PractitionerDetailedData | null>(null);
+
+  readonly availabilitySlots = signal<Availability[]>([]);
+  readonly isLoadingAvailability = signal<boolean>(false);
+  readonly selectedSlots = signal<slots[]>([]);
+  readonly dayList = signal<CarouselDay[]>([]);
+  readonly selectedDay = signal<CarouselDay | null>(null);
+  readonly weekOffset = signal<number>(0);
+  readonly selectedDayIndex = signal<number>(0);
+  readonly selectedSlotTime = signal<string>('');
+
+  reviewForm!: FormGroup;
+  readonly isSubmittingReview = signal<boolean>(false);
+  readonly Review = signal<providerReview[]>([]);
+  readonly selectedVisitReasons = signal<string[]>([]);
+  readonly showCustomVisit = signal<boolean>(false);
+  readonly customVisitText = signal<string>('');
+  readonly selectedHappyAbout = signal<string[]>([]);
+  readonly showCustomHappyAbout = signal<boolean>(false);
+  readonly customHappyAboutText = signal<string>('');
+
+  readonly bookingSuccess = signal<boolean>(false);
+  readonly bookingMessage = signal<string>('');
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
     doctorSpecialty: string;
@@ -100,19 +68,169 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     clinicName: string;
     clinicAddress: string;
     day: string;
+    date?: string;
     time: string;
     fee: number;
     bookingRefId: string;
     patientName: string;
   } | null>(null);
 
-  // Search bar context (matching doctors/home pages)
+  readonly selectedAssociatedDoctor = signal<any | null>(null);
+
+  readonly activeSection = signal<string>('info');
   readonly selectedCity = signal<string>('Jaipur');
   readonly searchQuery = signal<string>('Physiotherapist');
   readonly isCityOpen = signal<boolean>(false);
-  readonly popularCities = ['Jaipur', 'Kota', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Pune'];
 
-  // Doctor profile summary data
+
+  readonly navTabs = computed(() => {
+    const list = [
+      { id: 'info', label: 'Info' },
+      { id: 'stories', label: 'Stories (2)' },
+    ];
+    if (this.isClinic()) {
+      list.push({ id: 'doctors', label: `Associated Doctors (${this.associatedDoctors().length})` });
+    }
+    list.push(
+      { id: 'treatments', label: 'Surgeries & Treatments' },
+      { id: 'photos', label: 'Photos & Videos' },
+      { id: 'qa', label: 'Consult Q&A' }
+    );
+    return list;
+  });
+
+  async ngOnInit(): Promise<void> {
+    this.GetDate();
+    const id = this.route.snapshot.paramMap.get('id');
+    this.practitionerId = id ? (ExploreService.extractIdFromSlug(id) || Number(id)) : 0;
+
+    const isClinicRoute =
+      this.route.snapshot.data['isClinic'] === true ||
+      this.router.url.includes('clinic') ||
+      (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
+    this.isClinic.set(isClinicRoute);
+
+    this.createReviewForm();
+
+    // Fetch initial backend data in parallel
+    await Promise.all([
+      this.GetDoctorById(),
+      this.GetAllReview(),
+      this.loadAvailability()
+    ]);
+    this.autoSelectAvailableDay();
+
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        this.daySwiper?.update();
+      }, 50);
+    }
+
+    if (typeof window !== 'undefined') {
+      this.updateActiveSectionFromScroll();
+    }
+
+    // Handle redirection with confirmed booking query params
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        if (params['bookingConfirmed'] === 'true') {
+          const pending = this.bookingService.getPendingSlot();
+
+          pending?.bookingId
+
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }
+      });
+  }
+
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      import('@fancyapps/ui').then(({ Fancybox }) => {
+        Fancybox.bind(this.elRef.nativeElement, '[data-fancybox="clinic-gallery"]');
+      });
+      this.initDaySwiper();
+      setTimeout(() => {
+        if (!this.daySwiper) {
+          this.initDaySwiper();
+        } else {
+          this.daySwiper.update();
+        }
+      }, 80);
+      setTimeout(() => {
+        this.daySwiper?.update();
+      }, 300);
+    }
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    if (typeof window === 'undefined') return;
+    if (this.scrollRafId !== null) return;
+    this.scrollRafId = window.requestAnimationFrame(() => {
+      this.updateActiveSectionFromScroll();
+      this.scrollRafId = null;
+    });
+  }
+
+
+  ngOnDestroy(): void {
+    if (this.daySwiper) {
+      this.daySwiper.destroy(true, true);
+    }
+    if (typeof window !== 'undefined' && this.scrollRafId !== null) {
+      window.cancelAnimationFrame(this.scrollRafId);
+      this.scrollRafId = null;
+    }
+    if (isPlatformBrowser(this.platformId)) {
+      import('@fancyapps/ui').then(({ Fancybox }) => {
+        Fancybox.unbind(this.elRef.nativeElement);
+        Fancybox.close();
+      });
+    }
+  }
+
+  private initDaySwiper(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const root = this.elRef.nativeElement;
+    const container = (this.daySwiperRef?.nativeElement || root.querySelector('.day-tabs-slider')) as HTMLElement;
+    const prevBtn = (this.dayPrevBtn?.nativeElement || root.querySelector('.day-nav-arrow-prev')) as HTMLElement;
+    const nextBtn = (this.dayNextBtn?.nativeElement || root.querySelector('.day-nav-arrow-next')) as HTMLElement;
+
+    if (!container) return;
+
+    if (this.daySwiper) {
+      this.daySwiper.destroy(true, true);
+      this.daySwiper = undefined;
+    }
+
+    this.daySwiper = new Swiper(container, {
+      modules: [Navigation],
+      slidesPerView: 4,
+      slidesPerGroup: 2,
+      spaceBetween: 8,
+      watchOverflow: true,
+      observer: true,
+      observeParents: true,
+      resizeObserver: true,
+      updateOnWindowResize: true,
+      navigation: {
+        prevEl: prevBtn,
+        nextEl: nextBtn,
+      },
+    });
+
+    requestAnimationFrame(() => {
+      this.daySwiper?.update();
+    });
+  }
+
+
+
   readonly practitioner = {
     id: 1,
     name: 'Dr. Sneha Sharma',
@@ -133,169 +251,11 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     landmark: 'Near B2Bypass Chauraha, Jaipur',
     headline: 'Dr. Sneha Sharma – Expert in Sports & Orthopedic Physiotherapy and Post Operative Rehabilitation at Fit N Fly.',
     bioParagraphs: [
-      'Dr. Sneha Sharma is a renowned Sports Physiotherapist with a Master\'s degree in Sports, Musculoskeletal, and Orthopedic Physiotherapy. With a strong background in managing high-performance athletes, she has proudly represented India as a physiotherapist with national teams including Indian Volleyball, Taekwondo, and several other sporting disciplines.',
-      'At Fit n Fly, Dr. Sharma delivers personalized physiotherapy care, focusing on restoring movement, relieving pain, and optimizing overall physical performance. Her expertise spans a broad range of conditions, including sports injuries, back and neck pain, joint dysfunctions, post-operative rehabilitation, and chronic musculoskeletal disorders.',
-      'Combining evidence-based practice with modern therapeutic techniques, Dr. Sharma ensures each patient receives a customized treatment plan. Her approach integrates manual therapy, specialized exercise programs, and patient education, all aimed at not just treating symptoms but preventing future issues.',
-      'Fit n Fly is equipped with advanced rehabilitation equipment and offers a supportive, patient-centered environment. Dr. Sneha Sharma is known for her detailed assessments, clear communication, and her commitment to helping individuals return to their peak physical condition.'
+      'Dr. Sneha Sharma is a renowned Sports Physiotherapist with a Master\'s degree in Sports, Musculoskeletal, and Orthopedic Physiotherapy.',
+      'At Fit n Fly, Dr. Sharma delivers personalized physiotherapy care, focusing on restoring movement and relieving pain.',
+      'Combining evidence-based practice with modern therapeutic techniques, Dr. Sharma ensures each patient receives a customized treatment plan.'
     ]
   };
-
-  // Availability Time Slots JSON Data
-  readonly availabilityData = signal<DayAvailability[]>([
-    {
-      dayOfWeek: 1,
-      dayName: 'Monday',
-      slots: [
-        { id: 101, startTime: '09:00:00', endTime: '13:00:00', isActive: true },
-        { id: 102, startTime: '14:00:00', endTime: '18:00:00', isActive: true }
-      ]
-    },
-    {
-      dayOfWeek: 2,
-      dayName: 'Tuesday',
-      slots: [
-        { id: 103, startTime: '09:00:00', endTime: '13:00:00', isActive: true },
-        { id: 104, startTime: '14:00:00', endTime: '18:00:00', isActive: true }
-      ]
-    },
-    {
-      dayOfWeek: 3,
-      dayName: 'Wednesday',
-      slots: [
-        { id: 105, startTime: '09:00:00', endTime: '13:00:00', isActive: true }
-      ]
-    },
-    {
-      dayOfWeek: 4,
-      dayName: 'Thursday',
-      slots: [
-        { id: 106, startTime: '09:00:00', endTime: '13:00:00', isActive: true },
-        { id: 107, startTime: '14:00:00', endTime: '18:00:00', isActive: true }
-      ]
-    },
-    {
-      dayOfWeek: 5,
-      dayName: 'Friday',
-      slots: [
-        { id: 108, startTime: '09:00:00', endTime: '13:00:00', isActive: true },
-        { id: 109, startTime: '14:00:00', endTime: '18:00:00', isActive: true }
-      ]
-    },
-    {
-      dayOfWeek: 6,
-      dayName: 'Saturday',
-      slots: [
-        { id: 110, startTime: '10:00:00', endTime: '14:00:00', isActive: true }
-      ]
-    }
-  ]);
-
-  // Reviews Data JSON
-  readonly reviews = signal<PractitionerReview[]>([
-    {
-      id: 15,
-      userId: 42,
-      userName: 'Michael Brown',
-      practitionerId: 1,
-      clinicId: null,
-      rating: 5,
-      review: 'Dr. Sarah was extremely attentive and helped relieve my chronic back pain after just a few sessions. Highly recommended!',
-      visitedFor: 'Arthritis Physiotherapy, Osteoarthritis Physiotherapy, Knee Pain Physiotherapy',
-      timeAgo: 'Recent',
-      tags: ['Doctor friendliness', 'Explanation of the health issue', 'Treatment satisfaction', 'Value for money', 'Wait time'],
-      clinicReply: 'Thank You !! We wish you Good health & Happiness in life.'
-    },
-    {
-      id: 16,
-      userId: 58,
-      userName: 'Emily Watson',
-      practitionerId: 1,
-      clinicId: null,
-      rating: 4,
-      review: 'Very professional and knowledgeable therapist. Clear explanation of exercises.',
-      visitedFor: 'Frozen Shoulder Physiotherapy & Posture Correction',
-      timeAgo: '2 weeks ago',
-      tags: ['Doctor friendliness', 'Treatment satisfaction', 'Great exercises'],
-      clinicReply: 'Thank you for your warm feedback! Glad you are feeling much better.'
-    }
-  ]);
-
-  // Rehab Plans Data JSON
-  readonly rehabPlans = signal<RehabPlan[]>([
-    {
-      id: 12,
-      planName: '10-Session Rehab Plan',
-      totalSessions: 10,
-      validityDays: 60,
-      price: 4500.0,
-      isPopular: true,
-      isActive: true,
-      providerType: 'Practitioner',
-      providerId: 1,
-      expertiseId: 3,
-      benefits: [
-        {
-          id: 1,
-          planId: 12,
-          planType: 1,
-          benefitText: 'Personalized rehab exercise chart',
-          displayOrder: 1
-        },
-        {
-          id: 2,
-          planId: 12,
-          planType: 1,
-          benefitText: 'Weekly progress assessment',
-          displayOrder: 2
-        }
-      ]
-    }
-  ]);
-
-  // User Purchased Plan JSON
-  readonly activeSubscription = signal<UserSubscription | null>({
-    id: 55,
-    userId: 24,
-    patientId: 18,
-    planId: 12,
-    practitionerId: 1,
-    clinicId: null,
-    totalSessions: 10,
-    usedSessions: 2,
-    remainingSessions: 8,
-    startDate: '2026-08-15T00:00:00',
-    endDate: '2026-10-14T00:00:00',
-    status: 'Active',
-    amount: 4500.0,
-    paymentStatus: 'Paid'
-  });
-
-  // Surgeries & Treatments List
-  readonly treatmentsList = signal<TreatmentItem[]>([
-    { id: 1, name: 'Geriatric Physiotherapy Consultation' },
-    { id: 2, name: 'Tailbone Pain (Coccydynia)' },
-    { id: 3, name: 'Ribs Pain' },
-    { id: 4, name: 'Osteopathic Physiotherapy' },
-    { id: 5, name: 'Kegel Exercises' },
-    { id: 6, name: 'Buttock Pain' },
-    { id: 7, name: 'Orthopaedic Physiotherapy' },
-    { id: 8, name: 'Nerve and Muscle Disorders' },
-    { id: 9, name: 'Sports Injury Rehabilitation' },
-    { id: 10, name: 'Spine & Posture Alignment' },
-    { id: 11, name: 'Post-Surgical Joint Rehab' },
-    { id: 12, name: 'Cervical Spondylosis Therapy' }
-  ]);
-
-  readonly treatmentSearchQuery = signal<string>('');
-
-  readonly filteredTreatments = computed(() => {
-    const q = this.treatmentSearchQuery().toLowerCase().trim();
-    if (!q) return this.treatmentsList();
-    return this.treatmentsList().filter(t => t.name.toLowerCase().includes(q));
-  });
-
-  // Mode flag: Doctor vs Clinic Detail
-  readonly isClinic = signal<boolean>(false);
 
   // Associated Doctors list when in Clinic mode
   readonly associatedDoctors = signal([
@@ -349,51 +309,6 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     },
   ]);
 
-  readonly selectedAssociatedDoctor = signal<any | null>(null);
-
-  selectDoctorForBooking(doc: any): void {
-    this.selectedAssociatedDoctor.set(doc);
-    this.scrollToSection('appointment-slots');
-  }
-
-  // Single-Page Scroll Spy Tabs (Dynamically adds Associated Doctors in Clinic mode)
-  readonly navTabs = computed(() => {
-    const list = [
-      { id: 'info', label: 'Info' },
-      { id: 'stories', label: 'Stories (2)' },
-    ];
-    if (this.isClinic()) {
-      list.push({ id: 'doctors', label: `Associated Doctors (${this.associatedDoctors().length})` });
-    }
-    list.push(
-      { id: 'treatments', label: 'Surgeries & Treatments' },
-      { id: 'photos', label: 'Photos & Videos' },
-      { id: 'qa', label: 'Consult Q&A' }
-    );
-    return list;
-  });
-
-  readonly activeSection = signal<string>('info');
-
-  // Sticky Slot Picker State
-  readonly selectedDayIndex = signal<number>(0);
-  readonly selectedSlotTime = signal<string>('09:00 AM');
-  readonly bookingSuccess = signal<boolean>(false);
-  readonly bookingMessage = signal<string>('');
-
-  // Generated Days for the Slot Carousel (e.g. Today, Tomorrow, Wed, Thu...)
-  readonly dayList = [
-    { label: 'Today', subLabel: 'No Slots Available', dayOfWeek: 2, dateStr: 'Tue, 1 Sep', hasSlots: false },
-    { label: 'Tomorrow', subLabel: '16 Slots Available', dayOfWeek: 3, dateStr: 'Wed, 2 Sep', hasSlots: true },
-    { label: 'Thu, 3 Sep', subLabel: '16 Slots Available', dayOfWeek: 4, dateStr: 'Thu, 3 Sep', hasSlots: true },
-    { label: 'Fri, 4 Sep', subLabel: '16 Slots Available', dayOfWeek: 5, dateStr: 'Fri, 4 Sep', hasSlots: true },
-    { label: 'Sat, 5 Sep', subLabel: '8 Slots Available', dayOfWeek: 6, dateStr: 'Sat, 5 Sep', hasSlots: true }
-  ];
-
-  // Specific Slot Time Chips available for the selected day
-  readonly morningSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM'];
-  readonly afternoonSlots = ['02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'];
-
   // Clinic gallery images
   readonly clinicPhotos = [
     { url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=80', caption: 'Clinic Reception' },
@@ -401,148 +316,380 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     { url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80', caption: 'Rehab Equipment' }
   ];
 
-  ngOnInit(): void {
-    const isClinicRoute =
-      this.route.snapshot.data['isClinic'] === true ||
-      this.router.url.includes('clinic') ||
-      (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
-    this.isClinic.set(isClinicRoute);
+  // Predefined Visit Reasons for Review
+  readonly predefinedVisitReasons = [
+    'Knee Pain',
+    'Back Pain',
+    'Neck & Shoulder Pain',
+    'Sports Injury',
+    'Post-Op Rehab',
+    'Frozen Shoulder',
+    'Sciatica',
+    'Arthritis',
+    'Posture Correction'
+  ];
 
-    if (typeof window !== 'undefined') {
-      this.updateActiveSectionFromScroll();
-    }
+  // Predefined "Happy About" items for Review
+  readonly predefinedHappyAbout = [
+    'Doctor Friendliness',
+    'Explanation of Health Issue',
+    'Detailed Consultation',
+    'Treatment Satisfaction',
+    'Value for Money',
+    'Wait Time',
+    'Clinic Hygiene & Ambience'
+  ];
 
-    // Check if redirected from booking auth with confirmed status
-    this.route.queryParams.subscribe(params => {
-      if (params['bookingConfirmed'] === 'true') {
-        const pending = this.bookingService.getPendingSlot();
-        const dayLabel = pending?.selectedDay || `${this.dayList[1].label} (${this.dayList[1].dateStr})`;
-        const slotTime = pending?.selectedTime || this.selectedSlotTime();
+  // Popular Cities list
+  readonly popularCities = ['Jaipur', 'Kota', 'Mumbai', 'Delhi NCR', 'Bangalore', 'Pune'];
 
-        this.confirmAppointmentDirectly(
-          { label: dayLabel, dateStr: '' },
-          slotTime,
-          pending?.bookingId
-        );
 
-        // Clear query parameters cleanly from URL without reloading
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: {},
-          replaceUrl: true
-        });
+  /** API 1: Fetch Doctor or Clinic Profile Details */
+  async GetDoctorById(): Promise<void> {
+    const endpoint = this.isClinic()
+      ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}`
+      : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}`;
+    const res = await this.apiService.Get<PractitionerDetailedData>(endpoint);
+    this.doctorDetail.set(res?.data ?? null);
+  }
+
+  /** API 2: Fetch Doctor Availability Slots (Weekly / By Date) */
+  async loadAvailability(): Promise<void> {
+    try {
+      const pid = this.practitionerId;
+      const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?practitionerId=${pid}`);
+      if (res && res.isSuccess) {
+        console.log(res.data)
+        debugger;
+        this.availabilitySlots.set(res.data);
+      } else {
+        this.availabilitySlots.set([]);
       }
+    } catch (e) {
+      console.error('Error loading availability', e);
+      this.availabilitySlots.set([]);
+    }
+  }
+
+  GetDate(): void {
+    const today = new Date();
+    const days: CarouselDay[] = [];
+    for (let i = 0; i < 8; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dayNum = date.getDate();
+      const monthName = date.toLocaleString('en-US', { month: 'short' });
+      const dayOfWeek = date.getDay(); // 0 = Sun, 1 = Mon, ...
+      const dayName = date.toLocaleString('en-US', { weekday: 'short' });
+      days.push({
+        date,
+        label: dayName,
+        dateStr: `${dayNum} ${monthName}`,
+        fullDateStr: date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        dayOfWeek,
+        hasSlots: false,
+        slotCount: 0,
+        availableSlots: []
+      });
+    }
+    this.dayList.set(days);
+  }
+
+  onDayClick(day: CarouselDay, index: number): void {
+    this.selectedDayIndex.set(index);
+    this.selectedDay.set(day);
+    this.selectedSlotTime.set('');
+
+    const availability = this.availabilitySlots().find(
+      x => x.dayOfWeek === day.dayOfWeek
+    );
+    const slots = availability?.slots ?? [];
+    this.selectedSlots.set(slots.filter(s => s.isActive !== false));
+  }
+  async GetAllReview(): Promise<void> {
+    const res = await this.apiService.Post<providerReview[]>(ApiEndPoints.GetAllReviews, {
+      PractitionerId: this.practitionerId
     });
+    this.Review.set(res.isSuccess ? (res.data ?? []) : []);
   }
 
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      import('@fancyapps/ui').then(({ Fancybox }) => {
-        Fancybox.bind(this.elRef.nativeElement, '[data-fancybox="clinic-gallery"]');
-      });
+
+
+  async AddReview(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.showError('Please log in to submit a review.');
+      return;
     }
-  }
-
-  ngOnDestroy(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      import('@fancyapps/ui').then(({ Fancybox }) => {
-        Fancybox.unbind(this.elRef.nativeElement);
-        Fancybox.close();
-      });
+    if (this.reviewForm.invalid) {
+      this.reviewForm.markAllAsTouched();
+      this.showError('Please fill rating and review before submitting.');
+      return;
     }
-  }
-
-  @HostListener('window:scroll', [])
-  onWindowScroll(): void {
-    if (typeof window !== 'undefined') {
-      this.updateActiveSectionFromScroll();
-    }
-  }
-
-  // Smooth scroll to section when tab is clicked
-  scrollToSection(sectionId: string): void {
-    this.activeSection.set(sectionId);
-    if (typeof window === 'undefined') return;
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const yOffset = -140; // Height of sticky header + sub-nav
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }
-
-  // Detect which section is currently on screen
-  private updateActiveSectionFromScroll(): void {
-    if (typeof window === 'undefined') return;
-    const sectionIds = this.isClinic()
-      ? ['info', 'stories', 'doctors', 'treatments', 'photos', 'qa']
-      : ['info', 'stories', 'treatments', 'photos', 'qa'];
-    const scrollPosition = window.pageYOffset + 200;
-
-    for (let i = sectionIds.length - 1; i >= 0; i--) {
-      const element = document.getElementById(sectionIds[i]);
-      if (element) {
-        const top = element.offsetTop;
-        if (scrollPosition >= top) {
-          this.activeSection.set(sectionIds[i]);
-          break;
-        }
+    this.isSubmittingReview.set(true);
+    try {
+      const formVal = this.reviewForm.value;
+      const payload = {
+        rating: formVal.rating,
+        review: formVal.review,
+        practitionerId: this.practitionerId,
+        review1: formVal.review,
+        isRecommended: !!formVal.isRecommended,
+        visitedFor: formVal.visitedFor?.trim() || null,
+        happyAbout: formVal.happyAbout?.trim() || null
+      };
+      const res = await this.apiService.Post<boolean>(ApiEndPoints.AddReview, payload);
+      if (res.isSuccess) {
+        this.showSuccess(res.message || 'Review submitted successfully!');
+        this.createReviewForm();
+        await this.GetAllReview();
+      } else {
+        this.showError(res.message || 'Failed to submit review.');
       }
+    } finally {
+      this.isSubmittingReview.set(false);
+    }
+  }
+
+  async BookConsultancyApi(payload: any): Promise<any> {
+    return await this.apiService.Post<any>(ApiEndPoints.BookConsultancy, payload);
+  }
+
+
+
+  autoSelectAvailableDay(): void {
+    const days = this.dayList();
+    if (days.length > 0) {
+      this.onDayClick(days[0], 0);
     }
   }
 
   selectDay(index: number): void {
     this.selectedDayIndex.set(index);
-    if (this.dayList[index].hasSlots) {
-      this.selectedSlotTime.set('09:00 AM');
-    }
+    // const days = this.dayList();
+    // const day = days[index];
+    // if (day?.hasSlots && day.availableSlots.length > 0) {
+    //   this.selectedSlotTime.set(day.availableSlots[0]);
+    // }
   }
 
   selectSlot(time: string): void {
     this.selectedSlotTime.set(time);
   }
 
-  confirmAppointmentDirectly(day: { label: string; dateStr: string }, slotTime: string, existingRef?: string): void {
+  formatTime(timeStr: string): string {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1] || '00';
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    const hrsStr = hours < 10 ? `0${hours} ` : `${hours} `;
+    return `${hrsStr}:${minutes} ${ampm} `;
+  }
+
+  private expandRange(startTime: string, endTime: string): string[] {
+    const toMins = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + (m || 0);
+    };
+    const chips: string[] = [];
+    let cur = toMins(startTime);
+    const end = toMins(endTime);
+    while (cur < end) {
+      chips.push(this.formatMinutesToTime(cur));
+      cur += 30;
+    }
+    return chips;
+  }
+
+  private formatMinutesToTime(totalMins: number): string {
+    let hours = Math.floor(totalMins / 60);
+    const minutes = String(totalMins % 60).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    const hrsStr = hours < 10 ? `0${hours} ` : `${hours} `;
+    return `${hrsStr}:${minutes} ${ampm} `;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5.3 Review Form Helpers
+  // ─────────────────────────────────────────────────────────────────────────
+  createReviewForm(): void {
+    this.reviewForm = this.fb.group({
+      rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
+      review: ['', [Validators.required, Validators.minLength(3)]],
+      practitionerId: [this.practitionerId, [Validators.required]],
+      visitedFor: [''],
+      happyAbout: [''],
+      isRecommended: [true],
+    });
+    this.selectedVisitReasons.set([]);
+    this.showCustomVisit.set(false);
+    this.customVisitText.set('');
+    this.selectedHappyAbout.set([]);
+    this.showCustomHappyAbout.set(false);
+    this.customHappyAboutText.set('');
+  }
+
+  toggleVisitReason(reason: string): void {
+    const current = this.selectedVisitReasons();
+    if (current.includes(reason)) {
+      this.selectedVisitReasons.set(current.filter(r => r !== reason));
+    } else {
+      this.selectedVisitReasons.set([reason]);
+    }
+    this.syncReviewControl('visitedFor', this.selectedVisitReasons(), '');
+  }
+
+  // toggleVisitReason(reason: string): void {
+  //   const current = this.selectedVisitReasons();
+  //   const updated = current.includes(reason)
+  //     ? current.filter(r => r !== reason)
+  //     : [...current, reason];
+  //   this.selectedVisitReasons.set(updated);
+  //   this.syncReviewControl('visitedFor', updated, this.customVisitText());
+  // }
+
+  isVisitReasonSelected(reason: string): boolean {
+    return this.selectedVisitReasons().includes(reason);
+  }
+
+  toggleCustomVisit(): void {
+    const next = !this.showCustomVisit();
+    this.showCustomVisit.set(next);
+    if (!next) {
+      this.customVisitText.set('');
+      this.syncReviewControl('visitedFor', this.selectedVisitReasons(), '');
+    }
+  }
+
+  onCustomVisitChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.customVisitText.set(val);
+    this.syncReviewControl('visitedFor', this.selectedVisitReasons(), val);
+  }
+
+  toggleHappyAbout(option: string): void {
+    const current = this.selectedHappyAbout();
+    const updated = current.includes(option)
+      ? current.filter(o => o !== option)
+      : [...current, option];
+    this.selectedHappyAbout.set(updated);
+    this.syncReviewControl('happyAbout', updated, this.customHappyAboutText());
+  }
+
+  isHappyAboutSelected(option: string): boolean {
+    return this.selectedHappyAbout().includes(option);
+  }
+
+  toggleCustomHappyAbout(): void {
+    const next = !this.showCustomHappyAbout();
+    this.showCustomHappyAbout.set(next);
+    if (!next) {
+      this.customHappyAboutText.set('');
+      this.syncReviewControl('happyAbout', this.selectedHappyAbout(), '');
+    }
+  }
+
+  onCustomHappyAboutChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.customHappyAboutText.set(val);
+    this.syncReviewControl('happyAbout', this.selectedHappyAbout(), val);
+  }
+
+  private syncReviewControl(controlName: 'visitedFor' | 'happyAbout', selected: string[], custom: string): void {
+    const trimmed = custom.trim();
+    const items = trimmed ? [...selected, trimmed] : selected;
+    this.reviewForm.patchValue({ [controlName]: items.join(', ') });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5.4 Appointment Booking & Confirmation Methods
+  // ─────────────────────────────────────────────────────────────────────────
+  selectDoctorForBooking(doc: any): void {
+    this.selectedAssociatedDoctor.set(doc);
+    this.scrollToSection('appointment-slots');
+  }
+
+  async confirmAppointmentDirectly(day: any, slotTime: string, existingRef?: string): Promise<void> {
     const user = this.authService.getCurrentUser();
-    const ref = existingRef || `PHY-${Math.floor(100000 + Math.random() * 900000)}`;
+    const doc = this.doctorDetail();
+    const ref = existingRef || `PHY - ${Math.floor(100000 + Math.random() * 900000)} `;
+    const dateDisplay = day.fullDateStr || (day.dateStr ? `${day.label} (${day.dateStr})` : day.label);
+    const doctorName = doc?.fullName || this.practitioner.name;
+
+    // Resolve date to Date instance and YYYY-MM-DD date format
+    const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
+      ? day.date
+      : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
+    const formattedDate = DateHelper.formatLocalDate(resolvedDate);
+
+    // Send booking to backend API
+    if (this.isLoggedIn) {
+      try {
+        const payload = {
+          practitionerId: this.practitionerId || doc?.practitionerId || 1,
+          doctorName,
+          visitType: this.isClinic() ? 'In-Clinic' : 'Home Visit',
+          bookingRefId: ref,
+          consultancydate: formattedDate,
+          appointmentDate: formattedDate,
+          slotDate: formattedDate,
+          slotTime,
+          consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
+          mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
+          patientName: user?.fullName || this.authService.getUserName() || 'Patient'
+        };
+        await this.BookConsultancyApi(payload);
+      } catch (err) {
+        console.error('BookConsultancy API error:', err);
+      }
+    }
 
     this.bookingConfirmationDetails.set({
-      doctorName: this.practitioner.name,
-      doctorSpecialty: this.practitioner.specializations || 'Physiotherapist',
-      doctorPhoto: this.practitioner.photoUrl,
-      clinicName: this.practitioner.clinicName,
+      doctorName,
+      doctorSpecialty: doc?.specialization || this.practitioner.specializations || 'Physiotherapist',
+      doctorPhoto: doc?.profileImage || this.practitioner.photoUrl,
+      clinicName: doc?.clinicName || this.practitioner.clinicName,
       clinicAddress: this.practitioner.clinicAddress,
-      day: day.dateStr ? `${day.label} (${day.dateStr})` : day.label,
+      day: dateDisplay,
+      date: formattedDate,
       time: slotTime,
-      fee: this.practitioner.consultationFee,
+      fee: doc?.consultationFee ?? this.practitioner.consultationFee,
       bookingRefId: ref,
       patientName: user?.fullName || this.authService.getUserName() || 'Patient'
     });
 
-    this.bookingMessage.set(`Appointment confirmed with ${this.practitioner.name} for ${day.label} at ${slotTime}!`);
+    this.bookingMessage.set(`Appointment confirmed with ${doctorName} for ${dateDisplay} at ${slotTime} !`);
     this.bookingSuccess.set(true);
     this.bookingService.clearPendingSlot();
   }
 
   bookConsultancy(): void {
-    const day = this.dayList[this.selectedDayIndex()];
+    const day = new Date;
+    // this.dayList()[this.selectedDayIndex()];
+    // if (!day || !day.hasSlots) {
+    //   this.showError('Please select a day with available slots.');
+    //   return;
+    // }
+    const doc = this.doctorDetail();
     const paramId = this.route.snapshot.paramMap.get('id') || '1';
-    const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitioner.id || 1;
+    const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitionerId || 1;
 
     if (this.authService.isLoggedIn()) {
-      // User is already logged in -> show confirmation popup directly on this page!
       this.confirmAppointmentDirectly(day, this.selectedSlotTime());
     } else {
-      // Save pending slot selection and navigate to login/signup
       this.bookingService.savePendingSlot({
         providerId: Number(providerId) || 1,
-        providerName: this.practitioner.name,
-        providerSpecialty: this.practitioner.specializations || 'Physiotherapist',
-        providerImage: this.practitioner.photoUrl,
-        clinicName: this.practitioner.clinicName,
+        providerName: doc?.fullName || this.practitioner.name,
+        providerSpecialty: doc?.specialization || this.practitioner.specializations || 'Physiotherapist',
+        providerImage: doc?.profileImage || this.practitioner.photoUrl,
+        clinicName: doc?.clinicName || this.practitioner.clinicName,
         clinicAddress: this.practitioner.clinicAddress,
-        consultationFee: this.practitioner.consultationFee,
-        selectedDay: `${day.label} (${day.dateStr})`,
+        consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
+        // selectedDay: day.fullDateStr || `${ day.label } (${ day.dateStr })`,
+        // selectedDate: DateHelper.formatLocalDate(day.date),
         selectedTime: this.selectedSlotTime()
       });
 
@@ -551,6 +698,7 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
   }
 
   bookAppointment(): void {
+    debugger
     this.bookConsultancy();
   }
 
@@ -564,28 +712,34 @@ export class Doctordetail implements OnInit, AfterViewInit, OnDestroy {
     this.bookingSuccess.set(false);
   }
 
-  buyPlan(plan: RehabPlan): void {
-    if (!this.authService.isLoggedIn()) {
-      const paramId = this.route.snapshot.paramMap.get('id') || '1';
-      const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitioner.id || 1;
-      this.bookingService.savePendingSlot({
-        providerId: Number(providerId) || 1,
-        providerName: this.practitioner.name,
-        providerSpecialty: `Rehab Plan: ${plan.planName}`,
-        providerImage: this.practitioner.photoUrl,
-        clinicName: this.practitioner.clinicName,
-        clinicAddress: this.practitioner.clinicAddress,
-        consultationFee: plan.price,
-        selectedDay: `${plan.totalSessions} Sessions Plan`,
-        selectedTime: `${plan.validityDays} Days Validity`
-      });
-      this.router.navigate(['/booking/consultancy', providerId]);
-      return;
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5.5 Navigation, Scroll Spy & City Dropdown Methods
+  // ─────────────────────────────────────────────────────────────────────────
+  scrollToSection(sectionId: string): void {
+    this.activeSection.set(sectionId);
+    if (typeof window === 'undefined') return;
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -140;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
-    this.confirmAppointmentDirectly(
-      { label: `Plan: ${plan.planName}`, dateStr: `${plan.totalSessions} Sessions` },
-      `₹${plan.price}`
-    );
+  }
+
+  private updateActiveSectionFromScroll(): void {
+    if (typeof window === 'undefined') return;
+    const sectionIds = this.isClinic()
+      ? ['info', 'availability', 'stories', 'doctors', 'treatments', 'photos', 'qa']
+      : ['info', 'availability', 'stories', 'treatments', 'photos', 'qa'];
+    const scrollPosition = window.pageYOffset + 200;
+
+    for (let i = sectionIds.length - 1; i >= 0; i--) {
+      const element = document.getElementById(sectionIds[i]);
+      if (element && scrollPosition >= element.offsetTop) {
+        this.activeSection.set(sectionIds[i]);
+        break;
+      }
+    }
   }
 
   toggleCity(): void {

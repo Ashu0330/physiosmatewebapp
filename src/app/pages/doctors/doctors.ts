@@ -1,28 +1,13 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormGroup, FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { BaseComponent } from '../../helper/base-component';
 import { PractitionerModel } from '../../models/practitioner.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
+import { SharedModule } from '../../shared/shared-module';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 
-export interface Doctor {
-  id: string;
-  name: string;
-  degree: string;
-  specialist: string;
-  experienceYears: number;
-  location: string;
-  clinicName: string;
-  fee: number;
-  ratingPercent: number;
-  patientStoriesCount: number;
-  availableText: string;
-  photo: string;
-  gender: 'male' | 'female';
-  prime: boolean;
-  isVerified: boolean;
-}
 
 export interface ClinicAmenity {
   icon: 'equipment' | 'parking' | 'accessible' | 'team' | 'home' | 'timing' | 'reports';
@@ -49,14 +34,15 @@ export interface ClinicItem {
 @Component({
   selector: 'app-doctors',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [SharedModule, SearchBarComponent],
   templateUrl: './doctors.html',
   styleUrl: './doctors.css',
 })
 export class Doctors extends BaseComponent implements OnInit {
+  form: FormGroup;
   private route = inject(ActivatedRoute);
-  PractitionerList: PractitionerModel[]
-
+  readonly PractitionerList = signal<PractitionerModel[]>([]);
+  readonly isLoading = signal<boolean>(true);
 
   // Distinguishes Doctor Mode vs Clinic Mode
   readonly isClinic = signal<boolean>(false);
@@ -65,6 +51,7 @@ export class Doctors extends BaseComponent implements OnInit {
   readonly selectedCity = signal<string>('Gumanpura, Kota');
   readonly searchQuery = signal<string>('');
   readonly isCityOpen = signal<boolean>(false);
+
 
   readonly popularCities = [
     'Gumanpura, Kota',
@@ -104,77 +91,7 @@ export class Doctors extends BaseComponent implements OnInit {
   readonly selectedSlot = signal<string>('10:00 AM');
   readonly bookingSuccess = signal<boolean>(false);
 
-  // Doctor Data
-  readonly doctorsList = signal<Doctor[]>([
-    {
-      id: 'doc-1',
-      name: 'Dr. Sandeep Singh Bhatia',
-      degree: 'BDS, MDS - Orthodontics',
-      specialist: 'Dentist',
-      experienceYears: 17,
-      location: 'Talwandi, Kota',
-      clinicName: "Dr. Sandeep's Orthodontic & Dental Clinic",
-      fee: 200,
-      ratingPercent: 98,
-      patientStoriesCount: 244,
-      availableText: 'Available Tomorrow',
-      photo: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80',
-      gender: 'male',
-      prime: true,
-      isVerified: true,
-    },
-    {
-      id: 'doc-2',
-      name: 'Dr. Anshul Mohan Mathur',
-      degree: 'BDS, Dental Surgeon',
-      specialist: 'Dentist',
-      experienceYears: 30,
-      location: 'Talwandi, Kota',
-      clinicName: 'Mathur Dental Clinic',
-      fee: 400,
-      ratingPercent: 98,
-      patientStoriesCount: 799,
-      availableText: 'Available Today',
-      photo: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=400&q=80',
-      gender: 'male',
-      prime: false,
-      isVerified: true,
-    },
-    {
-      id: 'doc-3',
-      name: 'Dr. Jaya Singhvi',
-      degree: 'BDS, Cosmetic Dentistry',
-      specialist: 'Dentist',
-      experienceYears: 23,
-      location: 'Talwandi, Kota',
-      clinicName: "Twacha Skin Clinic & Dr Jaya's Dental Clinic",
-      fee: 300,
-      ratingPercent: 96,
-      patientStoriesCount: 312,
-      availableText: 'Available Tomorrow',
-      photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
-      gender: 'female',
-      prime: true,
-      isVerified: false,
-    },
-    {
-      id: 'doc-4',
-      name: 'Dr. Rajesh Sharma',
-      degree: 'BPT, MPT - Sports Rehabilitation',
-      specialist: 'Physiotherapist',
-      experienceYears: 15,
-      location: 'Gumanpura, Kota',
-      clinicName: 'Physiosmate Sports & Spine Clinic',
-      fee: 350,
-      ratingPercent: 99,
-      patientStoriesCount: 450,
-      availableText: 'Available Today',
-      photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80',
-      gender: 'male',
-      prime: true,
-      isVerified: false,
-    },
-  ]);
+
 
   // Clinic Data
   readonly allClinics = signal<ClinicItem[]>([
@@ -428,6 +345,7 @@ export class Doctors extends BaseComponent implements OnInit {
   }
   async GetAllDoctors(): Promise<void> {
     console.log('GetAllDoctors started');
+    this.isLoading.set(true);
 
     try {
       const res = await this.apiService.Post<any[]>(
@@ -436,12 +354,16 @@ export class Doctors extends BaseComponent implements OnInit {
 
       console.log('GetAllDoctors response:', res);
 
-      this.PractitionerList = res.isSuccess
-        ? (res.data ?? [])
-        : [];
+      this.PractitionerList.set(
+        res.isSuccess ? (res.data ?? []) : []
+      );
 
     } catch (error) {
       console.error('GetAllDoctors ERROR:', error);
+      this.PractitionerList.set([]);
+    } finally {
+      this.isLoading.set(false);
     }
   }
+
 }

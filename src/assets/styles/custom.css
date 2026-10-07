@@ -670,9 +670,9 @@ a {
 
 .physios-cards-section-sub {
   font-size: 16px;
-  color: #64748b;
+  color: #333;
   margin: 0 0 16px 4px;
-  font-weight: 400;
+  font-weight: 900;
   letter-spacing: -0.01em;
 }
 
@@ -691,12 +691,11 @@ a {
   text-decoration: none;
   display: flex;
   flex-direction: column;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .physios-card:hover {
-  transform: translateY(-4px);
   border-color: #cdebe5;
 }
 
@@ -1141,11 +1140,24 @@ a {
 }
 
 @media (max-width: 575px) {
+  .physios-input-box {
+    width: 100%;
+  }
+
   .physios-search-wrapper {
     flex-direction: column;
     height: auto;
     padding: 8px;
     gap: 6px;
+    align-items: flex-start;
+  }
+
+  .physios-divider {
+    margin: 1.5rem auto;
+  }
+
+  .physios-consult-section {
+    margin: 0;
   }
 
   .physios-city-box {
@@ -1161,7 +1173,10 @@ a {
 
   .physios-card {
     flex: 0 1 100%;
-    max-width: 280px;
+    max-width: 100%;
+  }
+  .physios-cards-section{
+    margin: 0 auto 2.5rem;
   }
 
   .physios-section-header {
@@ -1339,21 +1354,6 @@ a {
 
   .physios-footer-bottom {
     margin-top: 3rem;
-  }
-}
-
-@media (max-width: 420px) {
-  .physios-footer-grid {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-
-  .physios-footer-col {
-    align-items: center;
-  }
-
-  .physios-footer-links li a:hover {
-    transform: none;
   }
 }
 

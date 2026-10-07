@@ -1,4 +1,4 @@
-export class apiresponse<T> {
+export class ApiResponse<T> {
     isSuccess: Boolean
     message: string
     data: T

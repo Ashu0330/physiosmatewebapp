@@ -4,8 +4,8 @@
 <div class="top-grey-div"></div>
 <aside class="physios-sidebar">
   <nav class="physios-nav">
-    @for (item of menulist; track item.menuId || item.path || $index) {
-    <button type="button" class="physios-nav-btn" (click)="selectTab(item)">
+    @for (item of menulist(); track item.menuId || item.path || $index) {
+    <button type="button" class="physios-nav-btn" [class.active]="isTabActive(item)" (click)="selectTab(item)">
       <span>{{ item.menuName }}</span>
     </button>
     }

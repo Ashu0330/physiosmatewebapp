@@ -103,6 +103,7 @@
   padding: 1.75rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
 }
 
 .hero-card-inner {
@@ -160,10 +161,9 @@
 
 
 .doctor-degree {
-  font-size: 0.88rem;
-  color: #475569;
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 
@@ -541,6 +541,63 @@
 /* =========================================================
  * 4. Section: Stories / Patient Reviews (#stories)
  * ========================================================= */
+.review-rating-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.rating-picker-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.star-rating-stars {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 6px;
+}
+
+.star-rating-stars input[type="radio"] {
+  display: none;
+}
+
+.star-rating-stars label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  user-select: none;
+}
+
+.star-rating-stars label .star-icon {
+  width: 24px;
+  height: 24px;
+  fill: #f1f5f9;
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: block;
+}
+
+.star-rating-stars label:hover .star-icon {
+  transform: scale(1.22);
+}
+
+.star-rating-stars label:hover .star-icon,
+.star-rating-stars label:hover~label .star-icon,
+.star-rating-stars input[type="radio"]:checked~label .star-icon {
+  fill: #ffc107;
+  stroke: #eab308;
+}
+
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -562,6 +619,39 @@
   align-items: center;
   gap: 0.85rem;
   margin-bottom: 0.65rem;
+}
+
+.reviewer-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  max-width: 38px;
+
+  border-radius: 50%;
+  overflow: hidden;
+
+  background: #fef08a;
+  color: #854d0e;
+
+  font-weight: 700;
+  font-size: 0.95rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+.reviewer-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+
+  max-width: 100%;
+  max-height: 100%;
+
+  object-fit: cover;
+  display: block;
 }
 
 .reviewer-avatar {
@@ -596,7 +686,17 @@
 .review-visited-for {
   font-size: 0.86rem;
   color: #334155;
-  margin: 0 0 0.5rem 0;
+  margin: 0.4rem 0 0.55rem 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.review-visited-for strong {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .review-recommend {
@@ -635,6 +735,16 @@
   font-size: 0.74rem;
   font-weight: 600;
   padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.tag-pill.tag-pill-happy {
+  background: #E8F8F5;
+  color: #087F76;
+  border: 1px solid #A7F3D0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 3px 9px;
   border-radius: 4px;
 }
 
@@ -1117,49 +1227,100 @@
 }
 
 /* Day Carousel Strip */
+/* Optional Week Indicator Strip */
+.week-indicator-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #f1fbf9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.week-indicator-text {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #087F76;
+}
+
+.btn-today-shortcut {
+  background: transparent;
+  border: 1px solid #10A896;
+  color: #087F76;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-today-shortcut:hover {
+  background: #10A896;
+  color: #ffffff;
+}
+
+/* Day Carousel Strip */
 .day-carousel-strip {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
+  position: relative;
 }
 
 .day-nav-arrow {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: bold;
   color: #087F76;
-  padding: 0.6rem 0.75rem;
+  padding: 0.6rem 0.65rem;
   cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.day-nav-arrow:hover:not(:disabled) {
+  background: #e6f7f5;
+  color: #055953;
+}
+
+.day-nav-arrow:disabled,
+.day-nav-arrow.disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .day-tabs-slider {
-  display: flex;
-  flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.day-tabs-slider::-webkit-scrollbar {
-  display: none;
+  display: block;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .day-tab-btn {
   background: transparent;
   border: none;
   outline: none;
-  flex: 1;
-  padding: 8px 4px;
+  flex: 1 0 auto;
+  min-width: 82px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.15s ease;
-  min-width: 90px;
+  white-space: nowrap;
 }
 
 .day-title {
@@ -1170,6 +1331,16 @@
   margin-bottom: 2px;
 }
 
+.day-slot-count {
+  font-size: 0.72rem;
+  color: #10A896;
+  font-weight: 600;
+}
+
+.day-tab-btn.no-slots .day-slot-count {
+  color: #94a3b8;
+  font-weight: 500;
+}
 
 .day-tab-btn.active {
   border-bottom-color: var(--primary-color, #10A896);
@@ -1180,6 +1351,11 @@
   color: var(--primary-dark, #087F76);
 }
 
+.day-tab-btn.active .day-slot-count {
+  color: var(--primary-dark, #087F76);
+  font-weight: 700;
+}
+
 /* Slot Content Body */
 .slot-content-body {
   padding: 16px;
@@ -1187,7 +1363,12 @@
 
 .no-slots-alert {
   text-align: center;
-  padding: 1.5rem 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  min-height: 100px;
 }
 
 .calendar-alert-icon {
@@ -1198,7 +1379,12 @@
 .no-slots-msg {
   font-size: 0.82rem;
   color: #64748b;
-  margin: 0 0 1.25rem 0;
+  border: 1px solid #dee2e6;
+  padding: 0px 10px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
 }
 
 /* Slots Group */
@@ -1641,6 +1827,7 @@
   height: 100%;
   object-fit: cover;
 }
+
 /* 
 .doc-prime-badge {
   position: absolute;
@@ -1786,3 +1973,484 @@
   font-size: 0.72rem;
   color: #64748b;
 }
+
+.saved_icon {
+  position: absolute;
+  right: 0px;
+  top: -1px;
+}
+
+.add-review-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.add-review-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reviewer-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reviewer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #E9FAF9;
+  color: #087F76;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reviewer-avatar-wrap h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.reviewer-avatar-wrap p {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.review_textarea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Visited For & Happy About Tabbed Section */
+.review-feedback-tabs-section,
+.visited-for-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.review-feedback-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 0;
+  margin-bottom: 0.35rem;
+}
+
+.review-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.18s ease;
+  margin-bottom: -2px;
+}
+
+.review-tab-btn:hover {
+  color: #087F76;
+  background: #f1f5f9;
+}
+
+.review-tab-btn.active {
+  color: #087F76;
+  font-weight: 700;
+  border-bottom-color: #10A896;
+  background: #ffffff;
+}
+
+.review-tab-btn .tab-icon {
+  font-size: 0.95rem;
+}
+
+.review-tab-btn .tab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #10A896;
+  color: #ffffff;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.tab-content-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: fadeIn 0.18s ease-in-out;
+}
+
+.visited-for-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.visited-for-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.visited-for-title .visited-for-icon {
+  font-size: 0.95rem;
+}
+
+.visited-for-hint {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.visit-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.visit-choice-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 20px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.visit-choice-chip .chip-check {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  transition: color 0.18s ease;
+}
+
+.visit-choice-chip:hover {
+  border-color: #10A896;
+  background: #E8F8F5;
+  color: #087F76;
+}
+
+.visit-choice-chip:hover .chip-check {
+  color: #087F76;
+}
+
+.visit-choice-chip.selected {
+  background: #10A896;
+  border-color: #10A896;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(16, 168, 150, 0.25);
+  transform: translateY(-1px);
+}
+
+.visit-choice-chip.selected .chip-check {
+  color: #ffffff;
+}
+
+.visit-choice-chip.happy-choice-chip:hover {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.visit-choice-chip.happy-choice-chip:hover .chip-check {
+  color: #047857;
+}
+
+.visit-choice-chip.happy-choice-chip.selected {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28);
+}
+
+.visit-choice-chip.happy-choice-chip.selected .chip-check {
+  color: #ffffff;
+}
+
+.visit-choice-chip.other-chip {
+  border-style: dashed;
+}
+
+.custom-visit-input-wrap {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.custom-visit-input {
+  width: 100%;
+  padding: 0.55rem 0.85rem !important;
+  font-size: 0.84rem;
+  font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1.5px solid #10A896;
+  border-radius: 6px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.1);
+  box-sizing: border-box;
+}
+
+.selected-visit-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #087F76;
+  background: #E9FAF9;
+  border: 1px solid #D5F3EF;
+  border-radius: 4px;
+  padding: 4px 8px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.selected-visit-summary .summary-label {
+  font-weight: 700;
+  color: #087F76;
+}
+
+.selected-visit-summary .summary-val {
+  color: #1e293b;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.selected-visit-summary.happy-summary {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #065F46;
+}
+
+.selected-visit-summary.happy-summary .summary-label {
+  color: #047857;
+}
+
+.review_textarea textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 95px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.review_btns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.review_btns label,
+.review_btns .recommend-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.review_btns label:hover,
+.review_btns .recommend-label:hover {
+  color: #087F76;
+}
+
+.review_btns input {
+  accent-color: #10A896;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.review_btns button,
+.review_btns .btn-submit-review {
+  background: #10A896;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.18s ease, opacity 0.18s ease;
+}
+
+.review_btns button:hover:not(:disabled),
+.review_btns .btn-submit-review:hover:not(:disabled) {
+  background: #087F76;
+}
+
+.review_btns button:disabled,
+.review_btns .btn-submit-review:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* date calender css */
+.day-carousel-strip {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  position: relative;
+  overflow: hidden;
+  padding: 6px 4px;
+  width: 100%;
+}
+
+.day-tabs-slider.swiper {
+  display: block !important;
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: 4px 0;
+}
+
+.day-tabs-slider .swiper-wrapper {
+  display: flex;
+  box-sizing: content-box;
+  align-items: stretch;
+}
+
+.day-tabs-slider .swiper-slide {
+  height: auto;
+  display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* Preload: display 4 slides evenly before Swiper JS initializes */
+.day-tabs-slider:not(.swiper-initialized) .swiper-wrapper {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+.day-tabs-slider:not(.swiper-initialized) .swiper-slide {
+  flex: 0 0 calc((100% - 24px) / 4) !important;
+  width: calc((100% - 24px) / 4) !important;
+  max-width: calc((100% - 24px) / 4) !important;
+  min-width: 0 !important;
+}
+
+.day-tab-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  user-select: none;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.day-tab-box:hover {
+  border-color: #087F76;
+  background: #f0fdf4;
+}
+
+.day-tab-box span {
+  font-size: 11px;
+  line-height: 1.3;
+  display: block;
+  white-space: nowrap;
+}
+
+.day-tab-box span:first-child {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.day-tab-box span:last-child {
+  font-weight: 400;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.day-nav-arrow {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #087F76;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-nav-arrow.swiper-button-disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* date calender css */

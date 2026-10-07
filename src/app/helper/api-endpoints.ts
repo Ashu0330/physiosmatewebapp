@@ -25,6 +25,7 @@ export const ApiEndPoints = {
 
     // ── Consultancy / Booking ────────────────────────────────────────────────────
     GetAvailability: 'Consultancy/GetAvailability',
+    AddAvailability: 'Availability/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
 
@@ -41,6 +42,8 @@ export const ApiEndPoints = {
     UpdateProfile: 'User/UpdateProfile',
     UpdatePractitioner: 'Practitioner/AddPractitioner',
     UpdateClinic: 'Clinic/AddClinic',
+    AddReview: 'Review/AddProviderReview',
+    GetAllReviews: 'Review/GetAllReview',
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',

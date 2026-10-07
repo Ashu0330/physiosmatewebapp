@@ -1,8 +1,23 @@
-export interface ApiResponse<T> {
-  message: string;
-  isSuccess: boolean;
-  statusCode: number;
-  data: T;
+export class Availability {
+  dayName: string;
+  dayOfWeek: number;
+  slots: slots[];
+}
+export class slots {
+  endTime: string;
+  id: number;
+  isActive: boolean;
+  startTime: string;
+}
+export interface CarouselDay {
+  date: Date;
+  label: string;
+  dateStr: string;
+  fullDateStr: string;
+  dayOfWeek: number;
+  hasSlots: boolean;
+  slotCount: number;
+  availableSlots: string[];
 }
 
 export interface PractitionerSummary {
@@ -52,7 +67,7 @@ export interface PractitionerQualification {
   id?: number;
   practitionerId?: number;
   degree?: string;
-  degreeName?: string;
+  qualificationName?: string;
   institution?: string;
   university?: string;
   passingYear?: string | number;
@@ -118,7 +133,6 @@ export interface PractitionerDetailedData {
   services: PractitionerServiceItem[];
   languages: PractitionerLanguage[];
   qualifications: PractitionerQualification[];
-  subscriptionPlans: PractitionerSubscriptionPlan[];
 }
 
 export interface SavedPractitioner {
@@ -282,6 +296,40 @@ export interface BookingState {
   clinicAddress?: string | null;
   consultationFee: number;
   selectedDay?: string;
+  selectedDate?: string | Date;
   selectedTime?: string;
   bookingId?: string;
+}
+export class providerReview {
+  id: number;
+  userId: number;
+  userName: string;
+  providerType?: string;
+  providerId?: number;
+  practitionerId?: number;
+  clinicId?: number | null;
+  rating: number;
+  review: string;
+  profileImage?: string;
+  review1?: string;
+  visitedFor?: string;
+  happyAbout?: string;
+  isRecommended?: boolean | null;
+  timeAgo?: string;
+  fullName?: string;
+  createdDate?: string | Date;
+  updatedDate?: string | Date;
+  tags?: string[];
+  clinicReply?: string;
+  providerReply?: string;
+  providerReplyDate?: string | Date;
+}
+
+export class ReviewModel {
+  PractitionerId: number;
+  PractitioName: string;
+  clinicName?: string | null;
+  clinicId?: number | null;
+  rating?: number | null;
+  review: string;
 }

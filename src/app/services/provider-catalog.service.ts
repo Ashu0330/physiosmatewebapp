@@ -3,11 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../environment/environment';
 import {
-  ApiResponse,
   ProviderCatalogRequest,
   ProviderExpertise,
   ProviderSubscriptionPlan
 } from '../models/practitioner.model';
+import { ApiResponse } from '../models/apiresponse';
 
 @Injectable({
   providedIn: 'root',

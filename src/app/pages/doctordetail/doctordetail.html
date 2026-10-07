@@ -1,5 +1,3 @@
-<!-- Top Search Bar Strip (Matching Physiosmate Search Standard) -->
-
 <!-- Breadcrumb Strip -->
 <div class="physios-breadcrumb-strip">
   <div class="physios-detail-container">
@@ -8,11 +6,12 @@
       <span class="breadcrumb-separator">&gt;</span>
       <a routerLink="/doctors" class="breadcrumb-link">{{ selectedCity() }}</a>
       <span class="breadcrumb-separator">&gt;</span>
-      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">Physiotherapist</a>
+      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">{{ doctorDetail()?.specialization
+        }}</a>
       <span class="breadcrumb-separator">&gt;</span>
       <span class="breadcrumb-link">Mansarovar</span>
       <span class="breadcrumb-separator">&gt;</span>
-      <span class="breadcrumb-current">{{ practitioner.name }}</span>
+      <span class="breadcrumb-current">{{ doctorDetail()?.fullName }}</span>
     </nav>
   </div>
 </div>
@@ -29,43 +28,53 @@
         <div class="hero-card-inner">
           <!-- Doctor Photo -->
           <div class="doctor-photo-wrap">
-            <img [src]="practitioner.photoUrl" [alt]="practitioner.name" class="doctor-photo" />
+            <img [src]="doctorDetail()?.profileImage" [alt]="doctorDetail()?.fullName" class="doctor-photo" />
           </div>
 
           <!-- Doctor Meta Info -->
           <div class="doctor-meta-block">
             <div class="doctor-title-row">
               <h1 class="doctor-name">
-                {{ practitioner.name }} <span class="doctor-spec-title">{{ practitioner.specialtyTitle }}</span>
+                {{ doctorDetail()?.fullName }} <span class="doctor-spec-title">{{ doctorDetail()?.specialization
+                  }}</span>
               </h1>
             </div>
+            <div class="doctor-degree">
+              @for (item of doctorDetail()?.qualifications; track $index) {
+              <p class="mb-0">{{ item.qualificationName }}</p>
+              }
+            </div>
 
-            <p class="doctor-degree">{{ practitioner.degree }}</p>
-
-            <p class="doctor-specialization">{{ practitioner.specializations }}</p>
+            <p class="doctor-specialization">{{ doctorDetail()?.specialization }}</p>
             <p class="doctor-experience">
-              {{ practitioner.experienceOverall }} Years Experience Overall ({{ practitioner.experienceSpecialist }}
+              {{ doctorDetail()?.experienceYears }} Years Experience Overall ({{ doctorDetail()?.specialization
+              }}
               years as specialist)
             </p>
 
             <!-- Thumbs up rating badge -->
             <div class="doctor-rating-pill">
               <span class="thumbs-icon">👍</span>
-              <span class="rating-pct">{{ practitioner.ratingScorePercent }}%</span>
-              <span class="patients-count">({{ practitioner.patientStoriesCount }} patients)</span>
+              <span class="rating-pct">{{ doctorDetail()?.avgRating }}%</span>
+              <span class="patients-count">({{ doctorDetail()?.totalReviews }} patients)</span>
             </div>
 
             <!-- Doctor Intro Headline -->
-            <h2 class="doctor-headline">{{ practitioner.headline }}</h2>
+            <!-- <h2 class="doctor-headline">{{ doctorDetail()?.about }}</h2> -->
 
             <!-- Detailed Doctor Bio Paragraphs -->
             <div class="doctor-bio-content">
-              @for (p of practitioner.bioParagraphs; track p) {
-              <p>{{ p }}</p>
-              }
+              {{ doctorDetail()?.about }}
             </div>
           </div>
         </div>
+        <a href="javascript:void(0)" class="saved_icon">
+          <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="35" height="35" viewBox="0 0 50 50">
+            <path
+              d="M 12.8125 2 C 12.335938 2.089844 11.992188 2.511719 12 3 L 12 47 C 11.996094 47.359375 12.1875 47.691406 12.496094 47.871094 C 12.804688 48.054688 13.1875 48.054688 13.5 47.875 L 25 41.15625 L 36.5 47.875 C 36.8125 48.054688 37.195313 48.054688 37.503906 47.871094 C 37.8125 47.691406 38.003906 47.359375 38 47 L 38 3 C 38 2.449219 37.550781 2 37 2 L 13 2 C 12.96875 2 12.9375 2 12.90625 2 C 12.875 2 12.84375 2 12.8125 2 Z M 14 4 L 36 4 L 36 45.25 L 25.5 39.125 C 25.191406 38.945313 24.808594 38.945313 24.5 39.125 L 14 45.25 Z">
+            </path>
+          </svg>
+        </a>
       </section>
 
       <!-- 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy) -->
@@ -83,135 +92,271 @@
       </nav>
 
       <!-- 3. Section: Info (#info) -->
-      <section id="info" class="physios-detail-section">
-        <div class="section-card clinic-info-card">
-          <div class="clinic-location-header">
-            <span class="clinic-area-title">{{ practitioner.clinicAddress.split(',').pop()?.trim() || 'Mansarovar,
-              Jaipur' }}</span>
-          </div>
 
-          <div class="clinic-info-body">
-            <!-- Left Info Block -->
-            <div class="clinic-main-details">
-              <h3 class="clinic-name">{{ practitioner.clinicName }}</h3>
-
-              <!-- Ratings -->
-              <div class="clinic-rating-row">
-                <div class="clinic-stars">
-                  <span class="star-score">{{ practitioner.clinicRating }}</span>
-                  <span class="star-icon">★★★★★</span>
-                </div>
-                <div class="clinic-excellence-badge">
-                  <span class="diamond-icon">◆</span>
-                  <span>{{ practitioner.clinicExcellenceScore }} (Clinic Excellence Rating)</span>
-                </div>
-              </div>
-
-              <!-- Address & Landmark -->
-              <div class="clinic-address-block">
-                <p class="address-text">{{ practitioner.clinicAddress }}</p>
-                <a href="https://maps.google.com" target="_blank" class="directions-link">Get Directions</a>
-              </div>
-
-              <!-- Clinic Photo Gallery Thumbnails -->
-              <div class="clinic-gallery-row">
-                <h4 class="gallery-title">Clinic Photos &amp; Videos</h4>
-                <div class="gallery-thumbs-list">
-                  @for (photo of clinicPhotos; track photo.url; let i = $index) {
-                  <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption"
-                    class="gallery-thumb-item">
-                    <img [src]="photo.url" [alt]="photo.caption" class="gallery-img" />
-                  </a>
-                  }
-                  <div class="gallery-thumb-more" (click)="scrollToSection('photos')">
-                    <span>+6</span>
-                  </div>
-                </div>
-                <a href="javascript:void(0)" class="view-media-link" (click)="scrollToSection('photos')">View All
-                  Media</a>
-              </div>
-            </div>
-
-            <!-- Right Timings & Fee Block -->
-            <div class="clinic-timing-fee-box">
-              <div class="timing-rows-wrap">
-                <div class="timing-item">
-                  <span class="timing-days">Mon - Sat</span>
-                  <span class="timing-hours">09:00 AM - 01:00 PM<br />02:00 PM - 06:00 PM</span>
-                </div>
-                <div class="timing-item">
-                  <span class="timing-days">Sun</span>
-                  <span class="timing-hours">10:00 AM - 02:00 PM</span>
-                </div>
-              </div>
-
-              <div class="fee-display-box">
-                <span class="fee-currency">₹{{ practitioner.consultationFee }}</span>
-                <div class="prime-verify-pill">
-                  <span class="prime-badge-bold">Prime</span>
-                  <span class="prime-check-mark">✔</span>
-                  <span class="prime-details-text">Verified details</span>
-                </div>
-              </div>
-
-              <a type="button" class="btn_3" (click)="bookConsultancy()">
-                Book Consultancy
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- 4. Section: Stories / Patient Reviews (#stories) -->
       <section id="stories" class="physios-detail-section">
         <div class="section-card reviews-card">
           <h3 class="section-header-title">
-            {{ reviews().length }} Patient Stories for {{ practitioner.name }} {{ practitioner.specialtyTitle }}
+            {{ doctorDetail()?.totalReviews }} Patient Stories for {{ doctorDetail()?.fullName }} {{
+            doctorDetail()?.specialization }}
           </h3>
 
-          <div class="reviews-list">
-            @for (rev of reviews(); track rev.id) {
-            <div class="review-item">
-              <div class="review-header">
+          <!-- Add Review Section -->
+          <div class="add-review-card" [formGroup]="reviewForm">
+            <div class="add-review-card-head">
+              <div class="reviewer-avatar-wrap">
                 <div class="reviewer-avatar">
-                  {{ rev.userName.charAt(0) }}
+                  {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName.charAt(0).toUpperCase() : 'U' }}
                 </div>
-                <div class="reviewer-info">
-                  <span class="reviewer-name">{{ rev.userName }} (Verified)</span>
-                  <span class="review-time">{{ rev.timeAgo }}</span>
+                <div>
+                  <h4>
+                    {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName : 'Share Your Experience' }}
+                  </h4>
+                  <p>
+                    {{ isLoggedIn ? 'Verified Patient Review' : 'Consulted Dr. ' + (doctorDetail()?.fullName ||
+                    practitioner.name) + '? Leave a review below.' }}
+                  </p>
                 </div>
               </div>
 
-              @if (rev.visitedFor) {
+            </div>
+
+            <!-- 5 Individual Stars Rating Picker -->
+            <div class="review-rating-picker">
+              <span class="rating-picker-label">Your Rating:</span>
+              <div class="star-rating-stars" role="radiogroup" aria-label="Select Doctor Rating">
+                <input type="radio" id="doc-star5" name="rating" [value]="5" formControlName="rating" />
+                <label for="doc-star5" title="5 Stars - Excellent">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                    </path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star4" name="rating" [value]="4" formControlName="rating" />
+                <label for="doc-star4" title="4 Stars - Very Good">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                    </path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star3" name="rating" [value]="3" formControlName="rating" />
+                <label for="doc-star3" title="3 Stars - Good">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                    </path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star2" name="rating" [value]="2" formControlName="rating" />
+                <label for="doc-star2" title="2 Stars - Fair">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                    </path>
+                  </svg>
+                </label>
+
+                <input type="radio" id="doc-star1" name="rating" [value]="1" formControlName="rating" />
+
+                <label for="doc-star1" title="1 Star - Poor">
+                  <svg class="star-icon" viewBox="0 0 24 24" width="24" height="24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                    </path>
+                  </svg>
+                </label>
+              </div>
+            </div>
+
+            <!-- Visited For & Happy About Tabbed Section -->
+            <div class="review-feedback-tabs-section mb-3">
+              <!-- Bootstrap Nav Tabs Header -->
+              <ul class="nav nav-tabs mb-3" id="reviewFeedbackTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button type="button" class="nav-link active" id="visited-for-tab" data-bs-toggle="tab"
+                    data-bs-target="#visited-for-pane" role="tab" aria-controls="visited-for-pane" aria-selected="true">
+                    <span class="tab-icon me-1">🏥</span>
+                    <span class="tab-label">Visited For</span>
+                  </button>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                  <button type="button" class="nav-link" id="happy-about-tab" data-bs-toggle="tab"
+                    data-bs-target="#happy-about-pane" role="tab" aria-controls="happy-about-pane"
+                    aria-selected="false">
+                    <span class="tab-icon me-1">✨</span>
+                    <span class="tab-label">Happy About</span>
+                  </button>
+                </li>
+              </ul>
+
+              <!-- Tab Contents -->
+              <div class="tab-content" id="reviewFeedbackTabContent">
+                <!-- Tab 1: Visited For (Conditions) -->
+                <div class="tab-pane fade show active" id="visited-for-pane" role="tabpanel"
+                  aria-labelledby="visited-for-tab" tabindex="0">
+                  <div class="tab-content-panel">
+                    <div class="visited-for-header">
+                      <span class="visited-for-title">Reason for Visit / Condition:</span>
+                      <span class="visited-for-hint">(Choose 1 or more)</span>
+                    </div>
+
+                    <div class="visit-chips-wrap">
+                      @for (reason of predefinedVisitReasons; track reason) {
+                      <button type="button" class="visit-choice-chip" [class.selected]="isVisitReasonSelected(reason)"
+                        (click)="toggleVisitReason(reason)">
+                        <span class="chip-check">{{ isVisitReasonSelected(reason) ? '✓' : '+' }}</span>
+                        <span class="chip-text">{{ reason }}</span>
+                      </button>
+                      }
+
+                      <button type="button" class="visit-choice-chip other-chip" [class.selected]="showCustomVisit()"
+                        (click)="toggleCustomVisit()">
+                        <span class="chip-check">{{ showCustomVisit() ? '✕' : '+' }}</span>
+                        <span class="chip-text">Other Condition</span>
+                      </button>
+                    </div>
+
+                    @if (showCustomVisit()) {
+                    <div class="custom-visit-input-wrap">
+                      <input type="text" class="form-control custom-visit-input" [value]="customVisitText()"
+                        (input)="onCustomVisitChange($event)"
+                        placeholder="Type your specific condition (e.g. Tennis Elbow, Scoliosis)..." />
+                    </div>
+                    }
+
+                    @if (reviewForm.get('visitedFor')?.value) {
+                    <div class="selected-visit-summary">
+                      <span class="summary-label">Selected:</span>
+                      <span class="summary-val">{{ reviewForm.get('visitedFor')?.value }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Tab 2: Happy About (Experience) -->
+                <div class="tab-pane fade" id="happy-about-pane" role="tabpanel" aria-labelledby="happy-about-tab"
+                  tabindex="0">
+                  <div class="tab-content-panel">
+                    <div class="visited-for-header">
+                      <span class="visited-for-title">What were you happy with?</span>
+                      <span class="visited-for-hint">(Choose 1 or more)</span>
+                    </div>
+
+                    <div class="visit-chips-wrap">
+                      @for (option of predefinedHappyAbout; track option) {
+                      <button type="button" class="visit-choice-chip happy-choice-chip"
+                        [class.selected]="isHappyAboutSelected(option)" (click)="toggleHappyAbout(option)">
+                        <span class="chip-check">{{ isHappyAboutSelected(option) ? '✓' : '+' }}</span>
+                        <span class="chip-text">{{ option }}</span>
+                      </button>
+                      }
+
+                      <button type="button" class="visit-choice-chip other-chip"
+                        [class.selected]="showCustomHappyAbout()" (click)="toggleCustomHappyAbout()">
+                        <span class="chip-check">{{ showCustomHappyAbout() ? '✕' : '+' }}</span>
+                        <span class="chip-text">Other</span>
+                      </button>
+                    </div>
+
+                    @if (showCustomHappyAbout()) {
+                    <div class="custom-visit-input-wrap">
+                      <input type="text" class="form-control custom-visit-input" [value]="customHappyAboutText()"
+                        (input)="onCustomHappyAboutChange($event)" placeholder="Type what you were happy with..." />
+                    </div>
+                    }
+
+                    @if (reviewForm.get('happyAbout')?.value) {
+                    <div class="selected-visit-summary happy-summary">
+                      <span class="summary-label">Selected:</span>
+                      <span class="summary-val">{{ reviewForm.get('happyAbout')?.value }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Review Textarea -->
+            <div class="review_textarea">
+              <textarea id="patient-review-textarea" class="form-control review-input-textarea" rows="4"
+                formControlName="review"
+                placeholder="Write your review here... How was your consultation, treatment satisfaction, and overall recovery?"></textarea>
+
+              <div class="review_btns">
+                <label class="recommend-label">
+                  <input type="checkbox" formControlName="isRecommended" id="recommend-check" />
+                  <span>{{ reviewForm.get('isRecommended')?.value ? '👍 I recommend this doctor' : '🤷 Not recommending'
+                    }}</span>
+                </label>
+
+                <button type="button" class="btn-submit-review" (click)="AddReview()" [disabled]="isSubmittingReview()">
+                  <span>{{ isSubmittingReview() ? 'Submitting...' : 'Submit Review' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="reviews-list">
+            @for (rev of Review(); track rev.id) {
+            <div class="review-item">
+              <div class="review-header">
+                <div class="reviewer-avatar">
+                  @if (rev.profileImage) {
+                  <img [src]="rev.profileImage" [alt]="rev.fullName || 'Patient'" />
+                  } @else {
+                  {{ (rev.fullName || 'P').charAt(0).toUpperCase() }}
+                  }
+                </div>
+                <div class="reviewer-info">
+                  <span class="reviewer-name">{{ rev.fullName || 'Patient' }} (Verified)</span>
+                  <span class="review-time">{{ rev.timeAgo || 'Recent' }}</span>
+                </div>
+              </div>
+
+              <!-- Visited For in the red highlighted area from screenshot (above recommendation) -->
+              @if (rev.visitedFor ) {
               <p class="review-visited-for">
                 <strong>Visited For</strong> {{ rev.visitedFor }}
               </p>
               }
 
+              @if (rev.isRecommended !== false) {
               <div class="review-recommend">
                 <span class="thumbs-up">👍</span>
                 <span>I recommend the doctor</span>
               </div>
+              }
 
-              @if (rev.tags && rev.tags.length > 0) {
-              <div class="review-tags-wrap">
+              <!-- Happy About in the green tag pills section -->
+              @if (rev.happyAbout ) {
+              <div class="review-tags-wrap happy-about-wrap">
                 <span class="happy-with-label">Happy with:</span>
+
                 <div class="tag-pills">
-                  @for (t of rev.tags; track t) {
-                  <span class="tag-pill">{{ t }}</span>
+                  @for (t of (rev.happyAbout).split(','); track t) {
+                  <span class="tag-pill tag-pill-happy">{{ t.trim() }}</span>
                   }
                 </div>
               </div>
               }
 
-              <p class="review-text">"{{ rev.review }}"</p>
+              <p class="review-text">"{{ rev.review || rev.review1 }}"</p>
 
-              @if (rev.clinicReply) {
+              @if (rev.clinicReply || rev.providerReply) {
               <div class="clinic-reply-bubble">
                 <span class="reply-arrow">↳</span>
                 <div class="reply-content">
-                  <strong class="reply-author">{{ practitioner.clinicName }} replied:</strong>
-                  <p class="reply-text">{{ rev.clinicReply }}</p>
+                  <strong class="reply-author">{{ practitioner.clinicName || doctorDetail()?.fullName }}
+                    replied:</strong>
+                  <p class="reply-text">{{ rev.clinicReply || rev.providerReply }}</p>
                 </div>
               </div>
               }
@@ -221,7 +366,6 @@
         </div>
       </section>
 
-      <!-- 5. EXTRA SECTION: Associated Doctors (#doctors) - Only in Clinic Mode -->
       @if (isClinic()) {
       <section id="doctors" class="physios-detail-section">
         <div class="section-card associated-doctors-card">
@@ -282,7 +426,7 @@
               </div>
 
               <!-- Col 3: Availability, Fee & Action -->
-           
+
             </article>
             }
           </div>
@@ -294,21 +438,12 @@
       <section id="treatments" class="physios-detail-section">
         <div class="section-card treatments-card">
           <div class="treatments-header-row">
-            <h3 class="section-header-title">{{ treatmentsList().length }} Surgeries &amp; Treatments</h3>
+            <h3 class="section-header-title">{{ doctorDetail()?.services?.length }} Services &amp; Treatments</h3>
 
-            <div class="treatments-search-box">
-              <svg class="search-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" placeholder="Search surgeries &amp; treatments" [ngModel]="treatmentSearchQuery()"
-                (ngModelChange)="treatmentSearchQuery.set($event)" class="treatment-input" />
-            </div>
           </div>
 
           <div class="treatments-grid">
-            @for (t of filteredTreatments(); track t.id) {
+            @for (t of doctorDetail()?.services; track t.id) {
             <div class="treatment-item-card">
               <div class="treatment-icon-circle">
                 <!-- Stethoscope SVG -->
@@ -321,7 +456,7 @@
                   <circle cx="20" cy="10" r="2"></circle>
                 </svg>
               </div>
-              <span class="treatment-name">{{ t.name }}</span>
+              <span class="treatment-name">{{ t.serviceName }}</span>
             </div>
             }
           </div>
@@ -349,21 +484,40 @@
       <!-- 8. Section: Consult Q&A (#qa) -->
       <section id="qa" class="physios-detail-section">
         <div class="section-card qa-card">
-          <h3 class="section-header-title">Frequently Asked Questions &amp; Consult Q&amp;A</h3>
-          <div class="faq-list">
-            <div class="faq-item">
-              <h4 class="faq-question">What conditions does Dr. Sneha Sharma treat?</h4>
-              <p class="faq-answer">
-                Dr. Sneha Sharma specializes in sports injuries, knee pain, chronic back pain, cervical spondylosis,
-                post-operative joint rehabilitation, and musculoskeletal disorders.
-              </p>
+          <h3 class="section-header-title mb-4">Frequently Asked Questions &amp; Consult Q&amp;A</h3>
+          <div class="accordion" id="faqAccordion">
+            <!-- FAQ 1 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingFaqOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseFaqOne" aria-expanded="true" aria-controls="collapseFaqOne">
+                  What conditions does Dr. Sneha Sharma treat?
+                </button>
+              </h2>
+              <div id="collapseFaqOne" class="accordion-collapse collapse show" aria-labelledby="headingFaqOne"
+                data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Dr. Sneha Sharma specializes in sports injuries, knee pain, chronic back pain, cervical spondylosis,
+                  post-operative joint rehabilitation, and musculoskeletal disorders.
+                </div>
+              </div>
             </div>
-            <div class="faq-item">
-              <h4 class="faq-question">How can I book a 10-Session Rehab Plan?</h4>
-              <p class="faq-answer">
-                You can select the 10-Session Rehab Plan above to save on multi-session care. Your session chart and
-                weekly progress assessments will be managed directly with Dr. Sharma.
-              </p>
+
+            <!-- FAQ 2 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingFaqTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseFaqTwo" aria-expanded="false" aria-controls="collapseFaqTwo">
+                  How can I book a 10-Session Rehab Plan?
+                </button>
+              </h2>
+              <div id="collapseFaqTwo" class="accordion-collapse collapse" aria-labelledby="headingFaqTwo"
+                data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  You can select the 10-Session Rehab Plan above to save on multi-session care. Your session chart and
+                  weekly progress assessments will be managed directly with Dr. Sharma.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -397,87 +551,63 @@
                   <rect x="4" y="2" width="16" height="20" rx="2" />
                 </svg>
               </span>
-              <span class="type-text">Clinic Appointment</span>
+              <span class="type-text">{{isClinic()===true?'Clinic Consultancy':'Home visit'}}</span>
             </div>
-            <span class="appointment-fee">₹{{ practitioner.consultationFee }} fee</span>
+            <span class="appointment-fee">₹{{isClinic()===true?
+              doctorDetail()?.consultationFee:doctorDetail()?.consultationFee}} fee</span>
           </div>
 
           <!-- Clinic Mini Details -->
           <div class="booking-clinic-meta">
-            <h4 class="booking-clinic-name">{{ practitioner.clinicName }}</h4>
-            <span class="clinic-loc">Mansarovar</span>
+            <h4 class="booking-clinic-name">{{doctorDetail()?.fullName}}</h4>
+            <!-- <span class="clinic-loc">{{doctorDetail()?.city}}</span> -->
           </div>
 
           <!-- Day Navigation Carousel Strip -->
           <div class="day-carousel-strip">
-            <button type="button" class="day-nav-arrow"
-              (click)="selectedDayIndex.set(selectedDayIndex() > 0 ? selectedDayIndex() - 1 : 0)"
-              aria-label="Previous Day">
+            <button type="button" class="day-nav-arrow day-nav-arrow-prev" #dayPrevBtn title="Previous"
+              aria-label="Previous">
               &lt;
             </button>
-            <div class="day-tabs-slider">
-              @for (d of dayList; track d.label; let i = $index) {
-              <button type="button" class="day-tab-btn" [class.active]="selectedDayIndex() === i"
-                (click)="selectDay(i)">
-                <span class="day-title">{{ d.label }}</span>
-              </button>
-              }
+            <div class="swiper day-tabs-slider" #daySwiperRef>
+              <div class="swiper-wrapper">
+                @for (day of dayList(); track day.dateStr; let i = $index) {
+                <div class="swiper-slide">
+                  <div class="day-tab-box" [class.selected]="selectedDayIndex() === i" (click)="onDayClick(day, i)">
+                    <span>{{ day.dateStr }}</span>
+                    <span>{{ day.label }}</span>
+                  </div>
+                </div>
+                }
+              </div>
             </div>
-            <button type="button" class="day-nav-arrow"
-              (click)="selectedDayIndex.set(selectedDayIndex() < dayList.length - 1 ? selectedDayIndex() + 1 : selectedDayIndex())"
-              aria-label="Next Day">
+            <button type="button" class="day-nav-arrow day-nav-arrow-next" #dayNextBtn title="Next" aria-label="Next">
               &gt;
             </button>
           </div>
 
           <!-- Slot Content Display -->
           <div class="slot-content-body">
-            @if (!dayList[selectedDayIndex()].hasSlots) {
+            @if (selectedSlots().length > 0) {
             <div class="no-slots-alert">
-              <div class="calendar-alert-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none"
-                  stroke="#2c9caf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="lucide lucide-calendar-clock">
-                  <path d="M16 14v2.2l1.6 1" />
-                  <path d="M16 2v3" />
-                  <path d="M21 7.338V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2.338" />
-                  <path d="M3 9h5.859" />
-                  <path d="M8 2v3" />
-                  <circle cx="16" cy="16" r="6" />
-                </svg>
-              </div>
-              <p class="no-slots-msg">No slots available for today</p>
-            </div>
-            } @else {
-            <!-- Morning Slots -->
-            <div class="slots-group">
-              <span class="slots-group-title">Morning Slots</span>
-              <div class="slots-chips-grid">
-                @for (slot of morningSlots; track slot) {
-                <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
-                  (click)="selectSlot(slot)">
-                  {{ slot }}
-                </button>
-                }
-              </div>
+              @for (slot of selectedSlots(); track slot.id) {
+              <button type="button" class="no-slots-msg"
+                [class.selected]="selectedSlotTime() === (slot.startTime + '–' + slot.endTime)"
+                (click)="selectSlot(slot.startTime + '–' + slot.endTime)">
+                {{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }}
+              </button>
+              }
             </div>
 
-            <!-- Afternoon / Evening Slots -->
-            <div class="slots-group">
-              <span class="slots-group-title">Afternoon / Evening Slots</span>
-              <div class="slots-chips-grid">
-                @for (slot of afternoonSlots; track slot) {
-                <button type="button" class="slot-chip" [class.selected]="selectedSlotTime() === slot"
-                  (click)="selectSlot(slot)">
-                  {{ slot }}
-                </button>
-                }
-              </div>
-            </div>
-
+            @if (selectedSlotTime()) {
             <button type="button" class="btn-confirm-slot" (click)="bookAppointment()">
               Book Appointment for {{ selectedSlotTime() }}
             </button>
+            }
+            } @else {
+            <div class="no-slots-alert">
+              <p class="no-slots-msg" style="border:none; color:#94a3b8;">No slots available for this day</p>
+            </div>
             }
 
             <!-- Call Now Action Button -->
