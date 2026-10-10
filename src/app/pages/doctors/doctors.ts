@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
@@ -81,6 +81,7 @@ export class Doctors extends BaseComponent implements OnInit {
 
   // Active dropdown menu for filter ribbon
   readonly activeDropdown = signal<string | null>(null);
+  readonly dropdownPosition = signal<{ top: number; left: number } | null>(null);
 
   // App download mobile input
   readonly mobileNumber = signal<string>('');
@@ -280,12 +281,37 @@ export class Doctors extends BaseComponent implements OnInit {
     this.isCityOpen.set(false);
   }
 
-  toggleDropdown(name: string): void {
-    this.activeDropdown.update(cur => (cur === name ? null : name));
+  toggleDropdown(name: string, triggerBtn?: HTMLElement): void {
+    if (this.activeDropdown() === name) {
+      this.closeDropdown();
+      return;
+    }
+
+    if (triggerBtn) {
+      const rect = triggerBtn.getBoundingClientRect();
+      const estimatedWidth = name === 'sort' ? 220 : 190;
+      const screenWidth = window.innerWidth;
+
+      let left = rect.left;
+      if (left + estimatedWidth > screenWidth - 12) {
+        left = Math.max(12, screenWidth - estimatedWidth - 12);
+      }
+      if (left < 12) {
+        left = 12;
+      }
+
+      this.dropdownPosition.set({
+        top: Math.round(rect.bottom + 6),
+        left: Math.round(left),
+      });
+    }
+
+    this.activeDropdown.set(name);
   }
 
   closeDropdown(): void {
     this.activeDropdown.set(null);
+    this.dropdownPosition.set(null);
   }
 
   setGenderFilter(val: string): void {

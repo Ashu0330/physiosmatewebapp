@@ -98,18 +98,14 @@
   max-width: 1220px;
   margin: 0 auto;
   padding: 0 1.5rem;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .physios-filter-left {
   display: flex;
   align-items: center;
   gap: 14px;
-  position: relative;
   padding: 10px 0;
+  width: 100%;
 }
 
 .physios-filter-right {
@@ -191,23 +187,42 @@
   border-color: transparent transparent #1e293b transparent;
 }
 
-/* Filter Menus */
-.physios-filter-menu {
-  position: absolute;
-  top: calc(100% + 6px);
+/* Filter Backdrop (for transparent outside-click handling) */
+.physios-filter-backdrop {
+  position: fixed;
+  top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1040;
+  background: transparent;
+}
+
+/* Filter Menus (Floating Popover) */
+.physios-filter-menu {
+  position: fixed;
   background: #ffffff;
   border: 1px solid var(--green-border, #D5F3EF);
   border-radius: 6px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
   min-width: 180px;
   padding: 6px 0;
-  z-index: 110;
+  z-index: 1050;
+  animation: physiosFadeIn 0.15s ease-out;
+}
+
+@keyframes physiosFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .physios-filter-menu.right-aligned {
-  left: auto;
-  right: 0;
   min-width: 220px;
 }
 
@@ -1030,25 +1045,47 @@
 
   .physios-btn-contact-clinic-solid {
     width: fit-content;
+    padding-inline: 6px;
+  }
+
+  .physios-filter-container {
+    padding: 0 1rem;
   }
 
   .physios-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
     overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
-/* .physios-filter-left::-webkit-scrollbar {
-    width: 10px; 
-    height: 10px; 
-} */
 
-.physios-filter-left::-webkit-scrollbar-track {
-    background: var(--primary-color); 
-    border-radius: 5px;
-}
+  .physios-filter-left::-webkit-scrollbar {
+    display: none;
+  }
 
-.physios-filter-left::-webkit-scrollbar-thumb {
-    background: var(--green-dark); 
-    border-radius: 5px;
-}
+  .physios-filter-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .physios-filter-dropdown-wrapper {
+    flex-shrink: 0;
+  }
+
+  .physios-filter-right {
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  .physios-filter-menu {
+    max-width: calc(100vw - 24px);
+  }
+
   .physios-doc-name {
     flex-direction: column;
     align-items: flex-start;
