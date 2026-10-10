@@ -273,8 +273,8 @@
         @for (clinic of filteredClinics(); track clinic.id) {
         <article class="physios-doc-card" id="clinic-card-{{ clinic.id }}">
           <!-- Col 1: Clinic Image -->
-          <div class="physios-clinic-img-col">
-            <div class="physios-clinic-img-wrapper">
+          <div class="physios-doc-avatar-col clinic_list">
+            <div class="physios-doc-avatar-wrapper">
               <img [src]="clinic.image" [alt]="clinic.name" class="physios-clinic-img" />
               @if (clinic.isVerified) {
               <div class="physios-clinic-verified-badge" title="Verified Clinic">
@@ -466,7 +466,7 @@
                   <path d="M9 13c6.667 0 6.667-10 0-10" />
                 </svg>
                 <span class="physios-doc-fee">
-                  <b> ₹{{ doc.consultationFee }} </b> Consultation fee
+                  <b> {{ doc.consultationFee }} </b> Consultation fee
                 </span>
               </div>
               <div class="physios-doc-exp">
@@ -570,7 +570,7 @@
     <div class="physios-modal-body">
       @if (!bookingSuccess()) {
       <div class="physios-modal-fee-alert">
-        <span>Consultation Fee: <strong>₹{{ doc.consultationFee }}</strong> (Pay at Clinic, No Booking Fee)</span>
+        <span>Consultation Fee: <strong>{{ doc.consultationFee }}</strong> (Pay at Clinic, No Booking Fee)</span>
       </div>
 
       <div class="physios-modal-section-title">Select Appointment Slot</div>
