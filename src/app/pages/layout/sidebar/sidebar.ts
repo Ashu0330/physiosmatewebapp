@@ -59,8 +59,6 @@ export class Sidebar extends BaseComponent {
         this.setStoredParentId(parentId);
         this.GetAllMenu(parentId);
       } else {
-        // parentMenuId is null (e.g. on refresh before header resolves).
-        // Try restoring from localStorage safely.
         const storedId = this.getStoredParentId();
         if (storedId && storedId !== this.previousParentMenuId) {
           this.previousParentMenuId = storedId;

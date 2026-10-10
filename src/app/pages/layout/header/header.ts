@@ -42,18 +42,19 @@ export class Header extends BaseComponent implements OnInit {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
-      this.closeMobileMenu();        if (!this.isLoggedIn) {
+        this.closeMobileMenu(); if (!this.isLoggedIn) {
           return;
         }
         this.setParentMenuFromRoute();
-    });
+      });
   }
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;
     if (this.mobileMenuOpen) {
       this.profileDropdownOpen = false;
-      this.lockBodyScroll();      } else {
+      this.lockBodyScroll();
+    } else {
       this.unlockBodyScroll();
     }
   }
@@ -168,6 +169,7 @@ export class Header extends BaseComponent implements OnInit {
 
   selectMenuItem(item: MenusModel): void {
     if (item.menuName == 'Logout') {
+
       this.logout();
       return;
     }
