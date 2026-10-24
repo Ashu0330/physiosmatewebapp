@@ -510,6 +510,12 @@ input:checked+.pm-slider:before {
   color: var(--text-muted, #64748b);
 }
 
+.pm-badge-capacity {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
 /* Actions */
 .pm-actions-group {
   display: flex;
@@ -599,21 +605,6 @@ input:checked+.pm-slider:before {
   }
 }
 
-.pm-placeholder-card {
-  text-align: center;
-  padding: 60px 24px;
-}
-
-.pm-placeholder-card h3 {
-  font-family: var(--font-heading, 'Inter Tight', sans-serif);
-  font-size: 18px;
-  margin: 12px 0 6px 0;
-}
-
-.pm-placeholder-card p {
-  color: var(--text-muted, #64748b);
-  font-size: 14px;
-}
 
 /* Inline slot chips in the table */
 .pm-slots-inline {
@@ -675,4 +666,269 @@ input:checked+.pm-slider:before {
 .pm-chip-edit-btn:hover {
   color: var(--primary-color, #10a896);
   background: rgba(16, 168, 150, 0.1);
+}
+
+/* =========================================================
+ * Form Inputs & Table Display Styles
+ * ========================================================= */
+
+.pm-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-input, #f8fafc);
+  font-family: var(--font-body, 'Manrope', sans-serif);
+  font-size: 14px;
+  color: var(--text-main, #0f172a);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.pm-input:focus {
+  border-color: var(--primary-color, #10a896);
+  background-color: var(--bg-surface, #ffffff);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.12);
+}
+
+.pm-input::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.pm-required {
+  color: var(--danger, #ef4444);
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.pm-expertise-name {
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
+}
+
+
+.pm-row-editing {
+  background-color: var(--primary-subtle, #f0fdfa) !important;
+}
+
+/* =========================================================
+ * Subscription Plans / Packages
+ * ========================================================= */
+.pm-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.pm-plan-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 0;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.04));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pm-plan-card:hover {
+  box-shadow: 0 6px 20px rgba(16, 168, 150, 0.12);
+  transform: translateY(-2px);
+}
+
+.pm-plan-card.pm-plan-popular {
+  border-color: var(--primary-color, #10a896);
+  box-shadow: 0 4px 16px rgba(16, 168, 150, 0.18);
+}
+
+.pm-plan-popular-ribbon {
+  background: var(--primary-color, #10a896);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  text-align: center;
+}
+
+.pm-plan-header {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+}
+
+.pm-plan-name {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.pm-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pm-plan-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-muted, #f1f5f9);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-body, #334155);
+}
+
+.pm-plan-meta-chip svg {
+  color: var(--text-muted, #64748b);
+}
+
+.pm-plan-price-row {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light, #f1f5f9);
+}
+
+.pm-plan-price {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary-color, #10a896);
+}
+
+.pm-plan-price-label {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+.pm-plan-benefits {
+  padding: 14px 20px;
+  flex: 1;
+}
+
+.pm-plan-benefits-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+}
+
+.pm-plan-benefit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pm-plan-benefit-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-body, #334155);
+  line-height: 1.4;
+}
+
+.pm-plan-benefit-icon {
+  color: var(--primary-color, #10a896);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pm-plan-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-light, #f1f5f9);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pm-plan-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-muted, #f1f5f9);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body, #334155);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pm-plan-edit-btn:hover {
+  background: var(--primary-light, #e8f8f5);
+  border-color: var(--primary-color, #10a896);
+  color: var(--primary-color, #10a896);
+}
+
+/* textarea for benefits */
+.pm-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-input, #f8fafc);
+  font-family: var(--font-body, 'Manrope', sans-serif);
+  font-size: 13.5px;
+  color: var(--text-main, #0f172a);
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.pm-textarea:focus {
+  border-color: var(--primary-color, #10a896);
+  background-color: var(--bg-surface, #ffffff);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.12);
+}
+
+.pm-textarea::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.pm-plan-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pm-form-group-full {
+  grid-column: 1 / -1;
+}
+
+.pm-input-hint {
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .pm-plans-grid {
+    grid-template-columns: 1fr;
+  }
 }

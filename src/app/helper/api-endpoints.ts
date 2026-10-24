@@ -10,6 +10,10 @@ export const ApiEndPoints = {
     Register: 'Auth/Register',
     VerifyOtp: 'Auth/VerifyOtp',
     ResendOtp: 'Auth/ResendOtp',
+    GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
+    AddUpdateExpertise: 'ProviderCatalog/AddUpdateExpertise',
+    GetAllTreatmentServices: 'ProviderCatalog/GetAllTreatmentServices',
+    AddUpdateTreatmentServices: 'ProviderCatalog/AddUpdateTreatmentServices',
 
     // ── Practitioner (Doctor) Registration ─────────────────────────────────────
     AddPractitioner: 'Practitioner/AddPractitioner',
@@ -25,7 +29,7 @@ export const ApiEndPoints = {
 
     // ── Consultancy / Booking ────────────────────────────────────────────────────
     GetAvailability: 'Consultancy/GetAvailability',
-    AddAvailability: 'Availability/AddAvailability',
+    AddAvailability: 'ProviderCatalog/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
 
@@ -45,6 +49,10 @@ export const ApiEndPoints = {
     AddReview: 'Review/AddProviderReview',
     GetAllReviews: 'Review/GetAllReview',
 
+    // ── Patient ───────────────────────────────────────────────────────────────────
+    AddPatient: 'Patient/AddPatient',
+    GetMyPatients: 'Patient/GetMyPatients',
+
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
     DoctorPatientById: 'Doctor/Patient',
@@ -56,8 +64,13 @@ export const ApiEndPoints = {
     DoctorUpdateAppointmentStatus: 'Doctor/UpdateAppointmentStatus',
 
     // ── Provider Catalog ──────────────────────────────────────────────────────────
-    GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
+    // GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
     GetProviderPlans: 'ProviderCatalog/GetProviderPlans',
+    AddProviderPlans: 'ProviderCatalog/AddProviderPlans',
+    AddAddons: 'ProviderCatalog/AddAddons',
+    GetAllAddOns: 'ProviderCatalog/GetAllAddOns',
+    CreateAppointmentSlot: 'ProviderCatalog/CreateAppoimentSlot',
+    GetAppointmentSlots: 'Appointment/GetAppoimentSlot',
 
     // ── Master Data ────────────────────────────────────────────────────────────────
     GetAllRoles: 'Master/GetAllRoles',

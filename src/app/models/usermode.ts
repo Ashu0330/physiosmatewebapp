@@ -234,3 +234,24 @@ export class ClinicProfileModel {
     practitioners: ClinicPractitionerModel[] = [];
 }
 
+
+export class Expertise {
+    id: number;
+    providerId: number;
+    providerType: string;
+    expertiseName: string;
+    isSystem?: boolean;
+}
+
+export class TreatmentService {
+    id: number = 0;
+    providerId: number = 0;
+    providerType: string = '';
+    serviceName: string = '';
+    amount: number = 0;
+    isActive: boolean = true;
+    createdAt?: string;
+    updatedAt?: string;
+    treatmentAddOnId: number = 0;
+    isSystem?: boolean;
+}

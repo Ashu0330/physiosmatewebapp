@@ -3,12 +3,17 @@ import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { Availability, slots } from '../../models/practitioner.model';
 import { SharedModule } from '../../shared/shared-module';
+import { PlanBenefit, ProviderAddon, ProviderPlan } from '../../models/mastermodel';
 
 export interface AvailabilitySlot {
   id: number;
+  providerType: string;
+  providerId: number;
+  dayOfWeekName: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  maxCapacity: number;
   isActive: boolean;
 }
 
@@ -23,16 +28,47 @@ export class PracticeManagement extends BaseComponent implements OnInit {
   activeTab: string = 'Availability';
   availabilitySlots = signal<Availability[]>([]);
 
+  // ── Appointment Slots ──────────────────────────────────────────────
+  appointmentSlots = signal<AvailabilitySlot[]>([]);
+  appointmentSlotsByDay: { dayName: string; dayOfWeek: number; slots: AvailabilitySlot[] }[] = [];
+  showAppointmentSlotForm: boolean = true;
+  editingAppointmentSlotId: number = 0;
+  apptSlotDay: number = 1;
+  apptSlotStartTime: string = '09:00:00';
+  apptSlotEndTime: string = '10:00:00';
+  apptSlotMaxCapacity: number = 1;
+  apptSlotIsActive: boolean = true;
+  isLoadingAppointmentSlots: boolean = false;
+  isSavingAppointmentSlot: boolean = false;
+
+  // ── Subscription Plans ─────────────────────────────────────────────
+  providerPlans: ProviderPlan[] = [];
+  showPlanForm: boolean = true;
+  editingPlanId: number = 0;
+  planName: string = '';
+  planTotalSessions: number = 10;
+  planValidityDays: number = 30;
+  planPrice: number = 0;
+  planIsPopular: boolean = false;
+  planIsActive: boolean = true;
+  planBenefitsInput: string = '';  // newline-separated input
+  isLoadingPlans: boolean = false;
+  isSavingPlan: boolean = false;
+
+  // ── Add-on Services ────────────────────────────────────────────────
+  addons: ProviderAddon[] = [];
+  showAddonForm: boolean = true;
+  editingAddonId: number = 0;
+  addonName: string = '';
+  addonPrice: number = 0;
+  isLoadingAddons: boolean = false;
+  isSavingAddon: boolean = false;
 
   tabs: string[] = [
     'Availability',
     'Appointment Slots',
-    'Treatment Services',
-    'Treatment Fees',
-    'Expertise',
     'Subscription Plans',
-    'Add-on Services',
-    'Plan Benefits'
+    'Add-on Services'
   ];
 
   daysList = [
@@ -91,7 +127,12 @@ export class PracticeManagement extends BaseComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAvailability();
+    this.loadAppointmentSlots();
+    this.loadProviderPlans();
+    this.loadAddons();
   }
+
+  // ─── Availability ──────────────────────────────────────────────────
 
   async loadAvailability(): Promise<void> {
     this.isLoading = true;
@@ -149,17 +190,12 @@ export class PracticeManagement extends BaseComponent implements OnInit {
     try {
       const payload = {
         practitionerId: this.practitionerId,
-        slots: [
-          {
-            id: Number(this.editingSlotId || 0),
-            dayOfWeek: Number(this.selectedDay),
-            startTime: this.startTime,
-            endTime: this.endTime,
-            isActive: this.isActive
-          }
-        ]
+        id: Number(this.editingSlotId || 0),
+        dayOfWeek: Number(this.selectedDay),
+        startTime: this.startTime,
+        endTime: this.endTime,
+        isActive: this.isActive
       };
-
       const res = await this.apiService.Post<any>(ApiEndPoints.AddAvailability, payload);
       if (res && (res.isSuccess || res.data)) {
         this.showSuccess('Availability slot saved successfully!');
@@ -173,20 +209,15 @@ export class PracticeManagement extends BaseComponent implements OnInit {
       this.showError('Error saving slot. Please try again.');
     } finally {
       this.isSaving = false;
-      // this.cdr.detectChanges();  
     }
   }
 
   onEditSlot(day: Availability, slot: slots): void {
     this.editingSlotId = slot.id || 0;
-
     this.selectedDay = day.dayOfWeek;
-
     this.startTime = this.normalizeTime(slot.startTime);
     this.endTime = this.normalizeTime(slot.endTime);
-
     this.isActive = slot.isActive !== false;
-
     this.showAddForm = true;
   }
 
@@ -231,5 +262,284 @@ export class PracticeManagement extends BaseComponent implements OnInit {
     const mm = (parts[1] || '00').padStart(2, '0');
     const ss = (parts[2] || '00').padStart(2, '0');
     return `${hh}:${mm}:${ss}`;
+  }
+
+  // ─── Appointment Slots ─────────────────────────────────────────────
+
+  async loadAppointmentSlots(): Promise<void> {
+    this.isLoadingAppointmentSlots = true;
+    try {
+      const pid = this.practitionerId;
+      const res = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetAppointmentSlots}?providerId=${pid}&providerType=Practitioner`
+      );
+      if (res && res.isSuccess && Array.isArray(res.data)) {
+        this.appointmentSlots.set(res.data);
+        this.groupAppointmentSlotsByDay(res.data);
+      } else {
+        this.appointmentSlots.set([]);
+        this.appointmentSlotsByDay = [];
+      }
+    } catch (e) {
+      console.error('Error loading appointment slots', e);
+      this.appointmentSlots.set([]);
+      this.appointmentSlotsByDay = [];
+    } finally {
+      this.isLoadingAppointmentSlots = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private groupAppointmentSlotsByDay(slots: AvailabilitySlot[]): void {
+    const map = new Map<number, AvailabilitySlot[]>();
+    for (const slot of slots) {
+      if (!map.has(slot.dayOfWeek)) map.set(slot.dayOfWeek, []);
+      map.get(slot.dayOfWeek)!.push(slot);
+    }
+    this.appointmentSlotsByDay = Array.from(map.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([day, daySlots]) => ({
+        dayOfWeek: day,
+        dayName: daySlots[0]?.dayOfWeekName || this.getDayName(day),
+        slots: daySlots
+      }));
+  }
+
+  async createAppointmentSlot(): Promise<void> {
+    if (!this.apptSlotDay || !this.apptSlotStartTime || !this.apptSlotEndTime) {
+      this.showError('Please select day, start time and end time.');
+      return;
+    }
+    if (this.apptSlotStartTime >= this.apptSlotEndTime) {
+      this.showError('End time must be after start time.');
+      return;
+    }
+    if (this.apptSlotMaxCapacity < 1) {
+      this.showError('Max capacity must be at least 1.');
+      return;
+    }
+    this.isSavingAppointmentSlot = true;
+    try {
+      const now = new Date().toISOString();
+      const payload = {
+        id: this.editingAppointmentSlotId,
+        dayOfWeek: Number(this.apptSlotDay),
+        startTime: this.apptSlotStartTime,
+        endTime: this.apptSlotEndTime,
+        maxCapacity: Number(this.apptSlotMaxCapacity),
+        isActive: this.apptSlotIsActive,
+        createdAt: now,
+        updatedAt: now,
+        providerType: 'Practitioner',
+        providerId: this.practitionerId
+      };
+      const res = await this.apiService.Post<any>(ApiEndPoints.CreateAppointmentSlot, payload);
+      if (res && res.isSuccess) {
+        this.showSuccess(res.message || (this.editingAppointmentSlotId ? 'Slot updated.' : 'Slot created.'));
+        await this.loadAppointmentSlots();
+        this.resetAppointmentSlotForm();
+      } else {
+        this.showError(res?.message || 'Failed to save appointment slot.');
+      }
+    } catch (e: any) {
+      console.error('Create appointment slot error', e);
+      this.showError('Error saving slot. Please try again.');
+    } finally {
+      this.isSavingAppointmentSlot = false;
+    }
+  }
+
+  toggleAppointmentSlotForm(): void {
+    this.showAppointmentSlotForm = !this.showAppointmentSlotForm;
+    if (this.showAppointmentSlotForm && this.editingAppointmentSlotId === 0) {
+      this.resetAppointmentSlotForm();
+    }
+  }
+
+  resetAppointmentSlotForm(): void {
+    this.editingAppointmentSlotId = 0;
+    this.apptSlotDay = 1;
+    this.apptSlotStartTime = '09:00:00';
+    this.apptSlotEndTime = '10:00:00';
+    this.apptSlotMaxCapacity = 1;
+    this.apptSlotIsActive = true;
+  }
+
+  onEditAppointmentSlot(slot: AvailabilitySlot): void {
+    this.editingAppointmentSlotId = slot.id;
+    this.apptSlotDay = slot.dayOfWeek;
+    this.apptSlotStartTime = this.normalizeTime(slot.startTime);
+    this.apptSlotEndTime = this.normalizeTime(slot.endTime);
+    this.apptSlotMaxCapacity = slot.maxCapacity;
+    this.apptSlotIsActive = slot.isActive;
+    this.showAppointmentSlotForm = true;
+  }
+
+  // ─── Subscription Plans ────────────────────────────────────────────
+
+  async loadProviderPlans(): Promise<void> {
+    this.isLoadingPlans = true;
+    try {
+      const res = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetProviderPlans}`
+      );
+      if (res && res.isSuccess) {
+        this.providerPlans = res.data;
+      } else {
+        this.providerPlans = [];
+      }
+    } catch (e) {
+      console.error('Error loading provider plans', e);
+      this.providerPlans = [];
+    } finally {
+      this.isLoadingPlans = false;
+    }
+  }
+
+  async addProviderPlan(): Promise<void> {
+    if (!this.planName?.trim()) {
+      this.showError('Please enter a plan name.');
+      return;
+    }
+    if (this.planPrice < 0) {
+      this.showError('Price cannot be negative.');
+      return;
+    }
+    if (this.planTotalSessions < 1) {
+      this.showError('Total sessions must be at least 1.');
+      return;
+    }
+    this.isSavingPlan = true;
+    try {
+      const benefits: string[] = this.planBenefitsInput
+        .split('\n')
+        .map((b: string) => b.trim())
+        .filter((b: string) => b.length > 0);
+
+      const payload = {
+        id: this.editingPlanId,
+        planName: this.planName.trim(),
+        totalSessions: Number(this.planTotalSessions),
+        validityDays: Number(this.planValidityDays),
+        price: Number(this.planPrice),
+        isPopular: this.planIsPopular,
+        isActive: this.planIsActive,
+        benefits
+      };
+      const res = await this.apiService.Post<any>(ApiEndPoints.AddProviderPlans, payload);
+      if (res && res.isSuccess) {
+        this.showSuccess(res.message || (this.editingPlanId ? 'Plan updated.' : 'Plan created.'));
+        await this.loadProviderPlans();
+        this.resetPlanForm();
+      } else {
+        this.showError(res?.message || 'Failed to save plan.');
+      }
+    } catch (e: any) {
+      console.error('Add provider plan error', e);
+      this.showError('Error saving plan. Please try again.');
+    } finally {
+      this.isSavingPlan = false;
+    }
+  }
+
+  togglePlanForm(): void {
+    this.showPlanForm = !this.showPlanForm;
+    if (this.showPlanForm && this.editingPlanId === 0) {
+      this.resetPlanForm();
+    }
+  }
+
+  resetPlanForm(): void {
+    this.editingPlanId = 0;
+    this.planName = '';
+    this.planTotalSessions = 10;
+    this.planValidityDays = 30;
+    this.planPrice = 0;
+    this.planIsPopular = false;
+    this.planIsActive = true;
+    this.planBenefitsInput = '';
+  }
+
+  onEditPlan(plan: ProviderPlan): void {
+    this.editingPlanId = plan.id;
+    this.planName = plan.planName;
+    this.planTotalSessions = plan.totalSessions;
+    this.planValidityDays = plan.validityDays;
+    this.planPrice = plan.price;
+    this.planIsPopular = plan.isPopular;
+    this.planIsActive = plan.isActive;
+    this.planBenefitsInput = (plan.benefits || []).map((b: PlanBenefit) => b.benefitName).join('\n');
+    this.showPlanForm = true;
+  }
+
+  // ─── Add-on Services ────────────────────────────────────────────
+
+  async loadAddons(): Promise<void> {
+    this.isLoadingAddons = true;
+    try {
+      const res = await this.apiService.Get<any>(ApiEndPoints.GetAllAddOns);
+      if (res && res.isSuccess && res.data) {
+        this.addons = res.data;
+      } else {
+        this.addons = [];
+      }
+    } catch (e) {
+      console.error('Error loading add-ons', e);
+      this.addons = [];
+    } finally {
+      this.isLoadingAddons = false;
+    }
+  }
+
+  async addAddon(): Promise<void> {
+    if (!this.addonName?.trim()) {
+      this.showError('Please enter an add-on name.');
+      return;
+    }
+    if (this.addonPrice < 0) {
+      this.showError('Price cannot be negative.');
+      return;
+    }
+    this.isSavingAddon = true;
+    try {
+      const payload = {
+        id: this.editingAddonId,
+        addOnName: this.addonName.trim(),
+        price: Number(this.addonPrice),
+      };
+      const res = await this.apiService.Post<any>(ApiEndPoints.AddAddons, payload);
+      if (res && res.isSuccess) {
+        this.showSuccess(res.message || (this.editingAddonId ? 'Add-on updated.' : 'Add-on created.'));
+        await this.loadAddons();
+        this.resetAddonForm();
+      } else {
+        this.showError(res?.message || 'Failed to save add-on.');
+      }
+    } catch (e: any) {
+      console.error('Add addon error', e);
+      this.showError('Error saving add-on. Please try again.');
+    } finally {
+      this.isSavingAddon = false;
+    }
+  }
+
+  toggleAddonForm(): void {
+    this.showAddonForm = !this.showAddonForm;
+    if (this.showAddonForm && this.editingAddonId === 0) {
+      this.resetAddonForm();
+    }
+  }
+
+  resetAddonForm(): void {
+    this.editingAddonId = 0;
+    this.addonName = '';
+    this.addonPrice = 0;
+  }
+
+  onEditAddon(addon: ProviderAddon): void {
+    this.editingAddonId = addon.id;
+    this.addonName = addon.addOnName;
+    this.addonPrice = addon.price;
+    this.showAddonForm = true;
   }
 }

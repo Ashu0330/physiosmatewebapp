@@ -81,6 +81,12 @@
 
       <!-- ROW 1: 4 COLUMNS (Full Name, Mobile, Email, DOB) -->
       <div class="form-row-4">
+        <!-- Col 2: Mobile Number -->
+        <div class="form-group">
+          <label class="form-label" for="doc-mobile">Mobile Number <span class="req">*</span></label>
+          <input id="doc-mobile" name="mobile" type="tel" class="form-input" placeholder="e.g. +91 98234 56789"
+            [(ngModel)]="formData.mobile" (ngModelChange)="Getpatient($event)" required />
+        </div>
         <!-- Col 1: Full Name -->
         <div class="form-group">
           <label class="form-label" for="doc-fullName">Full Name <span class="req">*</span></label>
@@ -88,12 +94,7 @@
             [(ngModel)]="formData.fullName" required />
         </div>
 
-        <!-- Col 2: Mobile Number -->
-        <div class="form-group">
-          <label class="form-label" for="doc-mobile">Mobile Number <span class="req">*</span></label>
-          <input id="doc-mobile" name="mobile" type="tel" class="form-input" placeholder="e.g. +91 98234 56789"
-            [(ngModel)]="formData.mobile" required />
-        </div>
+
 
         <!-- Col 3: Email Address -->
         <div class="form-group">
@@ -142,7 +143,7 @@
             <option value="Other">Other</option>
           </select>
         </div>
-        
+
 
         <!-- Col 3: City -->
         <div class="form-group">

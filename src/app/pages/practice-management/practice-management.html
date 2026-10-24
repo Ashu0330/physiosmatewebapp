@@ -10,8 +10,7 @@
     </div>
     <div class="pm-header-info">
       <h1 class="pm-title">Practice Setup</h1>
-      <p class="pm-subtitle">Manage your availability, appointment slots, treatment services, fees and more – all in one
-        place.</p>
+      <p class="pm-subtitle">Manage your availability, appointment slots, subscription plans, and add-on services – all in one place.</p>
     </div>
   </div>
 
@@ -26,6 +25,28 @@
           <line x1="16" y1="2" x2="16" y2="6" />
           <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <svg *ngSwitchCase="'Appointment Slots'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+          <circle cx="12" cy="16" r="2" />
+        </svg>
+        <svg *ngSwitchCase="'Subscription Plans'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <path d="M20 12V22H4V12" />
+          <path d="M22 7H2v5h20V7z" />
+          <path d="M12 22V7" />
+          <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+          <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+        </svg>
+        <svg *ngSwitchCase="'Add-on Services'" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
         </svg>
         <svg *ngSwitchDefault width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2">
@@ -170,8 +191,7 @@
           </div>
           <div>
             <h3 class="pm-card-title">Your Consultancy Availability</h3>
-            <p class="pm-card-subtitle">Manage your active consultation hours. Patients can book slots based on this
-              schedule.</p>
+            <p class="pm-card-subtitle">Manage your active consultation hours. Patients can book slots based on this schedule.</p>
           </div>
         </div>
       </div>
@@ -220,13 +240,13 @@
                     </span>
                     <button type="button" class="pm-chip-edit-btn" (click)="onEditSlot(slot, item)"
                       [title]="'Edit ' + formatTime(item.startTime)">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
                     </button>
                   </span>
-
                   }
                 </div>
               </td>
@@ -239,17 +259,641 @@
 
   </div>
 
-  <!-- Other Tabs Placeholder -->
-  <div *ngIf="activeTab !== 'Availability'" class="pm-tab-content">
-    <div class="pm-card pm-placeholder-card">
-      <div class="pm-empty-icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
+  <!-- Tab Content: Appointment Slots -->
+  <div *ngIf="activeTab === 'Appointment Slots'" class="pm-tab-content">
+
+    <!-- Section Header Bar -->
+    <div class="pm-section-card-header">
+      <div class="pm-section-title-wrap">
+        <div class="pm-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <circle cx="12" cy="16" r="2" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="pm-section-title">Appointment Slots</h2>
+          <p class="pm-section-subtitle">Set appointment slots with patient capacity and manage when patients can book.</p>
+        </div>
       </div>
-      <h3>{{ activeTab }} Setup</h3>
-      <p>Configure your {{ activeTab.toLowerCase() }} options and preferences for your practice.</p>
+      <button type="button" class="pm-btn-primary" (click)="toggleAppointmentSlotForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {{ showAppointmentSlotForm && editingAppointmentSlotId === 0 ? 'Hide Form' : '+ Add Appointment Slot' }}
+      </button>
     </div>
+
+    <!-- Main Grid Layout (Form + How it works) -->
+    <div class="pm-grid-layout" *ngIf="showAppointmentSlotForm">
+      <!-- Add/Edit Appointment Slot Form Card -->
+      <div class="pm-card pm-form-card">
+        <h3 class="pm-card-title">
+          {{ editingAppointmentSlotId ? ('Edit Appointment Slot (ID: #' + editingAppointmentSlotId + ')') : 'Add Appointment Slot' }}
+        </h3>
+
+        <div class="pm-form-grid">
+          <!-- Day of Week -->
+          <div class="pm-form-group">
+            <label class="pm-label">Day of Week <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <select class="pm-select" [(ngModel)]="apptSlotDay">
+                <option *ngFor="let d of daysList" [value]="d.id">{{ d.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Start Time -->
+          <div class="pm-form-group">
+            <label class="pm-label">Start Time <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <span class="pm-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </span>
+              <select class="pm-select pm-select-with-icon" [(ngModel)]="apptSlotStartTime">
+                <option *ngFor="let t of timeOptions" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- End Time -->
+          <div class="pm-form-group">
+            <label class="pm-label">End Time <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <span class="pm-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </span>
+              <select class="pm-select pm-select-with-icon" [(ngModel)]="apptSlotEndTime">
+                <option *ngFor="let t of timeOptions" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Max Capacity -->
+          <div class="pm-form-group">
+            <label class="pm-label">Max Capacity <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="number" class="pm-input" [(ngModel)]="apptSlotMaxCapacity" min="1" placeholder="e.g. 2" />
+            </div>
+          </div>
+
+          <!-- Active Toggle -->
+          <div class="pm-form-group pm-toggle-group">
+            <label class="pm-label">Active</label>
+            <label class="pm-switch">
+              <input type="checkbox" [(ngModel)]="apptSlotIsActive" />
+              <span class="pm-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="pm-form-actions">
+          <button type="button" class="pm-btn-secondary"
+            (click)="resetAppointmentSlotForm(); showAppointmentSlotForm = false;">Cancel</button>
+          <button type="button" class="pm-btn-submit" [disabled]="isSavingAppointmentSlot"
+            (click)="createAppointmentSlot()">
+            <span *ngIf="isSavingAppointmentSlot" class="pm-spinner"></span>
+            {{ editingAppointmentSlotId ? 'Update Slot' : 'Add Slot' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- How it Works Side Card -->
+      <div class="pm-card pm-info-card">
+        <div class="pm-info-header">
+          <span class="pm-info-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </span>
+          <h4 class="pm-info-title">How it works?</h4>
+        </div>
+        <ol class="pm-info-list">
+          <li>Create recurring slots for consultation appointments</li>
+          <li>Set maximum patient capacity for each specific time slot</li>
+          <li>Grouped neatly by day of the week for easy overview</li>
+          <li>Active slots are immediately available for patient booking</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Table Card: Your Appointment Slots -->
+    <div class="pm-card pm-table-card">
+      <div class="pm-table-header">
+        <div class="pm-table-title-wrap">
+          <div class="pm-table-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <circle cx="12" cy="16" r="2" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="pm-card-title">Your Appointment Slots</h3>
+            <p class="pm-card-subtitle">Manage capacity and active booking slots configured for your practice.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingAppointmentSlots" class="pm-loading-state">
+        <div class="pm-loading-spinner"></div>
+        <p>Loading appointment slots...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingAppointmentSlots && appointmentSlots().length === 0" class="pm-empty-state">
+        <div class="pm-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <h4>No Appointment Slots Configured</h4>
+        <p>Add your available appointment slots with capacity above to allow patients to book.</p>
+      </div>
+
+      <!-- Table View -->
+      <div *ngIf="!isLoadingAppointmentSlots && appointmentSlots().length > 0" class="pm-table-wrapper">
+        <table class="pm-table">
+          <thead>
+            <tr>
+              <th style="width: 140px;">Day</th>
+              <th>Time Slots &amp; Capacity</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (group of appointmentSlotsByDay; track group.dayOfWeek) {
+            <tr>
+              <td class="font-medium">
+                {{ group.dayName }}
+                <span class="text-muted" style="font-size: 12px; font-weight: normal; margin-left: 4px;">({{ group.slots.length }})</span>
+              </td>
+              <td>
+                <div class="pm-slots-inline">
+                  @for (slot of group.slots; track slot.id) {
+                  <span class="pm-slot-chip" [class.pm-row-editing]="editingAppointmentSlotId === slot.id">
+                    <span class="pm-slot-time">{{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }}</span>
+                    <span class="pm-badge pm-badge-sm pm-badge-capacity" title="Maximum Capacity">
+                      Cap: {{ slot.maxCapacity }}
+                    </span>
+                    <span class="pm-badge pm-badge-sm" [class.pm-badge-active]="slot.isActive"
+                      [class.pm-badge-inactive]="!slot.isActive">
+                      {{ slot.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                    <button type="button" class="pm-chip-edit-btn" (click)="onEditAppointmentSlot(slot)"
+                      [title]="'Edit ' + formatTime(slot.startTime) + ' (Cap: ' + slot.maxCapacity + ')'">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  </span>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab Content: Subscription Plans -->
+  <div *ngIf="activeTab === 'Subscription Plans'" class="pm-tab-content">
+
+    <!-- Section Header Bar -->
+    <div class="pm-section-card-header">
+      <div class="pm-section-title-wrap">
+        <div class="pm-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 12V22H4V12" />
+            <path d="M22 7H2v5h20V7z" />
+            <path d="M12 22V7" />
+            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+            <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="pm-section-title">Subscription Plans</h2>
+          <p class="pm-section-subtitle">Create and manage session packages and subscription plans for your patients.</p>
+        </div>
+      </div>
+      <button type="button" class="pm-btn-primary" (click)="togglePlanForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {{ showPlanForm && editingPlanId === 0 ? 'Hide Form' : '+ Add Plan' }}
+      </button>
+    </div>
+
+    <!-- Add / Edit Plan Form -->
+    <div class="pm-grid-layout" *ngIf="showPlanForm">
+      <div class="pm-card pm-form-card">
+        <h3 class="pm-card-title">
+          {{ editingPlanId ? ('Edit Plan (ID: #' + editingPlanId + ')') : 'Add Subscription Plan' }}
+        </h3>
+
+        <!-- Row 1: Name (full width) -->
+        <div class="pm-plan-form-grid">
+          <div class="pm-form-group pm-form-group-full">
+            <label class="pm-label">Plan Name <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="text" class="pm-input" [(ngModel)]="planName"
+                placeholder="e.g. Complete Physiotherapy Care" />
+            </div>
+          </div>
+
+          <!-- Sessions -->
+          <div class="pm-form-group">
+            <label class="pm-label">Total Sessions <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="number" class="pm-input" [(ngModel)]="planTotalSessions" min="1" placeholder="10" />
+            </div>
+          </div>
+
+          <!-- Validity -->
+          <div class="pm-form-group">
+            <label class="pm-label">Validity (Days)</label>
+            <div class="pm-input-wrapper">
+              <input type="number" class="pm-input" [(ngModel)]="planValidityDays" min="1" placeholder="30" />
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="pm-form-group">
+            <label class="pm-label">Price (₹) <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="number" class="pm-input" [(ngModel)]="planPrice" min="0" placeholder="0" />
+            </div>
+          </div>
+
+          <!-- Popular Toggle -->
+          <div class="pm-form-group pm-toggle-group">
+            <label class="pm-label">Mark as Popular</label>
+            <label class="pm-switch">
+              <input type="checkbox" [(ngModel)]="planIsPopular" />
+              <span class="pm-slider"></span>
+            </label>
+          </div>
+
+          <!-- Active Toggle -->
+          <div class="pm-form-group pm-toggle-group">
+            <label class="pm-label">Active</label>
+            <label class="pm-switch">
+              <input type="checkbox" [(ngModel)]="planIsActive" />
+              <span class="pm-slider"></span>
+            </label>
+          </div>
+
+          <!-- Benefits textarea (full width) -->
+          <div class="pm-form-group pm-form-group-full">
+            <label class="pm-label">Benefits</label>
+            <textarea class="pm-textarea" [(ngModel)]="planBenefitsInput"
+              placeholder="Enter one benefit per line, e.g.&#10;10 physiotherapy sessions&#10;Personalized treatment plan"></textarea>
+            <p class="pm-input-hint">Enter each benefit on a new line.</p>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="pm-form-actions">
+          <button type="button" class="pm-btn-secondary"
+            (click)="resetPlanForm(); showPlanForm = false;">Cancel</button>
+          <button type="button" class="pm-btn-submit" [disabled]="isSavingPlan || !planName.trim()"
+            (click)="addProviderPlan()">
+            <span *ngIf="isSavingPlan" class="pm-spinner"></span>
+            {{ editingPlanId ? 'Update Plan' : 'Add Plan' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- How it Works Side Card -->
+      <div class="pm-card pm-info-card">
+        <div class="pm-info-header">
+          <span class="pm-info-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 12V22H4V12" />
+              <path d="M22 7H2v5h20V7z" />
+              <path d="M12 22V7" />
+            </svg>
+          </span>
+          <h4 class="pm-info-title">How it works?</h4>
+        </div>
+        <ol class="pm-info-list">
+          <li>Create plans with a set number of sessions and validity period</li>
+          <li>Set a price and mark popular plans to highlight them to patients</li>
+          <li>Add benefits line by line to showcase what's included</li>
+          <li>Patients can subscribe to plans directly from your profile</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Plans Display Card -->
+    <div class="pm-card pm-table-card">
+      <div class="pm-table-header">
+        <div class="pm-table-title-wrap">
+          <div class="pm-table-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 12V22H4V12" />
+              <path d="M22 7H2v5h20V7z" />
+              <path d="M12 22V7" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="pm-card-title">Your Subscription Plans</h3>
+            <p class="pm-card-subtitle">All session packages available for patient subscription.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingPlans" class="pm-loading-state">
+        <div class="pm-loading-spinner"></div>
+        <p>Loading subscription plans...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingPlans && providerPlans.length === 0" class="pm-empty-state">
+        <div class="pm-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 12V22H4V12" />
+            <path d="M22 7H2v5h20V7z" />
+            <path d="M12 22V7" />
+            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+            <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+          </svg>
+        </div>
+        <h4>No Subscription Plans Created</h4>
+        <p>Add a plan above to offer session packages to your patients.</p>
+      </div>
+
+      <!-- Plans Grid Cards -->
+      <div *ngIf="!isLoadingPlans && providerPlans.length > 0" style="padding: 20px;">
+        <div class="pm-plans-grid">
+          @for (plan of providerPlans; track plan.id) {
+          <div class="pm-plan-card" [class.pm-plan-popular]="plan.isPopular"
+            [class.pm-row-editing]="editingPlanId === plan.id">
+
+            <!-- Popular ribbon -->
+            <div *ngIf="plan.isPopular" class="pm-plan-popular-ribbon">⭐ Most Popular</div>
+
+            <!-- Header -->
+            <div class="pm-plan-header">
+              <h4 class="pm-plan-name">{{ plan.planName }}</h4>
+              <div class="pm-plan-meta">
+                <span class="pm-plan-meta-chip">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {{ plan.totalSessions }} Sessions
+                </span>
+                <span class="pm-plan-meta-chip">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  {{ plan.validityDays }} Days
+                </span>
+                <span class="pm-badge pm-badge-sm" [ngClass]="plan.isActive ? 'pm-badge-active' : 'pm-badge-inactive'">
+                  {{ plan.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Price -->
+            <div class="pm-plan-price-row">
+              <div>
+                <div class="pm-plan-price">₹{{ plan.price | number:'1.0-0' }}</div>
+                <div class="pm-plan-price-label">per package</div>
+              </div>
+              <div style="text-align: right; font-size: 12px; color: var(--text-muted, #64748b);">
+                ≈ ₹{{ (plan.price / plan.totalSessions) | number:'1.0-0' }}<br />
+                <span>per session</span>
+              </div>
+            </div>
+
+            <!-- Benefits -->
+            <div class="pm-plan-benefits" *ngIf="plan.benefits && plan.benefits.length > 0">
+              <p class="pm-plan-benefits-title">What's included</p>
+              <ul class="pm-plan-benefit-list">
+                @for (benefit of plan.benefits; track benefit.id) {
+                <li>
+                  <span class="pm-plan-benefit-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  {{ benefit.benefitName }}
+                </li>
+                }
+              </ul>
+            </div>
+
+            <!-- Footer / Edit -->
+            <div class="pm-plan-footer">
+              <span style="font-size: 12px; color: var(--text-muted, #64748b);">#{{ plan.id }}</span>
+              <button type="button" class="pm-plan-edit-btn" (click)="onEditPlan(plan)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Plan
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab Content: Add-on Services -->
+  <div *ngIf="activeTab === 'Add-on Services'" class="pm-tab-content">
+
+    <!-- Section Header Bar -->
+    <div class="pm-section-card-header">
+      <div class="pm-section-title-wrap">
+        <div class="pm-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="pm-section-title">Add-on Services</h2>
+          <p class="pm-section-subtitle">Offer optional chargeable add-ons that patients can include with their appointments.</p>
+        </div>
+      </div>
+      <button type="button" class="pm-btn-primary" (click)="toggleAddonForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {{ showAddonForm && editingAddonId === 0 ? 'Hide Form' : '+ Add Add-on' }}
+      </button>
+    </div>
+
+    <!-- Add / Edit Form -->
+    <div class="pm-grid-layout" *ngIf="showAddonForm">
+      <div class="pm-card pm-form-card">
+        <h3 class="pm-card-title">
+          {{ editingAddonId ? ('Edit Add-on (ID: #' + editingAddonId + ')') : 'Add Add-on Service' }}
+        </h3>
+
+        <div class="pm-form-grid">
+          <!-- Add-on Name -->
+          <div class="pm-form-group">
+            <label class="pm-label">Add-on Name <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="text" class="pm-input" [(ngModel)]="addonName"
+                placeholder="e.g. Advanced Posture Assessment"
+                (keyup.enter)="addAddon()" />
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="pm-form-group">
+            <label class="pm-label">Price (&#8377;) <span class="pm-required">*</span></label>
+            <div class="pm-input-wrapper">
+              <input type="number" class="pm-input" [(ngModel)]="addonPrice" min="0" placeholder="500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="pm-form-actions">
+          <button type="button" class="pm-btn-secondary"
+            (click)="resetAddonForm(); showAddonForm = false;">Cancel</button>
+          <button type="button" class="pm-btn-submit"
+            [disabled]="isSavingAddon || !addonName.trim()"
+            (click)="addAddon()">
+            <span *ngIf="isSavingAddon" class="pm-spinner"></span>
+            {{ editingAddonId ? 'Update Add-on' : 'Add Add-on' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- How it Works Side Card -->
+      <div class="pm-card pm-info-card">
+        <div class="pm-info-header">
+          <span class="pm-info-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </span>
+          <h4 class="pm-info-title">How it works?</h4>
+        </div>
+        <ol class="pm-info-list">
+          <li>Create optional chargeable add-on services for your practice</li>
+          <li>Patients can select add-ons when booking appointments</li>
+          <li>Each add-on has its own price, added to the booking total</li>
+          <li>Easily edit or disable add-ons at any time</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Table Card: Your Add-ons -->
+    <div class="pm-card pm-table-card">
+      <div class="pm-table-header">
+        <div class="pm-table-title-wrap">
+          <div class="pm-table-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="pm-card-title">Your Add-on Services</h3>
+            <p class="pm-card-subtitle">Optional services patients can add to their bookings.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingAddons" class="pm-loading-state">
+        <div class="pm-loading-spinner"></div>
+        <p>Loading add-on services...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingAddons && addons.length === 0" class="pm-empty-state">
+        <div class="pm-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+        </div>
+        <h4>No Add-on Services Configured</h4>
+        <p>Add optional services above that patients can include with their bookings.</p>
+      </div>
+
+      <!-- Table View -->
+      <div *ngIf="!isLoadingAddons && addons.length > 0" class="pm-table-wrapper">
+        <table class="pm-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">ID</th>
+              <th>Add-on Name</th>
+              <th style="width: 130px;">Price</th>
+              <th style="width: 110px;" class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (addon of addons; track addon.id) {
+            <tr [class.pm-row-editing]="editingAddonId === addon.id">
+              <td class="font-medium text-muted">#{{ addon.id }}</td>
+              <td class="font-medium">
+                <span class="pm-expertise-name">{{ addon.addOnName }}</span>
+              </td>
+              <td>
+                <span class="pm-badge pm-badge-capacity">
+                  &#8377;{{ addon.price | number:'1.0-2' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="pm-actions-group">
+                  <button type="button" class="pm-action-btn edit" (click)="onEditAddon(addon)"
+                    [title]="'Edit ' + addon.addOnName">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
