@@ -201,12 +201,17 @@
 
           <!-- Chief Complaint -->
           <div class="form-group">
-            <label class="form-label" for="c-chief">Chief Complaint & Pain Onset</label>
+            <label class="form-label" for="c-chief">Chief Complaint & History of Present Illness</label>
             <textarea id="c-chief" name="cChief" rows="2" class="form-textarea"
               placeholder="Describe current pain location, radiating pattern, onset duration, and aggravating factors..."
               [(ngModel)]="formData.chiefComplaint"></textarea>
           </div>
-
+          <div class="form-group">
+            <label class="form-label" for="c-chief">Clinical Findings</label>
+            <textarea id="c-chief" name="cChief" rows="2" class="form-textarea"
+              placeholder="Describe current pain location, radiating pattern, onset duration, and aggravating factors..."
+              [(ngModel)]="formData.chiefComplaint"></textarea>
+          </div>
           <!-- Provisional Diagnosis & Pain Severity -->
           <div class="form-grid-2">
             <div class="form-group">
@@ -248,11 +253,7 @@
               <input id="c-pulse" name="cPulse" type="text" class="form-input" placeholder="74 bpm"
                 [(ngModel)]="formData.pulse" />
             </div>
-            <div class="form-group">
-              <label class="form-label" for="c-rom">ROM / Flexibility Restriction</label>
-              <input id="c-rom" name="cRom" type="text" class="form-input"
-                placeholder="e.g. Lumbar flexion restricted by 40%" [(ngModel)]="formData.romNotes" />
-            </div>
+
           </div>
         </div>
 
@@ -261,42 +262,30 @@
         <!-- ────────────────────────────────────────────────────────────────── -->
         <div class="form-section">
           <div class="sec-heading-row">
-            <span class="sec-number">3</span>
+            <span class="sec-number">2</span>
             <div>
-              <h5 class="sec-title">Treatment Given & Rehabilitation Plan</h5>
+              <h5 class="sec-title">Prescription</h5>
               <span class="sec-desc">Clinical modalities administered today, assigned protocol, and follow-up</span>
             </div>
           </div>
 
           <!-- Treatment Given during Encounter -->
           <div class="form-group">
-            <label class="form-label" for="c-treatment-given">Treatment Given During This Encounter</label>
+            <label class="form-label" for="c-treatment-given">Treatment Protocol</label>
             <textarea id="c-treatment-given" name="cTreatmentGiven" rows="2" class="form-textarea treatment-highlight"
-              placeholder="Document modalities applied (e.g. IFT, Ultrasound, Dry Needling, Manual Joint Mobilization, Myofascial Release, Core Activation Drills)..."
-              [(ngModel)]="formData.treatmentGiven"></textarea>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="c-plan">Prescribed Care Plan Protocol</label>
-              <select id="c-plan" name="cPlan" class="form-select" [(ngModel)]="formData.recommendedPlan">
-                @for (plan of planTemplates; track plan) {
-                <option [value]="plan">{{ plan }}</option>
-                }
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="c-next-date">Next Review / Follow-Up Date</label>
-              <input id="c-next-date" name="cNextDate" type="date" class="form-input"
-                [(ngModel)]="formData.nextFollowUpDate" />
-            </div>
+              placeholder="Mobility Exercise,Modilities" [(ngModel)]="formData.treatmentGiven"></textarea>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="c-advice">Clinical Advice & Home Exercise Prescription</label>
+            <label class="form-label" for="c-advice">Advice & Home Exercise Prescription</label>
             <textarea id="c-advice" name="cAdvice" rows="3" class="form-textarea"
               placeholder="e.g. Prone McKenzie press-ups (10 reps, 3x daily). Apply ice packs for 15 minutes after session..."
+              [(ngModel)]="formData.clinicalAdvice"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="c-advice">Investigation</label>
+            <textarea id="c-advice" name="cAdvice" rows="3" class="form-textarea" placeholder="MRI,X-RAY,CT-Scan"
               [(ngModel)]="formData.clinicalAdvice"></textarea>
           </div>
         </div>
@@ -378,7 +367,65 @@
           <h4 class="qs-title">Clinical Quick Select</h4>
           <span class="qs-sub">Reusable templates to speed up consultation</span>
         </div>
+        <div class="qs-section">
+          <div class="qs-section-title-row">
+            <!-- Applicable only if that patient have history -->
 
+            <span class="qs-section-title">Consultation History</span>
+          </div>
+          <div class="qs-section-title-row">
+            <span class="qs-section-title">Conditions</span>
+          </div>
+
+          <!-- Search Condition -->
+          <div class="qs-search-box">
+            <svg class="qs-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="qs-search-input" placeholder="Search condition..." [ngModel]="conditionSearch()"
+              (ngModelChange)="conditionSearch.set($event)" />
+            @if (conditionSearch()) {
+            <button type="button" class="btn-clear-mini" (click)="conditionSearch.set('')">&times;</button>
+            }
+          </div>
+
+          <!-- Add Condition Button / Inline Form -->
+          @if (!showAddCondition) {
+          <button type="button" class="btn-add-condition-trigger" (click)="showAddCondition = true">
+            + Add Condition
+          </button>
+          } @else {
+          <div class="inline-add-row">
+            <input type="text" class="inline-add-input" placeholder="Type condition name..."
+              [(ngModel)]="newConditionInput" (keydown.enter)="addCustomCondition()" />
+            <button type="button" class="btn-inline-save" (click)="addCustomCondition()">Save</button>
+            <button type="button" class="btn-inline-cancel"
+              (click)="showAddCondition = false; newConditionInput = ''">&times;</button>
+          </div>
+          }
+
+          <!-- Conditions List -->
+          <div class="conditions-items-list">
+            @for (cond of filteredConditions(); track cond) {
+            <div class="condition-item-card"
+              [class.selected]="selectedCondition() === cond || formData.provisionalDiagnosis === cond"
+              (click)="selectCondition(cond)">
+              <span class="cond-name">{{ cond }}</span>
+              <span class="cond-add-icon">
+                @if (selectedCondition() === cond || formData.provisionalDiagnosis === cond) {
+                ✓
+                } @else {
+                +
+                }
+              </span>
+            </div>
+            } @empty {
+            <div class="qs-empty-msg">No conditions match "{{ conditionSearch() }}".</div>
+            }
+          </div>
+        </div>
         <!-- 1. CONDITIONS SECTION -->
         <div class="qs-section">
           <div class="qs-section-title-row">
@@ -517,178 +564,6 @@
 
   </div>
 
-  <!-- ── BOTTOM SECTION: RECENT CONSULTATIONS LEDGER ───────────────────────── -->
-  <div class="recent-consultations-section">
-    <div class="ledger-header">
-      <div>
-        <h4 class="ledger-title">Recent Clinical Consultations</h4>
-        <span class="ledger-subtitle">History of recorded assessments, diagnoses, and issued prescriptions</span>
-      </div>
-      <span class="ledger-count-badge">{{ recentConsultations.length }} Consultations Logged</span>
-    </div>
 
-    <div class="table-responsive">
-      <table class="consultations-table">
-        <thead>
-          <tr>
-            <th>Consultation Code</th>
-            <th>Date & Time</th>
-            <th>Patient Name</th>
-            <th>Type & Mode</th>
-            <th>Provisional Diagnosis</th>
-            <th>Fee & Payment</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of recentConsultations; track c.id) {
-          <tr>
-            <td>
-              <span class="code-badge">{{ c.consultationCode }}</span>
-            </td>
-            <td>
-              <div class="date-cell">
-                <span class="d-date">{{ c.date }}</span>
-                <span class="d-time">{{ c.time }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="patient-cell">
-                <span class="p-fullname">{{ c.patientName }}</span>
-                <span class="p-sub">{{ c.patientCode }} • {{ c.age }}y / {{ c.gender }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="type-cell">
-                <span class="type-badge">{{ c.consultationType }}</span>
-                <span class="mode-tag">{{ c.visitMode }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="diag-cell">
-                <span class="diag-text">{{ c.provisionalDiagnosis }}</span>
-                <span class="pain-pill" [class]="c.painSeverity.toLowerCase()">{{ c.painSeverity }} Pain</span>
-              </div>
-            </td>
-            <td>
-              <div class="fee-cell">
-                <span class="fee-amount">₹{{ c.fee }}</span>
-                <span class="pay-badge" [class]="c.paymentStatus.toLowerCase()">{{ c.paymentStatus }}</span>
-              </div>
-            </td>
-            <td>
-              <button type="button" class="btn-slip" (click)="viewSlip(c)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                  <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                Slip
-              </button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ── MODAL: CLINICAL CONSULTATION & PRESCRIPTION SLIP ───────────────────── -->
-  @if (showSlipModal && selectedConsultationForSlip) {
-  <div class="slip-modal-backdrop" (click)="closeSlipModal()">
-    <div class="slip-modal-card" (click)="$event.stopPropagation()">
-
-      <!-- Modal Top Bar -->
-      <div class="slip-modal-top">
-        <span class="modal-title">Consultation Slip & Medical Advice</span>
-        <div class="modal-top-actions">
-          <button type="button" class="btn-print-slip" (click)="printCurrentSlip()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Print Prescription Slip
-          </button>
-          <button type="button" class="btn-close-modal" (click)="closeSlipModal()">&times;</button>
-        </div>
-      </div>
-
-      <!-- Printable Slip Document -->
-      <div class="slip-document-print" id="printable-consultation-slip">
-        <div class="slip-header">
-          <div class="brand-row">
-            <div>
-              <h3 class="clinic-brand">PHYSIOSMATE CLINICAL NETWORK</h3>
-              <span class="clinic-sub">Department of Musculoskeletal & Sports Physiotherapy</span>
-            </div>
-            <div class="slip-ref-box">
-              <span class="ref-label">CONSULTATION REF</span>
-              <span class="ref-val">{{ selectedConsultationForSlip.consultationCode }}</span>
-            </div>
-          </div>
-          <div class="slip-divider"></div>
-        </div>
-
-        <!-- Patient & Date Banner -->
-        <div class="slip-grid-2">
-          <div>
-            <p><strong>Patient Name:</strong> {{ selectedConsultationForSlip.patientName }}</p>
-            <p><strong>Age / Gender:</strong> {{ selectedConsultationForSlip.age }} Yrs / {{
-              selectedConsultationForSlip.gender }}</p>
-            <p><strong>Contact:</strong> {{ selectedConsultationForSlip.phone }}</p>
-          </div>
-          <div class="text-right">
-            <p><strong>Date & Time:</strong> {{ selectedConsultationForSlip.date }} at {{
-              selectedConsultationForSlip.time }}</p>
-            <p><strong>Mode:</strong> {{ selectedConsultationForSlip.visitMode }} ({{
-              selectedConsultationForSlip.consultationType }})</p>
-            <p><strong>Fee Paid:</strong> ₹{{ selectedConsultationForSlip.fee }} ({{
-              selectedConsultationForSlip.paymentStatus }})</p>
-          </div>
-        </div>
-
-        <div class="slip-divider"></div>
-
-        <!-- Clinical Diagnosis -->
-        <div class="slip-section">
-          <h5 class="slip-sec-title">CLINICAL FINDINGS & DIAGNOSIS</h5>
-          <p><strong>Chief Complaint:</strong> {{ selectedConsultationForSlip.chiefComplaint }}</p>
-          <p><strong>Provisional Diagnosis:</strong> {{ selectedConsultationForSlip.provisionalDiagnosis }}</p>
-          @if (selectedConsultationForSlip.bp || selectedConsultationForSlip.pulse) {
-          <p><strong>Vitals:</strong> BP: {{ selectedConsultationForSlip.bp || '120/80' }} | Pulse: {{
-            selectedConsultationForSlip.pulse || '72' }} | Pain Rating: {{ selectedConsultationForSlip.painSeverity }}
-          </p>
-          }
-        </div>
-
-        <div class="slip-divider"></div>
-
-        <!-- Therapy Prescription -->
-        <div class="slip-section">
-          <h5 class="slip-sec-title">REHABILITATION PROTOCOL & HOME ADVICE</h5>
-          <p><strong>Assigned Care Plan:</strong> {{ selectedConsultationForSlip.recommendedPlan || 'Custom Care Plan'
-            }}</p>
-          @if (selectedConsultationForSlip.treatmentGiven) {
-          <p><strong>Treatment Administered Today:</strong> {{ selectedConsultationForSlip.treatmentGiven }}</p>
-          }
-          <div class="advice-box">
-            {{ selectedConsultationForSlip.clinicalAdvice }}
-          </div>
-          @if (selectedConsultationForSlip.nextFollowUpDate) {
-          <p class="followup-text"><strong>Review Appointment:</strong> {{ selectedConsultationForSlip.nextFollowUpDate
-            }}</p>
-          }
-        </div>
-
-        <div class="slip-footer">
-          <span>Verified by PhysiosMate Certified Physiotherapy Practitioner</span>
-          <span class="digital-seal">Electronically Generated Clinical Record</span>
-        </div>
-      </div>
-
-    </div>
-  </div>
-  }
 
 </div>

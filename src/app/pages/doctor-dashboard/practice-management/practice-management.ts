@@ -1,9 +1,9 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { BaseComponent } from '../../helper/base-component';
-import { ApiEndPoints } from '../../helper/api-endpoints';
-import { Availability, slots } from '../../models/practitioner.model';
-import { SharedModule } from '../../shared/shared-module';
-import { PlanBenefit, ProviderAddon, ProviderPlan } from '../../models/mastermodel';
+import { BaseComponent } from '../../../helper/base-component';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
+import { Availability, slots } from '../../../models/practitioner.model';
+import { SharedModule } from '../../../shared/shared-module';
+import { PlanBenefit, ProviderAddon, ProviderPlan } from '../../../models/mastermodel';
 
 export interface AvailabilitySlot {
   id: number;

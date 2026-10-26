@@ -21,6 +21,13 @@ export class DoctorAppointments implements OnInit {
   // ─── Search & Selection State ───────────────────────────────────────────────
   patientSearchQuery = signal<string>('');
   selectedPatientId = signal<string | null>(null);
+  isSearchDropdownOpen = signal<boolean>(false);
+
+  selectedPatient = computed<DoctorPatient | null>(() => {
+    const id = this.selectedPatientId();
+    if (!id) return null;
+    return this.patients.find(p => p.id === id) || null;
+  });
 
   // ─── Entry Mode Toggle: Appointment vs Inquiry ─────────────────────────────
   entryType: 'appointment' | 'inquiry' = 'appointment';
@@ -240,6 +247,8 @@ export class DoctorAppointments implements OnInit {
   // ─── Auto-Fill Form on Patient Selection ───────────────────────────────────
   selectPatient(patient: DoctorPatient): void {
     this.selectedPatientId.set(patient.id);
+    this.patientSearchQuery.set(patient.fullName);
+    this.isSearchDropdownOpen.set(false);
 
     this.formData.patientCode = patient.patientCode || patient.id;
     this.formData.fullName = patient.fullName;
@@ -256,6 +265,8 @@ export class DoctorAppointments implements OnInit {
   // ─── Clear Form for New Patient / Inquiry ─────────────────────────────────
   clearForNewEntry(): void {
     this.selectedPatientId.set(null);
+    this.patientSearchQuery.set('');
+    this.isSearchDropdownOpen.set(false);
     const newCode = `PT-${1040 + this.patients.length + 1}`;
 
     this.formData = {

@@ -184,7 +184,7 @@ export class Consultations implements OnInit, OnChanges {
 
       treatmentGiven: '',
       recommendedPlan: 'Spine Decompression & Core Stabilization',
-      clinicalAdvice: 'Prescribe cryotherapy 15 mins post-session. Maintain neutral spinal alignment during lifting.',
+      clinicalAdvice: '',
       nextFollowUpDate: ''
     };
 

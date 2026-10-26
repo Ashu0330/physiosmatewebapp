@@ -1,0 +1,619 @@
+<div class="schedule-treatment-page">
+  <div class="schedule-treatment-box">
+
+    <!-- ── TOP HEADER ROW: TITLE & SUBTABS ─────────────────────────────────── -->
+    <div class="treatment-topbar">
+      <div class="header-titles">
+        <h3 class="panel-title">Schedule Treatment</h3>
+        <p class="panel-subtitle">Search patient, check active treatment plans, and schedule daily or weekly sessions.</p>
+      </div>
+
+      <!-- Mode Filter Pills -->
+      <div class="filter-pills">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeTab() === 'daily'"
+          (click)="activeTab.set('daily')">
+          Daily Treatment
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeTab() === 'weekly'"
+          (click)="activeTab.set('weekly')">
+          Weekly Plan
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeTab() === 'assign-plan'"
+          (click)="activeTab.set('assign-plan')">
+          + Add Plan
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeTab() === 'list'"
+          (click)="activeTab.set('list')">
+          Scheduled List ({{ scheduledBookings().length }})
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TOP PATIENT SEARCH & DATA BAR (FULL WIDTH ON TOP) ───────────────── -->
+    <div class="top-patient-section">
+
+      <!-- Patient Search Input -->
+      <div class="top-search-row">
+        <div class="search-box">
+          <svg class="search-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search patient by name or phone..."
+            [ngModel]="patientSearchQuery()"
+            (ngModelChange)="patientSearchQuery.set($event); isSearchDropdownOpen.set(true)"
+            (focus)="isSearchDropdownOpen.set(true)" />
+          @if (patientSearchQuery()) {
+            <button type="button" class="btn-clear-search" (click)="clearSearch()">✕</button>
+          }
+        </div>
+
+        <!-- Autocomplete Suggestions Dropdown -->
+        @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
+          <div class="search-dropdown">
+            @for (pt of filteredPatients(); track pt.id) {
+              <div class="dropdown-item" (click)="selectPatient(pt)">
+                <div class="item-avatar">{{ getInitials(pt.fullName) }}</div>
+                <div class="item-info">
+                  <div class="item-name">{{ pt.fullName }} <span class="item-code">({{ pt.patientCode }})</span></div>
+                  <div class="item-sub">{{ pt.phone }} • {{ pt.gender }}, {{ pt.age }}y • {{ pt.primaryCondition }}</div>
+                </div>
+              </div>
+            } @empty {
+              <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Selected Patient Horizontal Summary & Treatment Plan Retrieval -->
+      @if (selectedPatient(); as pt) {
+        <div class="selected-patient-bar">
+
+          <!-- Left: Patient Basic Data -->
+          <div class="pt-basic-block">
+            <div class="pt-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="pt-info">
+              <div class="pt-name-row">
+                <h4 class="pt-name">{{ pt.fullName }}</h4>
+                <span class="pt-code">{{ pt.patientCode }}</span>
+              </div>
+              <div class="pt-meta-row">
+                <span>{{ pt.phone }}</span>
+                <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
+                @if (pt.primaryCondition) {
+                  <span>• {{ pt.primaryCondition }}</span>
+                }
+                @if (pt.city) {
+                  <span>• {{ pt.city }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Active Treatment Plan Retrieval -->
+          <div class="pt-plan-block">
+            @if (patientActivePlan(); as plan) {
+              <div class="plan-chip-active">
+                <div class="pca-header">
+                  <span class="pca-label">Active Plan:</span>
+                  <strong class="pca-title">{{ plan.title }}</strong>
+                  <span class="pca-code">({{ plan.planCode }})</span>
+                </div>
+                <div class="pca-meta">
+                  <span>{{ plan.completedSessions }} of {{ plan.totalSessions }} Sessions Done</span>
+                  <span class="pca-rem">({{ remainingSessions() }} Remaining)</span>
+                  <button type="button" class="btn-pca-link" (click)="activeTab.set('weekly')">
+                    Weekly Schedule &rarr;
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="plan-chip-none">
+                <span class="none-text">No active treatment plan found.</span>
+                <button type="button" class="btn-add-plan-link" (click)="activeTab.set('assign-plan')">
+                  + Add Plan to Patient
+                </button>
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+
+    </div>
+
+    <!-- ── MAIN CONTENT WORKSPACE BELOW ────────────────────────────────────── -->
+    <main class="content-workspace">
+
+      <!-- ====================================================================
+           TAB 1: DAILY TREATMENT
+           ==================================================================== -->
+      @if (activeTab() === 'daily') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Schedule Daily Treatment</h4>
+            <span class="card-subheading">Select date, available time slot, and set payment.</span>
+          </div>
+
+          <div class="form-grid-2">
+            <!-- Treatment Date (Clean input, no Today/Tomorrow buttons) -->
+            <div class="form-group">
+              <label class="form-label">Treatment Date</label>
+              <input
+                type="date"
+                class="form-input"
+                [ngModel]="treatmentDate()"
+                (ngModelChange)="treatmentDate.set($event)" />
+            </div>
+
+            <!-- Attending Doctor / Therapist -->
+            <div class="form-group">
+              <label class="form-label">Attending Doctor / Physiotherapist</label>
+              <select
+                class="form-select"
+                [ngModel]="attendingTherapist()"
+                (ngModelChange)="attendingTherapist.set($event)">
+                @for (doc of therapists; track doc) {
+                  <option [value]="doc">{{ doc }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Treatment / Service Name</label>
+            <input
+              type="text"
+              class="form-input"
+              [ngModel]="treatmentName()"
+              (ngModelChange)="treatmentName.set($event)"
+              placeholder="e.g. Spinal Mobilization & Exercise" />
+          </div>
+
+          <!-- Time Slots Selection (No bay info, clean slots with availability) -->
+          <div class="form-group">
+            <div class="slots-header-row">
+              <label class="form-label">Select Time Slot</label>
+              <span class="hint-text">Slots automatically prevent overlapping bookings</span>
+            </div>
+
+            <div class="slots-grid">
+              @for (slot of availableSlots(); track slot.id) {
+                <button
+                  type="button"
+                  class="slot-item-btn"
+                  [class.selected]="selectedSlot()?.id === slot.id"
+                  [class.disabled]="!slot.isAvailable"
+                  [disabled]="!slot.isAvailable"
+                  (click)="selectSlot(slot)">
+                  <span class="slot-time">{{ slot.time }}</span>
+                  <span class="slot-status" [class.booked]="!slot.isAvailable">
+                    {{ slot.isAvailable ? 'Available' : 'Booked' }}
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Fees & Payment Options -->
+          <div class="payment-block">
+            <label class="form-label">Treatment Fee & Payment</label>
+
+            <div class="payment-row">
+              <div class="fee-input-wrap">
+                <span class="currency-tag">₹</span>
+                <input
+                  type="number"
+                  class="form-input fee-input"
+                  [ngModel]="treatmentFee()"
+                  (ngModelChange)="treatmentFee.set(+$event); onFeeChange()"
+                  placeholder="600" />
+              </div>
+
+              <div class="pay-choice-pills">
+                <button
+                  type="button"
+                  class="pay-pill"
+                  [class.active]="paymentType() === 'advance'"
+                  (click)="setPaymentType('advance')">
+                  Advance Payment
+                </button>
+                <button
+                  type="button"
+                  class="pay-pill"
+                  [class.active]="paymentType() === 'due'"
+                  (click)="setPaymentType('due')">
+                  Payment Due
+                </button>
+              </div>
+            </div>
+
+            @if (paymentType() === 'advance') {
+              <div class="advance-subform">
+                <div class="form-grid-3">
+                  <div class="form-group">
+                    <label class="form-sublabel">Advance Paid (₹)</label>
+                    <input
+                      type="number"
+                      class="form-input"
+                      [ngModel]="advanceAmount()"
+                      (ngModelChange)="advanceAmount.set(+$event)" />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-sublabel">Balance Due (₹)</label>
+                    <div class="readonly-due">₹{{ balanceDue() }}</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-sublabel">Payment Mode</label>
+                    <select
+                      class="form-select"
+                      [ngModel]="paymentMode()"
+                      (ngModelChange)="paymentMode.set($event)">
+                      <option value="UPI">UPI</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Card">Card</option>
+                      <option value="NetBanking">Net Banking</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="due-msg-box">
+                Full treatment fee of <strong>₹{{ treatmentFee() }}</strong> is marked as <strong>Payment Due</strong>.
+              </div>
+            }
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label class="form-label">Clinical Notes / Comments (Optional)</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="e.g. Focus on cervical extension..."
+              [ngModel]="clinicalNotes()"
+              (ngModelChange)="clinicalNotes.set($event)" />
+          </div>
+
+          <!-- Submit -->
+          <div class="action-footer">
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!selectedPatient() || !selectedSlot() || !selectedSlot()?.isAvailable"
+              (click)="submitDailyTreatment()">
+              Schedule Daily Treatment
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ====================================================================
+           TAB 2: WEEKLY TREATMENT PLAN (ACCORDION)
+           ==================================================================== -->
+      @if (activeTab() === 'weekly') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Weekly Treatment Scheduling</h4>
+            <span class="card-subheading">View patient's purchased plan, click to expand accordion, and pick dates & slots.</span>
+          </div>
+
+          @if (patientAllPlans().length > 0) {
+            <div class="plans-accordion-list">
+              @for (plan of patientAllPlans(); track plan.id) {
+                <div class="accordion-item" [class.open]="expandedPlanId() === plan.id">
+
+                  <!-- ACCORDION HEADER (Click to Expand / Drop Down) -->
+                  <div class="accordion-header" (click)="toggleAccordion(plan.id)">
+                    <div class="plan-summary">
+                      <span class="plan-code-tag">{{ plan.planCode }}</span>
+                      <strong class="plan-name">{{ plan.title }}</strong>
+                      <span class="plan-freq">{{ plan.frequency }}</span>
+                    </div>
+
+                    <div class="plan-meta-right">
+                      <span class="plan-count">{{ plan.completedSessions }} / {{ plan.totalSessions }} Sessions</span>
+                      <span class="chevron" [class.rotated]="expandedPlanId() === plan.id">▼</span>
+                    </div>
+                  </div>
+
+                  <!-- ACCORDION BODY -->
+                  @if (expandedPlanId() === plan.id) {
+                    <div class="accordion-body">
+
+                      <div class="body-top">
+                        <span>Diagnosis: <strong>{{ plan.diagnosis }}</strong></span>
+                        <span>Remaining Sessions: <strong>{{ plan.totalSessions - plan.completedSessions }}</strong></span>
+                      </div>
+
+                      <!-- Multi-Date Weekly Session Rows -->
+                      <div class="weekly-rows-container">
+                        <div class="rows-header">
+                          <label class="form-label">Weekly Schedule Dates & Slots</label>
+                          <button
+                            type="button"
+                            class="btn-secondary-sm"
+                            (click)="addWeeklySession()">
+                            + Add Session Date
+                          </button>
+                        </div>
+
+                        <div class="session-rows">
+                          @for (sess of weeklyDraftSessions(); track sess.id; let idx = $index) {
+                            <div class="session-row">
+                              <span class="row-num">Day {{ idx + 1 }}</span>
+
+                              <input
+                                type="date"
+                                class="form-input date-col"
+                                [(ngModel)]="sess.date" />
+
+                              <select class="form-select slot-col" [(ngModel)]="sess.timeSlot">
+                                <option value="09:00 AM - 09:45 AM">09:00 AM - 09:45 AM</option>
+                                <option value="10:00 AM - 10:45 AM">10:00 AM - 10:45 AM</option>
+                                <option value="12:00 PM - 12:45 PM">12:00 PM - 12:45 PM</option>
+                                <option value="02:00 PM - 02:45 PM">02:00 PM - 02:45 PM</option>
+                                <option value="03:00 PM - 03:45 PM">03:00 PM - 03:45 PM</option>
+                                <option value="04:00 PM - 04:45 PM">04:00 PM - 04:45 PM</option>
+                                <option value="05:00 PM - 05:45 PM">05:00 PM - 05:45 PM</option>
+                                <option value="07:00 PM - 07:45 PM">07:00 PM - 07:45 PM</option>
+                              </select>
+
+                              <select class="form-select doc-col" [(ngModel)]="sess.therapist">
+                                @for (doc of therapists; track doc) {
+                                  <option [value]="doc">{{ doc }}</option>
+                                }
+                              </select>
+
+                              <button
+                                type="button"
+                                class="btn-remove"
+                                (click)="removeWeeklySession(idx)"
+                                title="Remove day">
+                                ✕
+                              </button>
+                            </div>
+                          } @empty {
+                            <div class="empty-rows-hint">
+                              No sessions added for this week yet. Click "+ Add Session Date" above.
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="action-footer">
+                        <button
+                          type="button"
+                          class="btn-primary"
+                          [disabled]="weeklyDraftSessions().length === 0"
+                          (click)="submitWeeklySchedule(plan)">
+                          Save Weekly Schedule ({{ weeklyDraftSessions().length }} Days)
+                        </button>
+                      </div>
+
+                    </div>
+                  }
+
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state-box">
+              <p>This patient has no active treatment plan purchased.</p>
+              <button type="button" class="btn-primary" (click)="activeTab.set('assign-plan')">
+                + Add Plan to Patient
+              </button>
+            </div>
+          }
+
+        </div>
+      }
+
+      <!-- ====================================================================
+           TAB 3: ASSIGN PLAN TO PATIENT
+           ==================================================================== -->
+      @if (activeTab() === 'assign-plan') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Assign Treatment Plan</h4>
+            <span class="card-subheading">Enroll patient in a treatment package with sessions and payment option.</span>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Plan Name / Protocol</label>
+              <input
+                type="text"
+                class="form-input"
+                [ngModel]="newPlanTitle()"
+                (ngModelChange)="newPlanTitle.set($event)"
+                placeholder="e.g. Cervical Spondylosis Care Plan" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Total Sessions</label>
+              <input
+                type="number"
+                class="form-input"
+                [ngModel]="newPlanSessions()"
+                (ngModelChange)="newPlanSessions.set(+$event)" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Duration (Weeks)</label>
+              <input
+                type="number"
+                class="form-input"
+                [ngModel]="newPlanWeeks()"
+                (ngModelChange)="newPlanWeeks.set(+$event)" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Plan Fee (₹)</label>
+              <input
+                type="number"
+                class="form-input"
+                [ngModel]="newPlanPrice()"
+                (ngModelChange)="newPlanPrice.set(+$event)" />
+            </div>
+          </div>
+
+          <!-- Payment Options for Plan -->
+          <div class="payment-block">
+            <label class="form-label">Payment Terms</label>
+
+            <div class="pay-choice-pills">
+              <button
+                type="button"
+                class="pay-pill"
+                [class.active]="newPlanPaymentType() === 'full'"
+                (click)="setNewPlanPaymentType('full')">
+                Full Advance
+              </button>
+              <button
+                type="button"
+                class="pay-pill"
+                [class.active]="newPlanPaymentType() === 'advance'"
+                (click)="setNewPlanPaymentType('advance')">
+                Partial Advance
+              </button>
+              <button
+                type="button"
+                class="pay-pill"
+                [class.active]="newPlanPaymentType() === 'due'"
+                (click)="setNewPlanPaymentType('due')">
+                Payment Due
+              </button>
+            </div>
+
+            <div class="form-grid-3" style="margin-top: 12px;">
+              <div class="form-group">
+                <label class="form-sublabel">Advance Amount (₹)</label>
+                <input
+                  type="number"
+                  class="form-input"
+                  [disabled]="newPlanPaymentType() === 'full' || newPlanPaymentType() === 'due'"
+                  [ngModel]="newPlanAdvance()"
+                  (ngModelChange)="newPlanAdvance.set(+$event)" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-sublabel">Balance Due (₹)</label>
+                <div class="readonly-due">₹{{ assignBalanceDue() }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-sublabel">Payment Mode</label>
+                <select
+                  class="form-select"
+                  [ngModel]="newPlanPaymentMode()"
+                  (ngModelChange)="newPlanPaymentMode.set($event)">
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="NetBanking">Net Banking</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-footer">
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!selectedPatient()"
+              (click)="submitAssignPlan()">
+              Assign Plan to {{ selectedPatient()?.fullName || 'Patient' }}
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ====================================================================
+           TAB 4: SCHEDULED LIST (TABLE)
+           ==================================================================== -->
+      @if (activeTab() === 'list') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Scheduled Treatments</h4>
+            <span class="card-subheading">All scheduled therapy sessions and payment statuses.</span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="minimal-table">
+              <thead>
+                <tr>
+                  <th>Booking Code</th>
+                  <th>Patient</th>
+                  <th>Date & Slot</th>
+                  <th>Treatment</th>
+                  <th>Attending Doctor</th>
+                  <th>Fee & Payment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of scheduledBookings(); track b.id) {
+                  <tr>
+                    <td><strong>{{ b.bookingCode }}</strong></td>
+                    <td>
+                      <div>{{ b.patientName }}</div>
+                      <span class="table-sub">{{ b.phone }}</span>
+                    </td>
+                    <td>
+                      <div>{{ b.date }}</div>
+                      <span class="table-sub">{{ b.timeSlot }}</span>
+                    </td>
+                    <td>{{ b.treatmentName }}</td>
+                    <td>{{ b.therapist }}</td>
+                    <td>
+                      <div>₹{{ b.fee }}</div>
+                      <span class="table-sub" [class.due-text]="b.balanceDue > 0">
+                        {{ b.paymentStatus }} (Paid ₹{{ b.advancePaid }}, Due ₹{{ b.balanceDue }})
+                      </span>
+                    </td>
+                    <td>
+                      <span class="status-pill">{{ b.status }}</span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="table-empty">No treatments scheduled yet.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      }
+
+    </main>
+
+  </div>
+
+</div>

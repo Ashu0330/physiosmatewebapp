@@ -114,26 +114,15 @@
           <input id="doc-dob" name="dob" type="date" class="form-input" [(ngModel)]="formData.dob"
             (change)="onDobChange()" />
         </div>
-        <div class="form-group">
-          <label class="form-label" for="doc-height">Height <span class="req">*</span></label>
-          <input id="doc-height" name="height" type="text" class="form-input" placeholder="e.g. 5.8"
-            [(ngModel)]="formData.height" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="doc-weight">Weight <span class="req">*</span></label>
-          <input id="doc-weight" name="weight" type="text" class="form-input" placeholder="e.g. 70"
-            [(ngModel)]="formData.weight" required />
-        </div>
+
         <!-- Col 2: Address -->
         <div class="form-group">
           <label class="form-label" for="doc-address">Residential Address</label>
           <input id="doc-address" name="address" type="text" class="form-input"
             placeholder="e.g. Flat 402, Green Valley Apartments" [(ngModel)]="formData.address" />
         </div>
-      </div>
 
-      <!-- ROW 2: 4 COLUMNS (Gender, Address, City, State) -->
-      <div class="form-row-4 mt-16">
+        <!-- ROW 2: 4 COLUMNS (Gender, Address, City, State) -->
         <!-- Col 1: Gender -->
         <div class="form-group">
           <label class="form-label" for="doc-gender">Gender</label>
@@ -158,10 +147,48 @@
           <input id="doc-state" name="state" type="text" class="form-input" placeholder="e.g. Maharashtra"
             [(ngModel)]="formData.state" />
         </div>
+
+        <div class="form-group">
+          <label class="form-label" for="visit-for">Visit For</label>
+          <select id="visit-for" name="visitFor" class="form-select" [(ngModel)]="formData.visitFor">
+            <option [ngValue]="undefined" disabled>Select visit type</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Treatment">Treatment</option>
+            <option value="Enquiry">Enquiry</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
+          <label class="form-label" for="doc-gender">Visit Type</label>
+          <select id="doc-gender" name="gender" class="form-select" [(ngModel)]="formData.gender">
+            <option value="Male">Home</option>
+            <option value="Female">Clinic</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
+          <label class="form-label" for="doc-gender">Assigned Doctor</label>
+          <select id="doc-gender" name="gender" class="form-select" [(ngModel)]="formData.gender">
+            <option value="Male">Himanshu</option>
+            <option value="Female">Etika</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
+          <label class="form-label" for="payment-mode">Payment Mode</label>
+          <select id="payment-mode" name="paymentMode" class="form-select" [(ngModel)]="formData.paymentMode">
+            <option [ngValue]="undefined" disabled>Select payment mode</option>
+            <option value="UPI">UPI</option>
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
+          <label class="form-label" for="doc-fees">
+            {{ formData.visitFor === 'Consultation' ? 'Consultation Fees' : 'Treatment Fees' }}
+          </label>
+          <input id="doc-fees" name="fees" type="number" class="form-input" placeholder="e.g. 500"
+            [(ngModel)]="formData.fees" />
+        </div>
       </div>
-
     </div>
-
     <!-- ── FORM ACTIONS BAR ── -->
     <div class="form-actions-bar">
       <button type="button" class="btn-clear" (click)="resetForm()">

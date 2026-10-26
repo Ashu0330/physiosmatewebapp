@@ -105,6 +105,9 @@ export interface NewPatientFormData {
   gender?: 'Male' | 'Female' | 'Other';
   dob?: string;
   address?: string;
+  fees: number;
+  visitFor?: 'Consultation' | 'Treatment' | 'Enquiry';
+  paymentMode?: 'UPI' | 'Cash' | 'Card';
   city?: string;
   state?: string;
   userId?: number;

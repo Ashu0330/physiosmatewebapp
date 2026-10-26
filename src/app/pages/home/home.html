@@ -1,9 +1,6 @@
 <div class="physios-home-container">
   <!-- 1. Search Bar (City Filter + Search Input) -->
-  <app-search-bar
-    [(selectedCity)]="selectedCity"
-    [(searchQuery)]="searchQuery"
-    [cities]="popularCities"
+  <app-search-bar [(selectedCity)]="selectedCity" [(searchQuery)]="searchQuery" [cities]="popularCities">
   ></app-search-bar>
 
   <!-- 2. Row of 4 Cards -->
