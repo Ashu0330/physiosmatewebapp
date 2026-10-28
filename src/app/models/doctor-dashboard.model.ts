@@ -106,8 +106,25 @@ export interface NewPatientFormData {
   dob?: string;
   address?: string;
   fees: number;
+  /** Mirrors API param VisitType (e.g. Consultancy, Treatment, Enquiry) */
+  visitType?: 'Consultancy' | 'Treatment' | 'Enquiry';
+  /** Kept for backward compat – maps to visitType */
   visitFor?: 'Consultation' | 'Treatment' | 'Enquiry';
-  paymentMode?: 'UPI' | 'Cash' | 'Card';
+  /** Mirrors API param VisitMode (Clinic | Home) */
+  visitMode?: 'Clinic' | 'Home';
+  /** Assigned practitioner id */
+  assignedPractitionerId?: number;
+  /** Date of consultation yyyy/MM/dd */
+  consultationDate?: string;
+  /** Slot start time HH:mm:ss */
+  startTime?: string;
+  /** Slot end time HH:mm:ss */
+  endTime?: string;
+  /** Consultation amount */
+  amount?: number;
+  paymentMode?: 'Upi' | 'Cash' | 'Card';
+  /** Payment status Paid | Pending */
+  paymentStatus?: 'Paid' | 'Pending';
   city?: string;
   state?: string;
   userId?: number;
@@ -181,4 +198,77 @@ export interface DoctorInquiryOrAppointment {
   inquirySource?: 'Phone Call' | 'Walk-in' | 'WhatsApp' | 'Referral';
   followUpDate?: string;
   fee?: number;
+}
+
+// ── Consultation Search & Finalize ───────────────────────────────────────────
+
+export interface PatientSearchItem {
+  patientId: number;
+  fullName: string;
+  mobile: string;
+  profileImage: string;
+  email: string;
+  gender: string;
+  dob: string;
+  age: number;
+  city: string;
+  state: string;
+  address: string;
+  firstVisitDate: string;
+  lastVisitDate: string;
+  isRegistered: boolean;
+  isPrimaryProvider: boolean;
+}
+
+export interface PatientConsultancyBooking {
+  bookingId: number;
+  slotId: number;
+  consultancyDate: string;
+  dob: string;
+  startTime: string;
+  endTime: string;
+  practitionerId: number | null;
+  consultancyBookingId: number;
+  amount: number;
+  practitionerName: string | null;
+  clinicId: number | null;
+  clinicName: string | null;
+  clinicAddress: string | null;
+  status: string | null;
+  notes: string | null;
+  patientId: number;
+  userId: number | null;
+  bookedAt: string;
+  patientName: string;
+  consultancyfees: number | null;
+  gender: string;
+  visitType: string;
+  homeVisitAddress: string | null;
+  assignedPractitionerId: number | null;
+  assignedPractitionerName: string | null;
+  assignmentStatus: string;
+  billing: any | null;
+  chiefComplaint: string | null;
+  clinicalFindings: string | null;
+  provisionalDiagnosis: string | null;
+  painSeverity: string | null;
+  bloodPressure: string | null;
+  pulse: string | null;
+  treatmentGiven: string | null;
+  clinicalAdvice: string | null;
+  investigation: string | null;
+}
+
+export interface FinalizeConsultancyRequest {
+  consultancyBookingId?: number;
+  patientId?: number;
+  chiefComplaint: string;
+  clinicalFindings: string;
+  provisionalDiagnosis: string;
+  painSeverity: string;
+  bloodPressure: string;
+  pulse: string;
+  treatmentGiven: string;
+  clinicalAdvice: string;
+  investigation: string;
 }

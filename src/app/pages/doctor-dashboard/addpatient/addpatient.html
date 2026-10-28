@@ -148,44 +148,88 @@
             [(ngModel)]="formData.state" />
         </div>
 
+        <!-- Visit For -->
         <div class="form-group">
-          <label class="form-label" for="visit-for">Visit For</label>
-          <select id="visit-for" name="visitFor" class="form-select" [(ngModel)]="formData.visitFor">
+          <label class="form-label" for="visit-type">Visit Type</label>
+          <select id="visit-type" name="visitType" class="form-select" [(ngModel)]="formData.visitType">
             <option [ngValue]="undefined" disabled>Select visit type</option>
-            <option value="Consultation">Consultation</option>
+            <option value="Consultancy">Consultancy</option>
             <option value="Treatment">Treatment</option>
             <option value="Enquiry">Enquiry</option>
           </select>
         </div>
-        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
-          <label class="form-label" for="doc-gender">Visit Type</label>
-          <select id="doc-gender" name="gender" class="form-select" [(ngModel)]="formData.gender">
-            <option value="Male">Home</option>
-            <option value="Female">Clinic</option>
+
+        <!-- Visit Mode -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="visit-mode">Visit Mode</label>
+          <select id="visit-mode" name="visitMode" class="form-select" [(ngModel)]="formData.visitMode">
+            <option [ngValue]="undefined" disabled>Select visit mode</option>
+            <option value="Clinic">Clinic</option>
+            <option value="Home">Home</option>
           </select>
         </div>
-        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
-          <label class="form-label" for="doc-gender">Assigned Doctor</label>
-          <select id="doc-gender" name="gender" class="form-select" [(ngModel)]="formData.gender">
-            <option value="Male">Himanshu</option>
-            <option value="Female">Etika</option>
+
+        <!-- Assigned Practitioner -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="assigned-practitioner">Assigned Practitioner</label>
+          <select id="assigned-practitioner" name="assignedPractitionerId" class="form-select"
+            [(ngModel)]="formData.assignedPractitionerId" [disabled]="isLoadingPractitioners">
+            <option [ngValue]="undefined" disabled>
+              {{ isLoadingPractitioners ? 'Loading practitioners...' : 'Select practitioner' }}
+            </option>
+            <option *ngFor="let p of practitioners" [ngValue]="p.id">{{ p.name }}</option>
+            <option *ngIf="!isLoadingPractitioners && practitioners.length === 0" disabled>
+              No practitioners found
+            </option>
           </select>
         </div>
-        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
+
+        <!-- Consultation Date -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="consultation-date">Consultation Date</label>
+          <input id="consultation-date" name="consultationDate" type="date" class="form-input"
+            [(ngModel)]="formData.consultationDate" />
+        </div>
+
+        <!-- Slot -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="slot-time">Slot</label>
+          <select id="slot-time" name="slotTime" class="form-select"
+            [(ngModel)]="selectedSlot" (ngModelChange)="onSlotSelected()">
+            <option [ngValue]="undefined" disabled>Select slot</option>
+            <option *ngFor="let s of slots" [ngValue]="s.label">{{ s.label }}</option>
+          </select>
+        </div>
+
+
+        <!-- Amount -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="doc-amount">
+            {{ formData.visitType === 'Consultancy' ? 'Consultation Amount' : 'Treatment Amount' }}
+          </label>
+          <input id="doc-amount" name="amount" type="number" class="form-input" placeholder="e.g. 500"
+            [(ngModel)]="formData.amount" />
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
           <label class="form-label" for="payment-mode">Payment Mode</label>
           <select id="payment-mode" name="paymentMode" class="form-select" [(ngModel)]="formData.paymentMode">
             <option [ngValue]="undefined" disabled>Select payment mode</option>
-            <option value="UPI">UPI</option>
+            <option value="Upi">UPI</option>
             <option value="Cash">Cash</option>
             <option value="Card">Card</option>
           </select>
         </div>
-        <div class="form-group" *ngIf="formData.visitFor === 'Consultation' || formData.visitFor === 'Treatment'">
-          <label class="form-label" for="doc-fees">
-            {{ formData.visitFor === 'Consultation' ? 'Consultation Fees' : 'Treatment Fees' }}
-          </label>
-          <input id="doc-fees" name="fees" type="number" class="form-input" placeholder="e.g. 500"
-            [(ngModel)]="formData.fees" />
+
+        <!-- Payment Status -->
+        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+          <label class="form-label" for="payment-status">Payment Status</label>
+          <select id="payment-status" name="paymentStatus" class="form-select" [(ngModel)]="formData.paymentStatus">
+            <option [ngValue]="undefined" disabled>Select payment status</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+          </select>
         </div>
       </div>
     </div>

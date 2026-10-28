@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, inject, output, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NewPatientFormData, DoctorPatient } from '../../../models/doctor-dashboard.model';
@@ -13,7 +13,7 @@ import { ApiEndPoints } from '../../../helper/api-endpoints';
   templateUrl: './addpatient.html',
   styleUrl: './addpatient.css',
 })
-export class Addpatient {
+export class Addpatient implements OnInit {
   private apiService = inject(ApiService);
   private alert = inject(SweetAlertService);
 
@@ -24,8 +24,64 @@ export class Addpatient {
   startConsultationWith = output<DoctorPatient>();
 
   isSavingPatient = false;
+  practitioners: { id: number; name: string }[] = [];
+  isLoadingPractitioners = false;
+  slots: { label: string; startTime: string; endTime: string }[] = [
+    { label: '09:00 - 09:30', startTime: '09:00', endTime: '09:30' },
+    { label: '09:30 - 10:00', startTime: '09:30', endTime: '10:00' },
+    { label: '10:00 - 10:30', startTime: '10:00', endTime: '10:30' },
+    { label: '10:30 - 11:00', startTime: '10:30', endTime: '11:00' },
+    { label: '11:00 - 11:30', startTime: '11:00', endTime: '11:30' },
+    { label: '11:30 - 12:00', startTime: '11:30', endTime: '12:00' },
+    { label: '14:00 - 14:30', startTime: '14:00', endTime: '14:30' },
+    { label: '14:30 - 15:00', startTime: '14:30', endTime: '15:00' },
+    { label: '15:00 - 15:30', startTime: '15:00', endTime: '15:30' },
+    { label: '15:30 - 16:00', startTime: '15:30', endTime: '16:00' },
+  ];
+  isLoadingSlots = false;
+  selectedSlot: string | undefined = undefined;
 
   private showError(msg: string): void { this.alert.toastError(msg); }
+
+  ngOnInit(): void {
+    this.loadPractitioners();
+  }
+
+  async loadPractitioners(): Promise<void> {
+    this.isLoadingPractitioners = true;
+    try {
+      const res = await this.apiService.Get<any>(ApiEndPoints.GetPractitioners);
+      if (res && res.isSuccess && Array.isArray(res.data)) {
+        this.practitioners = res.data.map((p: any) => ({
+          id: p.userId ?? p.id ?? p.practitionerId,
+          name: p.fullName ?? p.name ?? `Practitioner ${p.userId ?? p.id}`
+        }));
+      } else if (res && res.isSuccess && res.data?.items) {
+        this.practitioners = res.data.items.map((p: any) => ({
+          id: p.userId ?? p.id ?? p.practitionerId,
+          name: p.fullName ?? p.name ?? `Practitioner ${p.userId ?? p.id}`
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load practitioners', e);
+    } finally {
+      this.isLoadingPractitioners = false;
+    }
+  }
+
+  
+
+  onSlotSelected(): void {
+    const slot = this.slots.find(s => s.label === this.selectedSlot);
+    if (slot) {
+      this.formData.startTime = slot.startTime;
+      this.formData.endTime   = slot.endTime;
+    } else {
+      this.formData.startTime = '';
+      this.formData.endTime   = '';
+    }
+  }
+
   private showSuccess(msg: string): void { this.alert.toastSuccess(msg); }
 
   formData: NewPatientFormData = {
@@ -43,8 +99,16 @@ export class Addpatient {
     city: '',
     state: '',
     fees: 0,
-    visitFor:undefined,
+    visitType: undefined,
+    visitFor: undefined,
+    visitMode: undefined,
+    assignedPractitionerId: undefined,
+    consultationDate: '',
+    startTime: '',
+    endTime: '',
+    amount: undefined,
     paymentMode: undefined,
+    paymentStatus: undefined,
     userId: 1,
     roleId: 3,
     phone: '',
@@ -117,6 +181,9 @@ export class Addpatient {
 
     try {
       // Build query-param URL (mirrors the curl spec)
+      const visitTypeValue = this.formData.visitType ?? (
+        this.formData.visitFor === 'Consultation' ? 'Consultancy' : this.formData.visitFor
+      );
       const params = new URLSearchParams({
         FullName: this.formData.fullName.trim(),
         Mobile: this.formData.mobile.trim(),
@@ -126,6 +193,16 @@ export class Addpatient {
         ...(this.formData.address?.trim() ? { Address: this.formData.address.trim() } : {}),
         ...(this.formData.city?.trim() ? { City: this.formData.city.trim() } : {}),
         ...(this.formData.state?.trim() ? { State: this.formData.state.trim() } : {}),
+        ...(visitTypeValue ? { VisitType: visitTypeValue } : {}),
+        ...(this.formData.visitMode ? { VisitMode: this.formData.visitMode } : {}),
+        ...(this.formData.assignedPractitionerId != null
+          ? { AssignedPractitionerId: String(this.formData.assignedPractitionerId) } : {}),
+        ...(this.formData.consultationDate ? { ConsultationDate: this.formData.consultationDate } : {}),
+        ...(this.formData.startTime ? { StartTime: this.formData.startTime } : {}),
+        ...(this.formData.endTime ? { EndTime: this.formData.endTime } : {}),
+        ...(this.formData.amount != null ? { Amount: String(this.formData.amount) } : {}),
+        ...(this.formData.paymentMode ? { PaymentMode: this.formData.paymentMode } : {}),
+        ...(this.formData.paymentStatus ? { PaymentStatus: this.formData.paymentStatus } : {}),
       });
 
       // Build multipart/form-data body for the profile photo
@@ -194,8 +271,16 @@ export class Addpatient {
       dob: '',
       age: null,
       fees: 0,
+      visitType: undefined,
       visitFor: undefined,
+      visitMode: undefined,
+      assignedPractitionerId: undefined,
+      consultationDate: '',
+      startTime: '',
+      endTime: '',
+      amount: undefined,
       paymentMode: undefined,
+      paymentStatus: undefined,
       address: '',
       city: '',
       state: '',
@@ -206,11 +291,9 @@ export class Addpatient {
     };
     this.photoPreview = null;
     this.errorMessage = '';
+    this.selectedSlot = undefined;
+    this.slots = [];
     this.registeredPatient.set(null);
-    // const input = fileInput || this.photoInputRef?.nativeElement;
-    // if (input) {
-    //   input.value = '';
-    // }
   }
 
   onCancel(): void {

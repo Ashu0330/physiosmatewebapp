@@ -1,8 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient, DoctorConsultationRecord } from '../../../models/doctor-dashboard.model';
+import {
+  DoctorPatient,
+  DoctorConsultationRecord,
+  PatientSearchItem,
+  PatientConsultancyBooking,
+  FinalizeConsultancyRequest
+} from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
   selector: 'app-consultations',
@@ -13,6 +21,7 @@ import { SweetAlertService } from '../../../services/sweet-alert.service';
 })
 export class Consultations implements OnInit, OnChanges {
   private alertService = inject(SweetAlertService);
+  private apiService = inject(ApiService);
 
   @Input() patients: DoctorPatient[] = [];
   @Input() preSelectedPatientId: string | null = null;
@@ -24,6 +33,19 @@ export class Consultations implements OnInit, OnChanges {
   selectedPatientId = signal<string | null>(null);
   selectedPatient = signal<DoctorPatient | null>(null);
   isSearchDropdownOpen = signal<boolean>(false);
+
+  // ─── API-driven patient search ─────────────────────────────────────────────
+  patientSearchResults = signal<PatientSearchItem[]>([]);
+  isSearchingPatients = signal<boolean>(false);
+  selectedPatientItem = signal<PatientSearchItem | null>(null);
+
+  // ─── Patient Booking History ───────────────────────────────────────────────
+  patientBookingHistory = signal<PatientConsultancyBooking[]>([]);
+  isLoadingHistory = signal<boolean>(false);
+  selectedBooking = signal<PatientConsultancyBooking | null>(null);
+
+  // ─── Submission State ──────────────────────────────────────────────────────
+  isSubmitting = signal<boolean>(false);
 
   // ─── Right Panel: Conditions (Clinical Quick Select) ──────────────────────
   conditionSearch = signal<string>('');
@@ -148,6 +170,7 @@ export class Consultations implements OnInit, OnChanges {
   ];
 
   // ─── Active Clinical Consultation Form State ──────────────────────────────
+  // Field names match FinalizeConsultancyRequest API contract
   formData: {
     consultationType: 'Initial Assessment' | 'Follow-up Visit' | 'Second Opinion' | 'Pre-Rehab Review';
     visitMode: 'In-Clinic' | 'Video Call' | 'Home Visit';
@@ -156,12 +179,12 @@ export class Consultations implements OnInit, OnChanges {
     paymentMethod: 'Cash' | 'UPI / QR' | 'Card' | 'Insurance';
 
     chiefComplaint: string;
-    symptomsNotes: string;
+    clinicalFindings: string;        // API: clinicalFindings
     provisionalDiagnosis: string;
     painSeverity: 'Mild' | 'Moderate' | 'Severe';
-    bp: string;
+    bloodPressure: string;           // API: bloodPressure
     pulse: string;
-    romNotes: string;
+    investigation: string;           // API: investigation
 
     treatmentGiven: string;
     recommendedPlan: string;
@@ -175,12 +198,12 @@ export class Consultations implements OnInit, OnChanges {
       paymentMethod: 'UPI / QR',
 
       chiefComplaint: '',
-      symptomsNotes: '',
+      clinicalFindings: '',
       provisionalDiagnosis: '',
       painSeverity: 'Moderate',
-      bp: '120/80 mmHg',
+      bloodPressure: '120/80 mmHg',
       pulse: '74 bpm',
-      romNotes: '',
+      investigation: '',
 
       treatmentGiven: '',
       recommendedPlan: 'Spine Decompression & Core Stabilization',
@@ -313,7 +336,7 @@ export class Consultations implements OnInit, OnChanges {
     }
   }
 
-  // ─── Filtered Patients for Top Search Bar ─────────────────────────────────
+  // ─── Filtered Patients for Top Search Bar (local fallback) ─────────────────
   filteredPatients = computed(() => {
     const query = this.patientSearchQuery().toLowerCase().trim();
     if (!query) return this.patients;
@@ -328,14 +351,128 @@ export class Consultations implements OnInit, OnChanges {
     );
   });
 
-  // ─── Select Patient & Pre-fill Clinical Defaults ──────────────────────────
+  async onPatientSearchChange(query: string): Promise<void> {
+    this.patientSearchQuery.set(query);
+    this.isSearchDropdownOpen.set(true);
+
+    if (!query.trim()) {
+      this.patientSearchResults.set([]);
+      return;
+    }
+
+    this.isSearchingPatients.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.TodayConsultancyPatient, { search: query.trim() });
+      if (res?.isSuccess && res.data?.length > 0) {
+        this.patientSearchResults.set(res.data as PatientSearchItem[]);
+      } else {
+        this.patientSearchResults.set([]);
+      }
+    } catch (e) {
+      console.error('Patient search error', e);
+      this.patientSearchResults.set([]);
+    } finally {
+      this.isSearchingPatients.set(false);
+    }
+  }
+
+  async selectPatientFromSearch(item: PatientSearchItem): Promise<void> {
+    const ptCode = `PT-${item.patientId}`;
+    const patient: DoctorPatient = {
+      id: ptCode,
+      patientCode: ptCode,
+      fullName: item.fullName,
+      age: item.age,
+      gender: item.gender,
+      phone: item.mobile,
+      mobile: item.mobile,
+      email: item.email,
+      address: item.address,
+      city: item.city,
+      state: item.state,
+      photoUrl: item.profileImage || undefined,
+      status: 'Active',
+      sessionsCompleted: 0,
+      totalSessions: 0,
+      lastVisit: item.lastVisitDate
+        ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A',
+    };
+
+    this.selectedPatientItem.set(item);
+    this.selectPatient(patient);
+
+    // Load booking history
+    await this.loadPatientBookingHistory(item.patientId);
+  }
+
+  async loadPatientBookingHistory(patientId: number): Promise<void> {
+    this.isLoadingHistory.set(true);
+    this.patientBookingHistory.set([]);
+    this.selectedBooking.set(null);
+
+    try {
+      const res = await this.apiService.Get<PatientConsultancyBooking[]>(
+        `${ApiEndPoints.PatientConsultancyBookingDetails}?patientId=${patientId}`
+      );
+
+      if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientBookingHistory.set(res.data);
+      }
+    } catch (e) {
+      console.error('Booking history error', e);
+    } finally {
+      this.isLoadingHistory.set(false);
+    }
+  }
+
+  // ─── Pre-fill Form from Booking History ───────────────────────────────────
+  preFillFromBooking(booking: PatientConsultancyBooking): void {
+    if (booking.chiefComplaint) this.formData.chiefComplaint = booking.chiefComplaint;
+    if (booking.clinicalFindings) this.formData.clinicalFindings = booking.clinicalFindings;
+    if (booking.provisionalDiagnosis) {
+      this.formData.provisionalDiagnosis = booking.provisionalDiagnosis;
+      this.selectedCondition.set(booking.provisionalDiagnosis);
+    }
+    if (booking.painSeverity) {
+      const sev = booking.painSeverity as 'Mild' | 'Moderate' | 'Severe';
+      if (['Mild', 'Moderate', 'Severe'].includes(sev)) {
+        this.formData.painSeverity = sev;
+      }
+    }
+    if (booking.bloodPressure) this.formData.bloodPressure = booking.bloodPressure;
+    if (booking.pulse) this.formData.pulse = booking.pulse;
+    if (booking.treatmentGiven) this.formData.treatmentGiven = booking.treatmentGiven;
+    if (booking.clinicalAdvice) this.formData.clinicalAdvice = booking.clinicalAdvice;
+    if (booking.investigation) this.formData.investigation = booking.investigation;
+    if (booking.amount) this.formData.fee = booking.amount;
+    if (booking.visitType) {
+      const mode = booking.visitType as 'In-Clinic' | 'Video Call' | 'Home Visit';
+      if (['In-Clinic', 'Video Call', 'Home Visit'].includes(mode)) {
+        this.formData.visitMode = mode;
+      }
+    }
+  }
+
+  // ─── Select Booking from History — show detail modal ─────────────────────
+  bookingDetailModal = signal<PatientConsultancyBooking | null>(null);
+
+  selectBooking(booking: PatientConsultancyBooking): void {
+    this.selectedBooking.set(booking);
+    this.bookingDetailModal.set(booking);
+  }
+
+  closeBookingModal(): void {
+    this.bookingDetailModal.set(null);
+  }
+
   selectPatient(patient: DoctorPatient): void {
     this.selectedPatient.set(patient);
     this.selectedPatientId.set(patient.id);
     this.isSearchDropdownOpen.set(false);
     this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
 
-    // Pre-fill encounter defaults from patient's permanent clinical baseline
     this.formData.chiefComplaint = patient.initialComplaint || (patient.notes ? patient.notes : `${patient.primaryCondition || 'General'} clinical evaluation`);
     this.formData.provisionalDiagnosis = patient.primaryCondition || '';
     this.formData.treatmentGiven = '';
@@ -356,8 +493,12 @@ export class Consultations implements OnInit, OnChanges {
   clearConsultation(): void {
     this.selectedPatient.set(null);
     this.selectedPatientId.set(null);
+    this.selectedPatientItem.set(null);
     this.selectedCondition.set('');
     this.selectedPrecautions.set([]);
+    this.patientBookingHistory.set([]);
+    this.selectedBooking.set(null);
+    this.patientSearchResults.set([]);
 
     this.formData = {
       consultationType: 'Initial Assessment',
@@ -367,12 +508,12 @@ export class Consultations implements OnInit, OnChanges {
       paymentMethod: 'UPI / QR',
 
       chiefComplaint: '',
-      symptomsNotes: '',
+      clinicalFindings: '',
       provisionalDiagnosis: '',
       painSeverity: 'Moderate',
-      bp: '120/80 mmHg',
+      bloodPressure: '120/80 mmHg',
       pulse: '74 bpm',
-      romNotes: '',
+      investigation: '',
 
       treatmentGiven: '',
       recommendedPlan: 'Spine Decompression & Core Stabilization',
@@ -385,56 +526,91 @@ export class Consultations implements OnInit, OnChanges {
     this.formData.painSeverity = severity;
   }
 
-  // ─── Form Submission & Saving ──────────────────────────────────────────────
-  onSaveConsultation(): void {
+  // ─── Form Submission → FinalizeConsultancy API ─────────────────────────────
+  async onSaveConsultation(): Promise<void> {
     const pt = this.selectedPatient();
     if (!pt) {
       this.alertService.error('No Patient Selected', 'Please select a patient from the top search bar before recording a consultation encounter.');
       return;
     }
 
-    const newCode = `CNS-${500 + this.recentConsultations.length + 1}`;
-    const now = new Date();
-    const formattedDate = `Today, ${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
-    const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    if (!this.formData.chiefComplaint?.trim()) {
+      this.alertService.toastError('Chief Complaint is required.');
+      return;
+    }
 
-    // Snapshot patient permanent details alongside clinical encounter data
-    const record: DoctorConsultationRecord = {
-      id: newCode,
-      consultationCode: newCode,
-      patientId: pt.id,
-      patientCode: pt.patientCode,
-      patientName: pt.fullName,
-      age: pt.age,
-      gender: (pt.gender as 'Male' | 'Female' | 'Other') || 'Male',
-      phone: pt.mobile || pt.phone || '',
-      email: pt.email,
-      primaryCondition: this.formData.provisionalDiagnosis || pt.primaryCondition || 'General Musculoskeletal Care',
-      chiefComplaint: this.formData.chiefComplaint || `${pt.fullName} clinical evaluation`,
-      date: formattedDate,
-      time: formattedTime,
-      consultationType: this.formData.consultationType,
-      visitMode: this.formData.visitMode,
-      fee: this.formData.fee,
-      paymentStatus: this.formData.paymentStatus,
-      paymentMethod: this.formData.paymentMethod,
-      symptomsNotes: this.formData.symptomsNotes || 'Clinical examination within expected functional parameters.',
-      provisionalDiagnosis: this.formData.provisionalDiagnosis || pt.primaryCondition || 'Clinical assessment recorded',
+    this.isSubmitting.set(true);
+
+    const booking = this.selectedBooking();
+    const ptItem = this.selectedPatientItem();
+
+    const payload: FinalizeConsultancyRequest = {
+      ...(booking?.consultancyBookingId ? { consultancyBookingId: booking.consultancyBookingId } : {}),
+      ...(ptItem?.patientId ? { patientId: ptItem.patientId } : {}),
+      chiefComplaint: this.formData.chiefComplaint,
+      clinicalFindings: this.formData.clinicalFindings,
+      provisionalDiagnosis: this.formData.provisionalDiagnosis,
       painSeverity: this.formData.painSeverity,
-      bp: this.formData.bp,
+      bloodPressure: this.formData.bloodPressure,
       pulse: this.formData.pulse,
-      romNotes: this.formData.romNotes,
       treatmentGiven: this.formData.treatmentGiven,
-      recommendedPlan: this.formData.recommendedPlan,
       clinicalAdvice: this.formData.clinicalAdvice,
-      nextFollowUpDate: this.formData.nextFollowUpDate
+      investigation: this.formData.investigation,
     };
 
-    // Prepend to recent consultations ledger
-    this.recentConsultations = [record, ...this.recentConsultations];
-    this.consultationAdded.emit(record);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.FinalizeConsultancy, payload);
 
-    this.alertService.toastSuccess(`Consultation ${newCode} recorded for ${record.patientName}!`);
+      if (res?.isSuccess) {
+        // Build local record for the ledger
+        const newCode = `CNS-${500 + this.recentConsultations.length + 1}`;
+        const now = new Date();
+        const formattedDate = `Today, ${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+        const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        const record: DoctorConsultationRecord = {
+          id: newCode,
+          consultationCode: newCode,
+          patientId: pt.id,
+          patientCode: pt.patientCode,
+          patientName: pt.fullName,
+          age: pt.age,
+          gender: (pt.gender as 'Male' | 'Female' | 'Other') || 'Male',
+          phone: pt.mobile || pt.phone || '',
+          email: pt.email,
+          primaryCondition: this.formData.provisionalDiagnosis || pt.primaryCondition || 'General Musculoskeletal Care',
+          chiefComplaint: this.formData.chiefComplaint || `${pt.fullName} clinical evaluation`,
+          date: formattedDate,
+          time: formattedTime,
+          consultationType: this.formData.consultationType,
+          visitMode: this.formData.visitMode,
+          fee: this.formData.fee,
+          paymentStatus: this.formData.paymentStatus,
+          paymentMethod: this.formData.paymentMethod,
+          symptomsNotes: this.formData.clinicalFindings || 'Clinical examination within expected functional parameters.',
+          provisionalDiagnosis: this.formData.provisionalDiagnosis || pt.primaryCondition || 'Clinical assessment recorded',
+          painSeverity: this.formData.painSeverity,
+          bp: this.formData.bloodPressure,
+          pulse: this.formData.pulse,
+          romNotes: this.formData.investigation,
+          treatmentGiven: this.formData.treatmentGiven,
+          recommendedPlan: this.formData.recommendedPlan,
+          clinicalAdvice: this.formData.clinicalAdvice,
+          nextFollowUpDate: this.formData.nextFollowUpDate
+        };
+
+        this.recentConsultations = [record, ...this.recentConsultations];
+        this.consultationAdded.emit(record);
+        this.alertService.toastSuccess(res.message || `Consultation ${newCode} recorded for ${record.patientName}!`);
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to finalize consultation.');
+      }
+    } catch (e: any) {
+      console.error('FinalizeConsultancy error', e);
+      this.alertService.toastError('Error saving consultation. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 
   // ─── View Patient Profile Output ──────────────────────────────────────────
@@ -459,6 +635,16 @@ export class Consultations implements OnInit, OnChanges {
   printCurrentSlip(): void {
     if (typeof window !== 'undefined') {
       window.print();
+    }
+  }
+
+  // ─── Format booking date for history display ───────────────────────────────
+  formatBookingDate(dateStr: string): string {
+    if (!dateStr) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
     }
   }
 

@@ -32,6 +32,8 @@ export const ApiEndPoints = {
     AddAvailability: 'ProviderCatalog/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
+    FinalizeConsultancy: 'Consultancy/FinalizeConsultancy',
+    PatientConsultancyBookingDetails: 'Consultancy/PatientConsultancyBookingDetails',
 
     // ── User / Patient ────────────────────────────────────────────────────────────
     SavePractitioner: 'User/SavePractitioner',
@@ -52,6 +54,8 @@ export const ApiEndPoints = {
     // ── Patient ───────────────────────────────────────────────────────────────────
     AddPatient: 'Patient/AddPatient',
     GetMyPatients: 'Patient/GetMyPatients',
+        TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
+
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
