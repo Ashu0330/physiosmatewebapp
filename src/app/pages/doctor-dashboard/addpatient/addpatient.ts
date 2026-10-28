@@ -1,22 +1,25 @@
 import { Component, ElementRef, OnInit, ViewChild, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NewPatientFormData, DoctorPatient } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
+import { SharedModule } from '../../../shared/shared-module';
 
 @Component({
   selector: 'app-addpatient',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [SharedModule],
   templateUrl: './addpatient.html',
   styleUrl: './addpatient.css',
 })
 export class Addpatient implements OnInit {
   private apiService = inject(ApiService);
   private alert = inject(SweetAlertService);
+  private fb = inject(FormBuilder);
 
+  form!: FormGroup;
   @ViewChild('photoInput') photoInputRef?: ElementRef<HTMLInputElement>;
 
   patientAdded = output<NewPatientFormData>();
@@ -41,104 +44,97 @@ export class Addpatient implements OnInit {
   isLoadingSlots = false;
   selectedSlot: string | undefined = undefined;
 
-  private showError(msg: string): void { this.alert.toastError(msg); }
-
-  ngOnInit(): void {
-    this.loadPractitioners();
-  }
-
-  async loadPractitioners(): Promise<void> {
-    this.isLoadingPractitioners = true;
-    try {
-      const res = await this.apiService.Get<any>(ApiEndPoints.GetPractitioners);
-      if (res && res.isSuccess && Array.isArray(res.data)) {
-        this.practitioners = res.data.map((p: any) => ({
-          id: p.userId ?? p.id ?? p.practitionerId,
-          name: p.fullName ?? p.name ?? `Practitioner ${p.userId ?? p.id}`
-        }));
-      } else if (res && res.isSuccess && res.data?.items) {
-        this.practitioners = res.data.items.map((p: any) => ({
-          id: p.userId ?? p.id ?? p.practitionerId,
-          name: p.fullName ?? p.name ?? `Practitioner ${p.userId ?? p.id}`
-        }));
-      }
-    } catch (e) {
-      console.error('Failed to load practitioners', e);
-    } finally {
-      this.isLoadingPractitioners = false;
-    }
-  }
-
-  
-
-  onSlotSelected(): void {
-    const slot = this.slots.find(s => s.label === this.selectedSlot);
-    if (slot) {
-      this.formData.startTime = slot.startTime;
-      this.formData.endTime   = slot.endTime;
-    } else {
-      this.formData.startTime = '';
-      this.formData.endTime   = '';
-    }
-  }
-
-  private showSuccess(msg: string): void { this.alert.toastSuccess(msg); }
-
-  formData: NewPatientFormData = {
-    file: null,
-    height: '',
-    weight: '',
-    photoPreview: '',
-    fullName: '',
-    mobile: '',
-    email: '',
-    gender: 'Male',
-    dob: '',
-    age: null,
-    address: '',
-    city: '',
-    state: '',
-    fees: 0,
-    visitType: undefined,
-    visitFor: undefined,
-    visitMode: undefined,
-    assignedPractitionerId: undefined,
-    consultationDate: '',
-    startTime: '',
-    endTime: '',
-    amount: undefined,
-    paymentMode: undefined,
-    paymentStatus: undefined,
-    userId: 1,
-    roleId: 3,
-    phone: '',
-    primaryCondition: 'General Assessment'
-  };
-
   photoPreview: string | null = null;
   registeredPatient = signal<DoctorPatient | null>(null);
-  errorMessage = '';
+
+  constructor() {
+    this.createform();
+  }
+
+  ngOnInit(): void {
+  }
+
+  createform(): void {
+    this.form = this.fb.group({
+      file: [null],
+      photoPreview: [''],
+      fullName: ['', [Validators.required]],
+      mobile: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      email: ['', [Validators.email]],
+      gender: ['Male'],
+      dob: [''],
+      age: [null],
+      address: [''],
+      city: [''],
+      state: [''],
+      fees: [0],
+      visitType: [null],
+      visitFor: [null],
+      visitMode: [null],
+      assignedPractitionerId: [null],
+      consultationDate: [''],
+      startTime: [''],
+      endTime: [''],
+      slotTime: [null],
+      amount: [null],
+      paymentMode: [null],
+      paymentStatus: [null],
+      userId: [1],
+      roleId: [3],
+      phone: [''],
+      height: [''],
+      weight: [''],
+      primaryCondition: ['General Assessment']
+    });
+  }
+
+
+
+  get isConsultancyOrTreatment(): boolean {
+    const vt = this.form?.get('visitType')?.value;
+    return vt === 'Consultancy' || vt === 'Treatment';
+  }
+
+
+
+  onSlotSelected(): void {
+    const slotLabel = this.form.get('slotTime')?.value || this.selectedSlot;
+    const slot = this.slots.find(s => s.label === slotLabel);
+    if (slot) {
+      this.selectedSlot = slot.label;
+      this.form.patchValue({
+        slotTime: slot.label,
+        startTime: slot.startTime,
+        endTime: slot.endTime
+      });
+    } else {
+      this.selectedSlot = undefined;
+      this.form.patchValue({
+        startTime: '',
+        endTime: ''
+      });
+    }
+  }
 
   // ─── Photo File Upload Handling ──────────────────────────────────────────
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const selectedFile = input.files[0];
-      this.formData.file = selectedFile;
+      this.form.patchValue({ file: selectedFile });
 
       const reader = new FileReader();
       reader.onload = () => {
         this.photoPreview = reader.result as string;
-        this.formData.photoPreview = this.photoPreview;
+        this.form.patchValue({ photoPreview: this.photoPreview });
       };
       reader.readAsDataURL(selectedFile);
     }
   }
 
   removePhoto(fileInput?: HTMLInputElement): void {
-    this.formData.file = null;
+    this.form.patchValue({ file: null, photoPreview: '' });
     this.photoPreview = null;
-    this.formData.photoPreview = '';
     const input = fileInput || this.photoInputRef?.nativeElement;
     if (input) {
       input.value = '';
@@ -147,17 +143,18 @@ export class Addpatient implements OnInit {
 
   // ─── DOB & Age Calculation ───────────────────────────────────────────────
   onDobChange(): void {
-    if (this.formData.dob) {
-      const birth = new Date(this.formData.dob);
+    const dob = this.form.get('dob')?.value;
+    if (dob) {
+      const birth = new Date(dob);
       const now = new Date();
       let age = now.getFullYear() - birth.getFullYear();
       const m = now.getMonth() - birth.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
         age--;
       }
-      this.formData.age = age >= 0 ? age : null;
+      this.form.patchValue({ age: age >= 0 ? age : null });
     } else {
-      this.formData.age = null;
+      this.form.patchValue({ age: null });
     }
   }
 
@@ -167,93 +164,93 @@ export class Addpatient implements OnInit {
   }
 
   async addPatient(): Promise<void> {
-    if (!this.formData.fullName?.trim()) {
-      this.showError('Please enter patient full name.');
+    const formVal = this.form.getRawValue();
+
+    if (!formVal.fullName?.trim()) {
+      this.alert.error('Please enter patient full name.');
       return;
     }
-    if (!this.formData.mobile?.trim()) {
-      this.showError('Please enter mobile number.');
+    if (!formVal.mobile?.trim()) {
+      this.alert.error('Please enter mobile number.');
       return;
     }
 
-    this.errorMessage = '';
     this.isSavingPatient = true;
 
     try {
-      // Build query-param URL (mirrors the curl spec)
-      const visitTypeValue = this.formData.visitType ?? (
-        this.formData.visitFor === 'Consultation' ? 'Consultancy' : this.formData.visitFor
+      const visitTypeValue = formVal.visitType ?? (
+        formVal.visitFor === 'Consultation' ? 'Consultancy' : formVal.visitFor
       );
       const params = new URLSearchParams({
-        FullName: this.formData.fullName.trim(),
-        Mobile: this.formData.mobile.trim(),
-        ...(this.formData.email?.trim() ? { Email: this.formData.email.trim() } : {}),
-        ...(this.formData.gender ? { Gender: this.formData.gender as string } : {}),
-        ...(this.formData.dob ? { DOB: this.formData.dob } : {}),
-        ...(this.formData.address?.trim() ? { Address: this.formData.address.trim() } : {}),
-        ...(this.formData.city?.trim() ? { City: this.formData.city.trim() } : {}),
-        ...(this.formData.state?.trim() ? { State: this.formData.state.trim() } : {}),
+        FullName: formVal.fullName.trim(),
+        Mobile: formVal.mobile.trim(),
+        ...(formVal.email?.trim() ? { Email: formVal.email.trim() } : {}),
+        ...(formVal.gender ? { Gender: formVal.gender as string } : {}),
+        ...(formVal.dob ? { DOB: formVal.dob } : {}),
+        ...(formVal.address?.trim() ? { Address: formVal.address.trim() } : {}),
+        ...(formVal.city?.trim() ? { City: formVal.city.trim() } : {}),
+        ...(formVal.state?.trim() ? { State: formVal.state.trim() } : {}),
         ...(visitTypeValue ? { VisitType: visitTypeValue } : {}),
-        ...(this.formData.visitMode ? { VisitMode: this.formData.visitMode } : {}),
-        ...(this.formData.assignedPractitionerId != null
-          ? { AssignedPractitionerId: String(this.formData.assignedPractitionerId) } : {}),
-        ...(this.formData.consultationDate ? { ConsultationDate: this.formData.consultationDate } : {}),
-        ...(this.formData.startTime ? { StartTime: this.formData.startTime } : {}),
-        ...(this.formData.endTime ? { EndTime: this.formData.endTime } : {}),
-        ...(this.formData.amount != null ? { Amount: String(this.formData.amount) } : {}),
-        ...(this.formData.paymentMode ? { PaymentMode: this.formData.paymentMode } : {}),
-        ...(this.formData.paymentStatus ? { PaymentStatus: this.formData.paymentStatus } : {}),
+        ...(formVal.visitMode ? { VisitMode: formVal.visitMode } : {}),
+        ...(formVal.assignedPractitionerId != null
+          ? { AssignedPractitionerId: String(formVal.assignedPractitionerId) } : {}),
+        ...(formVal.consultationDate ? { ConsultationDate: formVal.consultationDate } : {}),
+        ...(formVal.startTime ? { StartTime: formVal.startTime } : {}),
+        ...(formVal.endTime ? { EndTime: formVal.endTime } : {}),
+        ...(formVal.amount != null ? { Amount: String(formVal.amount) } : {}),
+        ...(formVal.paymentMode ? { PaymentMode: formVal.paymentMode } : {}),
+        ...(formVal.paymentStatus ? { PaymentStatus: formVal.paymentStatus } : {}),
       });
 
       // Build multipart/form-data body for the profile photo
       const body = new FormData();
-      if (this.formData.file) {
-        body.append('file', this.formData.file);
+      if (formVal.file) {
+        body.append('file', formVal.file);
       }
 
       const endpoint = `${ApiEndPoints.AddPatient}?${params.toString()}`;
-      const res = await this.apiService.PostForm<any>(endpoint, body);
+      const res: any = await this.apiService.PostForm<any>(endpoint, body);
 
       if (res && res.isSuccess) {
-        this.showSuccess(res.message || 'Patient added successfully.');
+        this.alert.success(res.message);
         const p = res.data?.patient;
-
-        const newPtCode = `PT-${res.data?.patientId ?? Math.floor(1040 + Math.random() * 900)}`;
-        const newPatient: DoctorPatient = {
-          id: newPtCode,
-          patientCode: newPtCode,
-          fullName: p?.fullName ?? this.formData.fullName.trim(),
-          age: p?.age ?? this.formData.age ?? 0,
-          gender: p?.gender ?? (this.formData.gender as string),
-          dob: p?.dob ?? this.formData.dob,
-          phone: p?.mobile ?? this.formData.mobile.trim(),
-          mobile: p?.mobile ?? this.formData.mobile.trim(),
-          email: p?.email ?? this.formData.email?.trim() ?? '',
-          address: this.formData.address?.trim() ?? '',
-          city: p?.city ?? this.formData.city?.trim() ?? '',
-          state: p?.state ?? this.formData.state?.trim() ?? '',
-          photoUrl: p?.profileImage ?? this.photoPreview ?? undefined,
-          userId: this.formData.userId ?? 1,
-          roleId: this.formData.roleId ?? 3,
-          primaryCondition: 'General Assessment',
-          status: 'Active',
-          currentPlan: 'General Physiotherapy Plan',
-          sessionsCompleted: 0,
-          totalSessions: 10,
-          lastVisit: 'Just Registered',
-          nextAppointment: 'Pending Schedule',
-          notes: 'Registered via Add Patient form.'
-        };
+        const newPtCode = `PT-${res.data?.patientId}`;
+        const newPatient = res.data.items;
+        // const newPatient: DoctorPatient = {
+        //   id: newPtCode,
+        //   patientCode: newPtCode,
+        //   fullName: p?.fullName ?? formVal.fullName.trim(),
+        //   age: p?.age ?? formVal.age ?? 0,
+        //   gender: p?.gender ?? (formVal.gender as string),
+        //   dob: p?.dob ?? formVal.dob,
+        //   phone: p?.mobile ?? formVal.mobile.trim(),
+        //   mobile: p?.mobile ?? formVal.mobile.trim(),
+        //   email: p?.email ?? formVal.email?.trim() ?? '',
+        //   address: formVal.address?.trim() ?? '',
+        //   city: p?.city ?? formVal.city?.trim() ?? '',
+        //   state: p?.state ?? formVal.state?.trim() ?? '',
+        //   photoUrl: p?.profileImage ?? this.photoPreview ?? undefined,
+        //   userId: formVal.userId ?? 1,
+        //   roleId: formVal.roleId ?? 3,
+        //   primaryCondition: 'General Assessment',
+        //   status: 'Active',
+        //   currentPlan: 'General Physiotherapy Plan',
+        //   sessionsCompleted: 0,
+        //   totalSessions: 10,
+        //   lastVisit: 'Just Registered',
+        //   nextAppointment: 'Pending Schedule',
+        //   notes: 'Registered via Add Patient form.'
+        // };
 
         this.registeredPatient.set(newPatient);
-        this.formData.phone = this.formData.mobile.trim();
-        this.patientAdded.emit({ ...this.formData });
+        this.form.patchValue({ phone: formVal.mobile.trim() });
+        this.patientAdded.emit({ ...this.form.getRawValue() });
       } else {
-        this.showError(res?.message || 'Failed to add patient.');
+        this.alert.success(res?.message || 'Failed to add patient.');
       }
     } catch (e: any) {
       console.error('Add patient error', e);
-      this.showError('Error adding patient. Please try again.');
+      this.alert.error('Error adding patient. Please try again.');
     } finally {
       this.isSavingPatient = false;
     }
@@ -261,38 +258,9 @@ export class Addpatient implements OnInit {
 
   // ─── Form Reset & Navigation ─────────────────────────────────────────────
   resetForm(): void {
-    this.formData = {
-      file: null,
-      photoPreview: '',
-      fullName: '',
-      mobile: '',
-      email: '',
-      gender: 'Male',
-      dob: '',
-      age: null,
-      fees: 0,
-      visitType: undefined,
-      visitFor: undefined,
-      visitMode: undefined,
-      assignedPractitionerId: undefined,
-      consultationDate: '',
-      startTime: '',
-      endTime: '',
-      amount: undefined,
-      paymentMode: undefined,
-      paymentStatus: undefined,
-      address: '',
-      city: '',
-      state: '',
-      userId: 1,
-      roleId: 3,
-      phone: '',
-      primaryCondition: 'General Assessment'
-    };
+    this.createform();
     this.photoPreview = null;
-    this.errorMessage = '';
     this.selectedSlot = undefined;
-    this.slots = [];
     this.registeredPatient.set(null);
   }
 
@@ -311,31 +279,24 @@ export class Addpatient implements OnInit {
       ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
       : 'PT';
   }
+
   async Getpatient(e: any): Promise<void> {
-    if (e.length !== 10) {
+    const val = typeof e === 'string' ? e : this.form.get('mobile')?.value;
+    if (!val || val.length < 10) {
       return;
     }
-    const mobile = this.formData.mobile?.trim();
-
-    if (!mobile) {
-      this.showError('Please enter mobile number.');
-      return;
-    }
-
+    const mobile = val.trim();
     try {
-      const request = {
-        search: mobile
-      };
+      const request = { search: mobile };
 
       const response = await this.apiService.Post<any>(
         ApiEndPoints.GetMyPatients,
         request
       );
 
-      if (response.isSuccess && response.data?.items?.length > 0) {
+      if (response && response.isSuccess && response.data?.items?.length > 0) {
         const patient = response.data.items[0];
-        this.formData = {
-          ...this.formData,
+        this.form.patchValue({
           fullName: patient.fullName ?? '',
           mobile: patient.mobile ?? mobile,
           email: patient.email ?? '',
@@ -344,19 +305,22 @@ export class Addpatient implements OnInit {
           address: patient.address ?? '',
           city: patient.city ?? '',
           state: patient.state ?? '',
-          userId: patient.userId ?? 1,
-          roleId: patient.roleId ?? 3,
+          userId: patient.userId,
+          roleId: patient.roleId,
           phone: patient.phone ?? patient.mobile ?? mobile,
           primaryCondition: patient.primaryCondition ?? 'General Assessment'
-        };
+        });
 
-        this.showSuccess('Patient details fetched successfully.');
+        if (patient.dob) {
+          this.onDobChange();
+        }
+
+        this.alert.success('Patient details fetched successfully.');
       } else {
-        this.showError(response?.message || 'Patient not found.');
+        this.alert.error(response?.message || 'Patient not found.');
       }
     } catch (error) {
-      console.error('Get patient error:', error);
-      this.showError('Error fetching patient details. Please try again.');
+      this.alert.error('Error fetching patient details. Please try again.');
     }
   }
 }

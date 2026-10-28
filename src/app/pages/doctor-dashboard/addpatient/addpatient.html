@@ -11,22 +11,10 @@
     </button>
   </div>
 
-  <!-- Error Alert Box -->
-  @if (errorMessage) {
-  <div class="alert-box danger">
-    <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="12"></line>
-      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-    </svg>
-    <span>{{ errorMessage }}</span>
-  </div>
-  }
 
   <!-- Active Registration Form -->
   @if (!registeredPatient()) {
-  <form class="patient-form-card" (ngSubmit)="onSubmit()">
+  <form class="patient-form-card" [formGroup]="form" (ngSubmit)="onSubmit()">
 
     <!-- ── PROFILE PHOTO UPLOAD SECTION ── -->
     <div class="photo-upload-section">
@@ -84,138 +72,133 @@
         <!-- Col 2: Mobile Number -->
         <div class="form-group">
           <label class="form-label" for="doc-mobile">Mobile Number <span class="req">*</span></label>
-          <input id="doc-mobile" name="mobile" type="tel" class="form-input" placeholder="e.g. +91 98234 56789"
-            [(ngModel)]="formData.mobile" (ngModelChange)="Getpatient($event)" required />
+          <input id="doc-mobile" formControlName="mobile" type="tel" class="form-input"
+            placeholder="e.g. +91 98234 56789" (input)="Getpatient(form.get('mobile')?.value)" required />
         </div>
         <!-- Col 1: Full Name -->
         <div class="form-group">
           <label class="form-label" for="doc-fullName">Full Name <span class="req">*</span></label>
-          <input id="doc-fullName" name="fullName" type="text" class="form-input" placeholder="e.g. Ananya Iyer"
-            [(ngModel)]="formData.fullName" required />
+          <input id="doc-fullName" formControlName="fullName" type="text" class="form-input"
+            placeholder="e.g. Ananya Iyer" required />
         </div>
-
-
 
         <!-- Col 3: Email Address -->
         <div class="form-group">
           <label class="form-label" for="doc-email">Email Address</label>
-          <input id="doc-email" name="email" type="email" class="form-input" placeholder="ananya.iyer@example.com"
-            [(ngModel)]="formData.email" />
+          <input id="doc-email" formControlName="email" type="email" class="form-input"
+            placeholder="ananya.iyer@example.com" />
         </div>
 
         <!-- Col 4: Date of Birth & Computed Age -->
         <div class="form-group">
           <div class="label-with-badge">
             <label class="form-label" for="doc-dob">Date of Birth</label>
-            @if (formData.age !== null) {
-            <span class="age-calc-badge">{{ formData.age }} yrs</span>
+            @if (form.get('age')?.value !== null && form.get('age')?.value !== undefined) {
+            <span class="age-calc-badge">{{ form.get('age')?.value }} yrs</span>
             }
           </div>
-          <input id="doc-dob" name="dob" type="date" class="form-input" [(ngModel)]="formData.dob"
-            (change)="onDobChange()" />
+          <input id="doc-dob" formControlName="dob" type="date" class="form-input" (change)="onDobChange()" />
         </div>
 
         <!-- Col 2: Address -->
         <div class="form-group">
           <label class="form-label" for="doc-address">Residential Address</label>
-          <input id="doc-address" name="address" type="text" class="form-input"
-            placeholder="e.g. Flat 402, Green Valley Apartments" [(ngModel)]="formData.address" />
+          <input id="doc-address" formControlName="address" type="text" class="form-input"
+            placeholder="e.g. Flat 402, Green Valley Apartments" />
         </div>
 
         <!-- ROW 2: 4 COLUMNS (Gender, Address, City, State) -->
         <!-- Col 1: Gender -->
         <div class="form-group">
           <label class="form-label" for="doc-gender">Gender</label>
-          <select id="doc-gender" name="gender" class="form-select" [(ngModel)]="formData.gender">
+          <select id="doc-gender" formControlName="gender" class="form-select">
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Other">Other</option>
           </select>
         </div>
 
-
         <!-- Col 3: City -->
         <div class="form-group">
           <label class="form-label" for="doc-city">City</label>
-          <input id="doc-city" name="city" type="text" class="form-input" placeholder="e.g. Mumbai"
-            [(ngModel)]="formData.city" />
+          <input id="doc-city" formControlName="city" type="text" class="form-input" placeholder="e.g. Mumbai" />
         </div>
 
         <!-- Col 4: State -->
         <div class="form-group">
           <label class="form-label" for="doc-state">State</label>
-          <input id="doc-state" name="state" type="text" class="form-input" placeholder="e.g. Maharashtra"
-            [(ngModel)]="formData.state" />
+          <input id="doc-state" formControlName="state" type="text" class="form-input" placeholder="e.g. Maharashtra" />
         </div>
 
         <!-- Visit For -->
         <div class="form-group">
           <label class="form-label" for="visit-type">Visit Type</label>
-          <select id="visit-type" name="visitType" class="form-select" [(ngModel)]="formData.visitType">
-            <option [ngValue]="undefined" disabled>Select visit type</option>
+          <select id="visit-type" formControlName="visitType" class="form-select">
+            <option [ngValue]="null" disabled>Select visit type</option>
             <option value="Consultancy">Consultancy</option>
             <option value="Treatment">Treatment</option>
             <option value="Enquiry">Enquiry</option>
           </select>
         </div>
 
+        @if (isConsultancyOrTreatment) {
         <!-- Visit Mode -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="visit-mode">Visit Mode</label>
-          <select id="visit-mode" name="visitMode" class="form-select" [(ngModel)]="formData.visitMode">
-            <option [ngValue]="undefined" disabled>Select visit mode</option>
+          <select id="visit-mode" formControlName="visitMode" class="form-select">
+            <option [ngValue]="null" disabled>Select visit mode</option>
             <option value="Clinic">Clinic</option>
             <option value="Home">Home</option>
           </select>
         </div>
 
         <!-- Assigned Practitioner -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="assigned-practitioner">Assigned Practitioner</label>
-          <select id="assigned-practitioner" name="assignedPractitionerId" class="form-select"
-            [(ngModel)]="formData.assignedPractitionerId" [disabled]="isLoadingPractitioners">
-            <option [ngValue]="undefined" disabled>
+          <select id="assigned-practitioner" formControlName="assignedPractitionerId" class="form-select"
+            [disabled]="isLoadingPractitioners">
+            <option [ngValue]="null" disabled>
               {{ isLoadingPractitioners ? 'Loading practitioners...' : 'Select practitioner' }}
             </option>
-            <option *ngFor="let p of practitioners" [ngValue]="p.id">{{ p.name }}</option>
-            <option *ngIf="!isLoadingPractitioners && practitioners.length === 0" disabled>
-              No practitioners found
-            </option>
+            @for (p of practitioners; track p.id) {
+            <option [ngValue]="p.id">{{ p.name }}</option>
+            }
+            @if (!isLoadingPractitioners && practitioners.length === 0) {
+            <option disabled>No practitioners found</option>
+            }
           </select>
         </div>
 
         <!-- Consultation Date -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="consultation-date">Consultation Date</label>
-          <input id="consultation-date" name="consultationDate" type="date" class="form-input"
-            [(ngModel)]="formData.consultationDate" />
+          <input id="consultation-date" formControlName="consultationDate" type="date" class="form-input" />
         </div>
 
         <!-- Slot -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="slot-time">Slot</label>
-          <select id="slot-time" name="slotTime" class="form-select"
-            [(ngModel)]="selectedSlot" (ngModelChange)="onSlotSelected()">
-            <option [ngValue]="undefined" disabled>Select slot</option>
-            <option *ngFor="let s of slots" [ngValue]="s.label">{{ s.label }}</option>
+          <select id="slot-time" formControlName="slotTime" class="form-select" (change)="onSlotSelected()">
+            <option [ngValue]="null" disabled>Select slot</option>
+            @for (s of slots; track s.label) {
+            <option [ngValue]="s.label">{{ s.label }}</option>
+            }
           </select>
         </div>
 
-
         <!-- Amount -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="doc-amount">
-            {{ formData.visitType === 'Consultancy' ? 'Consultation Amount' : 'Treatment Amount' }}
+            {{ form.get('visitType')?.value === 'Consultancy' ? 'Consultation Amount' : 'Treatment Amount' }}
           </label>
-          <input id="doc-amount" name="amount" type="number" class="form-input" placeholder="e.g. 500"
-            [(ngModel)]="formData.amount" />
+          <input id="doc-amount" formControlName="amount" type="number" class="form-input" placeholder="e.g. 500" />
         </div>
 
         <!-- Payment Mode -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="payment-mode">Payment Mode</label>
-          <select id="payment-mode" name="paymentMode" class="form-select" [(ngModel)]="formData.paymentMode">
-            <option [ngValue]="undefined" disabled>Select payment mode</option>
+          <select id="payment-mode" formControlName="paymentMode" class="form-select">
+            <option [ngValue]="null" disabled>Select payment mode</option>
             <option value="Upi">UPI</option>
             <option value="Cash">Cash</option>
             <option value="Card">Card</option>
@@ -223,14 +206,15 @@
         </div>
 
         <!-- Payment Status -->
-        <div class="form-group" *ngIf="formData.visitType === 'Consultancy' || formData.visitType === 'Treatment'">
+        <div class="form-group">
           <label class="form-label" for="payment-status">Payment Status</label>
-          <select id="payment-status" name="paymentStatus" class="form-select" [(ngModel)]="formData.paymentStatus">
-            <option [ngValue]="undefined" disabled>Select payment status</option>
+          <select id="payment-status" formControlName="paymentStatus" class="form-select">
+            <option [ngValue]="null" disabled>Select payment status</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
           </select>
         </div>
+        }
       </div>
     </div>
     <!-- ── FORM ACTIONS BAR ── -->

@@ -1,7 +1,10 @@
-import { Component, input, output, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DoctorPatient } from '../../../models/doctor-dashboard.model';
+import { ApiService } from '../../../services/api.service';
+import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 export interface EMRPatient {
   id: string;
@@ -42,7 +45,10 @@ export interface EMRPatient {
   templateUrl: './patients.html',
   styleUrl: './patients.css',
 })
-export class Patients {
+export class Patients implements OnInit {
+  private apiService = inject(ApiService);
+  private alert = inject(SweetAlertService);
+
   // Inputs & Outputs for parent component
   patients = input<DoctorPatient[]>([]);
   navigateToAdd = output<void>();
@@ -67,478 +73,31 @@ export class Patients {
   showEditModal = signal<boolean>(false);
   showPhotoModal = signal<boolean>(false);
 
-  // 15 Rich Dummy Patients matching the screenshot cards and clinic database
-  allEMRPatients = signal<EMRPatient[]>([
-    {
-      id: 'P971',
-      patientCode: 'P971',
-      fullName: 'nita chimote',
-      age: 31,
-      gender: 'Female',
-      phone: '+917389902664',
-      email: 'nita.chimote@example.com',
-      bloodGroup: 'B+',
-      dob: '12 Sep 1995',
-      address: 'Flat 302, Sunrise Heights, Kothrud, Pune, Maharashtra',
-      emergencyContact: '+91 98220 11223 (Rahul Chimote - Spouse)',
-      primaryCondition: 'Cervical Spondylosis & Postural Neck Strain',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Spine Care',
-      notes: 'Patient reports reduced cervical stiffness after 3rd traction session. Recommended 15 min daily home stretching.',
-      medicalHistory: [
-        'Cervical Spondylosis (C5-C6)',
-        'Mild Essential Hypertension (under medical control)',
-        'No known drug allergies (NKDA)'
-      ],
-      groups: ['Post-Op Rehab', 'VIP Client', 'Morning Slot'],
-      memberships: 'PhysiosMate Annual Wellness Pass (Active - Renews Dec 2026)',
-      counts: {
-        appointments: 12,
-        clinicalNotes: 1,
-        treatmentPlans: 6,
-        completedProcedures: 12,
-        files: 4,
-        prescriptions: 11,
-        invoices: 12,
-        payments: 12
-      }
-    },
-    {
-      id: 'P1982',
-      patientCode: 'P1982',
-      fullName: 'tijia devi',
-      age: 48,
-      gender: 'Female',
-      phone: '+919329219283',
-      email: 'tijia.devi@example.com',
-      bloodGroup: 'O+',
-      dob: '14 Jan 1978',
-      address: '74, Ganesh Nagar, Model Colony, Pune',
-      emergencyContact: '+91 93292 19280 (Son - Suresh)',
-      primaryCondition: 'Bilateral Knee Osteoarthritis (Grade II)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Joint Rehab',
-      notes: 'Joint crepitus in left knee reduced. Initiated quadriceps isometric strengthening.',
-      medicalHistory: ['Osteoarthritis Knee Grade II', 'Mild Osteopenia'],
-      groups: ['Joint Care', 'Morning Slot'],
-      memberships: 'PhysiosMate Silver Pass',
-      counts: {
-        appointments: 9,
-        clinicalNotes: 2,
-        treatmentPlans: 3,
-        completedProcedures: 8,
-        files: 3,
-        prescriptions: 5,
-        invoices: 8,
-        payments: 8
-      }
-    },
-    {
-      id: 'P2416',
-      patientCode: 'P2416',
-      fullName: 'ashish mahajan',
-      age: 36,
-      gender: 'Male',
-      phone: '+919893052965',
-      email: 'ashish.m@example.com',
-      bloodGroup: 'A+',
-      dob: '22 Aug 1990',
-      address: 'Plot 18, IT Park Road, Hinjewadi, Pune',
-      emergencyContact: '+91 98930 52960 (Renu Mahajan - Wife)',
-      primaryCondition: 'Postural Thoracic Kyphosis & Rhomboid Spasm',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Spine Care',
-      notes: 'Workstation ergonomic evaluation complete. Prescribed scapular retraction drills.',
-      medicalHistory: ['Thoracic Spine Postural Dysfunction', 'No known allergies'],
-      groups: ['IT Ergonomics Care', 'Evening Slot'],
-      memberships: 'Corporate Health Plan',
-      counts: {
-        appointments: 6,
-        clinicalNotes: 2,
-        treatmentPlans: 2,
-        completedProcedures: 5,
-        files: 2,
-        prescriptions: 3,
-        invoices: 5,
-        payments: 5
-      }
-    },
-    {
-      id: 'P2369',
-      patientCode: 'P2369',
-      fullName: 'adhya sinha',
-      age: 29,
-      gender: 'Female',
-      phone: '+919097792605',
-      email: 'adhya.sinha@example.com',
-      bloodGroup: 'B+',
-      dob: '05 Mar 1997',
-      address: 'Penthouse 4, Green Valley, Baner, Pune',
-      emergencyContact: '+91 90977 92600 (Parent - V. Sinha)',
-      primaryCondition: 'Sciatica & Piriformis Syndrome (Right Leg)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Spine Care',
-      notes: 'Piriformis stretch tolerated well. Positive straight leg raise angle increased to 70°.',
-      medicalHistory: ['Sciatica Right L5/S1', 'Piriformis Tightness'],
-      groups: ['Spine Care Program', 'VIP Client'],
-      memberships: 'PhysiosMate Wellness Pass',
-      counts: {
-        appointments: 10,
-        clinicalNotes: 3,
-        treatmentPlans: 4,
-        completedProcedures: 7,
-        files: 4,
-        prescriptions: 4,
-        invoices: 7,
-        payments: 7
-      }
-    },
-    {
-      id: 'P2614',
-      patientCode: 'P2614',
-      fullName: 'mohd munna',
-      age: 44,
-      gender: 'Male',
-      phone: '+918602924633',
-      email: 'mohd.munna@example.com',
-      bloodGroup: 'O+',
-      dob: '18 Nov 1982',
-      address: '22, Camp Cantonment, Pune',
-      emergencyContact: '+91 86029 24630 (Family Contact)',
-      primaryCondition: 'Lumbar Spondylolisthesis (Grade I L5-S1)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Spine Care',
-      notes: 'Focus on flexion bias core stabilization. Extension exercises strictly contra-indicated.',
-      medicalHistory: ['Grade I Spondylolisthesis', 'Hypertension'],
-      groups: ['Spine Clinic'],
-      memberships: 'Pay Per Session',
-      counts: {
-        appointments: 7,
-        clinicalNotes: 2,
-        treatmentPlans: 3,
-        completedProcedures: 6,
-        files: 3,
-        prescriptions: 4,
-        invoices: 6,
-        payments: 6
-      }
-    },
-    {
-      id: 'P2613',
-      patientCode: 'P2613',
-      fullName: 'sabitri murmu',
-      age: 55,
-      gender: 'Female',
-      phone: '+918989118011',
-      email: 'sabitri.m@example.com',
-      bloodGroup: 'AB+',
-      dob: '30 Jul 1971',
-      address: 'A-12, Railway Colony, Pune',
-      emergencyContact: '+91 89891 18010 (Daughter - Anita)',
-      primaryCondition: 'Supraspinatus Tendinopathy & Subacromial Impingement',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Shoulder Rehab',
-      notes: 'Ultrasound therapy applied to right supraspinatus tendon. Passive abduction 110 degrees.',
-      medicalHistory: ['Rotator Cuff Tendinopathy', 'Type 2 Diabetes'],
-      groups: ['Shoulder Clinic', 'Morning Slot'],
-      memberships: 'PhysiosMate Standard Plan',
-      counts: {
-        appointments: 8,
-        clinicalNotes: 3,
-        treatmentPlans: 2,
-        completedProcedures: 8,
-        files: 2,
-        prescriptions: 4,
-        invoices: 8,
-        payments: 8
-      }
-    },
-    {
-      id: 'P2612',
-      patientCode: 'P2612',
-      fullName: 'sajid khan ji',
-      age: 33,
-      gender: 'Male',
-      phone: '+917489152234',
-      email: 'sajid.khan@example.com',
-      bloodGroup: 'B+',
-      dob: '12 Dec 1993',
-      address: 'Flat 101, Lake Vista, Katraj, Pune',
-      emergencyContact: '+91 74891 52230 (Brother - Tariq)',
-      primaryCondition: 'Tennis Elbow (Lateral Epicondylalgia - Right)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Sports Rehab',
-      notes: 'Deep friction massage and eccentric wrist extensor protocol with TheraBand bar.',
-      medicalHistory: ['Lateral Epicondylitis Right Elbow'],
-      groups: ['Sports Injury Rehab'],
-      memberships: 'Sports Recovery Plan',
-      counts: {
-        appointments: 5,
-        clinicalNotes: 1,
-        treatmentPlans: 2,
-        completedProcedures: 4,
-        files: 1,
-        prescriptions: 3,
-        invoices: 4,
-        payments: 4
-      }
-    },
-    {
-      id: 'P197',
-      patientCode: 'P197',
-      fullName: 'jitendra singh pal',
-      age: 39,
-      gender: 'Male',
-      phone: '+919893357419',
-      email: 'jitendra.pal@example.com',
-      bloodGroup: 'O+',
-      dob: '04 Oct 1987',
-      address: '15/B, Koregaon Park Annex, Pune',
-      emergencyContact: '+91 98933 57410 (Spouse - Sunita)',
-      primaryCondition: 'Chronic Plantar Fasciitis & Calcaneal Spur',
-      status: 'Active',
-      visitedCategory: 'recent-added',
-      clinicalGroup: 'Sports Rehab',
-      notes: 'Shockwave therapy protocol initiated. Custom silicon heel cup recommended.',
-      medicalHistory: ['Plantar Fasciitis Bilateral', 'High BMI'],
-      groups: ['Foot & Ankle Clinic'],
-      memberships: 'Annual Wellness Pass',
-      counts: {
-        appointments: 4,
-        clinicalNotes: 1,
-        treatmentPlans: 1,
-        completedProcedures: 3,
-        files: 2,
-        prescriptions: 2,
-        invoices: 3,
-        payments: 3
-      }
-    },
-    {
-      id: 'P2611',
-      patientCode: 'P2611',
-      fullName: 'alia khatum',
-      age: 26,
-      gender: 'Female',
-      phone: '+919826144320',
-      email: 'alia.khatum@example.com',
-      bloodGroup: 'A-',
-      dob: '19 Apr 2000',
-      address: '304, Silver Crest, Viman Nagar, Pune',
-      emergencyContact: '+91 98261 44329 (Mother - F. Khatum)',
-      primaryCondition: 'Cervicogenic Headache & Forward Head Posture',
-      status: 'Active',
-      visitedCategory: 'recent-added',
-      clinicalGroup: 'Spine Care',
-      notes: 'Suboccipital myofascial release provided. Significant immediate tension headache relief.',
-      medicalHistory: ['Cervicogenic Headache', 'Postural Neck Strain'],
-      groups: ['VIP Client', 'IT Ergonomics Care'],
-      memberships: 'PhysiosMate Wellness Pass',
-      counts: {
-        appointments: 4,
-        clinicalNotes: 2,
-        treatmentPlans: 2,
-        completedProcedures: 4,
-        files: 2,
-        prescriptions: 2,
-        invoices: 4,
-        payments: 4
-      }
-    },
-    {
-      id: 'P2610',
-      patientCode: 'P2610',
-      fullName: 'affia khatum',
-      age: 28,
-      gender: 'Female',
-      phone: '+919826100912',
-      email: 'affia.k@example.com',
-      bloodGroup: 'O+',
-      dob: '23 Jun 1998',
-      address: '304, Silver Crest, Viman Nagar, Pune',
-      emergencyContact: '+91 98261 44320 (Sister - Alia)',
-      primaryCondition: 'Thoracic Outlet Syndrome (Postural)',
-      status: 'Active',
-      visitedCategory: 'recent-added',
-      clinicalGroup: 'Spine Care',
-      notes: 'Scalene and pectoralis minor stretching exercises prescribed.',
-      medicalHistory: ['Postural Nerve Compression'],
-      groups: ['Spine Clinic'],
-      memberships: 'Standard Plan',
-      counts: {
-        appointments: 3,
-        clinicalNotes: 1,
-        treatmentPlans: 1,
-        completedProcedures: 2,
-        files: 1,
-        prescriptions: 2,
-        invoices: 2,
-        payments: 2
-      }
-    },
-    {
-      id: 'P2609',
-      patientCode: 'P2609',
-      fullName: 'shanaz khan',
-      age: 42,
-      gender: 'Female',
-      phone: '+919644659973',
-      email: 'shanaz.khan@example.com',
-      bloodGroup: 'B-',
-      dob: '08 Feb 1984',
-      address: 'Flat 502, Greenview Terraces, Hadapsar, Pune',
-      emergencyContact: '+91 96446 59970 (Spouse - A. Khan)',
-      primaryCondition: 'Chronic Lumbar Disc Herniation & Postural Kyphosis',
-      status: 'Active',
-      visitedCategory: 'recent-added',
-      clinicalGroup: 'Spine Care',
-      notes: 'Spine decompression protocol week 2. Core activation improved.',
-      medicalHistory: ['L4-L5 Disc Bulge', 'Mild Scoliotic Curve'],
-      groups: ['Spine Care Program', 'Evening Slot'],
-      memberships: 'Annual Wellness Pass',
-      counts: {
-        appointments: 5,
-        clinicalNotes: 2,
-        treatmentPlans: 3,
-        completedProcedures: 4,
-        files: 3,
-        prescriptions: 3,
-        invoices: 4,
-        payments: 4
-      }
-    },
-    {
-      id: 'PT-1041',
-      patientCode: 'PT-1041',
-      fullName: 'ananya iyer',
-      age: 34,
-      gender: 'Female',
-      phone: '+919823456789',
-      email: 'ananya.iyer@example.com',
-      bloodGroup: 'O+',
-      dob: '24 Apr 1992',
-      address: 'B-14, Greenwoods Residency, Baner, Pune',
-      emergencyContact: '+91 98234 56780 (Rajesh Iyer - Husband)',
-      primaryCondition: 'Lumbar Disc Herniation & Sciatica',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Spine Care',
-      notes: 'Significant reduction in radiating leg pain. Continue neutral spine core activation.',
-      medicalHistory: ['L4-L5 Disc Protrusion', 'Seasonal allergic rhinitis'],
-      groups: ['Spine Care Program', 'Evening Slot'],
-      memberships: 'PhysiosMate Spine Care Package',
-      counts: {
-        appointments: 8,
-        clinicalNotes: 3,
-        treatmentPlans: 4,
-        completedProcedures: 6,
-        files: 5,
-        prescriptions: 4,
-        invoices: 6,
-        payments: 6
-      }
-    },
-    {
-      id: 'PT-1042',
-      patientCode: 'PT-1042',
-      fullName: 'vikramaditya rao',
-      age: 28,
-      gender: 'Male',
-      phone: '+919845012345',
-      email: 'vikram.rao@example.com',
-      bloodGroup: 'A+',
-      dob: '08 Jan 1998',
-      address: '702, Skyline Towers, Aundh, Pune',
-      emergencyContact: '+91 98450 12340 (Sneha Rao - Sister)',
-      primaryCondition: 'Right Knee ACL Reconstruction (Post-Op Wk 8)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Sports Rehab',
-      notes: 'Full active extension achieved. Concentrating on eccentric quadriceps strength.',
-      medicalHistory: ['Right Knee ACL Tear (Hamstring graft)', 'Post-Op Week 8 Protocol'],
-      groups: ['Sports Injury Rehab', 'Athlete Program'],
-      memberships: 'Elite Sports Recovery Plan',
-      counts: {
-        appointments: 14,
-        clinicalNotes: 5,
-        treatmentPlans: 8,
-        completedProcedures: 10,
-        files: 6,
-        prescriptions: 7,
-        invoices: 10,
-        payments: 10
-      }
-    },
-    {
-      id: 'PT-1043',
-      patientCode: 'PT-1043',
-      fullName: 'meera nambiar',
-      age: 52,
-      gender: 'Female',
-      phone: '+919711234567',
-      email: 'meera.nambiar@example.com',
-      bloodGroup: 'B+',
-      dob: '15 Jul 1974',
-      address: '401, Palms Enclave, Viman Nagar, Pune',
-      emergencyContact: '+91 97112 34560 (K. Nambiar - Husband)',
-      primaryCondition: 'Adhesive Capsulitis (Frozen Shoulder - Left)',
-      status: 'Active',
-      visitedCategory: 'recent-visited',
-      clinicalGroup: 'Shoulder Rehab',
-      notes: 'Grade II mobilization tolerated well. Passive abduction improved by 15 degrees.',
-      medicalHistory: ['Frozen Shoulder (Phase 2)', 'Type 2 Diabetes'],
-      groups: ['Senior Wellness', 'Shoulder Clinic'],
-      memberships: 'PhysiosMate Standard Plan',
-      counts: {
-        appointments: 6,
-        clinicalNotes: 2,
-        treatmentPlans: 2,
-        completedProcedures: 4,
-        files: 2,
-        prescriptions: 3,
-        invoices: 4,
-        payments: 4
-      }
-    },
-    {
-      id: 'PT-1045',
-      patientCode: 'PT-1045',
-      fullName: 'siddharth verma',
-      age: 23,
-      gender: 'Male',
-      phone: '+919650043210',
-      email: 'siddharth.v@example.com',
-      bloodGroup: 'O-',
-      dob: '19 Nov 2002',
-      address: '12, Shanti Kunj, FC Road, Pune',
-      emergencyContact: '+91 96500 43219 (Sunil Verma - Father)',
-      primaryCondition: 'Lateral Ankle Sprain (Grade II ATFL)',
-      status: 'Completed',
-      visitedCategory: 'regular',
-      clinicalGroup: 'Sports Rehab',
-      notes: 'Discharged with home balance board maintenance exercises. Full proprioception restored.',
-      medicalHistory: ['Grade II ATFL Sprain (Inversion injury)'],
-      groups: ['Sports Rehab', 'Discharged Patients'],
-      memberships: 'Pay Per Session',
-      counts: {
-        appointments: 8,
-        clinicalNotes: 4,
-        treatmentPlans: 2,
-        completedProcedures: 8,
-        files: 2,
-        prescriptions: 3,
-        invoices: 8,
-        payments: 8
-      }
-    }
-  ]);
+  // ─── Infinite Scroll / API State ─────────────────────────────────────────
+  private readonly PAGE_SIZE = 20;
+  private currentPage = 1;
+  isLoadingPatients = signal<boolean>(false);
+  hasMorePatients = signal<boolean>(true);
+
+  formData: any = {
+    fullName: '',
+    mobile: '',
+    email: '',
+    gender: 'Male',
+    dob: '',
+    address: '',
+    city: '',
+    state: '',
+    userId: 1,
+    roleId: 3,
+    phone: '',
+    primaryCondition: 'General Assessment'
+  };
+
+  private showError(msg: string): void { this.alert.toastError(msg); }
+  private showSuccess(msg: string): void { this.alert.toastSuccess(msg); }
+
+  allEMRPatients = signal<EMRPatient[]>([]);
 
   // Filtered patient cards computed based on search query and left filter selection
   filteredPatientCards = computed<EMRPatient[]>(() => {
@@ -569,6 +128,122 @@ export class Patients {
       return matchesGroup && matchesSearch;
     });
   });
+
+  // ─── Lifecycle ───────────────────────────────────────────────────────────
+  ngOnInit(): void {
+    this.loadPatients();
+  }
+
+  // ─── Window Scroll for Infinite Scrolling ─────────────────────────────────
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (this.viewMode() !== 'cards') return;
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+
+    // Load next page when user scrolls near bottom (300px threshold)
+    if (windowHeight + scrollY >= documentHeight - 300) {
+      if (this.hasMorePatients() && !this.isLoadingPatients()) {
+        this.loadMorePatients();
+      }
+    }
+  }
+
+  // ─── API: Load patients with pagination ──────────────────────────────────
+  async loadPatients(page: number = 1): Promise<void> {
+    if (this.isLoadingPatients()) return;
+    this.isLoadingPatients.set(true);
+    try {
+      const request: any = {
+        page,
+        pageSize: this.PAGE_SIZE
+      };
+      const query = this.cardSearchQuery()?.trim();
+      if (query) {
+        request.search = query;
+      }
+      const response = await this.apiService.Post<any>(
+        ApiEndPoints.GetMyPatients,
+        request
+      );
+      if (response?.isSuccess && response.data?.items?.length > 0) {
+        const items: EMRPatient[] = response.data.items.map((p: any) => this.mapToEMRPatient(p));
+        if (page === 1) {
+          this.allEMRPatients.set(items);
+        } else {
+          this.allEMRPatients.update(existing => [...existing, ...items]);
+        }
+        this.currentPage = page;
+        // If fewer items returned than page size, no more pages
+        this.hasMorePatients.set(items.length === this.PAGE_SIZE);
+      } else {
+        if (page === 1) {
+          this.allEMRPatients.set([]);
+        }
+        this.hasMorePatients.set(false);
+      }
+    } catch (error) {
+      console.error('Load patients error:', error);
+      this.showError('Error loading patients. Please try again.');
+    } finally {
+      this.isLoadingPatients.set(false);
+    }
+  }
+
+  // ─── API: Load next page for infinite scroll ──────────────────────────────
+  async loadMorePatients(): Promise<void> {
+    if (!this.hasMorePatients() || this.isLoadingPatients()) return;
+    await this.loadPatients(this.currentPage + 1);
+  }
+
+  // ─── Map API patient object to EMRPatient ─────────────────────────────────
+  private mapToEMRPatient(p: any): EMRPatient {
+    const gender: 'Male' | 'Female' =
+      (p.gender === 'Female' || p.gender === 'female') ? 'Female' : 'Male';
+
+    let age = p.age ?? 0;
+    if (!age && p.dob) {
+      const birth = new Date(p.dob);
+      const now = new Date();
+      let calc = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) calc--;
+      age = calc >= 0 ? calc : 0;
+    }
+
+    return {
+      id: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
+      patientCode: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
+      fullName: p.fullName ?? '',
+      age,
+      gender,
+      phone: p.mobile ?? p.phone ?? '',
+      email: p.email ?? '',
+      bloodGroup: p.bloodGroup ?? '',
+      dob: p.dob ?? '',
+      address: p.address ?? '',
+      emergencyContact: p.emergencyContact ?? '',
+      primaryCondition: p.primaryCondition ?? 'General Assessment',
+      status: (p.status === 'Completed' || p.status === 'Pending') ? p.status : 'Active',
+      visitedCategory: p.visitedCategory ?? 'regular',
+      clinicalGroup: p.clinicalGroup ?? 'General',
+      notes: p.notes ?? '',
+      medicalHistory: Array.isArray(p.medicalHistory) ? p.medicalHistory : [],
+      groups: Array.isArray(p.groups) ? p.groups : [],
+      memberships: p.memberships ?? '',
+      counts: {
+        appointments: p.counts?.appointments ?? p.appointmentCount ?? 0,
+        clinicalNotes: p.counts?.clinicalNotes ?? 0,
+        treatmentPlans: p.counts?.treatmentPlans ?? 0,
+        completedProcedures: p.counts?.completedProcedures ?? 0,
+        files: p.counts?.files ?? 0,
+        prescriptions: p.counts?.prescriptions ?? 0,
+        invoices: p.counts?.invoices ?? 0,
+        payments: p.counts?.payments ?? 0
+      }
+    };
+  }
 
   // Dummy Appointments for selected patient
   dummyAppointments = [
@@ -708,4 +383,50 @@ export class Patients {
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
   }
+  async Getpatient(e?: any): Promise<void> {
+    if (typeof e === 'string' && e.trim().length === 10) {
+      const mobile = e.trim();
+      try {
+        const request = {
+          search: mobile
+        };
+
+        const response = await this.apiService.Post<any>(
+          ApiEndPoints.GetMyPatients,
+          request
+        );
+
+        if (response?.isSuccess && response.data?.items?.length > 0) {
+          const patient = response.data.items[0];
+          this.formData = {
+            ...this.formData,
+            fullName: patient.fullName ?? '',
+            mobile: patient.mobile ?? mobile,
+            email: patient.email ?? '',
+            gender: patient.gender ?? 'Male',
+            dob: patient.dob ?? '',
+            address: patient.address ?? '',
+            city: patient.city ?? '',
+            state: patient.state ?? '',
+            userId: patient.userId ?? 1,
+            roleId: patient.roleId ?? 3,
+            phone: patient.phone ?? patient.mobile ?? mobile,
+            primaryCondition: patient.primaryCondition ?? 'General Assessment'
+          };
+
+          this.showSuccess('Patient details fetched successfully.');
+        } else {
+          this.showError(response?.message || 'Patient not found.');
+        }
+      } catch (error) {
+        console.error('Get patient error:', error);
+        this.showError('Error fetching patient details. Please try again.');
+      }
+      return;
+    }
+
+    // Default: reload patients list
+    await this.loadPatients(1);
+  }
+
 }
