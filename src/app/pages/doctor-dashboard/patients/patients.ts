@@ -1,13 +1,14 @@
 import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient } from '../../../models/doctor-dashboard.model';
+import { DoctorPatient, PatientConsultancyBooking } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 export interface EMRPatient {
   id: string;
+  patientId?: number;
   patientCode: string;
   fullName: string;
   age: number;
@@ -72,6 +73,12 @@ export class Patients implements OnInit {
   newNoteText = signal<string>('');
   showEditModal = signal<boolean>(false);
   showPhotoModal = signal<boolean>(false);
+
+  // ─── Patient Consultations State (Matches pattern from Consultations component) ─
+  patientConsultations = signal<PatientConsultancyBooking[]>([]);
+  isLoadingConsultations = signal<boolean>(false);
+  selectedConsultation = signal<PatientConsultancyBooking | null>(null);
+  consultationDetailModal = signal<PatientConsultancyBooking | null>(null);
 
   // ─── Infinite Scroll / API State ─────────────────────────────────────────
   private readonly PAGE_SIZE = 20;
@@ -212,8 +219,11 @@ export class Patients implements OnInit {
       age = calc >= 0 ? calc : 0;
     }
 
+    const patientId = p.patientId ?? p.id ?? p.userId ?? (parseInt(String(p.patientCode || p.id).replace(/\D/g, ''), 10) || 1);
+
     return {
       id: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
+      patientId: Number(patientId),
       patientCode: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
       fullName: p.fullName ?? '',
       age,
@@ -339,6 +349,8 @@ export class Patients implements OnInit {
     this.selectedPatient.set(patient);
     this.activeSubTab.set('profile');
     this.viewMode.set('emr');
+    const pid = patient.patientId ?? (Number(String(patient.id).replace(/\D/g, '')) || 1);
+    this.loadPatientBookingHistory(pid);
   }
 
   backToCards(): void {
@@ -351,6 +363,53 @@ export class Patients implements OnInit {
 
   setSubTab(tab: string): void {
     this.activeSubTab.set(tab);
+    if (tab === 'consultations') {
+      const p = this.selectedPatient();
+      if (p) {
+        const pid = p.patientId ?? (Number(String(p.id).replace(/\D/g, '')) || 1);
+        this.loadPatientBookingHistory(pid);
+      }
+    }
+  }
+
+  // ─── Patient Consultation Booking History (Same pattern as in Consultations) ─
+  async loadPatientBookingHistory(patientId: number): Promise<void> {
+    this.isLoadingConsultations.set(true);
+    this.patientConsultations.set([]);
+    this.selectedConsultation.set(null);
+
+    try {
+      const res = await this.apiService.Get<PatientConsultancyBooking[]>(
+        `${ApiEndPoints.PatientConsultancyBookingDetails}?patientId=${patientId}`
+      );
+
+      if (res && res.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientConsultations.set(res.data);
+      }
+    } catch (e) {
+      console.error('Patient booking history error', e);
+      this.showError('Error loading consultation history.');
+    } finally {
+      this.isLoadingConsultations.set(false);
+    }
+  }
+
+  selectBooking(booking: PatientConsultancyBooking): void {
+    this.selectedConsultation.set(booking);
+    this.consultationDetailModal.set(booking);
+  }
+
+  closeBookingModal(): void {
+    this.consultationDetailModal.set(null);
+  }
+
+  formatBookingDate(dateStr: string): string {
+    if (!dateStr) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
   }
 
   toggleSidebar(): void {
