@@ -359,8 +359,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       const pid = this.practitionerId;
       const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?practitionerId=${pid}`);
       if (res && res.isSuccess) {
-        console.log(res.data)
-        debugger;
         this.availabilitySlots.set(res.data);
       } else {
         this.availabilitySlots.set([]);
@@ -698,7 +696,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookAppointment(): void {
-    debugger
     this.bookConsultancy();
   }
 

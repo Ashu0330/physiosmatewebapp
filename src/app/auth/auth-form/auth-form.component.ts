@@ -140,7 +140,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
           } else if (roleId === 3) {
             this.router.navigate(['/clinics']);
           } else {
-            this.router.navigate(['/user-dashboard']);
+            this.router.navigate(['/user-dashboard/medical-records']);
           }
         }
         return;

@@ -138,7 +138,7 @@ export class Header extends BaseComponent implements OnInit {
     if (this.currentUser?.practitionerId || this.currentUser?.roleId === 2) {
       return '/doctor-dashboard';
     }
-    return '/user-dashboard';
+    return '/user-dashboard/medical-records';
   }
 
   async toggleProfileDropdown(event: Event): Promise<void> {

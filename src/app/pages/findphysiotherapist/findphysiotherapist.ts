@@ -286,7 +286,6 @@ export class Findphysiotherapist extends BaseComponent implements OnInit {
     this.isCityOpen = false;
   }
   async GetAllDoctors(): Promise<void> {
-    debugger;
     const res = await this.apiService.Post<PractitionerModel[]>(ApiEndPoints.GetPractitioners);
     this.PractitionerList = res.isSuccess ? (res.data ?? []) : []
   }

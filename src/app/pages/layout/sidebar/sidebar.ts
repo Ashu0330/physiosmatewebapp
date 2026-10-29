@@ -31,6 +31,7 @@ export class Sidebar extends BaseComponent {
   );
 
   readonly isSidebarActive = computed<boolean>(() => {
+
     this.currentUrl();
     const list = this.menulist();
     if (!list || list.length === 0) {
@@ -94,6 +95,7 @@ export class Sidebar extends BaseComponent {
     const res = await this.apiService.Get<MenusModel[]>(
       `${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${id}`
     );
+
     this.menulist.set(res.isSuccess ? (res.data ?? []) : []);
   }
 

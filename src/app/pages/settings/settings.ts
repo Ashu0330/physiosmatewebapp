@@ -313,7 +313,6 @@ export class Settings extends BaseComponent implements OnInit {
     try {
       const form = new FormData();
       const data = this.form.value;
-      debugger;
       form.append('fullName', data.fullName);
       form.append('email', data.email);
       form.append('mobile', data.mobile);
