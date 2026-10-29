@@ -77,12 +77,8 @@
           <p class="pm-section-subtitle">Set your weekly consultation hours and manage when patients can book you.</p>
         </div>
       </div>
-      <button type="button" class="pm-btn-primary" (click)="toggleAddForm()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ showAddForm && editingSlotId === 0 ? 'Hide Form' : '+ Add Time Slot' }}
+      <button type="button" class="pm-btn-primary" (click)="toggleAddForm()">        
+        {{ showAddForm && editingSlotId === 0 ? 'Hide Form' : 'Add Time Slot' }}
       </button>
     </div>
 
@@ -279,12 +275,8 @@
           <p class="pm-section-subtitle">Set appointment slots with patient capacity and manage when patients can book.</p>
         </div>
       </div>
-      <button type="button" class="pm-btn-primary" (click)="toggleAppointmentSlotForm()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ showAppointmentSlotForm && editingAppointmentSlotId === 0 ? 'Hide Form' : '+ Add Appointment Slot' }}
+      <button type="button" class="pm-btn-primary" (click)="toggleAppointmentSlotForm()">        
+        {{ showAppointmentSlotForm && editingAppointmentSlotId === 0 ? 'Hide Form' : 'Add Appointment Slot' }}
       </button>
     </div>
 
@@ -498,12 +490,8 @@
           <p class="pm-section-subtitle">Create and manage session packages and subscription plans for your patients.</p>
         </div>
       </div>
-      <button type="button" class="pm-btn-primary" (click)="togglePlanForm()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ showPlanForm && editingPlanId === 0 ? 'Hide Form' : '+ Add Plan' }}
+      <button type="button" class="pm-btn-primary" (click)="togglePlanForm()">        
+        {{ showPlanForm && editingPlanId === 0 ? 'Hide Form' : 'Add Plan' }}
       </button>
     </div>
 
@@ -747,12 +735,8 @@
           <p class="pm-section-subtitle">Offer optional chargeable add-ons that patients can include with their appointments.</p>
         </div>
       </div>
-      <button type="button" class="pm-btn-primary" (click)="toggleAddonForm()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ showAddonForm && editingAddonId === 0 ? 'Hide Form' : '+ Add Add-on' }}
+      <button type="button" class="pm-btn-primary" (click)="toggleAddonForm()">        
+        {{ showAddonForm && editingAddonId === 0 ? 'Hide Form' : 'Add Add-on' }}
       </button>
     </div>
 

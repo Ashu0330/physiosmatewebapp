@@ -4,10 +4,42 @@
        VIEW 1: PATIENTS CARDS DIRECTORY (SCREENSHOT 3 INSPIRED - PHYSIOSMATE THEME)
        ========================================================================= -->
   @if (viewMode() === 'cards') {
+  <div class="cards-top-bar">
+    <div class="header-titles">
+      <h3 class="overview-title">Clinical Practice Overview</h3>
+      <p class="overview-subtitle">Real-time KPIs, appointment completion rates, and practice performance
+        metrics.</p>
+    </div>
+    <div class="top-bar-right-actions">
+      <button type="button" class="btn-secondary-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Print Label</span>
+      </button>
+
+      <button type="button" class="btn-secondary-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="18" r="3"></circle>
+          <circle cx="6" cy="6" r="3"></circle>
+          <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+          <line x1="6" y1="9" x2="6" y2="21"></line>
+        </svg>
+        <span>Merge Patients</span>
+      </button>
+
+      <button type="button" class="btn-primary-add" (click)="onAddPatientClick()">
+        <span>+ Add New Patient</span>
+      </button>
+    </div>
+  </div>
+
   <div class="cards-view-panel">
 
     <!-- Top Action & Search Bar -->
-    <div class="cards-top-bar">
+    <div class="cards-top-search">
       <div class="top-bar-left-search">
         <div class="cards-search-box">
           <svg class="search-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -21,31 +53,6 @@
           <button type="button" class="btn-clear-search" (click)="cardSearchQuery.set('')">&times;</button>
           }
         </div>
-      </div>
-
-      <div class="top-bar-right-actions">
-        <button type="button" class="btn-secondary-outline">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <rect x="6" y="14" width="12" height="8"></rect>
-          </svg>
-          <span>Print Label</span>
-        </button>
-
-        <button type="button" class="btn-secondary-outline">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="18" cy="18" r="3"></circle>
-            <circle cx="6" cy="6" r="3"></circle>
-            <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
-            <line x1="6" y1="9" x2="6" y2="21"></line>
-          </svg>
-          <span>Merge Patients</span>
-        </button>
-
-        <button type="button" class="btn-primary-add" (click)="onAddPatientClick()">
-          <span>+ Add New Patient</span>
-        </button>
       </div>
     </div>
 
@@ -289,14 +296,6 @@
           </svg>
         </div>
 
-        <!-- Small Avatar Thumbnail -->
-        <div class="patient-avatar-thumb">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#94A3B8">
-            <path
-              d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-          </svg>
-        </div>
-
         <!-- Patient Demographics Summary -->
         <div class="patient-demographics-text">
           <span class="patient-title-name">{{ selectedPatient()!.fullName }}</span>
@@ -308,7 +307,12 @@
 
       <div class="banner-right">
         <button type="button" class="btn-banner-back" (click)="backToCards()">
-          &larr; Back to Patient Cards
+          <svg _ngcontent-ng-c767920605="" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5">
+            <line _ngcontent-ng-c767920605="" x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline _ngcontent-ng-c767920605="" points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Patient Cards
         </button>
       </div>
     </div>
@@ -509,9 +513,8 @@
       <!-- Right Content Main Area -->
       <main class="emr-content-main">
 
-        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
         <!-- SUB-TAB 1: PROFILE (SCREENSHOT 2 EXACT DESIGN)               -->
-        <!-- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ -->
+
         @if (activeSubTab() === 'profile') {
         <div class="profile-tab-wrapper">
 
@@ -691,7 +694,8 @@
             <div class="header-action-group">
               <button type="button" class="btn-table-outline"
                 (click)="loadPatientBookingHistory(selectedPatient()!.patientId ?? 1)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-2">
                   <polyline points="23 4 23 10 17 10"></polyline>
                   <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                 </svg>
@@ -750,7 +754,7 @@
                   <span class="c-meta-label">Doctor:</span>
                   <strong class="c-meta-val">{{ c.assignedPractitionerName || c.practitionerName }}</strong>
                 </div>
-                
+
 
                 <div class="c-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -760,7 +764,7 @@
                   <span class="c-meta-label">Clinic:</span>
                   <span class="c-meta-val">{{ c.clinicName }}</span>
                 </div>
-                
+
 
                 <div class="c-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -770,7 +774,7 @@
                   <span class="c-meta-label">Address:</span>
                   <span class="c-meta-val">{{ c.clinicAddress }}</span>
                 </div>
-                
+
 
                 <div class="c-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -779,33 +783,33 @@
                   <span class="c-meta-label">Home Visit:</span>
                   <span class="c-meta-val">{{ c.homeVisitAddress }}</span>
                 </div>
-                
+
               </div>
-              
+
 
               <!-- Vitals Strip -->
               <div class="c-vitals-strip">
                 <span class="c-vitals-label">Vitals:</span>
                 <div class="c-vitals-items">
-                  
+
                   <span class="c-vital-chip">
                     <span class="c-vital-name">BP:</span>
                     <strong>{{ c.bloodPressure }}</strong>
                   </span>
-                 
+
                   <span class="c-vital-chip">
                     <span class="c-vital-name">Pulse:</span>
                     <strong>{{ c.pulse }}</strong>
                   </span>
-                  
+
                   <span class="severity-badge" [class.mild]="c.painSeverity === 'Mild'"
                     [class.moderate]="c.painSeverity === 'Moderate'" [class.severe]="c.painSeverity === 'Severe'">
                     Pain: {{ c.painSeverity }}
                   </span>
-                  
+
                 </div>
               </div>
-              
+
 
               <!-- Clinical Encounter Details Grid -->
               <div class="c-clinical-grid">
@@ -843,7 +847,7 @@
                   <div class="c-block-tag">Clinical Notes</div>
                   <div class="c-block-content">{{ c.notes }}</div>
                 </div>
-                
+
               </div>
             </div>
             }
@@ -862,7 +866,7 @@
                 }}</p>
             </div>
             <button type="button" class="btn-primary-action-sm" (click)="onAddPatientClick()">
-              + Book Appointment
+              Book Appointment
             </button>
           </div>
 
@@ -913,7 +917,7 @@
               <h3 class="subtab-title">Vital Signs & Clinical Biometrics</h3>
               <p class="subtab-subtitle">Most recent clinical readings recorded during session check-in</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Log New Vitals</button>
+            <button type="button" class="btn-primary-action-sm">Log New Vitals</button>
           </div>
 
           <div class="vitals-cards-grid">
@@ -959,7 +963,7 @@
               <h3 class="subtab-title">Doctor Clinical Notes (SOAP)</h3>
               <p class="subtab-subtitle">Formal evaluations, diagnosis tracking, and therapeutic milestones</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Add Clinical Note</button>
+            <button type="button" class="btn-primary-action-sm">Add Clinical Note</button>
           </div>
 
           @for (note of dummyClinicalNotes; track note.date) {
@@ -1004,7 +1008,7 @@
               <p class="subtab-subtitle">Current physical therapy protocols and prescribed exercise phases</p>
             </div>
             <button type="button" class="btn-primary-action-sm" (click)="onPlansClick()">
-              + Create Treatment Plan
+              Create Treatment Plan
             </button>
           </div>
 
@@ -1041,7 +1045,7 @@
               <h3 class="subtab-title">Completed Procedures ({{ selectedPatient()!.counts.completedProcedures }})</h3>
               <p class="subtab-subtitle">Record of delivered therapies, electrotherapy, and manual techniques</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Log Procedure</button>
+            <button type="button" class="btn-primary-action-sm">Log Procedure</button>
           </div>
 
           <div class="subtab-table-box">
@@ -1082,7 +1086,7 @@
               </h3>
               <p class="subtab-subtitle">Prescribed home exercises, supportive appliances, and medications</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Add Prescription</button>
+            <button type="button" class="btn-primary-action-sm">Add Prescription</button>
           </div>
 
           <div class="subtab-table-box">
@@ -1120,7 +1124,7 @@
               <h3 class="subtab-title">Medical Reports & Files ({{ selectedPatient()!.counts.files }})</h3>
               <p class="subtab-subtitle">Diagnostic scans, radiological imaging, and clinical evaluation PDFs</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Upload File</button>
+            <button type="button" class="btn-primary-action-sm">Upload File</button>
           </div>
 
           <div class="files-grid">
@@ -1151,7 +1155,7 @@
               <h3 class="subtab-title">Billing & Payment Invoices ({{ selectedPatient()!.counts.invoices }})</h3>
               <p class="subtab-subtitle">Financial statements, receipt logs, and package invoice records</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">+ Generate Invoice</button>
+            <button type="button" class="btn-primary-action-sm">Generate Invoice</button>
           </div>
 
           <div class="subtab-table-box">

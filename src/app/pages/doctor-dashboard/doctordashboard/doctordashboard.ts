@@ -22,6 +22,7 @@ import { Treatmentplans } from '../treatmentplans/treatmentplans';
 import { Consultations } from '../consultations/consultations';
 import { DoctorAppointments } from '../appointments/doctor-appointments';
 import { Sidebar } from '../../layout/sidebar/sidebar';
+import { Authservice } from '../../../services/authservice';
 
 export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments';
 
@@ -43,10 +44,11 @@ export class Doctordashboard implements OnInit {
   private doctorService = inject(DoctorDashboardService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private auth = inject(Authservice);
   private elementRef = inject(ElementRef);
 
   activeTab: DoctorDashboardTab = 'dashboard';
-  doctorName = 'Dr. Himanshu Suman';
+  doctorName = this.auth.getUserName();
   preSelectedPatientId = signal<string | null>(null);
 
   // ─── Central Clinical State ────────────────────────────────────────────────

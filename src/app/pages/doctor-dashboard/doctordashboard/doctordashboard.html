@@ -3,14 +3,10 @@
 
     <!-- Top Header Row (Matching Patient Drive Topbar) -->
     <div class="physios-drive-topbar">
-      <div class="topbar-left">
-        <h1 class="drive-heading">Doctor Console</h1>
-      </div>
       <div class="topbar-right">
         <div class="user-profile-header">
-
           <div class="user-details">
-            <span class="user-name">Welcome - {{ doctorName }}</span>
+            <span class="overview-subtitle fw-semibold mb-1">Welcome back, {{ doctorName }}</span>
           </div>
         </div>
       </div>
@@ -86,7 +82,8 @@
                 }
               </div>
 
-              <a routerLink="/doctor-dashboard/schedule-treatment" class="btn-primary-action" style="background-color: #0F766E; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+              <a routerLink="/doctor-dashboard/schedule-treatment" class="btn-primary-action"
+                style="background-color: #0F766E; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -97,7 +94,7 @@
               </a>
 
               <button type="button" class="btn-primary-action" (click)="selectTab('add-patient')">
-                + Add Patient
+                Add Patient
               </button>
             </div>
           </div>
@@ -111,7 +108,6 @@
               <!-- 1. Total Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Total Appointments</span>
                   <div class="metric-icon-box icon-teal">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -120,6 +116,7 @@
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Total Appointments</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number">{{ stats.totalAppointments }}</span>
@@ -130,13 +127,13 @@
               <!-- 2. Completed Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Completed</span>
                   <div class="metric-icon-box icon-green">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                       <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Completed</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
@@ -147,13 +144,13 @@
               <!-- 3. Pending Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Pending</span>
                   <div class="metric-icon-box icon-amber">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Pending</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
@@ -164,7 +161,6 @@
               <!-- 4. Cancelled Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Cancelled</span>
                   <div class="metric-icon-box icon-slate">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"></circle>
@@ -172,6 +168,7 @@
                       <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Cancelled</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
@@ -182,13 +179,13 @@
               <!-- 5. Completion Rate -->
               <div class="metric-card highlight-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Completion Rate</span>
                   <div class="metric-icon-box icon-cyan">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                       <polyline points="17 6 23 6 23 12"></polyline>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Completion Rate</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
@@ -206,7 +203,6 @@
               <!-- 6. Active Patients -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Active Patients</span>
                   <div class="metric-icon-box icon-blue">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -215,6 +211,7 @@
                       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Active Patients</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-blue">{{ stats.activePatients }}</span>
@@ -225,7 +222,6 @@
               <!-- 7. New Patients -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">New Patients</span>
                   <div class="metric-icon-box icon-purple">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -234,6 +230,7 @@
                       <line x1="23" y1="11" x2="17" y2="11"></line>
                     </svg>
                   </div>
+                  <span class="metric-card-label">New Patients</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-purple">{{ stats.newPatients }}</span>
@@ -244,13 +241,13 @@
               <!-- 8. Revenue -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Revenue</span>
                   <div class="metric-icon-box icon-green">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="1" x2="12" y2="23"></line>
                       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Revenue</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
@@ -261,13 +258,13 @@
               <!-- 9. Pending Payments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Pending Payments</span>
                   <div class="metric-icon-box icon-rose">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                       <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Pending Payments</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
@@ -279,7 +276,6 @@
               <!-- 10. Average Rating & Reviews -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Average Rating</span>
                   <div class="metric-icon-box icon-gold">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
                       <polygon
@@ -287,6 +283,7 @@
                       </polygon>
                     </svg>
                   </div>
+                  <span class="metric-card-label">Average Rating</span>
                 </div>
                 <div class="metric-bottom">
                   <span class="metric-number text-gold">
@@ -309,7 +306,12 @@
                 <span class="section-sub">Real-time consultation & physical therapy sessions</span>
               </div>
               <button type="button" class="link-btn-flat" (click)="selectTab('patients')">
-                View All Patients &rarr;
+                View All Patients
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
               </button>
             </div>
 
@@ -323,7 +325,7 @@
                     <th>Session Milestone</th>
                     <th>Visit Mode</th>
                     <th>Status</th>
-                    <th class="text-right">Action</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -383,7 +385,7 @@
                     </td>
 
                     <!-- Interactive Action Button -->
-                    <td class="text-right">
+                    <td>
                       @if (apt.status === 'Scheduled') {
                       <button type="button" class="btn-status-action start"
                         (click)="updateAppointmentStatus(apt.id, 'In-Progress')">

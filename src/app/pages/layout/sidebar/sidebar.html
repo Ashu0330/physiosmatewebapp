@@ -1,8 +1,11 @@
 <!-- Sidebar Navigation -->
 
 @if (isSidebarActive()) {
-<div class="top-grey-div"></div>
+<!-- <div class="top-grey-div"></div> -->
 <aside class="physios-sidebar">
+  <button class="physios-nav-btn">
+    <h1 class="drive-heading">Doctor Console</h1>
+  </button>
   <nav class="physios-nav">
     @for (item of menulist(); track item.menuId || item.path || $index) {
     <button type="button" class="physios-nav-btn" [class.active]="isTabActive(item)" (click)="selectTab(item)">
