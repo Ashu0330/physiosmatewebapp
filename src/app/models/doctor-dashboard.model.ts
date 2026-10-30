@@ -262,3 +262,18 @@ export interface FinalizeConsultancyRequest {
   clinicalAdvice: string;
   investigation: string;
 }
+export class Payment {
+  id: number;
+  patientId: number;
+  referenceId: number;
+  referenceType: string;
+  providerType: string;
+  providerId: number;
+  amount: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  transactionId: number;
+  paidAt: string;
+  createdAt: string;
+  serviceDate: string;
+}

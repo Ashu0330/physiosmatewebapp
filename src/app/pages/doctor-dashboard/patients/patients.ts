@@ -1,7 +1,7 @@
 import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient, PatientConsultancyBooking } from '../../../models/doctor-dashboard.model';
+import { DoctorPatient, PatientConsultancyBooking, Payment } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
@@ -79,6 +79,7 @@ export class Patients implements OnInit {
   isLoadingConsultations = signal<boolean>(false);
   selectedConsultation = signal<PatientConsultancyBooking | null>(null);
   consultationDetailModal = signal<PatientConsultancyBooking | null>(null);
+  PatientPayments = signal<Payment[]>([]);
 
   // ─── Infinite Scroll / API State ─────────────────────────────────────────
   private readonly PAGE_SIZE = 20;
@@ -198,7 +199,6 @@ export class Patients implements OnInit {
     }
   }
 
-  // ─── API: Load next page for infinite scroll ──────────────────────────────
   async loadMorePatients(): Promise<void> {
     if (!this.hasMorePatients() || this.isLoadingPatients()) return;
     await this.loadPatients(this.currentPage + 1);
@@ -446,13 +446,8 @@ export class Patients implements OnInit {
     if (typeof e === 'string' && e.trim().length === 10) {
       const mobile = e.trim();
       try {
-        const request = {
-          search: mobile
-        };
-
-        const response = await this.apiService.Post<any>(
-          ApiEndPoints.GetMyPatients,
-          request
+        const request = { search: mobile };
+        const response = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, request
         );
 
         if (response?.isSuccess && response.data?.items?.length > 0) {
@@ -483,9 +478,26 @@ export class Patients implements OnInit {
       }
       return;
     }
-
-    // Default: reload patients list
     await this.loadPatients(1);
+  }
+
+  async GetPayment(patientid: any): Promise<void> {
+    try {
+      const response = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetAllPayment}?patientId=${patientid}`);
+      if (response?.isSuccess) {
+        debugger
+        this.PatientPayments.set(response.data);
+      }
+      else {
+        this.alert.error(response.message)
+      }
+    }
+    catch (error) {
+      console.error('Get patient error:', error);
+      this.showError('Error fetching patient details. Please try again.');
+    }
+    return;
   }
 
 }

@@ -54,8 +54,7 @@ export const ApiEndPoints = {
     // ── Patient ───────────────────────────────────────────────────────────────────
     AddPatient: 'Patient/AddPatient',
     GetMyPatients: 'Patient/GetMyPatients',
-        TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
-
+    TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
@@ -73,6 +72,7 @@ export const ApiEndPoints = {
     AddProviderPlans: 'ProviderCatalog/AddProviderPlans',
     AddAddons: 'ProviderCatalog/AddAddons',
     GetAllAddOns: 'ProviderCatalog/GetAllAddOns',
+    GetAllPayment: 'ProviderCatalog/GetAllPayment',
     CreateAppointmentSlot: 'ProviderCatalog/CreateAppoimentSlot',
     GetAppointmentSlots: 'Appointment/GetAppoimentSlot',
 

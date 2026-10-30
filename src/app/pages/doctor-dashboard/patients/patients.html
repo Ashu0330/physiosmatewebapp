@@ -482,8 +482,8 @@
             <span class="nav-counter">{{ selectedPatient()!.counts.invoices }}</span>
           </button>
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'payments'"
-            (click)="setSubTab('payments')">
+          <button (click)="GetPayment(selectedPatient()?.patientId)" type="button" class="emr-nav-item"
+            [class.active]="activeSubTab() === 'payments'" (click)="setSubTab('payments')">
             <div class="nav-item-left">
               <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2">
@@ -1148,7 +1148,7 @@
         }
 
         <!-- SUB-TAB 9: BILLING -->
-        @if (activeSubTab() === 'invoices' || activeSubTab() === 'payments' || activeSubTab() === 'ledger') {
+        @if (activeSubTab() === 'invoices' || activeSubTab() === 'payments' || activeSubTab() === 'ledger' ){
         <div class="subtab-panel">
           <div class="subtab-header">
             <div>
@@ -1172,17 +1172,17 @@
                 </tr>
               </thead>
               <tbody>
-                @for (inv of dummyInvoices; track inv.invNo) {
+                @for (inv of PatientPayments(); track inv.id) {
                 <tr>
-                  <td><strong>{{ inv.invNo }}</strong></td>
-                  <td>{{ inv.date }}</td>
-                  <td>{{ inv.service }}</td>
+                  <td><strong>{{ inv.id }}</strong></td>
+                  <td>{{ inv.paidAt | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ inv.referenceType }}</td>
                   <td><strong>{{ inv.amount }}</strong></td>
-                  <td>{{ inv.mode }}</td>
-                  <td><span class="status-badge completed">{{ inv.status }}</span></td>
-                  <td class="text-right">
+                  <td>{{ inv.paymentMethod }}</td>
+                  <td><span class="status-badge completed">{{ inv.paymentStatus }}</span></td>
+                  <!-- <td class="text-right">
                     <button type="button" class="btn-table-outline">Print Receipt</button>
-                  </td>
+                  </td> -->
                 </tr>
                 }
               </tbody>

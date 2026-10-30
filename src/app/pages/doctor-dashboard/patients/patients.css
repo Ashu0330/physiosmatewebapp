@@ -2017,3 +2017,29 @@
   font-weight: 600;
   color: #15803d;
 }
+
+
+/* ── Patient Payments Subtab Styles ──────────────────────────────────────── */
+.payment-total-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  border: 1px solid #cceee8;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.payment-total-pill strong {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.payment-amount {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary-dark, #087F76);
+}
