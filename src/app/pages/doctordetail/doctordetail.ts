@@ -64,7 +64,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
   readonly bookingSuccess = signal<boolean>(false);
   readonly bookingMessage = signal<string>('');
-  
+
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
     doctorSpecialty: string;
@@ -527,7 +527,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     if (slotOrStart && typeof slotOrStart === 'object' && 'startTime' in slotOrStart) {
       const s = slotOrStart as slots; // current
       /* start real */
-      this.selectedSlot.set(s);
       sTime = s.startTime || '';
       eTime = s.endTime || '';
       slotId = s.id || null;
@@ -816,7 +815,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
           patientName: user?.fullName || this.authService.getUserName() || 'Patient',
           homeVisitAddress: formValues.homeVisitAddress || formValues.address || null,
-          slotId: formValues.slotId || this.selectedSlot()?.id || null
         };
         await this.BookConsultancyApi(payload);
       } catch (err) {
