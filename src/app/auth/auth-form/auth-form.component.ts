@@ -54,6 +54,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   // ── Send OTP ────────────────────────────────────────────────────────────────
 
   async sendSignupOtp(): Promise<void> {
+    if (this.isSignupOtpSending() || this.signupOtpCountdown() > 0) return;
     const emailCtrl = this.signupForm.get('email');
     if (!emailCtrl || emailCtrl.invalid) {
       emailCtrl?.markAsTouched();

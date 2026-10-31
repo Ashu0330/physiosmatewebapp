@@ -375,9 +375,8 @@
 
         <!-- Category: EMR -->
         <div class="nav-category-block">
-          <div class="nav-category-title">EMR</div>
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'vital-signs'"
+          <!-- <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'vital-signs'"
             (click)="setSubTab('vital-signs')">
             <div class="nav-item-left">
               <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -388,22 +387,9 @@
               </svg>
               <span class="nav-label">Vital Signs</span>
             </div>
-          </button>
+          </button> -->
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'clinical-notes'"
-            (click)="setSubTab('clinical-notes')">
-            <div class="nav-item-left">
-              <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-              </svg>
-              <span class="nav-label">Clinical Notes</span>
-            </div>
-            <span class="nav-counter">{{ selectedPatient()!.counts.clinicalNotes }}</span>
-          </button>
+
 
           <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'treatment-plans'"
             (click)="setSubTab('treatment-plans')">
@@ -444,32 +430,22 @@
             </div>
           </button>
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'prescriptions'"
+          <!-- <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'prescriptions'"
             (click)="setSubTab('prescriptions')">
             <div class="nav-item-left">
               <span class="nav-label">Prescriptions</span>
             </div>
             <span class="nav-counter">{{ selectedPatient()!.counts.prescriptions }}</span>
-          </button>
+          </button> -->
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'timeline'"
-            (click)="setSubTab('timeline')">
-            <div class="nav-item-left">
-              <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              <span class="nav-label">Timeline</span>
-            </div>
-          </button>
+
         </div>
 
         <!-- Category: Billing -->
-        <div class="nav-category-block">
-          <div class="nav-category-title">Billing</div>
+        <!-- <div class="nav-category-block">
+          <div class="nav-category-title">Billing</div> -->
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'invoices'"
+        <!-- <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'invoices'"
             (click)="setSubTab('invoices')">
             <div class="nav-item-left">
               <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -480,22 +456,22 @@
               <span class="nav-label">Invoices</span>
             </div>
             <span class="nav-counter">{{ selectedPatient()!.counts.invoices }}</span>
-          </button>
+          </button> -->
 
-          <button (click)="GetPayment(selectedPatient()?.patientId)" type="button" class="emr-nav-item"
-            [class.active]="activeSubTab() === 'payments'" (click)="setSubTab('payments')">
-            <div class="nav-item-left">
-              <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-              <span class="nav-label">Payments</span>
-            </div>
-            <span class="nav-counter">{{ selectedPatient()!.counts.payments }}</span>
-          </button>
+        <button (click)="GetPayment(selectedPatient()?.patientId)" type="button" class="emr-nav-item"
+          [class.active]="activeSubTab() === 'payments'" (click)="setSubTab('payments')">
+          <div class="nav-item-left">
+            <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span class="nav-label">Payments</span>
+          </div>
+          <span class="nav-counter">{{ selectedPatient()!.counts.payments }}</span>
+        </button>
 
-          <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'ledger'"
+        <!-- <button type="button" class="emr-nav-item" [class.active]="activeSubTab() === 'ledger'"
             (click)="setSubTab('ledger')">
             <div class="nav-item-left">
               <svg class="nav-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -505,8 +481,8 @@
               </svg>
               <span class="nav-label">Ledger</span>
             </div>
-          </button>
-        </div>
+          </button> -->
+        <!-- </div> -->
 
       </aside>
 
@@ -605,27 +581,6 @@
 
             <!-- Right Column: Notes, Medical History, Groups, Memberships -->
             <div class="profile-right-col">
-
-              <!-- Patient Notes -->
-              <!-- <div class="profile-section-block">
-                <h3 class="section-green-title">Patient Notes</h3>
-                <div class="note-input-container">
-                  <textarea class="note-textarea" placeholder="Type note here" rows="3" [ngModel]="newNoteText()"
-                    (ngModelChange)="newNoteText.set($event)"></textarea>
-                  <div class="note-btn-row">
-                    <button type="button" class="btn-save-note" (click)="addNote()">Note</button>
-                  </div>
-                </div>
-
-                @if (selectedPatient()!.notes) {
-                <div class="existing-notes-card">
-                  <div class="note-bubble">
-                    <p class="note-content">{{ selectedPatient()!.notes }}</p>
-                    <span class="note-timestamp">Recorded by Dr. Himanshu Suman  Clinical Observation</span>
-                  </div>
-                </div>
-                }
-              </div> -->
 
               <!-- Medical History [Edit] -->
               <div class="profile-section-block">
@@ -726,7 +681,7 @@
                       <line x1="8" y1="2" x2="8" y2="6"></line>
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    <span class="c-date-text">{{ formatBookingDate(c.consultancyDate) }}</span>
+                    <span class="c-date-text">{{ c.consultancyDate| date:'dd MMM yyyy' }}</span>
                     <span class="c-time-text">{{ c.startTime }} &ndash; {{ c.endTime }}</span>
                   </div>
 
@@ -909,94 +864,8 @@
         </div>
         }
 
-        <!-- SUB-TAB 3: VITAL SIGNS -->
-        @if (activeSubTab() === 'vital-signs') {
-        <div class="subtab-panel">
-          <div class="subtab-header">
-            <div>
-              <h3 class="subtab-title">Vital Signs & Clinical Biometrics</h3>
-              <p class="subtab-subtitle">Most recent clinical readings recorded during session check-in</p>
-            </div>
-            <button type="button" class="btn-primary-action-sm">Log New Vitals</button>
-          </div>
 
-          <div class="vitals-cards-grid">
-            <div class="vital-card">
-              <span class="vital-lbl">Blood Pressure</span>
-              <span class="vital-val">{{ dummyVitals.bp }}</span>
-              <span class="vital-status green">Normal Range</span>
-            </div>
-            <div class="vital-card">
-              <span class="vital-lbl">Pulse Rate</span>
-              <span class="vital-val">{{ dummyVitals.pulse }}</span>
-              <span class="vital-status green">Resting Regular</span>
-            </div>
-            <div class="vital-card">
-              <span class="vital-lbl">Oxygen Saturation (SpO2)</span>
-              <span class="vital-val">{{ dummyVitals.spo2 }}</span>
-              <span class="vital-status green">Optimal</span>
-            </div>
-            <div class="vital-card">
-              <span class="vital-lbl">Body Temperature</span>
-              <span class="vital-val">{{ dummyVitals.temp }}</span>
-              <span class="vital-status green">Afebrile</span>
-            </div>
-            <div class="vital-card">
-              <span class="vital-lbl">Height / Weight</span>
-              <span class="vital-val">{{ dummyVitals.height }} / {{ dummyVitals.weight }}</span>
-              <span class="vital-status blue">BMI {{ dummyVitals.bmi }}</span>
-            </div>
-            <div class="vital-card">
-              <span class="vital-lbl">VAS Pain Score</span>
-              <span class="vital-val pain">{{ dummyVitals.painScore }}</span>
-              <span class="vital-status orange">Mild (Improved from 7/10)</span>
-            </div>
-          </div>
-        </div>
-        }
 
-        <!-- SUB-TAB 4: CLINICAL NOTES -->
-        @if (activeSubTab() === 'clinical-notes') {
-        <div class="subtab-panel">
-          <div class="subtab-header">
-            <div>
-              <h3 class="subtab-title">Doctor Clinical Notes (SOAP)</h3>
-              <p class="subtab-subtitle">Formal evaluations, diagnosis tracking, and therapeutic milestones</p>
-            </div>
-            <button type="button" class="btn-primary-action-sm">Add Clinical Note</button>
-          </div>
-
-          @for (note of dummyClinicalNotes; track note.date) {
-          <div class="soap-note-card">
-            <div class="soap-header">
-              <div class="soap-doctor-info">
-                <strong>{{ note.doctor }}</strong>
-                <span class="cell-sub">{{ note.date }}</span>
-              </div>
-              <span class="badge-soap">SOAP Evaluation</span>
-            </div>
-            <div class="soap-body">
-              <div class="soap-row">
-                <span class="soap-tag s">S</span>
-                <div class="soap-text"><strong>Subjective:</strong> {{ note.subjective }}</div>
-              </div>
-              <div class="soap-row">
-                <span class="soap-tag o">O</span>
-                <div class="soap-text"><strong>Objective:</strong> {{ note.objective }}</div>
-              </div>
-              <div class="soap-row">
-                <span class="soap-tag a">A</span>
-                <div class="soap-text"><strong>Assessment:</strong> {{ note.assessment }}</div>
-              </div>
-              <div class="soap-row">
-                <span class="soap-tag p">P</span>
-                <div class="soap-text"><strong>Plan:</strong> {{ note.plan }}</div>
-              </div>
-            </div>
-          </div>
-          }
-        </div>
-        }
 
         <!-- SUB-TAB 5: TREATMENT PLANS -->
         @if (activeSubTab() === 'treatment-plans') {
@@ -1036,86 +905,6 @@
           </div>
         </div>
         }
-
-        <!-- SUB-TAB 6: PROCEDURES -->
-        @if (activeSubTab() === 'procedures') {
-        <div class="subtab-panel">
-          <div class="subtab-header">
-            <div>
-              <h3 class="subtab-title">Completed Procedures ({{ selectedPatient()!.counts.completedProcedures }})</h3>
-              <p class="subtab-subtitle">Record of delivered therapies, electrotherapy, and manual techniques</p>
-            </div>
-            <button type="button" class="btn-primary-action-sm">Log Procedure</button>
-          </div>
-
-          <div class="subtab-table-box">
-            <table class="subtab-table">
-              <thead>
-                <tr>
-                  <th>Procedure / Therapy Name</th>
-                  <th>Date Delivered</th>
-                  <th>Duration</th>
-                  <th>Administered By</th>
-                  <th class="text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (proc of dummyProcedures; track proc.name + proc.date) {
-                <tr>
-                  <td><strong>{{ proc.name }}</strong></td>
-                  <td>{{ proc.date }}</td>
-                  <td>{{ proc.duration }}</td>
-                  <td>{{ proc.therapist }}</td>
-                  <td class="text-right">
-                    <span class="status-badge completed">Completed</span>
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-        }
-
-        <!-- SUB-TAB 7: PRESCRIPTIONS -->
-        @if (activeSubTab() === 'prescriptions') {
-        <div class="subtab-panel">
-          <div class="subtab-header">
-            <div>
-              <h3 class="subtab-title">Prescriptions & Home Regimens ({{ selectedPatient()!.counts.prescriptions }})
-              </h3>
-              <p class="subtab-subtitle">Prescribed home exercises, supportive appliances, and medications</p>
-            </div>
-            <button type="button" class="btn-primary-action-sm">Add Prescription</button>
-          </div>
-
-          <div class="subtab-table-box">
-            <table class="subtab-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Item / Exercise Name</th>
-                  <th>Dosage / Frequency</th>
-                  <th>Duration</th>
-                  <th>Instructions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (rx of dummyPrescriptions; track rx.title) {
-                <tr>
-                  <td><span class="tag-chip">{{ rx.type }}</span></td>
-                  <td><strong>{{ rx.title }}</strong></td>
-                  <td>{{ rx.dosage }}</td>
-                  <td>{{ rx.duration }}</td>
-                  <td>{{ rx.instructions }}</td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-        }
-
         <!-- SUB-TAB 8: FILES -->
         @if (activeSubTab() === 'files') {
         <div class="subtab-panel">
@@ -1147,74 +936,120 @@
         </div>
         }
 
-        <!-- SUB-TAB 9: BILLING -->
-        @if (activeSubTab() === 'invoices' || activeSubTab() === 'payments' || activeSubTab() === 'ledger' ){
+        <!-- SUB-TAB 9: BILLING & PAYMENTS -->
+        @if ( activeSubTab() === 'payments' ){
         <div class="subtab-panel">
           <div class="subtab-header">
             <div>
-              <h3 class="subtab-title">Billing & Payment Invoices ({{ selectedPatient()!.counts.invoices }})</h3>
-              <p class="subtab-subtitle">Financial statements, receipt logs, and package invoice records</p>
+              <h3 class="subtab-title">Billing & Payment Records</h3>
+              <p class="subtab-subtitle">Financial statements, receipt logs, and payment transactions for {{
+                selectedPatient()?.fullName }}</p>
             </div>
-            <button type="button" class="btn-primary-action-sm">Generate Invoice</button>
-          </div>
-
-          <div class="subtab-table-box">
-            <table class="subtab-table">
-              <thead>
-                <tr>
-                  <th>Invoice No.</th>
-                  <th>Date</th>
-                  <th>Clinical Service</th>
-                  <th>Amount</th>
-                  <th>Payment Mode</th>
-                  <th>Status</th>
-                  <th class="text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (inv of PatientPayments(); track inv.id) {
-                <tr>
-                  <td><strong>{{ inv.id }}</strong></td>
-                  <td>{{ inv.paidAt | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ inv.referenceType }}</td>
-                  <td><strong>{{ inv.amount }}</strong></td>
-                  <td>{{ inv.paymentMethod }}</td>
-                  <td><span class="status-badge completed">{{ inv.paymentStatus }}</span></td>
-                  <!-- <td class="text-right">
-                    <button type="button" class="btn-table-outline">Print Receipt</button>
-                  </td> -->
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-        }
-
-        <!-- SUB-TAB 10: TIMELINE -->
-        @if (activeSubTab() === 'timeline') {
-        <div class="subtab-panel">
-          <div class="subtab-header">
-            <div>
-              <h3 class="subtab-title">Patient Journey Timeline</h3>
-              <p class="subtab-subtitle">Chronological record of visits, reminders, and milestones</p>
+            <div class="header-action-group">
+              <button type="button" class="btn-table-outline" (click)="GetPayment(selectedPatient()?.patientId)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-1">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+              <button type="button" class="btn-primary-action-sm">Generate Invoice</button>
             </div>
           </div>
 
-          <div class="timeline-container">
-            @for (item of dummyTimeline; track item.date) {
-            <div class="timeline-row">
-              <div class="timeline-dot"></div>
-              <div class="timeline-card">
-                <span class="timeline-date">{{ item.date }}</span>
-                <h4 class="timeline-title">{{ item.title }}</h4>
-                <p class="timeline-desc">{{ item.desc }}</p>
+          @if (PatientPayments().length === 0) {
+          <div class="empty-subtab-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <p>No payment records found for this patient.</p>
+          </div>
+          } @else {
+          <div class="payment-date-groups-container">
+            @for (group of PatientPayments(); track group.date || $index) {
+            <div class="payment-date-card">
+              <!-- Date Header -->
+              <div class="payment-date-card-header">
+                <div class="payment-date-left">
+                  <div class="c-date-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="c-date-text">{{group.date| date:'dd MMM yyyy' }}</span>
+                  </div>
+                  <span class="payment-count-badge">
+                    {{ group.totalPayments}} Payments
+                  </span>
+                </div>
+                <div class="payment-date-right">
+                  <span class="subtotal-label">Total Amount:</span>
+                  <span class="payment-total-chip">&#8377;{{ $any(group).totalAmount ?? group.TotalAmount ?? 0 }}</span>
+                </div>
+              </div>
+
+              <!-- Table for this Date's payments -->
+              <div class="subtab-table-box">
+                <table class="subtab-table">
+                  <thead>
+                    <tr>
+                      <th>Payment #</th>
+                      <th>Service Date</th>
+                      <th>Service / Reference</th>
+                      <th>Provider</th>
+                      <th>Amount</th>
+                      <th>Payment Mode</th>
+                      <th>Status</th>
+                      <th class="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (inv of ($any(group).payments || group.Payments || [group]); track inv.id || $index) {
+                    <tr>
+                      <td><strong>#{{ inv.id }}</strong></td>
+                      <td>
+                        <strong>{{ (inv.serviceDate || inv.paidAt || $any(group).date) | date:'dd/MM/yyyy' }}</strong>
+                        @if (inv.paidAt) {
+                        <div class="cell-sub">{{ inv.paidAt | date:'shortTime' }}</div>
+                        }
+                      </td>
+                      <td>
+                        <strong>{{ inv.referenceType || 'Consultancy' }}</strong>
+                        @if ($any(inv).addOnName) {
+                        <div class="cell-sub">{{ $any(inv).addOnName }}</div>
+                        }
+                      </td>
+                      <td>
+                        <span class="provider-type-tag">{{ inv.providerType || 'Practitioner' }}</span>
+                      </td>
+                      <td><strong class="payment-amount">&#8377;{{ inv.amount }}</strong></td>
+                      <td><span class="tag-chip">{{ inv.paymentMethod || 'UPI' }}</span></td>
+                      <td>
+                        <span class="status-badge" [class.completed]="inv.paymentStatus === 'Paid'"
+                          [class.pending]="inv.paymentStatus !== 'Paid'">
+                          {{ inv.paymentStatus || 'Paid' }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <button type="button" class="btn-table-outline">Receipt</button>
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
             }
           </div>
+          }
         </div>
         }
+
+
 
       </main>
 
@@ -1231,7 +1066,7 @@
     <div class="modal-dialog-box" (click)="$event.stopPropagation()">
       <div class="modal-head">
         <h4>Edit Patient Profile</h4>
-        <button type="button" class="btn-modal-x" (click)="showEditModal.set(false)">&times;</button>
+        <button type="button" class="btn-modal-x" (click)="showEditModal.set(false)">& s;</button>
       </div>
       <div class="modal-form-content">
         <div class="form-row">

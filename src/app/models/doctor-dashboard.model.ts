@@ -262,7 +262,7 @@ export interface FinalizeConsultancyRequest {
   clinicalAdvice: string;
   investigation: string;
 }
-export class Payment {
+export class PaymentSummary {
   id: number;
   patientId: number;
   referenceId: number;
@@ -276,4 +276,10 @@ export class Payment {
   paidAt: string;
   createdAt: string;
   serviceDate: string;
+}
+export class Payment {
+  date: string;
+  TotalAmount: number;
+  totalPayments: number;
+  Payments?: PaymentSummary[]
 }

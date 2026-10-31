@@ -44,7 +44,7 @@
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <input id="signup-email" type="email" formControlName="email" placeholder="e.g. rahul@example.com"
-          class="form-input"
+          class="form-input" (keydown.enter)="(!isSignupOtpSending() && signupOtpCountdown() === 0) ? sendSignupOtp() : null"
           [class.is-invalid]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched" />
         <button type="button" class="fp-send-otp-btn" [disabled]="isSignupOtpSending() || signupOtpCountdown() > 0"
           (click)="sendSignupOtp()">
@@ -75,7 +75,7 @@
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
         <input id="signup-otp" type="text" formControlName="otp" placeholder="Enter received OTP" maxlength="6"
-          class="form-input" [class.is-invalid]="signupForm.get('otp')?.invalid && signupForm.get('otp')?.touched" />
+          class="form-input" (keydown.enter)="verifyOtp()" [class.is-invalid]="signupForm.get('otp')?.invalid && signupForm.get('otp')?.touched" />
       </div>
       @if (signupForm.get('otp')?.invalid && signupForm.get('otp')?.touched) {
       <span class="field-error">Please enter the received OTP</span>
@@ -97,15 +97,20 @@
 
     <!-- Submit Button: Sends OTP if not sent yet, or verifies OTP & continues if sent -->
     @if (!signupOtpSent()) {
-    <button type="button" class="submit-btn" (click)="sendSignupOtp()" [disabled]="isSignupOtpSending()">
+    <button type="button" class="submit-btn" (click)="sendSignupOtp()" (keydown.enter)="(!isSignupOtpSending() && signupOtpCountdown() === 0) ? sendSignupOtp() : null" [disabled]="isSignupOtpSending() || signupOtpCountdown() > 0">
       @if (isSignupOtpSending()) {
       <span class="spinner"></span>
       <span>Sending OTP...</span>
       } @else {
-      <span>Send Verification OTP 
+      <span>Send Verification OTP
         <span>
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" width="16" height="16" viewBox="0 0 32 32" style="color: rgb(255, 255, 255); opacity: 1; transform: rotate(0deg);"><path fill="currentColor" d="m18.72 6.78l-1.44 1.44L24.063 15H4v2h20.063l-6.782 6.78l1.44 1.44l8.5-8.5l.686-.72l-.687-.72z"></path></svg>
-      </span>
+          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"
+            role="img" width="16" height="16" viewBox="0 0 32 32"
+            style="color: rgb(255, 255, 255); opacity: 1; transform: rotate(0deg);">
+            <path fill="currentColor"
+              d="m18.72 6.78l-1.44 1.44L24.063 15H4v2h20.063l-6.782 6.78l1.44 1.44l8.5-8.5l.686-.72l-.687-.72z"></path>
+          </svg>
+        </span>
       </span>
       }
     </button>

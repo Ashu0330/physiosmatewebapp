@@ -591,16 +591,14 @@
             @if (selectedSlots().length > 0) {
             <div class="no-slots-alert">
               @for (slot of selectedSlots(); track slot.id) {
-              <button type="button" class="no-slots-msg"
-                [class.selected]="selectedSlotTime() === (slot.startTime + '–' + slot.endTime)"
-                (click)="selectSlot(slot.startTime + '–' + slot.endTime)">
+              <button type="button" class="no-slots-msg" (click)="selectSlot(slot)">
                 {{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }}
               </button>
               }
             </div>
 
             @if (selectedSlotTime()) {
-            <button type="button" class="btn-confirm-slot" (click)="bookAppointment()">
+            <button type="button" class="btn-confirm-slot" (click)="bookConsultancy()">
               Book Appointment for {{ selectedSlotTime() }}
             </button>
             }

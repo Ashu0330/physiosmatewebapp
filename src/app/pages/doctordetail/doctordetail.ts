@@ -48,6 +48,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   readonly weekOffset = signal<number>(0);
   readonly selectedDayIndex = signal<number>(0);
   readonly selectedSlotTime = signal<string>('');
+  readonly selectedStartTime = signal<string>('');
+  readonly selectedEndTime = signal<string>('');
 
   reviewForm!: FormGroup;
   readonly isSubmittingReview = signal<boolean>(false);
@@ -137,7 +139,20 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         if (params['bookingConfirmed'] === 'true') {
           const pending = this.bookingService.getPendingSlot();
 
-          pending?.bookingId
+          if (pending && this.isLoggedIn) {
+            const dayObj = {
+              date: pending.selectedDate || new Date(),
+              label: pending.selectedDay || 'Selected Day',
+              fullDateStr: typeof pending.selectedDate === 'string' ? pending.selectedDate : ''
+            };
+            this.confirmAppointmentDirectly(
+              dayObj,
+              pending.selectedTime || '',
+              pending.bookingId,
+              pending.startTime,
+              pending.endTime
+            );
+          }
 
           this.router.navigate([], {
             relativeTo: this.route,
@@ -397,6 +412,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.selectedDayIndex.set(index);
     this.selectedDay.set(day);
     this.selectedSlotTime.set('');
+    this.selectedStartTime.set('');
+    this.selectedEndTime.set('');
 
     const availability = this.availabilitySlots().find(
       x => x.dayOfWeek === day.dayOfWeek
@@ -470,8 +487,29 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     // }
   }
 
-  selectSlot(time: string): void {
-    this.selectedSlotTime.set(time);
+  selectSlot(slotOrStart: slots | string, end?: string): void {
+    if (typeof slotOrStart === 'object' && slotOrStart !== null) {
+      const s = slotOrStart as slots;
+      this.selectedStartTime.set(s.startTime || '');
+      this.selectedEndTime.set(s.endTime || '');
+      this.selectedSlotTime.set(s.startTime && s.endTime ? `${s.startTime}–${s.endTime}` : (s.startTime || ''));
+    } else if (typeof slotOrStart === 'string') {
+      if (end) {
+        this.selectedStartTime.set(slotOrStart);
+        this.selectedEndTime.set(end);
+        this.selectedSlotTime.set(`${slotOrStart}–${end}`);
+      } else {
+        this.selectedSlotTime.set(slotOrStart);
+        const parts = slotOrStart.split(/[–\-]/).map(x => x.trim());
+        if (parts.length >= 2) {
+          this.selectedStartTime.set(parts[0]);
+          this.selectedEndTime.set(parts[1]);
+        } else {
+          this.selectedStartTime.set(slotOrStart);
+          this.selectedEndTime.set('');
+        }
+      }
+    }
   }
 
   formatTime(timeStr: string): string {
@@ -610,7 +648,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.scrollToSection('appointment-slots');
   }
 
-  async confirmAppointmentDirectly(day: any, slotTime: string, existingRef?: string): Promise<void> {
+  async confirmAppointmentDirectly(day: any, slotTime: string, existingRef?: string, startTime?: string, endTime?: string): Promise<void> {
+    debugger;
     const user = this.authService.getCurrentUser();
     const doc = this.doctorDetail();
     const ref = existingRef || `PHY - ${Math.floor(100000 + Math.random() * 900000)} `;
@@ -622,6 +661,9 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       ? day.date
       : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
     const formattedDate = DateHelper.formatLocalDate(resolvedDate);
+
+    const startTimeVal = startTime || this.selectedStartTime() || (slotTime ? slotTime.split(/[–\-]/)[0]?.trim() : '');
+    const endTimeVal = endTime || this.selectedEndTime() || (slotTime ? slotTime.split(/[–\-]/)[1]?.trim() : '');
 
     // Send booking to backend API
     if (this.isLoggedIn) {
@@ -635,6 +677,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           appointmentDate: formattedDate,
           slotDate: formattedDate,
           slotTime,
+          startTime: startTimeVal,
+          endTime: endTimeVal,
+          starttime: startTimeVal,
+          endtime: endTimeVal,
           consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
           mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
           patientName: user?.fullName || this.authService.getUserName() || 'Patient'
@@ -665,18 +711,13 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookConsultancy(): void {
-    const day = new Date;
-    // this.dayList()[this.selectedDayIndex()];
-    // if (!day || !day.hasSlots) {
-    //   this.showError('Please select a day with available slots.');
-    //   return;
-    // }
+    const day = this.selectedDay() || { date: new Date(), label: 'Today', dateStr: 'Today', fullDateStr: '' };
     const doc = this.doctorDetail();
     const paramId = this.route.snapshot.paramMap.get('id') || '1';
     const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitionerId || 1;
-
+    debugger;
     if (this.authService.isLoggedIn()) {
-      this.confirmAppointmentDirectly(day, this.selectedSlotTime());
+      this.confirmAppointmentDirectly(day, this.selectedSlotTime(), undefined, this.selectedStartTime(), this.selectedEndTime());
     } else {
       this.bookingService.savePendingSlot({
         providerId: Number(providerId) || 1,
@@ -686,9 +727,11 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         clinicName: doc?.clinicName || this.practitioner.clinicName,
         clinicAddress: this.practitioner.clinicAddress,
         consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
-        // selectedDay: day.fullDateStr || `${ day.label } (${ day.dateStr })`,
-        // selectedDate: DateHelper.formatLocalDate(day.date),
-        selectedTime: this.selectedSlotTime()
+        selectedTime: this.selectedSlotTime(),
+        selectedDay: (day as any).label,
+        selectedDate: (day as any).date,
+        startTime: this.selectedStartTime(),
+        endTime: this.selectedEndTime()
       });
 
       this.router.navigate(['/booking/consultancy', providerId]);

@@ -298,6 +298,8 @@ export interface BookingState {
   selectedDay?: string;
   selectedDate?: string | Date;
   selectedTime?: string;
+  startTime?: string;
+  endTime?: string;
   bookingId?: string;
 }
 export class providerReview {

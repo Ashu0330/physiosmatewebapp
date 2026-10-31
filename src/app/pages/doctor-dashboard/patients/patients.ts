@@ -264,30 +264,8 @@ export class Patients implements OnInit {
     { date: '15 Oct 2026', time: '10:30 AM - 11:15 AM', type: 'Initial Clinical Evaluation', therapist: 'Dr. Himanshu Suman', status: 'Completed', room: 'Consultation Suite' }
   ];
 
-  // Dummy Vital Signs
-  dummyVitals = {
-    bp: '120/80 mmHg',
-    pulse: '74 bpm',
-    spo2: '99%',
-    temp: '98.4 °F',
-    respiratoryRate: '16 /min',
-    height: '162 cm',
-    weight: '58 kg',
-    bmi: '22.1 (Normal)',
-    painScore: '3 / 10'
-  };
 
-  // Dummy Clinical SOAP Note
-  dummyClinicalNotes = [
-    {
-      date: '25 Oct 2026, 12:15 PM',
-      doctor: 'Dr. Himanshu Suman (PT)',
-      subjective: 'Patient reports 40% reduction in neck stiffness and decreased pain radiating to left shoulder.',
-      objective: 'Cervical extension increased by 10°. Bilateral rotation: Left 65°, Right 70°. No Spurling sign.',
-      assessment: 'Improving subacute cervical radiculopathy. Positive response to spinal decompression.',
-      plan: 'Continue 3x weekly motorized traction (12 kg) + isometric neck flexor strengthening.'
-    }
-  ];
+
 
   // Dummy Treatment Plans
   dummyTreatmentPlans = [
@@ -336,13 +314,6 @@ export class Patients implements OnInit {
     { title: 'Discharge Summary & Home Rehab Guidelines.pdf', size: '850 KB', date: '25 Oct 2026', doctor: 'Dr. Himanshu Suman' }
   ];
 
-  // Dummy Timeline
-  dummyTimeline = [
-    { date: '25 Oct 2026', title: 'Session #4 Completed', desc: 'Patient demonstrated notable improvement in neck rotation (increased by 10 degrees).' },
-    { date: '22 Oct 2026', title: 'Maitland Mobilization Initiated', desc: 'Grade II mobilization of C5-C6 segment started without adverse reaction.' },
-    { date: '18 Oct 2026', title: 'Ultrasound Therapy Session', desc: 'Targeted ultrasound applied to left levator scapulae trigger point.' },
-    { date: '15 Oct 2026', title: 'Initial Assessment & Treatment Onboarding', desc: 'Evaluated by Dr. Himanshu Suman. Assigned Cervical Spine Protocol.' }
-  ];
 
   // User Actions
   openPatientEMR(patient: EMRPatient): void {
@@ -403,14 +374,7 @@ export class Patients implements OnInit {
     this.consultationDetailModal.set(null);
   }
 
-  formatBookingDate(dateStr: string): string {
-    if (!dateStr) return 'N/A';
-    try {
-      return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch {
-      return dateStr;
-    }
-  }
+
 
   toggleSidebar(): void {
     this.isSidebarCollapsed.update(val => !val);
