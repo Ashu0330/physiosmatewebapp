@@ -1377,14 +1377,22 @@
 }
 
 .no-slots-msg {
-  font-size: 0.82rem;
+  font-size: 12px;
   color: #64748b;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--primary-color);
   padding: 0px 10px;
   margin: 0;
   display: flex;
   align-items: center;
   border-radius: 5px;
+  height: fit-content;
+  padding: 5px;
+  background-color: white;
+}
+
+.no-slots-msg:hover {
+  background-color: #f0f0f0;
+
 }
 
 /* Slots Group */
@@ -2454,3 +2462,17 @@
 }
 
 /* date calender css */
+
+.user_home_addre ss{
+  width: 100%;margin-top: 20px;
+}
+
+.user_home_address input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 10px;  
+}
