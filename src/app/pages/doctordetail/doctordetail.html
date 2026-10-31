@@ -598,8 +598,8 @@
               </button>
               }
             </div>
-            <div class="user_home_address">
-              <input type="text" formControlName="homeVisitAddress" placeholder="Enter your address" id="homeVisitAddress">
+            <div class="user_home_address">              
+              <textarea  rows="2" placeholder="enter the address" formControlName="homeVisitAddress" id="homeVisitAddress"></textarea>
             </div>
             @if (bookingForm.get('slotTime')?.value || selectedSlotTime()) {
             <button type="button" class="btn-confirm-slot" (click)="bookConsultancy()">

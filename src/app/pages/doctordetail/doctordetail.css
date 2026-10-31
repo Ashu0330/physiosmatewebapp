@@ -2467,12 +2467,13 @@
   width: 100%;margin-top: 20px;
 }
 
-.user_home_address input {
+.user_home_address textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #dee2e6;
   border-radius: 5px;
   font-size: 12px;
   color: #64748b;
-  margin-bottom: 10px;  
+  margin-bottom: 10px;
+  min-height: 40px;  
 }
