@@ -2,8 +2,9 @@
  * Professional Header Styles - Physios Premium Design
  * Built with design tokens from variable.css
  * ========================================================= */
-*:focus-visible {
-  outline: none
+*:focus-visible, *:focus {
+  outline: none;
+  box-shadow:none;
 }
 
  a {
