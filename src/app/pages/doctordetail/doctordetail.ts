@@ -74,7 +74,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     day: string;
     date?: string;
     time: string;
-    fee: number;
+    amount: number;
     bookingRefId: string;
     patientName: string;
   } | null>(null);
@@ -564,57 +564,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
   }
 
-  /*
-      });
-    }
-  }
-
-
-    if (slotOrStart && typeof slotOrStart === 'object' && 'startTime' in slotOrStart) {
-      const s = slotOrStart as slots; // current
-
-  // comment closed
-
-    } else if (typeof slotOrStart === 'string') {
-      if (end) {
-        this.selectedStartTime.set(slotOrStart);
-        this.selectedEndTime.set(end);
-        this.selectedSlotTime.set(`${slotOrStart}–${end}`);
-      } else {
-        this.selectedSlotTime.set(slotOrStart);
-        const parts = slotOrStart.split(/[–\-]/).map(x => x.trim());
-        if (parts.length >= 2) {
-          this.selectedStartTime.set(parts[0]);
-          this.selectedEndTime.set(parts[1]);
-        } else {
-          this.selectedStartTime.set(slotOrStart);
-          this.selectedEndTime.set('');
-
-    const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
-      ? day.date
-      : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
-    const formattedDate = DateHelper.formatLocalDate(resolvedDate);
-
-    if (this.bookingForm) {
-      this.bookingForm.patchValue({
-        consultancydate: formattedDate,
-        appointmentDate: formattedDate,
-        slotDate: formattedDate,
-        slotTime: '',
-        startTime: '',
-        endTime: '',
-        starttime: '',
-        endtime: '',
-        slotId: null // dayReset
-      });
-    }
-        }
-      }
-    }
-  }
-
-  */
-
   formatTime(timeStr: string): string {
     if (!timeStr) return '';
     const parts = timeStr.split(':');
@@ -659,7 +608,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.bookingForm = this.fb.group({
       practitionerId: [this.practitionerId || doc?.practitionerId || 1, [Validators.required]],
       doctorName: [doc?.fullName || this.practitioner.name || ''],
-      visitType: [this.isClinic() ? 'In-Clinic' : 'Home Visit'],
+      visitType: [this.isClinic() ? 'Clinic' : 'Home'],
       bookingRefId: [''],
       consultancydate: ['', [Validators.required]],
       appointmentDate: [''],
@@ -671,7 +620,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       endtime: [''],
       slotId: [null],
       consultationFee: [doc?.consultationFee ?? this.practitioner.consultationFee ?? 500],
-      mode: [this.isClinic() ? 'In-Clinic' : 'Home Visit'],
+      mode: [this.isClinic() ? 'In-Clinic' : 'Home'],
       patientName: [''],
       homeVisitAddress: [''],
       address: ['']
@@ -767,9 +716,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.reviewForm.patchValue({ [controlName]: items.join(', ') });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5.4 Appointment Booking & Confirmation Methods
-  // ─────────────────────────────────────────────────────────────────────────
   selectDoctorForBooking(doc: any): void {
     this.selectedAssociatedDoctor.set(doc);
     this.scrollToSection('appointment-slots');
@@ -801,7 +747,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         const payload = {
           practitionerId: formValues.practitionerId || this.practitionerId || doc?.practitionerId || 1,
           doctorName,
-          visitType: this.isClinic() ? 'In-Clinic' : 'Home Visit',
+          visitType: this.isClinic() ? 'Clinic' : 'Home',
           bookingRefId: ref,
           consultancydate: formattedDate,
           appointmentDate: formattedDate,
@@ -811,8 +757,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           endTime: endTimeVal,
           starttime: startTimeVal,
           endtime: endTimeVal,
-          consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
-          mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
+          amount: doc?.consultationFee ?? this.practitioner.consultationFee,
+          mode: this.isClinic() ? ' Clinic' : 'Home',
           patientName: user?.fullName || this.authService.getUserName() || 'Patient',
           homeVisitAddress: formValues.homeVisitAddress || formValues.address || null,
         };
@@ -831,7 +777,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       day: dateDisplay,
       date: formattedDate,
       time: slotTime,
-      fee: doc?.consultationFee ?? this.practitioner.consultationFee,
+      amount: doc?.consultationFee ?? this.practitioner.consultationFee,
       bookingRefId: ref,
       patientName: user?.fullName || this.authService.getUserName() || 'Patient'
     });

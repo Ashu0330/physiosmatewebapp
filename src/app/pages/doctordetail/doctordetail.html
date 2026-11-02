@@ -551,7 +551,7 @@
                   <rect x="4" y="2" width="16" height="20" rx="2" />
                 </svg>
               </span>
-              <span class="type-text">{{isClinic()===true?'Clinic Consultancy':'Home visit'}}</span>
+              <span class="type-text">{{isClinic()===true?'Clinic Consultancy':'Home'}}</span>
             </div>
             <span class="appointment-fee">₹{{isClinic()===true?
               doctorDetail()?.consultationFee:doctorDetail()?.consultationFee}} fee</span>
@@ -598,8 +598,9 @@
               </button>
               }
             </div>
-            <div class="user_home_address">              
-              <textarea  rows="2" placeholder="enter the address" formControlName="homeVisitAddress" id="homeVisitAddress"></textarea>
+            <div class="user_home_address">
+              <textarea rows="2" placeholder="enter the address" formControlName="homeVisitAddress"
+                id="homeVisitAddress"></textarea>
             </div>
             @if (bookingForm.get('slotTime')?.value || selectedSlotTime()) {
             <button type="button" class="btn-confirm-slot" (click)="bookConsultancy()">
@@ -679,7 +680,7 @@
         <span class="si-icon">💰</span>
         <div class="si-content">
           <span class="si-label">Consultation Fee</span>
-          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.fee || practitioner.consultationFee }} (Pay at
+          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.amount || practitioner.consultationFee }} (Pay at
             Clinic)</strong>
         </div>
       </div>

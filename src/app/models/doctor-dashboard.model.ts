@@ -283,3 +283,14 @@ export class Payment {
   totalPayments: number;
   Payments?: PaymentSummary[]
 }
+export class PatientConsultancyDetails {
+  patientId: number;
+  fullName: string;
+  mobile: string;
+  isRegistered: boolean;
+  paymentStatus: string;
+  consultancyStatus: string;
+  consultancyDate: string;
+  fees: number;
+  path: string;
+}

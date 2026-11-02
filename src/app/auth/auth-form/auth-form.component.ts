@@ -5,6 +5,7 @@ import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
 import { SharedModule } from '../../shared/shared-module';
 import { BaseComponent } from '../../helper/base-component';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-auth-form',

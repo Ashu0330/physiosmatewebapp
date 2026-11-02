@@ -12,7 +12,8 @@ import {
   DoctorStatsFilter,
   NewPatientFormData,
   DoctorConsultationRecord,
-  DoctorInquiryOrAppointment
+  DoctorInquiryOrAppointment,
+  PatientConsultancyDetails
 } from '../../../models/doctor-dashboard.model';
 
 // Child components
@@ -23,6 +24,9 @@ import { Consultations } from '../consultations/consultations';
 import { DoctorAppointments } from '../appointments/doctor-appointments';
 import { Sidebar } from '../../layout/sidebar/sidebar';
 import { Authservice } from '../../../services/authservice';
+import { SharedModule } from '../../../shared/shared-module';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments';
 
@@ -30,8 +34,7 @@ export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'tre
   selector: 'app-doctordashboard',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterModule,
+    SharedModule,
     Addpatient,
     Patients,
     Treatmentplans,
@@ -50,8 +53,9 @@ export class Doctordashboard implements OnInit {
   activeTab: DoctorDashboardTab = 'dashboard';
   doctorName = this.auth.getUserName();
   preSelectedPatientId = signal<string | null>(null);
+  protected apiService = inject(ApiService);
 
-  // ─── Central Clinical State ────────────────────────────────────────────────
+  Consultancy = signal<PatientConsultancyDetails[]>([]);
   patients: DoctorPatient[] = [
     {
       id: 'PT-1041',
@@ -476,6 +480,7 @@ export class Doctordashboard implements OnInit {
   ngOnInit(): void {
     this.resolveTabFromRoute();
     this.fetchData();
+    this.GetConsultancy();
   }
 
   /** Map each URL path segment → the tab that should be active */
@@ -727,7 +732,15 @@ export class Doctordashboard implements OnInit {
     }
   }
 
+  startConsultancy(item: PatientConsultancyDetails): void {
+    if (item?.patientId) {
+      this.preSelectedPatientId.set(item.patientId.toString());
+    }
+    this.selectTab('Consultations');
+  }
+
   getInitials(name: string): string {
+    if (!name) return 'PT';
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
@@ -773,6 +786,27 @@ export class Doctordashboard implements OnInit {
         phone: item.phone
       };
       this.todayAppointments = [newApt, ...this.todayAppointments];
+    }
+  }
+  async GetConsultancy(): Promise<void> {
+    const today = new Date();
+    const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
+    const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+
+    const model = {
+      page: 1,
+      pageSize: 101,
+      fromDate,
+      toDate,
+    };
+
+    const res = await this.apiService.Post<PatientConsultancyDetails[]>(
+      ApiEndPoints.ConsultancyPatient,
+      model
+    );
+
+    if (res.isSuccess && res.data) {
+      this.Consultancy.set(res.data);
     }
   }
 }

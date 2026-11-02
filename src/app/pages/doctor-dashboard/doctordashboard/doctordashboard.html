@@ -298,15 +298,15 @@
 
           </div>
 
-          <!-- Today's Schedule Section -->
+          <!-- Today's Consultancy Section -->
           <div class="dashboard-section-card">
             <div class="section-card-header">
               <div>
-                <h4 class="section-heading">Today's Appointment Schedule</h4>
-                <span class="section-sub">Real-time consultation & physical therapy sessions</span>
+                <h4 class="section-heading">Today's Consultancy Schedule</h4>
+                <span class="section-sub">Real-time consultation &amp; physical therapy sessions</span>
               </div>
-              <button type="button" class="link-btn-flat" (click)="selectTab('patients')">
-                View All Patients
+              <button type="button" class="link-btn-flat" (click)="selectTab('Consultations')">
+                View All Consultations
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -319,23 +319,24 @@
               <table class="minimal-table">
                 <thead>
                   <tr>
-                    <th>Time Slot</th>
+                    <th>Date &amp; Time</th>
                     <th>Patient Details</th>
-                    <th>Diagnosis / Condition</th>
-                    <th>Session Milestone</th>
-                    <th>Visit Mode</th>
+                    <th>Mobile</th>
+                    <th>Fees</th>
+                    <th>Payment</th>
                     <th>Status</th>
+                    <th>Registered</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (apt of todayAppointments; track apt.id) {
+                  @for (item of Consultancy(); track item.patientId) {
                   <tr>
-                    <!-- Time -->
+                    <!-- Time / Date -->
                     <td>
                       <div class="time-block">
-                        <span class="time-primary">{{ apt.timeSlot }}</span>
-                        <span class="time-sub">{{ apt.date }}</span>
+                        <span class="time-primary">{{ item.consultancyDate | date:'dd MMM yyyy' }}</span>
+                        <span class="time-sub">{{ item.consultancyDate | date:'hh:mm a' }}</span>
                       </div>
                     </td>
 
@@ -343,62 +344,64 @@
                     <td>
                       <div class="pt-profile-row">
                         <div class="pt-avatar">
-                          {{ getInitials(apt.patientName) }}
+                          {{ getInitials(item.fullName) }}
                         </div>
                         <div class="pt-text">
-                          <span class="pt-name">{{ apt.patientName }}</span>
-                          <span class="pt-code">{{ apt.patientId }}</span>
+                          <span class="pt-name">{{ item.fullName }}</span>
+                          <span class="pt-code">PT-{{ item.patientId }}</span>
                         </div>
                       </div>
                     </td>
 
-                    <!-- Condition -->
+                    <!-- Mobile -->
                     <td>
-                      <span class="condition-name">{{ apt.condition }}</span>
+                      <span class="condition-name">{{ item.mobile || '—' }}</span>
                     </td>
 
-                    <!-- Session Progress -->
+                    <!-- Fees -->
                     <td>
-                      <div class="session-counter-pill">
-                        Session {{ apt.sessionNumber }} of {{ apt.totalSessions }}
-                      </div>
+                      <span class="condition-name font-semibold">&#8377;{{ item.fees }}</span>
                     </td>
 
-                    <!-- Visit Mode -->
+                    <!-- Payment Status -->
                     <td>
-                      <span class="mode-tag" [class.video]="apt.visitType === 'Video Call'">
-                        @if (apt.visitType === 'Video Call') {
-                        Video Call
-                        } @else {
-                        In-Clinic
-                        }
+                      <span class="apt-status-pill"
+                        [class.completed]="item.paymentStatus === 'Paid'"
+                        [class.scheduled]="item.paymentStatus === 'Pending' || item.paymentStatus === 'Unpaid'">
+                        {{ item.paymentStatus || '—' }}
                       </span>
                     </td>
 
-                    <!-- Status Badge -->
+                    <!-- Consultancy Status -->
                     <td>
-                      <span class="apt-status-pill" [class.scheduled]="apt.status === 'Scheduled'"
-                        [class.in-progress]="apt.status === 'In-Progress'"
-                        [class.completed]="apt.status === 'Completed'">
-                        {{ apt.status }}
+                      <span class="apt-status-pill"
+                        [class.scheduled]="item.consultancyStatus === 'Scheduled' || item.consultancyStatus === 'Booked'"
+                        [class.in-progress]="item.consultancyStatus === 'In-Progress'"
+                        [class.completed]="item.consultancyStatus === 'Completed'">
+                        {{ item.consultancyStatus || '—' }}
                       </span>
                     </td>
 
-                    <!-- Interactive Action Button -->
+                    <!-- Registered -->
                     <td>
-                      @if (apt.status === 'Scheduled') {
-                      <button type="button" class="btn-status-action start"
-                        (click)="updateAppointmentStatus(apt.id, 'In-Progress')">
-                        Start Session
-                      </button>
-                      } @else if (apt.status === 'In-Progress') {
-                      <button type="button" class="btn-status-action complete"
-                        (click)="updateAppointmentStatus(apt.id, 'Completed')">
-                        Mark Done ✓
-                      </button>
+                      @if (item.isRegistered) {
+                      <span class="apt-status-pill completed">&#10003; Yes</span>
                       } @else {
-                      <span class="completed-text">✓ Finalized</span>
+                      <span class="apt-status-pill scheduled">No</span>
                       }
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                      <button type="button" class="btn-status-action start" (click)="startConsultancy(item)">
+                        Consult &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="8" style="padding: 32px 0; text-align: center; color: #94A3B8; font-size: 13px;">
+                      No consultancy records found for today.
                     </td>
                   </tr>
                   }
@@ -408,7 +411,7 @@
           </div>
 
           <!-- Active Treatment Plans Quick Preview -->
-          <!-- <div class="dashboard-section-card">
+          <div class="dashboard-section-card">
             <div class="section-card-header">
               <div>
                 <h4 class="section-heading">Ongoing Patient Rehabilitation Plans</h4>
@@ -448,49 +451,49 @@
               </div>
               }
             </div>
-          </div> -->
+          </div>
 
         </div>
         }
 
         <!-- ────────────────────────────────────────────────────────────────── -->
         <!-- 2. ADD PATIENT COMPONENT                                           -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (activeTab === 'add-patient') {
-        <app-addpatient (patientAdded)="onPatientAdded($event)"
-          (startConsultationWith)="onStartConsultationWith($event)" (cancel)="selectTab('patients')" />
-        }
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            @if (activeTab === 'add-patient') {
+            <app-addpatient (patientAdded)="onPatientAdded($event)"
+              (startConsultationWith)="onStartConsultationWith($event)" (cancel)="selectTab('patients')" />
+            }
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- 3. PATIENTS DIRECTORY COMPONENT                                    -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (activeTab === 'patients') {
-        <app-patients [patients]="patients" (navigateToAdd)="selectTab('add-patient')"
-          (navigateToPlans)="selectTab('treatment-plans')" />
-        }
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            <!-- 3. PATIENTS DIRECTORY COMPONENT                                    -->
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            @if (activeTab === 'patients') {
+            <app-patients [patients]="patients" (navigateToAdd)="selectTab('add-patient')"
+              (navigateToPlans)="selectTab('treatment-plans')" />
+            }
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- 4. TREATMENT PLANS COMPONENT                                       -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (activeTab === 'treatment-plans') {
-        <app-treatmentplans [treatmentPlans]="treatmentPlans" (navigateToAdd)="selectTab('add-patient')" />
-        }
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            <!-- 4. TREATMENT PLANS COMPONENT                                       -->
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            @if (activeTab === 'treatment-plans') {
+            <app-treatmentplans [treatmentPlans]="treatmentPlans" (navigateToAdd)="selectTab('add-patient')" />
+            }
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- 5. CONSULTATIONS COMPONENT                                         -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (activeTab === 'Consultations') {
-        <app-consultations [patients]="patients" [preSelectedPatientId]="preSelectedPatientId()"
-          (consultationAdded)="onConsultationAdded($event)" (viewPatientProfile)="onViewPatientProfile($event)" />
-        }
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            <!-- 5. CONSULTATIONS COMPONENT                                         -->
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            @if (activeTab === 'Consultations') {
+            <app-consultations [patients]="patients" [preSelectedPatientId]="preSelectedPatientId()"
+              (consultationAdded)="onConsultationAdded($event)" (viewPatientProfile)="onViewPatientProfile($event)" />
+            }
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- 6. APPOINTMENTS & INQUIRIES COMPONENT                              -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (activeTab === 'Appointments') {
-        <app-doctor-appointments [patients]="patients" [appointments]="todayAppointments"
-          (appointmentAdded)="onAppointmentAdded($event)" />
-        }
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            <!-- 6. APPOINTMENTS & INQUIRIES COMPONENT                              -->
+            <!-- ────────────────────────────────────────────────────────────────── -->
+            @if (activeTab === 'Appointments') {
+            <app-doctor-appointments [patients]="patients" [appointments]="todayAppointments"
+              (appointmentAdded)="onAppointmentAdded($event)" />
+            }
 
       </main>
     </div>
