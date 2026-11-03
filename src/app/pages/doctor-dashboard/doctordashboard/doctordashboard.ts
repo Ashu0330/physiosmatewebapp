@@ -22,13 +22,14 @@ import { Patients } from '../patients/patients';
 import { Treatmentplans } from '../treatmentplans/treatmentplans';
 import { Consultations } from '../consultations/consultations';
 import { DoctorAppointments } from '../appointments/doctor-appointments';
+import { ConsultancyList } from '../consultancy-list/consultancy-list';
 import { Sidebar } from '../../layout/sidebar/sidebar';
 import { Authservice } from '../../../services/authservice';
 import { SharedModule } from '../../../shared/shared-module';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 
-export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments';
+export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments' | 'consultancy-list';
 
 @Component({
   selector: 'app-doctordashboard',
@@ -39,7 +40,9 @@ export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'tre
     Patients,
     Treatmentplans,
     Consultations,
-    DoctorAppointments],
+    DoctorAppointments,
+    // ConsultancyList
+  ],
   templateUrl: './doctordashboard.html',
   styleUrl: './doctordashboard.css',
 })
@@ -494,6 +497,8 @@ export class Doctordashboard implements OnInit {
     'Consultations': 'Consultations',
     'appointments': 'Appointments',
     'Appointments': 'Appointments',
+    'consultancy-list': 'consultancy-list',
+    'Consultancy-List': 'consultancy-list',
   };
 
   /** Map each tab → the URL path segment */
@@ -504,6 +509,7 @@ export class Doctordashboard implements OnInit {
     'treatment-plans': 'treatment-plans',
     'Consultations': 'Consultations',
     'Appointments': 'Appointments',
+    'consultancy-list': 'consultancy-list',
   };
 
   resolveTabFromRoute(): void {

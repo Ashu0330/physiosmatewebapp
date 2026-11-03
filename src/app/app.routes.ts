@@ -14,6 +14,7 @@ import { ArticleDetail } from './pages/articles/article-detail/article-detail';
 import { Settings } from './pages/settings/settings';
 import { PracticeManagement } from './pages/doctor-dashboard/practice-management/practice-management';
 import { ScheduleTreatment } from './pages/doctor-dashboard/schedule-treatment/schedule-treatment';
+import { ConsultancyList } from './pages/doctor-dashboard/consultancy-list/consultancy-list';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -62,6 +63,7 @@ export const routes: Routes = [
       { path: 'practice-management', component: PracticeManagement },
       // { path: 'practice-management', component: PracticeManagement },
       { path: 'schedule-treatment', component: ScheduleTreatment },
+      { path: 'consultancy-list', component: ConsultancyList },
     ],
   },
 

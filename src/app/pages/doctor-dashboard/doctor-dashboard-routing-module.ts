@@ -4,6 +4,7 @@ import { Doctordashboard } from './doctordashboard/doctordashboard';
 import { Settings } from '../settings/settings';
 import { PracticeManagement } from './practice-management/practice-management';
 import { ScheduleTreatment } from './schedule-treatment/schedule-treatment';
+import { ConsultancyList } from './consultancy-list/consultancy-list';
 
 const routes: Routes = [
   { path: '', component: Doctordashboard },
@@ -15,6 +16,8 @@ const routes: Routes = [
   { path: 'Consultations', component: Doctordashboard },
   { path: 'appointments', component: Doctordashboard },
   { path: 'Appointments', component: Doctordashboard },
+  { path: 'consultancy-list', component: ConsultancyList },
+  { path: 'Consultancy-List', component: ConsultancyList },
   { path: 'settings', component: Settings },
   { path: 'practice-management', component: PracticeManagement },
   { path: 'Practice-Management', component: PracticeManagement },
