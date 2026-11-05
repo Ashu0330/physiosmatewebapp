@@ -77,6 +77,7 @@ export const ApiEndPoints = {
     GetAllPayment: 'ProviderCatalog/GetAllPayment',
     CreateAppointmentSlot: 'ProviderCatalog/CreateAppoimentSlot',
     GetAppointmentSlots: 'Appointment/GetAppoimentSlot',
+    GetAvailableAppointmentSlots: 'Appointment/GetAvailableSlots',
 
     // ── Master Data ────────────────────────────────────────────────────────────────
     GetAllRoles: 'Master/GetAllRoles',

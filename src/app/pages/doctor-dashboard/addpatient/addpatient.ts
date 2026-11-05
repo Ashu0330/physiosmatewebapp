@@ -6,6 +6,27 @@ import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SharedModule } from '../../../shared/shared-module';
+import { Authservice } from '../../../services/authservice';
+
+// ─── Slot Models ──────────────────────────────────────────────────────────────
+interface ConsultancySlot {
+  id: number;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
+interface TreatmentSlot {
+  slotId: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  currentBookings: number;
+  remainingSpots: number;
+  isOpen: boolean;
+}
+type AppointmentSlot = TreatmentSlot;
 
 @Component({
   selector: 'app-addpatient',
@@ -18,6 +39,7 @@ export class Addpatient implements OnInit {
   private apiService = inject(ApiService);
   private alert = inject(SweetAlertService);
   private fb = inject(FormBuilder);
+  private auth = inject(Authservice);
 
   form!: FormGroup;
   @ViewChild('photoInput') photoInputRef?: ElementRef<HTMLInputElement>;
@@ -29,19 +51,19 @@ export class Addpatient implements OnInit {
   isSavingPatient = false;
   practitioners: { id: number; name: string }[] = [];
   isLoadingPractitioners = false;
-  slots: { label: string; startTime: string; endTime: string }[] = [
-    { label: '09:00 - 09:30', startTime: '09:00', endTime: '09:30' },
-    { label: '09:30 - 10:00', startTime: '09:30', endTime: '10:00' },
-    { label: '10:00 - 10:30', startTime: '10:00', endTime: '10:30' },
-    { label: '10:30 - 11:00', startTime: '10:30', endTime: '11:00' },
-    { label: '11:00 - 11:30', startTime: '11:00', endTime: '11:30' },
-    { label: '11:30 - 12:00', startTime: '11:30', endTime: '12:00' },
-    { label: '14:00 - 14:30', startTime: '14:00', endTime: '14:30' },
-    { label: '14:30 - 15:00', startTime: '14:30', endTime: '15:00' },
-    { label: '15:00 - 15:30', startTime: '15:00', endTime: '15:30' },
-    { label: '15:30 - 16:00', startTime: '15:30', endTime: '16:00' },
-  ];
+
+  // ─── Dynamic slot state (replaces static list) ────────────────────────────
+  consultancySlots = signal<ConsultancySlot[]>([]);
+  treatmentSlots = signal<TreatmentSlot[]>([]);
+  get appointmentSlots() {
+    return this.treatmentSlots;
+  }
   isLoadingSlots = false;
+
+  // Keep for backward-compat on onSlotSelected (not used for display now)
+  slots: { label: string; startTime: string; endTime: string }[] = [];
+
+  isLoadingSlots_legacy = false;
   selectedSlot: string | undefined = undefined;
 
   photoPreview: string | null = null;
@@ -52,6 +74,31 @@ export class Addpatient implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadPractitioners();
+    this.setupFormSubscriptions();
+
+    const currentPid = this.currentPractitionerId;
+    if (currentPid && !this.form.get('assignedPractitionerId')?.value) {
+      this.form.patchValue({ assignedPractitionerId: currentPid });
+    }
+  }
+
+  get currentPractitionerId(): number {
+    const profId = this.auth.getCurrentProfessionalId();
+    const user = this.auth.getCurrentUser();
+    return Number(user?.practitionerId || profId || user?.id || 0);
+  }
+
+  setupFormSubscriptions(): void {
+    this.form.get('visitType')?.valueChanges.subscribe(() => {
+      this.onVisitTypeChange();
+    });
+    this.form.get('assignedPractitionerId')?.valueChanges.subscribe(() => {
+      this.onPractitionerChange();
+    });
+    this.form.get('consultationDate')?.valueChanges.subscribe(() => {
+      this.onDateChange();
+    });
   }
 
   createform(): void {
@@ -76,6 +123,7 @@ export class Addpatient implements OnInit {
       startTime: [''],
       endTime: [''],
       slotTime: [null],
+      appointmentSlotId: [null],   // ← for Appointment visit type
       amount: [null],
       paymentMode: [null],
       paymentStatus: [null],
@@ -95,24 +143,230 @@ export class Addpatient implements OnInit {
     return vt === 'Consultancy' || vt === 'Treatment';
   }
 
+  get isTreatmentVisit(): boolean {
+    return this.form?.get('visitType')?.value === 'Treatment';
+  }
 
+  get isAppointmentVisit(): boolean {
+    return this.isTreatmentVisit;
+  }
+
+  get isConsultancyVisit(): boolean {
+    return this.form?.get('visitType')?.value === 'Consultancy';
+  }
+
+  // ─── Slot Loading & Dropdown Handlers ─────────────────────────────────────
+  onVisitTypeChange(): void {
+    this.consultancySlots.set([]);
+    this.treatmentSlots.set([]);
+    this.form.patchValue({ slotTime: null, startTime: '', endTime: '', appointmentSlotId: null });
+    this.triggerSlotLoad();
+  }
+
+  onPractitionerChange(): void {
+    this.consultancySlots.set([]);
+    this.treatmentSlots.set([]);
+    this.form.patchValue({ slotTime: null, startTime: '', endTime: '', appointmentSlotId: null });
+    this.triggerSlotLoad();
+  }
+
+  onDateChange(): void {
+    const visitType = this.form.get('visitType')?.value;
+    if (visitType === 'Treatment') {
+      this.treatmentSlots.set([]);
+      this.form.patchValue({ slotTime: null, appointmentSlotId: null, startTime: '', endTime: '' });
+      this.triggerSlotLoad();
+    } else if (visitType === 'Consultancy') {
+      this.triggerSlotLoad();
+    }
+  }
+
+  async loadPractitioners(): Promise<void> {
+    this.isLoadingPractitioners = true;
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitioners, { page: 1, pageSize: 100 });
+      if (res?.isSuccess && res.data) {
+        const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+        this.practitioners = list.map((p: any) => ({
+          id: p.id ?? p.practitionerId,
+          name: p.fullName ?? p.name ?? `Dr. ${p.id}`
+        }));
+      }
+    } catch (e) {
+      console.error('Error loading practitioners', e);
+    } finally {
+      const currentPid = this.currentPractitionerId;
+      if (currentPid > 0 && !this.practitioners.some(p => p.id === currentPid)) {
+        const currentName = this.auth.getUserName() || 'Assigned Doctor';
+        this.practitioners = [{ id: currentPid, name: currentName }, ...this.practitioners];
+      }
+
+      if (!this.form.get('assignedPractitionerId')?.value && this.practitioners.length > 0) {
+        const defaultId = currentPid > 0 && this.practitioners.some(p => p.id === currentPid)
+          ? currentPid
+          : this.practitioners[0].id;
+        this.form.patchValue({ assignedPractitionerId: defaultId });
+      }
+
+      this.isLoadingPractitioners = false;
+      this.triggerSlotLoad();
+    }
+  }
+
+  triggerSlotLoad(): void {
+    const visitType = this.form.get('visitType')?.value;
+    let practitionerId = this.form.get('assignedPractitionerId')?.value;
+
+    if (!practitionerId && this.currentPractitionerId > 0) {
+      practitionerId = this.currentPractitionerId;
+      this.form.patchValue({ assignedPractitionerId: practitionerId }, { emitEvent: false });
+    }
+
+    if (!practitionerId) {
+      return;
+    }
+
+    const date = this.form.get('consultationDate')?.value;
+
+    if (visitType === 'Consultancy') {
+      this.loadConsultancySlots(Number(practitionerId), date);
+    } else if (visitType === 'Treatment') {
+      if (date) {
+        this.loadTreatmentSlots(Number(practitionerId), date);
+      } else {
+        this.treatmentSlots.set([]);
+      }
+    }
+  }
+
+  async loadConsultancySlots(practitionerId: number, date?: string): Promise<void> {
+    this.isLoadingSlots = true;
+    try {
+      const res = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetAvailability}?practitionerId=${practitionerId}`
+      );
+      if (res?.isSuccess && res.data) {
+        const rawGroups = Array.isArray(res.data) ? res.data : [res.data];
+        let targetDayOfWeek: number | null = null;
+        if (date) {
+          const d = new Date(date);
+          if (!isNaN(d.getTime())) {
+            targetDayOfWeek = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+          }
+        }
+
+        const allSlots: ConsultancySlot[] = [];
+        for (const group of rawGroups) {
+          const groupDay = group.dayOfWeek ?? group.DayOfWeek;
+          if (targetDayOfWeek !== null && groupDay !== undefined && groupDay !== targetDayOfWeek) {
+            continue;
+          }
+          const slots = group.slots ?? group.Slots ?? [];
+          for (const s of slots) {
+            allSlots.push({
+              id: s.id ?? s.Id,
+              startTime: s.startTime ?? s.StartTime,
+              endTime: s.endTime ?? s.EndTime,
+              isActive: s.isActive ?? s.IsActive ?? true,
+            });
+          }
+        }
+
+        if (allSlots.length === 0) {
+          for (const group of rawGroups) {
+            const slots = group.slots ?? group.Slots ?? [];
+            for (const s of slots) {
+              allSlots.push({
+                id: s.id ?? s.Id,
+                startTime: s.startTime ?? s.StartTime,
+                endTime: s.endTime ?? s.EndTime,
+                isActive: s.isActive ?? s.IsActive ?? true,
+              });
+            }
+          }
+        }
+
+        this.consultancySlots.set(allSlots.filter(s => s.isActive));
+      } else {
+        this.consultancySlots.set([]);
+      }
+    } catch (e) {
+      console.error('Error loading consultancy slots', e);
+      this.consultancySlots.set([]);
+    } finally {
+      this.isLoadingSlots = false;
+    }
+  }
+
+  async loadTreatmentSlots(practitionerId: number, date: string): Promise<void> {
+    this.isLoadingSlots = true;
+    try {
+      const res = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetAvailableAppointmentSlots}?practitionerId=${practitionerId}&date=${date}`
+      );
+      if (res?.isSuccess && res.data) {
+        const raw = Array.isArray(res.data) ? res.data : [res.data];
+        const data: TreatmentSlot[] = raw.map((s: any) => ({
+          slotId: s.slotId ?? s.SlotId,
+          slotDate: s.slotDate ?? s.SlotDate,
+          startTime: s.startTime ?? s.StartTime,
+          endTime: s.endTime ?? s.EndTime,
+          maxCapacity: s.maxCapacity ?? s.MaxCapacity,
+          currentBookings: s.currentBookings ?? s.CurrentBookings,
+          remainingSpots: s.remainingSpots ?? s.RemainingSpots,
+          isOpen: s.isOpen ?? s.IsOpen ?? true,
+        }));
+        this.treatmentSlots.set(data.filter(s => s.isOpen && s.remainingSpots > 0));
+      } else {
+        this.treatmentSlots.set([]);
+      }
+    } catch (e) {
+      console.error('Error loading treatment slots', e);
+      this.treatmentSlots.set([]);
+    } finally {
+      this.isLoadingSlots = false;
+    }
+  }
+
+  loadAppointmentSlots(practitionerId: number, date: string): Promise<void> {
+    return this.loadTreatmentSlots(practitionerId, date);
+  }
+
+  formatSlotTime(t: string): string {
+    if (!t) return '';
+    const parts = t.split(':');
+    let h = parseInt(parts[0], 10);
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
 
   onSlotSelected(): void {
-    const slotLabel = this.form.get('slotTime')?.value || this.selectedSlot;
-    const slot = this.slots.find(s => s.label === slotLabel);
-    if (slot) {
-      this.selectedSlot = slot.label;
-      this.form.patchValue({
-        slotTime: slot.label,
-        startTime: slot.startTime,
-        endTime: slot.endTime
-      });
+    const visitType = this.form.get('visitType')?.value;
+    const slotVal = this.form.get('slotTime')?.value;
+
+    if (visitType === 'Treatment') {
+      const slot = this.treatmentSlots().find(s => s.slotId == slotVal);
+      if (slot) {
+        this.form.patchValue({
+          appointmentSlotId: slot.slotId,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        });
+      }
     } else {
-      this.selectedSlot = undefined;
-      this.form.patchValue({
-        startTime: '',
-        endTime: ''
-      });
+      const slot = this.consultancySlots().find(s => s.id == slotVal);
+      if (slot) {
+        this.selectedSlot = `${slot.startTime}–${slot.endTime}`;
+        this.form.patchValue({
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        });
+      } else {
+        this.selectedSlot = undefined;
+        this.form.patchValue({ startTime: '', endTime: '' });
+      }
     }
   }
 
@@ -194,9 +448,14 @@ export class Addpatient implements OnInit {
         ...(formVal.visitMode ? { VisitMode: formVal.visitMode } : {}),
         ...(formVal.assignedPractitionerId != null
           ? { AssignedPractitionerId: String(formVal.assignedPractitionerId) } : {}),
-        ...(formVal.consultationDate ? { ConsultationDate: formVal.consultationDate } : {}),
+        ...(formVal.consultationDate ? {
+          ConsultationDate: formVal.consultationDate,
+          AppointmentDate: formVal.consultationDate
+        } : {}),
         ...(formVal.startTime ? { StartTime: formVal.startTime } : {}),
         ...(formVal.endTime ? { EndTime: formVal.endTime } : {}),
+        ...(visitTypeValue === 'Treatment' && formVal.appointmentSlotId != null
+          ? { AppointmentSlotId: String(formVal.appointmentSlotId) } : {}),
         ...(formVal.amount != null ? { Amount: String(formVal.amount) } : {}),
         ...(formVal.paymentMode ? { PaymentMode: formVal.paymentMode } : {}),
         ...(formVal.paymentStatus ? { PaymentStatus: formVal.paymentStatus } : {}),
@@ -259,8 +518,15 @@ export class Addpatient implements OnInit {
   // ─── Form Reset & Navigation ─────────────────────────────────────────────
   resetForm(): void {
     this.createform();
+    this.setupFormSubscriptions();
+    const currentPid = this.currentPractitionerId;
+    if (currentPid) {
+      this.form.patchValue({ assignedPractitionerId: currentPid });
+    }
     this.photoPreview = null;
     this.selectedSlot = undefined;
+    this.consultancySlots.set([]);
+    this.treatmentSlots.set([]);
     this.registeredPatient.set(null);
   }
 
