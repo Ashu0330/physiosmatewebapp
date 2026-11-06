@@ -210,6 +210,33 @@ export interface PatientSearchItem {
   isPrimaryProvider: boolean;
 }
 
+export class AppointmentPatientSearchItem {
+  patientId: number;
+  profile?: string | null;
+  fullName: string;
+  mobile: string;
+  profileImage?: string | null;
+  email?: string | null;
+  gender: string;
+  dob?: string | null;
+  age: number;
+  isRegistered?: boolean;
+  firstVisitDate?: string | null;
+  lastVisitDate?: string | null;
+  isPrimaryProvider?: boolean;
+  city?: string | null;
+  state?: string | null;
+  address?: string | null;
+  paymentStatus?: string | null;
+  consultancyStatus?: string | null;
+  consultancyDate?: string | null;
+  appointmentStatus?: string | null;
+  appointmentDate?: string | null;
+  fees?: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+}
+
 export interface PatientConsultancyBooking {
   bookingId: number;
   slotId: number;

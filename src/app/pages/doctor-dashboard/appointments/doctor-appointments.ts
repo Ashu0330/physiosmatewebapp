@@ -1,8 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient, DoctorAppointment, DoctorInquiryOrAppointment } from '../../../models/doctor-dashboard.model';
+import { DoctorPatient, DoctorAppointment, DoctorInquiryOrAppointment, AppointmentPatientSearchItem } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
   selector: 'app-doctor-appointments',
@@ -13,6 +15,7 @@ import { SweetAlertService } from '../../../services/sweet-alert.service';
 })
 export class DoctorAppointments implements OnInit {
   private alertService = inject(SweetAlertService);
+  private apiService = inject(ApiService);
 
   @Input() patients: DoctorPatient[] = [];
   @Input() appointments: DoctorAppointment[] = [];
@@ -21,13 +24,11 @@ export class DoctorAppointments implements OnInit {
   // ─── Search & Selection State ───────────────────────────────────────────────
   patientSearchQuery = signal<string>('');
   selectedPatientId = signal<string | null>(null);
+  selectedPatient = signal<DoctorPatient | null>(null);
   isSearchDropdownOpen = signal<boolean>(false);
-
-  selectedPatient = computed<DoctorPatient | null>(() => {
-    const id = this.selectedPatientId();
-    if (!id) return null;
-    return this.patients.find(p => p.id === id) || null;
-  });
+  patientSearchResults = signal<AppointmentPatientSearchItem[]>([]);
+  isSearchingPatients = signal<boolean>(false);
+  selectedPatientItem = signal<AppointmentPatientSearchItem | null>(null);
 
   // ─── Entry Mode Toggle: Appointment vs Inquiry ─────────────────────────────
   entryType: 'appointment' | 'inquiry' = 'appointment';
@@ -230,7 +231,7 @@ export class DoctorAppointments implements OnInit {
     ];
   }
 
-  // ─── Filtered Patients for Left Search Box ────────────────────────────────
+  // ─── Filtered Patients for Left Search Box (local fallback) ───────────────
   filteredPatients = computed(() => {
     const query = this.patientSearchQuery().toLowerCase().trim();
     if (!query) return this.patients;
@@ -244,11 +245,84 @@ export class DoctorAppointments implements OnInit {
     );
   });
 
+  // ─── Live Patient Search via Backend API (Matching Consultancy Approach) ───
+  async onPatientSearchChange(query: string): Promise<void> {
+    this.patientSearchQuery.set(query);
+    this.isSearchDropdownOpen.set(true);
+
+    if (!query.trim()) {
+      this.patientSearchResults.set([]);
+      return;
+    }
+
+    this.isSearchingPatients.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitionerAppointments, {
+        search: query.trim(),
+        page: 1,
+        pageSize: 10
+      });
+      if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientSearchResults.set(res.data as AppointmentPatientSearchItem[]);
+      } else {
+        this.patientSearchResults.set([]);
+      }
+    } catch (e) {
+      console.error('Patient search error', e);
+      this.patientSearchResults.set([]);
+    } finally {
+      this.isSearchingPatients.set(false);
+    }
+  }
+
+  // ─── Select Patient from Search Results ─────────────────────────────────────
+  selectPatientFromSearch(item: AppointmentPatientSearchItem): void {
+    const ptCode = `PT-${item.patientId}`;
+    const patient: DoctorPatient = {
+      id: ptCode,
+      patientCode: ptCode,
+      fullName: item.fullName,
+      age: item.age,
+      gender: (item.gender as 'Male' | 'Female' | 'Other') || 'Male',
+      phone: item.mobile,
+      mobile: item.mobile,
+      email: item.email || '',
+      address: item.address || undefined,
+      city: item.city || undefined,
+      state: item.state || undefined,
+      photoUrl: item.profileImage || undefined,
+      status: 'Active',
+      sessionsCompleted: 0,
+      totalSessions: 0,
+      lastVisit: item.lastVisitDate
+        ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A',
+    };
+
+    this.selectedPatientItem.set(item);
+    this.selectPatient(patient);
+
+    if (item.appointmentDate) {
+      this.formData.appointmentDate = item.appointmentDate.split('T')[0];
+    }
+    if (item.fees) {
+      this.formData.fee = item.fees;
+    }
+    if (item.appointmentStatus && ['Scheduled', 'In-Progress', 'Completed'].includes(item.appointmentStatus)) {
+      this.formData.appointmentStatus = item.appointmentStatus as 'Scheduled' | 'In-Progress' | 'Completed';
+    }
+    if (item.startTime && item.endTime) {
+      this.formData.timeSlot = `${item.startTime} - ${item.endTime}`;
+    }
+  }
+
   // ─── Auto-Fill Form on Patient Selection ───────────────────────────────────
   selectPatient(patient: DoctorPatient): void {
+    this.selectedPatient.set(patient);
     this.selectedPatientId.set(patient.id);
-    this.patientSearchQuery.set(patient.fullName);
     this.isSearchDropdownOpen.set(false);
+    this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
 
     this.formData.patientCode = patient.patientCode || patient.id;
     this.formData.fullName = patient.fullName;
@@ -259,13 +333,18 @@ export class DoctorAppointments implements OnInit {
     this.formData.condition = patient.primaryCondition || '';
     this.formData.inquiryInterest = patient.primaryCondition || '';
     this.formData.appointmentNotes = patient.notes || '';
-    this.formData.fee = 500;
+    if (!this.formData.fee) {
+      this.formData.fee = 500;
+    }
   }
 
   // ─── Clear Form for New Patient / Inquiry ─────────────────────────────────
   clearForNewEntry(): void {
+    this.selectedPatient.set(null);
     this.selectedPatientId.set(null);
+    this.selectedPatientItem.set(null);
     this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
     this.isSearchDropdownOpen.set(false);
     const newCode = `PT-${1040 + this.patients.length + 1}`;
 
