@@ -20,43 +20,66 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" class="patient-search-input" placeholder="Search patient by name, phone, code (e.g. PT-1041)..."
+        <input type="text" class="patient-search-input" placeholder="Search patient by name or mobile..."
           [ngModel]="patientSearchQuery()"
-          (ngModelChange)="patientSearchQuery.set($event); isSearchDropdownOpen.set(true)"
+          (ngModelChange)="onPatientSearchChange($event)"
           (focus)="isSearchDropdownOpen.set(true)" />
+
+        @if (isSearchingPatients()) {
+        <span class="search-spinner"></span>
+        }
+
         @if (patientSearchQuery()) {
-        <button type="button" class="btn-clear-search" (click)="clearForNewEntry()">&times;</button>
+        <button type="button" class="btn-clear-search" (click)="patientSearchQuery.set(''); patientSearchResults.set([])">&times;</button>
         }
       </div>
 
       <!-- Live Search Autocomplete Dropdown -->
       @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
       <div class="search-dropdown">
-        @for (patient of filteredPatients(); track patient.id) {
-        <div class="dropdown-item" (click)="selectPatient(patient)">
-          <div class="item-avatar">{{ getInitials(patient.fullName) }}</div>
-          <div class="item-info">
-            <div class="item-name">
-              {{ patient.fullName }}
-              <span class="item-code">({{ patient.patientCode || patient.id }})</span>
+        <div class="dropdown-header">
+          @if (isSearchingPatients()) {
+          <span>Searching...</span>
+          } @else {
+          <span>{{ patientSearchResults().length }} Patients Matched</span>
+          }
+          <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
+        </div>
+        <div class="dropdown-scroll-list">
+          @for (p of patientSearchResults(); track p.patientId) {
+          <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
+            <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
+            <div class="item-info">
+              <div class="item-name">
+                {{ p.fullName }}
+                <span class="item-code">(PT-{{ p.patientId }})</span>
+              </div>
+              <div class="item-sub">
+                {{ p.age }} yrs • {{ p.gender }} • {{ p.mobile }}
+                @if (p.city) {
+                  • {{ p.city }}
+                }
+                @if (p.appointmentDate) {
+                  • {{ p.appointmentDate | date:'mediumDate' }}
+                }
+              </div>
             </div>
-            <div class="item-sub">
-              {{ patient.phone || patient.mobile }} • {{ patient.age }}y, {{ patient.gender }}
-              @if (patient.primaryCondition) {
-                • {{ patient.primaryCondition }}
-              }
-            </div>
+            @if (p.appointmentStatus) {
+              <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
+            }
+            @if (selectedPatientItem()?.patientId === p.patientId) {
+              <span class="selected-pill">Active</span>
+            }
           </div>
-          @if (selectedPatientId() === patient.id) {
-          <span class="selected-pill">Active</span>
+          } @empty {
+          @if (!isSearchingPatients()) {
+          <div class="dropdown-empty">
+            No patients match "{{ patientSearchQuery() }}".
+            <button type="button" class="btn-link" (click)="clearForNewEntry()">+ Enter New Walk-in Patient</button>
+          </div>
+          }
           }
         </div>
-        } @empty {
-        <div class="dropdown-empty">
-          No patients match "{{ patientSearchQuery() }}".
-          <button type="button" class="btn-link" (click)="clearForNewEntry()">+ Enter New Walk-in Patient</button>
-        </div>
-        }
       </div>
       }
     </div>

@@ -362,7 +362,7 @@ export class Consultations implements OnInit, OnChanges {
 
     this.isSearchingPatients.set(true);
     try {
-      const res = await this.apiService.Post<any>(ApiEndPoints.TodayConsultancyPatient, { search: query.trim() });
+      const res = await this.apiService.Post<any>(ApiEndPoints.ConsultancyPatient, { search: query.trim() });
       if (res?.isSuccess && res.data?.length > 0) {
         this.patientSearchResults.set(res.data as PatientSearchItem[]);
       } else {
