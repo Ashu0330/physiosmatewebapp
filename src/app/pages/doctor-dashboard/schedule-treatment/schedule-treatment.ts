@@ -148,7 +148,7 @@ export class ScheduleTreatment implements OnInit {
     },
     {
       id: 'PT-1044',
-      patientCode: 'PT-1044',
+      patientCode: 'PT-1064',
       fullName: 'Rohan Deshmukh',
       age: 41,
       gender: 'Male',
@@ -158,9 +158,9 @@ export class ScheduleTreatment implements OnInit {
       city: 'South Delhi',
       primaryCondition: 'Cervical Radiculopathy',
       status: 'Active',
-      sessionsCompleted: 0,
-      totalSessions: 0,
-      lastVisit: '20 Oct 2026'
+      sessionsCompleted: 12,
+      totalSessions: 12,
+      lastVisit: '29 Oct 2026'
     },
     {
       id: 'PT-1045',
@@ -267,7 +267,6 @@ export class ScheduleTreatment implements OnInit {
     if (!p) return [];
     return this.treatmentPlans().filter(plan => plan.patientId === p.id);
   });
-
   remainingSessions = computed<number>(() => {
     const plan = this.patientActivePlan();
     if (!plan) return 0;

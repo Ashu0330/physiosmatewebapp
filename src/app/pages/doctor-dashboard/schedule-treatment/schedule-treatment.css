@@ -909,3 +909,365 @@
   padding: 24px;
   color: #9CA3AF;
 }
+
+/* ── Schedule Layout Container & Patient Overview Sidebar ────────────── */
+.schedule-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+.schedule-treatment-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-left {
+  width: 380px;
+  flex: 0 0 380px;
+  position: sticky;
+  top: 20px;
+}
+
+@media (max-width: 1200px) {
+  .schedule-box {
+    flex-direction: column;
+  }
+
+  .schedule-left {
+    width: 100%;
+    flex: 0 0 auto;
+    position: static;
+  }
+}
+
+/* ── Patient Overview Card ─────────────────────────────────────────────── */
+.patient-overview-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: inherit;
+}
+
+/* Card Title */
+.po-card-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 2px;
+}
+
+.po-title-icon {
+  color: #0D9488;
+}
+
+.po-card-title h3 {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+/* Patient Header Card */
+.po-patient-header {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.po-patient-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0D9488;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.po-patient-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.po-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.po-patient-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-patient-code {
+  background: #EEF2F6;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+}
+
+.po-patient-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* 3-Col Metric Boxes */
+.po-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.po-metric-box {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 10px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.po-metric-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0D9488;
+  flex-shrink: 0;
+}
+
+.po-metric-icon.rupee-icon {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0D9488;
+}
+
+.po-metric-data {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.po-metric-label {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-metric-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Last Visits Section */
+.po-visits-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.po-visits-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.po-vh-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #0D9488;
+}
+
+.po-vh-left h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.btn-po-view-all {
+  background: none;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0D9488;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.btn-po-view-all:hover {
+  color: #0F766E;
+  text-decoration: underline;
+}
+
+.view-all-arrow {
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+
+.btn-po-view-all:hover .view-all-arrow {
+  transform: translateX(2px);
+}
+
+/* Visits List */
+.po-visits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.po-visit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #EEF2F6;
+  transition: all 0.15s ease;
+}
+
+.po-visit-item:hover {
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+}
+
+.po-visit-item.latest {
+  background: #E8F8F5;
+  border: 1px solid #BCECE3;
+}
+
+.po-visit-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.po-date-badge {
+  width: 42px;
+  height: 44px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.po-visit-item.latest .po-date-badge {
+  border-color: #BCECE3;
+}
+
+.po-date-day {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.1;
+}
+
+.po-date-month {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0D9488;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.po-visit-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.po-visit-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-visit-sub {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-visit-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.po-visit-fee {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.po-chevron {
+  color: #64748B;
+}
+
+/* Empty State */
+.po-empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  color: #94A3B8;
+  font-size: 12.5px;
+}

@@ -54,7 +54,7 @@ export const ApiEndPoints = {
     // ── Patient ───────────────────────────────────────────────────────────────────
     AddPatient: 'Patient/AddPatient',
     GetMyPatients: 'Patient/GetMyPatients',
-    TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
+    // TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
 
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
