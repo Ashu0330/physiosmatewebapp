@@ -1,6 +1,7 @@
 import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DoctorPatient, PatientConsultancyBooking, Payment } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
@@ -49,6 +50,7 @@ export interface EMRPatient {
 export class Patients implements OnInit {
   private apiService = inject(ApiService);
   private alert = inject(SweetAlertService);
+  private router = inject(Router);
 
   // Inputs & Outputs for parent component
   patients = input<DoctorPatient[]>([]);
@@ -386,6 +388,14 @@ export class Patients implements OnInit {
 
   onPlansClick(): void {
     this.navigateToPlans.emit();
+  }
+
+  onScheduleTreatment(): void {
+    this.router.navigate(['/doctor-dashboard/schedule-treatment']);
+  }
+
+  onNewConsultation(): void {
+    this.setSubTab('consultations');
   }
 
   addNote(): void {
