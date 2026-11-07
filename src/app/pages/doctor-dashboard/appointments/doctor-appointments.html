@@ -182,12 +182,18 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-
             <div class="form-group">
+              <label class="form-label" for="apt-service">Addon service</label>
+              <select id="apt-service" name="aptservice" class="form-select" >
+                <option value="" disable selected>Addon Service</option>                
+              </select>
+            </div>
+
+            <!-- <div class="form-group">
               <label class="form-label" for="apt-code">Patient / File Code</label>
               <input id="apt-code" name="aptCode" type="text" class="form-input read-only-input" placeholder="PT-1042"
                 [(ngModel)]="formData.patientCode" />
-            </div>
+            </div> -->
           </div>
         </div>
 
