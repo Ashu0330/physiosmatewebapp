@@ -67,6 +67,7 @@ export const ApiEndPoints = {
     DoctorUpdateAppointmentStatus: 'Doctor/UpdateAppointmentStatus',
     ConsultancyPatient: 'Consultancy/ConsultancyPatient',
     GetPractitionerAppointments: 'Appointment/GetPractitionerAppointments',
+    PatientAppointmentDetails: 'Appointment/PatientAppointmentDetails',
 
 
     // ── Provider Catalog ──────────────────────────────────────────────────────────
