@@ -210,7 +210,7 @@ export interface PatientSearchItem {
   isPrimaryProvider: boolean;
 }
 
-export class AppointmentPatientSearchItem {
+export interface AppointmentPatientSearchItem {
   patientId: number;
   profile?: string | null;
   fullName: string;
@@ -235,6 +235,38 @@ export class AppointmentPatientSearchItem {
   fees?: number | null;
   startTime?: string | null;
   endTime?: string | null;
+}
+
+export interface PatientAppointmentHistoryItem {
+  id: number;
+  patientId: number;
+  patientName?: string | null;
+  gender?: string | null;
+  dob?: string | null;
+  userId?: number;
+  userName?: string | null;
+  practitionerId?: number | null;
+  practitionerName?: string | null;
+  assignmentStatus?: string | null;
+  clinicId?: number | null;
+  clinicName?: string | null;
+  assignedPractitionerId?: number | null;
+  assignedPractitionerName?: string | null;
+  userSubscriptionId?: number;
+  sessionNumber?: number;
+  providerType?: string | null;
+  visitType?: string | null;
+  providerId?: number | null;
+  appointmentSlotId?: number | null;
+  appointmentDate?: string;
+  appointmentTime?: string | null;
+  status?: string;
+  notes?: string | null;
+  createdAt?: string;
+  updatedAt?: string | null;
+  treatments?: any[];
+  billing?: any | null;
+  amount?: number;
 }
 
 export interface PatientConsultancyBooking {

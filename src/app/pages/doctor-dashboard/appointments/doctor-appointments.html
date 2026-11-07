@@ -3,141 +3,127 @@
   <!-- ── Top Header Row ─────────────────────────────────────────────────────── -->
   <div class="appointments-header">
     <div class="header-titles">
-      <h3 class="panel-title">Appointments & Patient Inquiries</h3>
-      <p class="panel-subtitle">Schedule clinical therapy appointments or record prospective patient inquiries for
-        future follow-up.</p>
+      <h3 class="panel-title">Appointments & Patient Scheduling</h3>
+      <p class="panel-subtitle">Schedule clinical therapy appointments and review patient appointment history.</p>
     </div>
-
   </div>
 
-  <!-- ── FULL-WIDTH TOP PATIENT SEARCH & DIRECTORY BAR ──────────────────────── -->
-  <div class="top-patient-section">
-    <!-- Top Search Row -->
-    <div class="top-search-row">
-      <div class="patient-search-box">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" class="patient-search-input" placeholder="Search patient by name or mobile..."
-          [ngModel]="patientSearchQuery()"
-          (ngModelChange)="onPatientSearchChange($event)"
-          (focus)="isSearchDropdownOpen.set(true)" />
+  <!-- ── MAIN TWO-COLUMN WORKSPACE (70% Form / 30% Appointment History) ──────── -->
+  <div class="appointment-two-col-layout">
 
-        @if (isSearchingPatients()) {
-        <span class="search-spinner"></span>
-        }
+    <!-- ── LEFT/CENTER (70%): SEARCH & APPOINTMENT FORM ──────────────────────── -->
+    <main class="appointment-main-col">
 
-        @if (patientSearchQuery()) {
-        <button type="button" class="btn-clear-search" (click)="patientSearchQuery.set(''); patientSearchResults.set([])">&times;</button>
-        }
-      </div>
+      <!-- ── FULL-WIDTH TOP PATIENT SEARCH & DIRECTORY BAR ──────────────────── -->
+      <div class="top-patient-section">
+        <!-- Top Search Row -->
+        <div class="top-search-row">
+          <div class="patient-search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="patient-search-input" placeholder="Search patient by name or mobile..."
+              [ngModel]="patientSearchQuery()"
+              (ngModelChange)="onPatientSearchChange($event)"
+              (focus)="isSearchDropdownOpen.set(true)" />
 
-      <!-- Live Search Autocomplete Dropdown -->
-      @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
-      <div class="search-dropdown">
-        <div class="dropdown-header">
-          @if (isSearchingPatients()) {
-          <span>Searching...</span>
-          } @else {
-          <span>{{ patientSearchResults().length }} Patients Matched</span>
-          }
-          <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
-        </div>
-        <div class="dropdown-scroll-list">
-          @for (p of patientSearchResults(); track p.patientId) {
-          <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
-            <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
-            <div class="item-info">
-              <div class="item-name">
-                {{ p.fullName }}
-                <span class="item-code">(PT-{{ p.patientId }})</span>
-              </div>
-              <div class="item-sub">
-                {{ p.age }} yrs • {{ p.gender }} • {{ p.mobile }}
-                @if (p.city) {
-                  • {{ p.city }}
+            @if (isSearchingPatients()) {
+            <span class="search-spinner"></span>
+            }
+
+            @if (patientSearchQuery()) {
+            <button type="button" class="btn-clear-search" (click)="patientSearchQuery.set(''); patientSearchResults.set([])">&times;</button>
+            }
+          </div>
+
+          <!-- Live Search Autocomplete Dropdown -->
+          @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
+          <div class="search-dropdown">
+            <div class="dropdown-header">
+              @if (isSearchingPatients()) {
+              <span>Searching...</span>
+              } @else {
+              <span>{{ patientSearchResults().length }} Patients Matched</span>
+              }
+              <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
+            </div>
+            <div class="dropdown-scroll-list">
+              @for (p of patientSearchResults(); track p.patientId) {
+              <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
+                <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
+                <div class="item-info">
+                  <div class="item-name">
+                    {{ p.fullName }}
+                    <span class="item-code">(PT-{{ p.patientId }})</span>
+                  </div>
+                  <div class="item-sub">
+                    {{ p.age }} yrs • {{ p.gender }} • {{ p.mobile }}
+                    @if (p.city) {
+                      • {{ p.city }}
+                    }
+                    @if (p.appointmentDate) {
+                      • {{ p.appointmentDate | date:'mediumDate' }}
+                    }
+                  </div>
+                </div>
+                @if (p.appointmentStatus) {
+                  <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
                 }
-                @if (p.appointmentDate) {
-                  • {{ p.appointmentDate | date:'mediumDate' }}
+                @if (selectedPatientItem()?.patientId === p.patientId) {
+                  <span class="selected-pill">Active</span>
+                }
+              </div>
+              } @empty {
+              @if (!isSearchingPatients()) {
+              <div class="dropdown-empty">
+                No patients match "{{ patientSearchQuery() }}".
+                <button type="button" class="btn-link" (click)="clearForNewEntry()">+ Enter New Walk-in Patient</button>
+              </div>
+              }
+              }
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- Selected Patient Horizontal Summary Bar -->
+        @if (selectedPatient(); as pt) {
+        <div class="selected-patient-bar">
+          <div class="pt-basic-block">
+            <div class="pt-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="pt-info">
+              <div class="pt-name-row">
+                <h4 class="pt-name">{{ pt.fullName }}</h4>
+                <span class="pt-code">{{ pt.patientCode || pt.id }}</span>
+              </div>
+              <div class="pt-meta-row">
+                <span>{{ pt.phone || pt.mobile }}</span>
+                <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
+                @if (pt.primaryCondition) {
+                  <span>• {{ pt.primaryCondition }}</span>
+                }
+                @if (pt.city) {
+                  <span>• {{ pt.city }}</span>
                 }
               </div>
             </div>
-            @if (p.appointmentStatus) {
-              <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
-            }
-            @if (selectedPatientItem()?.patientId === p.patientId) {
-              <span class="selected-pill">Active</span>
-            }
           </div>
-          } @empty {
-          @if (!isSearchingPatients()) {
-          <div class="dropdown-empty">
-            No patients match "{{ patientSearchQuery() }}".
-            <button type="button" class="btn-link" (click)="clearForNewEntry()">+ Enter New Walk-in Patient</button>
-          </div>
-          }
-          }
-        </div>
-      </div>
-      }
-    </div>
 
-    <!-- Selected Patient Horizontal Summary Bar -->
-    @if (selectedPatient(); as pt) {
-    <div class="selected-patient-bar">
-      <div class="pt-basic-block">
-        <div class="pt-avatar">{{ getInitials(pt.fullName) }}</div>
-        <div class="pt-info">
-          <div class="pt-name-row">
-            <h4 class="pt-name">{{ pt.fullName }}</h4>
-            <span class="pt-code">{{ pt.patientCode || pt.id }}</span>
-          </div>
-          <div class="pt-meta-row">
-            <span>{{ pt.phone || pt.mobile }}</span>
-            <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
-            @if (pt.primaryCondition) {
-              <span>• {{ pt.primaryCondition }}</span>
-            }
-            @if (pt.city) {
-              <span>• {{ pt.city }}</span>
-            }
+          <div class="pt-actions-block">
+            <button type="button" class="btn-new-pt-link" (click)="clearForNewEntry()">
+              + Enter New / Walk-in Patient
+            </button>
           </div>
         </div>
+        }
       </div>
 
-      <div class="pt-actions-block">
-        <button type="button" class="btn-new-pt-link" (click)="clearForNewEntry()">
-          + Enter New / Walk-in Patient
-        </button>
-      </div>
-    </div>
-    }
-  </div>
-
-  <!-- ── MAIN APPOINTMENT & INQUIRY FORM (FULL WIDTH) ────────────────────────── -->
-  <main class="appointment-panel-col">
+      <!-- ── APPOINTMENT FORM ────────────────────────────────────────────────── -->
       <form class="appointment-form-card" (ngSubmit)="onSave()">
 
-        <!-- Mode Toggle: Clinical Appointment vs Prospect Inquiry -->
-        <div class="mode-toggle-card">
-          <div class="mode-toggle-group">
-
-          </div>
-          <div class="mode-hint-text">
-            @if (entryType === 'appointment') {
-            <span>Schedules an active treatment or consultation session on the doctor's calendar.</span>
-            } @else {
-            <span>Saves prospect details & callback notes for future follow-up without billing a clinical
-              consultation.</span>
-            }
-          </div>
-        </div>
-
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- SECTION 1: Patient Information (Auto-Filled)                       -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
+        <!-- SECTION 1: Patient Information -->
         <div class="form-section">
           <div class="sec-heading-row">
             <span class="sec-number">1</span>
@@ -191,10 +177,7 @@
           </div>
         </div>
 
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- SECTION 2A: CLINICAL APPOINTMENT SCHEDULING (If appointment mode)   -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        @if (entryType === 'appointment') {
+        <!-- SECTION 2: Appointment Schedule & Session Details -->
         <div class="form-section">
           <div class="sec-heading-row">
             <span class="sec-number">2</span>
@@ -247,9 +230,6 @@
             </div>
           </div>
 
-          <div class="form-grid-2">
-          </div>
-
           <div class="form-group">
             <label class="form-label" for="apt-notes">Treatment Notes & Precautions</label>
             <textarea id="apt-notes" name="aptNotes" rows="2" class="form-textarea"
@@ -257,37 +237,192 @@
               [(ngModel)]="formData.appointmentNotes"></textarea>
           </div>
         </div>
-        }
-
-        <!-- ────────────────────────────────────────────────────────────────── -->
-        <!-- SECTION 2B: INQUIRY / FUTURE PROSPECT DETAILS (If inquiry mode)    -->
-        <!-- ────────────────────────────────────────────────────────────────── -->
 
         <!-- Form Actions Bar -->
         <div class="form-actions-bar">
           <button type="button" class="btn-reset" (click)="clearForNewEntry()">
             Clear Form
           </button>
-          <button type="submit" class="btn-submit-appointment" [class.inquiry-submit]="entryType === 'inquiry'">
-            @if (entryType === 'appointment') {
+          <button type="submit" class="btn-submit-appointment">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             Schedule Clinical Appointment
-            } @else {
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-              <polyline points="17 21 17 13 7 13 7 21"></polyline>
-              <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-            Save Prospect Inquiry (No Consultation Bill)
-            }
           </button>
         </div>
 
       </form>
     </main>
 
-  <!-- ── BOTTOM SECTION: TABBED DIRECTORY & LEDGER ──────────────────────────── -->
+    <!-- ── RIGHT COLUMN (30%): PATIENT APPOINTMENT HISTORY ───────────────────── -->
+    <aside class="appointment-history-sidebar">
+      <div class="history-sidebar-card">
+        <div class="qs-header">
+          <h4 class="qs-title">Appointment History</h4>
+          <span class="qs-sub">Past therapy & clinic appointments</span>
+        </div>
+
+        @if (selectedPatient()) {
+          <div class="qs-section">
+            <div class="qs-section-title-row">
+              <span class="qs-section-title">Past Appointments</span>
+              @if (isLoadingHistory()) {
+                <span class="qs-loading-badge">Loading...</span>
+              } @else if (patientAppointmentHistory().length > 0) {
+                <span class="qs-count-badge">{{ patientAppointmentHistory().length }}</span>
+              }
+            </div>
+
+            @if (isLoadingHistory()) {
+              <div class="qs-empty-msg">Fetching appointment history...</div>
+            } @else if (patientAppointmentHistory().length === 0) {
+              <div class="qs-empty-msg">No past appointments found for this patient.</div>
+            } @else {
+              <div class="history-items-list">
+                @for (apt of patientAppointmentHistory(); track apt.id) {
+                  <div class="history-item-card"
+                    [class.selected]="selectedAppointment()?.id === apt.id"
+                    (click)="selectAppointment(apt)">
+                    <div class="hi-top-row">
+                      <span class="hi-date">{{ formatBookingDate(apt.appointmentDate) }}</span>
+                      <span class="hi-status" [class.hi-status-done]="apt.status === 'Completed'" [class.hi-status-sched]="apt.status === 'Scheduled'">
+                        {{ apt.status || 'Scheduled' }}
+                      </span>
+                    </div>
+                    <div class="hi-detail-row">
+                      <span class="hi-visit">{{ apt.visitType || 'Clinic' }}</span>
+                      @if (apt.appointmentTime) {
+                        <span class="hi-time">{{ apt.appointmentTime }}</span>
+                      }
+                      @if (apt.sessionNumber) {
+                        <span class="hi-session">S#{{ apt.sessionNumber }}</span>
+                      }
+                      @if (apt.amount || apt.billing?.amount) {
+                        <span class="hi-fee">₹{{ apt.amount || apt.billing?.amount }}</span>
+                      }
+                    </div>
+                    @if (apt.notes) {
+                      <div class="hi-complaint">{{ apt.notes }}</div>
+                    }
+                    @if (selectedAppointment()?.id === apt.id) {
+                      <div class="hi-selected-badge">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Selected
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="sidebar-no-patient-msg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <p>Select a patient to view their appointment history</p>
+          </div>
+        }
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ── MODAL: APPOINTMENT DETAILS OVERLAY (Matching Consultancy) ─────────── -->
+  @if (appointmentDetailModal()) {
+    <div class="bk-modal-overlay" (click)="closeAppointmentModal()">
+      <div class="bk-modal" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="bk-modal-header">
+          <div class="bk-modal-title-group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="bk-modal-title">Appointment Details</span>
+          </div>
+          <button class="bk-modal-close" (click)="closeAppointmentModal()" aria-label="Close">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="bk-modal-body">
+          <div class="bk-status-strip"
+            [class.bk-status-completed]="appointmentDetailModal()!.status === 'Completed'"
+            [class.bk-status-booked]="appointmentDetailModal()!.status !== 'Completed'">
+            {{ appointmentDetailModal()!.status || 'Scheduled' }}
+          </div>
+
+          <div class="bk-detail-grid">
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Patient</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.patientName }}</span>
+            </div>
+
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Appointment Date</span>
+              <span class="bk-detail-value">{{ formatBookingDate(appointmentDetailModal()!.appointmentDate) }}</span>
+            </div>
+
+            @if (appointmentDetailModal()!.appointmentTime) {
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Time</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.appointmentTime }}</span>
+            </div>
+            }
+
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Visit Type</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.visitType || 'Clinic' }}</span>
+            </div>
+
+            @if (appointmentDetailModal()!.sessionNumber) {
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Session Number</span>
+              <span class="bk-detail-value">#{{ appointmentDetailModal()!.sessionNumber }}</span>
+            </div>
+            }
+
+            @if (appointmentDetailModal()!.practitionerName) {
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Practitioner</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.practitionerName }}</span>
+            </div>
+            }
+
+            @if (appointmentDetailModal()!.clinicName) {
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Clinic</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.clinicName }}</span>
+            </div>
+            }
+
+            @if (appointmentDetailModal()!.amount || appointmentDetailModal()!.billing?.amount) {
+            <div class="bk-detail-row">
+              <span class="bk-detail-label">Fee / Billing</span>
+              <span class="bk-detail-value fee-highlight">₹{{ appointmentDetailModal()!.amount || appointmentDetailModal()!.billing?.amount }}</span>
+            </div>
+            }
+
+            @if (appointmentDetailModal()!.notes) {
+            <div class="bk-detail-row bk-full-row">
+              <span class="bk-detail-label">Notes</span>
+              <span class="bk-detail-value">{{ appointmentDetailModal()!.notes }}</span>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bk-modal-footer">
+          <button class="bk-btn-close" (click)="closeAppointmentModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
 
 </div>
