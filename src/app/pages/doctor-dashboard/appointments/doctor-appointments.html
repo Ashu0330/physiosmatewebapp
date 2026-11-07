@@ -25,8 +25,7 @@
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input type="text" class="patient-search-input" placeholder="Search patient by name or mobile..."
-              [ngModel]="patientSearchQuery()"
-              (ngModelChange)="onPatientSearchChange($event)"
+              [ngModel]="patientSearchQuery()" (ngModelChange)="onPatientSearchChange($event)"
               (focus)="isSearchDropdownOpen.set(true)" />
 
             @if (isSearchingPatients()) {
@@ -34,7 +33,8 @@
             }
 
             @if (patientSearchQuery()) {
-            <button type="button" class="btn-clear-search" (click)="patientSearchQuery.set(''); patientSearchResults.set([])">&times;</button>
+            <button type="button" class="btn-clear-search"
+              (click)="patientSearchQuery.set(''); patientSearchResults.set([])">&times;</button>
             }
           </div>
 
@@ -61,18 +61,18 @@
                   <div class="item-sub">
                     {{ p.age }} yrs • {{ p.gender }} • {{ p.mobile }}
                     @if (p.city) {
-                      • {{ p.city }}
+                    • {{ p.city }}
                     }
                     @if (p.appointmentDate) {
-                      • {{ p.appointmentDate | date:'mediumDate' }}
+                    • {{ p.appointmentDate | date:'mediumDate' }}
                     }
                   </div>
                 </div>
                 @if (p.appointmentStatus) {
-                  <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
+                <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
                 }
                 @if (selectedPatientItem()?.patientId === p.patientId) {
-                  <span class="selected-pill">Active</span>
+                <span class="selected-pill">Active</span>
                 }
               </div>
               } @empty {
@@ -102,10 +102,10 @@
                 <span>{{ pt.phone || pt.mobile }}</span>
                 <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
                 @if (pt.primaryCondition) {
-                  <span>• {{ pt.primaryCondition }}</span>
+                <span>• {{ pt.primaryCondition }}</span>
                 }
                 @if (pt.city) {
-                  <span>• {{ pt.city }}</span>
+                <span>• {{ pt.city }}</span>
                 }
               </div>
             </div>
@@ -168,67 +168,11 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-
-            <div class="form-group">
-              <label class="form-label" for="apt-code">Patient / File Code</label>
-              <input id="apt-code" name="aptCode" type="text" class="form-input read-only-input" placeholder="PT-1042"
-                [(ngModel)]="formData.patientCode" />
-            </div>
           </div>
         </div>
 
         <!-- SECTION 2: Appointment Schedule & Session Details -->
         <div class="form-section">
-          <div class="sec-heading-row">
-            <span class="sec-number">2</span>
-            <div>
-              <h5 class="sec-title">Appointment Schedule & Session Details</h5>
-              <span class="sec-desc">Choose appointment date, time slot, and session purpose</span>
-            </div>
-          </div>
-
-          <div class="form-grid-3">
-            <div class="form-group">
-              <label class="form-label" for="apt-date">Appointment Date <span class="req">*</span></label>
-              <input id="apt-date" name="aptDate" type="date" class="form-input" [(ngModel)]="formData.appointmentDate"
-                required />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="apt-visittype">Visit Mode</label>
-              <select id="apt-visittype" name="aptVisitType" class="form-select" [(ngModel)]="formData.visitType">
-                <option value="In-Clinic">In-Clinic (Center)</option>
-                <option value="Video Call">Tele-Rehab (Video Call)</option>
-                <option value="Home Visit">Home Visit (Domiciliary)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="apt-sessiontype">Session Type</label>
-              <select id="apt-sessiontype" name="aptSessionType" class="form-select" [(ngModel)]="formData.sessionType">
-                <option value="Initial Assessment">Initial Assessment</option>
-                <option value="Regular Rehab Session">Regular Rehab Session</option>
-                <option value="Follow-up Review">Follow-up Review</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Time Slot Chips -->
-          <div class="form-group">
-            <label class="form-label">Select Available Time Slot <span class="req">*</span></label>
-            <div class="time-slot-chips">
-              @for (slot of availableSlots; track slot) {
-              <button type="button" class="time-chip" [class.selected]="formData.timeSlot === slot"
-                (click)="setTimeSlot(slot)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                {{ slot }}
-              </button>
-              }
-            </div>
-          </div>
 
           <div class="form-group">
             <label class="form-label" for="apt-notes">Treatment Notes & Precautions</label>
@@ -263,68 +207,68 @@
         </div>
 
         @if (selectedPatient()) {
-          <div class="qs-section">
-            <div class="qs-section-title-row">
-              <span class="qs-section-title">Past Appointments</span>
-              @if (isLoadingHistory()) {
-                <span class="qs-loading-badge">Loading...</span>
-              } @else if (patientAppointmentHistory().length > 0) {
-                <span class="qs-count-badge">{{ patientAppointmentHistory().length }}</span>
-              }
-            </div>
-
+        <div class="qs-section">
+          <div class="qs-section-title-row">
+            <span class="qs-section-title">Past Appointments</span>
             @if (isLoadingHistory()) {
-              <div class="qs-empty-msg">Fetching appointment history...</div>
-            } @else if (patientAppointmentHistory().length === 0) {
-              <div class="qs-empty-msg">No past appointments found for this patient.</div>
-            } @else {
-              <div class="history-items-list">
-                @for (apt of patientAppointmentHistory(); track apt.id) {
-                  <div class="history-item-card"
-                    [class.selected]="selectedAppointment()?.id === apt.id"
-                    (click)="selectAppointment(apt)">
-                    <div class="hi-top-row">
-                      <span class="hi-date">{{ formatBookingDate(apt.appointmentDate) }}</span>
-                      <span class="hi-status" [class.hi-status-done]="apt.status === 'Completed'" [class.hi-status-sched]="apt.status === 'Scheduled'">
-                        {{ apt.status || 'Scheduled' }}
-                      </span>
-                    </div>
-                    <div class="hi-detail-row">
-                      <span class="hi-visit">{{ apt.visitType || 'Clinic' }}</span>
-                      @if (apt.appointmentTime) {
-                        <span class="hi-time">{{ apt.appointmentTime }}</span>
-                      }
-                      @if (apt.sessionNumber) {
-                        <span class="hi-session">S#{{ apt.sessionNumber }}</span>
-                      }
-                      @if (apt.amount || apt.billing?.amount) {
-                        <span class="hi-fee">₹{{ apt.amount || apt.billing?.amount }}</span>
-                      }
-                    </div>
-                    @if (apt.notes) {
-                      <div class="hi-complaint">{{ apt.notes }}</div>
-                    }
-                    @if (selectedAppointment()?.id === apt.id) {
-                      <div class="hi-selected-badge">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        Selected
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
+            <span class="qs-loading-badge">Loading...</span>
+            } @else if (patientAppointmentHistory().length > 0) {
+            <span class="qs-count-badge">{{ patientAppointmentHistory().length }}</span>
             }
           </div>
-        } @else {
-          <div class="sidebar-no-patient-msg">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <p>Select a patient to view their appointment history</p>
+
+          @if (isLoadingHistory()) {
+          <div class="qs-empty-msg">Fetching appointment history...</div>
+          } @else if (patientAppointmentHistory().length === 0) {
+          <div class="qs-empty-msg">No past appointments found for this patient.</div>
+          } @else {
+          <div class="history-items-list">
+            @for (apt of patientAppointmentHistory(); track apt.id) {
+            <div class="history-item-card" [class.selected]="selectedAppointment()?.id === apt.id"
+              (click)="selectAppointment(apt)">
+              <div class="hi-top-row">
+                <span class="hi-date">{{ formatBookingDate(apt.appointmentDate) }}</span>
+                <span class="hi-status" [class.hi-status-done]="apt.status === 'Completed'"
+                  [class.hi-status-sched]="apt.status === 'Scheduled'">
+                  {{ apt.status || 'Scheduled' }}
+                </span>
+              </div>
+              <div class="hi-detail-row">
+                <span class="hi-visit">{{ apt.visitType || 'Clinic' }}</span>
+                @if (apt.appointmentTime) {
+                <span class="hi-time">{{ apt.appointmentTime }}</span>
+                }
+                @if (apt.sessionNumber) {
+                <span class="hi-session">S#{{ apt.sessionNumber }}</span>
+                }
+                @if (apt.amount || apt.billing?.amount) {
+                <span class="hi-fee">₹{{ apt.amount || apt.billing?.amount }}</span>
+                }
+              </div>
+              @if (apt.notes) {
+              <div class="hi-complaint">{{ apt.notes }}</div>
+              }
+              @if (selectedAppointment()?.id === apt.id) {
+              <div class="hi-selected-badge">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Selected
+              </div>
+              }
+            </div>
+            }
           </div>
+          }
+        </div>
+        } @else {
+        <div class="sidebar-no-patient-msg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <p>Select a patient to view their appointment history</p>
+        </div>
         }
       </div>
     </aside>
@@ -333,96 +277,96 @@
 
   <!-- ── MODAL: APPOINTMENT DETAILS OVERLAY (Matching Consultancy) ─────────── -->
   @if (appointmentDetailModal()) {
-    <div class="bk-modal-overlay" (click)="closeAppointmentModal()">
-      <div class="bk-modal" (click)="$event.stopPropagation()">
-        <!-- Header -->
-        <div class="bk-modal-header">
-          <div class="bk-modal-title-group">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span class="bk-modal-title">Appointment Details</span>
-          </div>
-          <button class="bk-modal-close" (click)="closeAppointmentModal()" aria-label="Close">&times;</button>
+  <div class="bk-modal-overlay" (click)="closeAppointmentModal()">
+    <div class="bk-modal" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="bk-modal-header">
+        <div class="bk-modal-title-group">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="bk-modal-title">Appointment Details</span>
+        </div>
+        <button class="bk-modal-close" (click)="closeAppointmentModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Body -->
+      <div class="bk-modal-body">
+        <div class="bk-status-strip" [class.bk-status-completed]="appointmentDetailModal()!.status === 'Completed'"
+          [class.bk-status-booked]="appointmentDetailModal()!.status !== 'Completed'">
+          {{ appointmentDetailModal()!.status || 'Scheduled' }}
         </div>
 
-        <!-- Body -->
-        <div class="bk-modal-body">
-          <div class="bk-status-strip"
-            [class.bk-status-completed]="appointmentDetailModal()!.status === 'Completed'"
-            [class.bk-status-booked]="appointmentDetailModal()!.status !== 'Completed'">
-            {{ appointmentDetailModal()!.status || 'Scheduled' }}
+        <div class="bk-detail-grid">
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Patient</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.patientName }}</span>
           </div>
 
-          <div class="bk-detail-grid">
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Patient</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.patientName }}</span>
-            </div>
-
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Appointment Date</span>
-              <span class="bk-detail-value">{{ formatBookingDate(appointmentDetailModal()!.appointmentDate) }}</span>
-            </div>
-
-            @if (appointmentDetailModal()!.appointmentTime) {
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Time</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.appointmentTime }}</span>
-            </div>
-            }
-
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Visit Type</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.visitType || 'Clinic' }}</span>
-            </div>
-
-            @if (appointmentDetailModal()!.sessionNumber) {
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Session Number</span>
-              <span class="bk-detail-value">#{{ appointmentDetailModal()!.sessionNumber }}</span>
-            </div>
-            }
-
-            @if (appointmentDetailModal()!.practitionerName) {
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Practitioner</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.practitionerName }}</span>
-            </div>
-            }
-
-            @if (appointmentDetailModal()!.clinicName) {
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Clinic</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.clinicName }}</span>
-            </div>
-            }
-
-            @if (appointmentDetailModal()!.amount || appointmentDetailModal()!.billing?.amount) {
-            <div class="bk-detail-row">
-              <span class="bk-detail-label">Fee / Billing</span>
-              <span class="bk-detail-value fee-highlight">₹{{ appointmentDetailModal()!.amount || appointmentDetailModal()!.billing?.amount }}</span>
-            </div>
-            }
-
-            @if (appointmentDetailModal()!.notes) {
-            <div class="bk-detail-row bk-full-row">
-              <span class="bk-detail-label">Notes</span>
-              <span class="bk-detail-value">{{ appointmentDetailModal()!.notes }}</span>
-            </div>
-            }
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Appointment Date</span>
+            <span class="bk-detail-value">{{ formatBookingDate(appointmentDetailModal()!.appointmentDate) }}</span>
           </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="bk-modal-footer">
-          <button class="bk-btn-close" (click)="closeAppointmentModal()">Close</button>
+          @if (appointmentDetailModal()!.appointmentTime) {
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Time</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.appointmentTime }}</span>
+          </div>
+          }
+
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Visit Type</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.visitType || 'Clinic' }}</span>
+          </div>
+
+          @if (appointmentDetailModal()!.sessionNumber) {
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Session Number</span>
+            <span class="bk-detail-value">#{{ appointmentDetailModal()!.sessionNumber }}</span>
+          </div>
+          }
+
+          @if (appointmentDetailModal()!.practitionerName) {
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Practitioner</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.practitionerName }}</span>
+          </div>
+          }
+
+          @if (appointmentDetailModal()!.clinicName) {
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Clinic</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.clinicName }}</span>
+          </div>
+          }
+
+          @if (appointmentDetailModal()!.amount || appointmentDetailModal()!.billing?.amount) {
+          <div class="bk-detail-row">
+            <span class="bk-detail-label">Fee / Billing</span>
+            <span class="bk-detail-value fee-highlight">₹{{ appointmentDetailModal()!.amount ||
+              appointmentDetailModal()!.billing?.amount }}</span>
+          </div>
+          }
+
+          @if (appointmentDetailModal()!.notes) {
+          <div class="bk-detail-row bk-full-row">
+            <span class="bk-detail-label">Notes</span>
+            <span class="bk-detail-value">{{ appointmentDetailModal()!.notes }}</span>
+          </div>
+          }
         </div>
       </div>
+
+      <!-- Footer -->
+      <div class="bk-modal-footer">
+        <button class="bk-btn-close" (click)="closeAppointmentModal()">Close</button>
+      </div>
     </div>
+  </div>
   }
 
 </div>
