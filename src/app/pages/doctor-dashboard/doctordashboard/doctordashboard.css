@@ -596,6 +596,11 @@
   color: #059669;
 }
 
+.apt-status-pill.failed {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
 .btn-status-action {
   font-family: inherit;
   font-size: 11px;
@@ -727,6 +732,20 @@
   font-size: 10px;
 }
 
+.payment-patient-info .payment-patient-name {
+  overflow: hidden;
+  color: #253653;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payment-patient-info .payment-patient-meta {
+  color: #71809A;
+  font-size: 10.5px;
+}
+
 .payment-patient-status {
   padding: 4px 8px;
   border-radius: 12px;
@@ -734,6 +753,42 @@
   color: #13966C;
   font-size: 9px;
   font-weight: 700;
+}
+
+.payment-patient-status.is-due {
+  background: #FFF4DE;
+  color: #B45309;
+}
+
+.payment-patient-status.is-failed {
+  background: #FFE4E4;
+  color: #DC2626;
+}
+
+.payment-submit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0E7490, #0D9488);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.payment-submit-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.payment-submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .payment-details-list {
@@ -802,9 +857,14 @@
   font-weight: 600;
 }
 
-.payment-close-button:hover {
+.payment-close-button:hover:not(:disabled) {
   border: 1px solid #EF4444;
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+}
+
+.payment-close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .payment-download-button {

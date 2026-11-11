@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -76,26 +76,7 @@ export class DoctorAppointments implements OnInit {
   ngOnInit(): void {
     const today = new Date();
     this.formData.appointmentDate = today.toISOString().split('T')[0];
-
-    // Auto-select first patient if available
-    if (this.patients.length > 0) {
-      this.selectPatient(this.patients[0]);
-    }
   }
-
-  // ─── Filtered Patients for Local Fallback ──────────────────────────────────
-  filteredPatients = computed(() => {
-    const query = this.patientSearchQuery().toLowerCase().trim();
-    if (!query) return this.patients;
-
-    return this.patients.filter(p =>
-      p.fullName.toLowerCase().includes(query) ||
-      (p.phone && p.phone.toLowerCase().includes(query)) ||
-      (p.mobile && p.mobile.toLowerCase().includes(query)) ||
-      (p.patientCode && p.patientCode.toLowerCase().includes(query)) ||
-      (p.primaryCondition && p.primaryCondition.toLowerCase().includes(query))
-    );
-  });
 
   // ─── Live Patient Search via Backend API (Matching Consultancy Approach) ───
   async onPatientSearchChange(query: string): Promise<void> {
@@ -241,10 +222,9 @@ export class DoctorAppointments implements OnInit {
     this.selectedAppointment.set(null);
     this.appointmentDetailModal.set(null);
     this.isSearchDropdownOpen.set(false);
-    const newCode = `PT-${1040 + this.patients.length + 1}`;
 
-    this.formData = {
-      patientCode: newCode,
+    this.formData = { 
+      patientCode: '',
       fullName: '',
       phone: '',
       email: '',

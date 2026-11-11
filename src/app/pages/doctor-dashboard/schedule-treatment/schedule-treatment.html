@@ -42,29 +42,63 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" class="search-input" placeholder="Search patient by name or phone..."
+            <input type="text" class="search-input" placeholder="Search patient by name, mobile, or email..."
               [ngModel]="patientSearchQuery()"
-              (ngModelChange)="patientSearchQuery.set($event); isSearchDropdownOpen.set(true)"
+              (ngModelChange)="onPatientSearchChange($event)"
               (focus)="isSearchDropdownOpen.set(true)" />
+            @if (isSearchingPatients()) {
+            <span class="search-spinner"></span>
+            }
             @if (patientSearchQuery()) {
-            <button type="button" class="btn-clear-search" (click)="clearSearch()">✕</button>
+            <button type="button" class="btn-clear-search" (click)="clearSearch()">&times;</button>
             }
           </div>
 
           <!-- Autocomplete Suggestions Dropdown -->
           @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
           <div class="search-dropdown">
-            @for (pt of filteredPatients(); track pt.id) {
-            <div class="dropdown-item" (click)="selectPatient(pt)">
-              <div class="item-avatar">{{ getInitials(pt.fullName) }}</div>
-              <div class="item-info">
-                <div class="item-name">{{ pt.fullName }} <span class="item-code">({{ pt.patientCode }})</span></div>
-                <div class="item-sub">{{ pt.phone }} • {{ pt.gender }}, {{ pt.age }}y • {{ pt.primaryCondition }}</div>
-              </div>
+            <div class="dropdown-header">
+              @if (isSearchingPatients()) {
+              <span>Searching...</span>
+              } @else {
+              <span>{{ patientSearchResults().length }} Patients Matched</span>
+              }
+              <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
             </div>
-            } @empty {
-            <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
-            }
+            <div class="dropdown-scroll-list">
+              @for (p of patientSearchResults(); track p.patientId) {
+              <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
+                <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
+                <div class="item-info">
+                  <div class="item-name">{{ p.fullName }} <span class="item-code">(PT-{{ p.patientId }})</span></div>
+                  <div class="item-sub">
+                    @if (p.mobile) {
+                    <span>{{ p.mobile }}</span>
+                    }
+                    @if (p.age) {
+                    <span>{{ p.mobile ? ' • ' : '' }}{{ p.age }} yrs</span>
+                    }
+                    @if (p.gender) {
+                    <span>{{ (p.mobile || p.age) ? ' • ' : '' }}{{ p.gender }}</span>
+                    }
+                    @if (p.city) {
+                    <span> • {{ p.city }}</span>
+                    }
+                    @if (p.email) {
+                    <span> • {{ p.email }}</span>
+                    }
+                  </div>
+                </div>
+                @if (selectedPatientItem()?.patientId === p.patientId) {
+                <span class="selected-pill">Active</span>
+                }
+              </div>
+              } @empty {
+              @if (!isSearchingPatients()) {
+              <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
+              }
+              }
+            </div>
           </div>
           }
         </div>
@@ -82,8 +116,17 @@
                 <span class="pt-code">{{ pt.patientCode }}</span>
               </div>
               <div class="pt-meta-row">
-                <span>{{ pt.phone }}</span>
-                <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
+                @if (pt.phone || pt.mobile) {
+                <span>{{ pt.phone || pt.mobile }}</span>
+                }
+                @if (pt.age || pt.gender) {
+                <span>
+                  @if (pt.phone || pt.mobile) { • }
+                  @if (pt.age) { {{ pt.age }} yrs }
+                  @if (pt.age && pt.gender) { , }
+                  @if (pt.gender) { {{ pt.gender }} }
+                </span>
+                }
                 @if (pt.primaryCondition) {
                 <span>• {{ pt.primaryCondition }}</span>
                 }

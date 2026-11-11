@@ -330,7 +330,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (item of Consultancy(); track item.patientId) {
+                  @for (item of Consultancy(); track item.consultancyId ?? item.paymentId ?? $index) {
                   <tr>
                     <!-- Time / Date -->
                     <td>
@@ -365,8 +365,11 @@
 
                     <!-- Payment Status -->
                     <td>
-                      <span class="apt-status-pill" [class.completed]="item.paymentStatus === 'Paid'"
-                        [class.scheduled]="item.paymentStatus === 'Pending' || item.paymentStatus === 'Unpaid'">
+                      <span class="apt-status-pill"
+                        [class.completed]="item.paymentStatus === 'Paid' || item.paymentStatus === 'Success'"
+                        [class.in-progress]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.scheduled]="item.paymentStatus === 'Refunded'"
+                        [class.failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
                         {{ item.paymentStatus || '—' }}
                       </span>
                     </td>
@@ -392,156 +395,12 @@
 
                     <!-- Action -->
                     <td>
-                      <button type="button" class="btn-status-action start btn btn-primary" data-bs-toggle="modal"
-                        [attr.data-bs-target]="'#paymentModal-' + item.patientId">
+                      <button type="button" class="btn-status-action start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#paymentModal"
+                        (click)="openPaymentModal(item)">
                         Payment
                       </button>
-                      <!-- Modal -->
-                      <div class="modal fade" [id]="'paymentModal-' + item.patientId" tabindex="-1"
-                        [attr.aria-labelledby]="'paymentModalLabel-' + item.patientId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered payment-modal-dialog" role="document">
-                          <div class="modal-content payment-modal-content">
-                            <div class="modal-header payment-modal-header">
-                              <div class="payment-modal-heading">
-                                <span class="payment-modal-icon" aria-hidden="true">
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="5" width="18" height="14" rx="3"></rect>
-                                    <path d="M3 10h18"></path>
-                                    <path d="M7 15h3"></path>
-                                  </svg>
-                                </span>
-                                <span>
-                                  <h5 class="modal-title" [id]="'paymentModalLabel-' + item.patientId">Payment</h5>
-                                  <span class="payment-modal-subtitle">View payment details for the selected
-                                    patient.</span>
-                                </span>
-                              </div>
-                              <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
-                                aria-label="Close">
-                              </button>
-                            </div>
-                            <div class="modal-body payment-modal-body">                              
-                              <div class="payment-patient-card mb-3">
-                                <span class="payment-patient-avatar">{{ getInitials(item.fullName) }}</span>
-                                <div class="payment-patient-info">
-                                  <span class="payment-patient-name">{{ item.fullName }}</span>
-                                  <span>Patient ID: PT-{{ item.patientId }}</span>
-                                </div>
-                              </div>
-
-                              <div class="payment-details-form">
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
-                                  <select class="form-select form-select-sm">
-                                    <option value="Cash">Cash</option>
-                                    <option value="Card">Credit / Debit Card</option>
-                                    <option value="UPI">UPI / QR Code</option>
-                                    <option value="NetBanking">Net Banking</option>
-                                  </select>
-                                </div>
-
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
-                                  <select class="form-select form-select-sm">
-                                    <option value="Paid">Paid</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                  </select>
-                                </div>
-
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">CONSULTATION AMOUNT</label>
-                                  <input type="number" class="form-control form-control-sm" />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="modal-footer payment-modal-footer">
-                              <button type="button" class="payment-close-button" data-bs-dismiss="modal">Close</button>
-                              <button type="button" class="payment-download-button">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <path d="m7 10 5 5 5-5"></path>
-                                  <path d="M12 15V3"></path>
-                                </svg>
-                                Download Receipt
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="modal fade" [id]="'paymentModal-' + item.patientId" tabindex="-1"
-                        [attr.aria-labelledby]="'paymentModalLabel-' + item.patientId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered payment-modal-dialog">
-                          <div class="modal-content payment-modal-content">
-                            <div class="modal-header payment-modal-header">
-                              <div class="payment-modal-heading">
-                                <span class="payment-modal-icon">
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                                  </svg>
-                                </span>
-                                <div>
-                                  <h5 class="modal-title" id="consultancyPaymentModalLabel">Consultancy Payment</h5>
-                                  <span class="payment-modal-subtitle">Process payment and update encounter financial
-                                    status</span>
-                                </div>
-                              </div>
-                              <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                            </div>
-
-                            <div class="modal-body payment-modal-body">
-                              <div class="payment-patient-card mb-3">
-                                <span class="payment-patient-avatar">{{ getInitials(item.fullName) }}</span>
-                                <div class="payment-patient-info">
-                                  <span class="payment-patient-name">{{ item.fullName }}</span>
-                                  <span class="payment-patient-meta">ID: PT-{{ item.patientId }} &bull; {{ item.mobile
-                                    || 'No Mobile'
-                                    }}</span>
-                                </div>
-                              </div>
-
-                              <div class="payment-details-form">
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
-                                  <select class="form-select form-select-sm">
-                                    <option value="Cash">Cash</option>
-                                    <option value="Card">Credit / Debit Card</option>
-                                    <option value="UPI">UPI / QR Code</option>
-                                    <option value="NetBanking">Net Banking</option>
-                                  </select>
-                                </div>
-
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
-                                  <select class="form-select form-select-sm">
-                                    <option value="Paid">Paid</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                  </select>
-                                </div>
-
-                                <div class="mb-3">
-                                  <label class="form-label small fw-bold text-muted">CONSULTATION AMOUNT</label>
-                                  <input type="number" class="form-control form-control-sm" />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div class="modal-footer payment-modal-footer">
-                              <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-bs-dismiss="modal">Cancel</button>
-                              <button type="button" class="btn btn-sm btn-primary-action" data-bs-dismiss="modal">
-                                Save Payment Status
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </td>
                   </tr>
                   } @empty {
@@ -555,6 +414,108 @@
               </table>
             </div>
           </div>
+
+          <!-- ── Shared Payment Modal (outside @for loop) ───────────────────── -->
+          <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered payment-modal-dialog" role="document">
+              <div class="modal-content payment-modal-content">
+                @if (selectedPaymentRow(); as item) {
+                <form (ngSubmit)="submitPaymentUpdate()">
+                  <!-- Header -->
+                  <div class="modal-header payment-modal-header">
+                    <div class="payment-modal-heading">
+                      <span class="payment-modal-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                          <path d="M3 10h18"></path>
+                          <path d="M7 15h3"></path>
+                        </svg>
+                      </span>
+                      <span>
+                        <h5 class="modal-title" id="paymentModalLabel">Update Payment</h5>
+                        <span class="payment-modal-subtitle">Process &amp; update consultancy payment</span>
+                      </span>
+                    </div>
+                    <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
+                      aria-label="Close"></button>
+                  </div>
+
+                  <!-- Body -->
+                  <div class="modal-body payment-modal-body">
+                    <!-- Patient card -->
+                    <div class="payment-patient-card mb-3">
+                      <span class="payment-patient-avatar">{{ getInitials(item.fullName) }}</span>
+                      <div class="payment-patient-info">
+                        <span class="payment-patient-name">{{ item.fullName }}</span>
+                        <span class="payment-patient-meta">
+                          PT-{{ item.patientId }} &bull; {{ item.mobile || 'No mobile' }}
+                          @if (item.paymentId) { &bull; Payment #{{ item.paymentId }} }
+                        </span>
+                      </div>
+                      <span class="payment-patient-status"
+                        [class.is-due]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.is-failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
+                        {{ item.paymentStatus || 'Due' }}
+                      </span>
+                    </div>
+
+                    @if (!item.paymentId) {
+                    <div class="alert alert-warning py-2 small">
+                      No linked payment record. Submit will be skipped.
+                    </div>
+                    }
+
+                    <!-- Form fields -->
+                    <div class="payment-details-form">
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
+                        <select class="form-select form-select-sm"
+                          [ngModel]="paymentMethod()" (ngModelChange)="paymentMethod.set($event)"
+                          name="paymentMethod">
+                          @for (opt of paymentMethodOptions; track opt.value) {
+                          <option [value]="opt.value">{{ opt.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
+                        <select class="form-select form-select-sm" required
+                          [ngModel]="paymentStatus()" (ngModelChange)="paymentStatus.set($event)"
+                          name="paymentStatus">
+                          @for (opt of paymentStatusOptions; track opt.value) {
+                          <option [value]="opt.value">{{ opt.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">AMOUNT (&#8377;)</label>
+                        <input type="number" class="form-control form-control-sm payment-amount-input" min="0" step="0.01"
+                          [ngModel]="paymentAmount()" (ngModelChange)="onPaymentAmountChange($event)"
+                          name="paymentAmount" placeholder="e.g. 500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Footer -->
+                  <div class="modal-footer payment-modal-footer">
+                    <button type="button" class="payment-close-button" data-bs-dismiss="modal"
+                      #paymentModalCloseBtn [disabled]="isUpdatingPayment()">
+                      Cancel
+                    </button>
+                    <button type="submit" class="payment-submit-button"
+                      [disabled]="isUpdatingPayment() || !item.paymentId">
+                      {{ isUpdatingPayment() ? 'Submitting...' : 'Submit' }}
+                    </button>
+                  </div>
+                </form>
+                }
+              </div>
+            </div>
+          </div>
+          <!-- ── End Payment Modal ───────────────────────────────────────────── -->
 
           <!-- Active Treatment Plans Quick Preview -->
           <div class="dashboard-section-card">

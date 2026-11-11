@@ -352,4 +352,8 @@ export class PatientConsultancyDetails {
   consultancyDate: string;
   fees: number;
   path: string;
+  // Payment modal fields
+  consultancyId?: number;
+  paymentId?: number;
+  paymentMethod?: string;
 }

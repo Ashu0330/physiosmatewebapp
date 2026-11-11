@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, inject, signal, ElementRef, HostListener, ViewChild, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 
@@ -28,6 +29,7 @@ import { Authservice } from '../../../services/authservice';
 import { SharedModule } from '../../../shared/shared-module';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
+import { SweetAlertService } from '../../../services/sweet-alert.service';
 
 export type DoctorDashboardTab = 'dashboard' | 'add-patient' | 'patients' | 'treatment-plans' | 'Consultations' | 'Appointments' | 'consultancy-list';
 
@@ -52,11 +54,43 @@ export class Doctordashboard implements OnInit {
   private route = inject(ActivatedRoute);
   private auth = inject(Authservice);
   private elementRef = inject(ElementRef);
+  private alertService = inject(SweetAlertService);
 
   activeTab: DoctorDashboardTab = 'dashboard';
   doctorName = this.auth.getUserName();
   preSelectedPatientId = signal<string | null>(null);
   protected apiService = inject(ApiService);
+
+  private platformId = inject(PLATFORM_ID);
+
+  // ─── Payment Modal ─────────────────────────────────────────────────────────
+  @ViewChild('paymentModalCloseBtn') paymentModalCloseBtn?: ElementRef<HTMLButtonElement>;
+
+  selectedPaymentRow = signal<PatientConsultancyDetails | null>(null);
+  paymentMethod = signal<string>('Cash');
+  paymentStatus = signal<string>('Due');
+  paymentAmount = signal<number>(0);
+  isUpdatingPayment = signal<boolean>(false);
+
+  private savedPaymentMethods = new Map<number, string>();
+
+  readonly paymentMethodOptions = [
+    { value: 'Cash',       label: 'Cash' },
+    { value: 'Card',       label: 'Credit / Debit Card' },
+    { value: 'UPI',        label: 'UPI / QR Code' },
+    { value: 'NetBanking', label: 'Net Banking' },
+    { value: 'Online',     label: 'Online' },
+  ];
+
+  readonly paymentStatusOptions = [
+    { value: 'Paid',          label: 'Paid' },
+    { value: 'Due',           label: 'Due' },
+    { value: 'Pending',       label: 'Pending' },
+    { value: 'PartiallyPaid', label: 'Partially Paid' },
+    { value: 'Failed',        label: 'Failed' },
+    { value: 'Cancelled',     label: 'Cancelled' },
+    { value: 'Refunded',      label: 'Refunded' },
+  ];
 
   Consultancy = signal<PatientConsultancyDetails[]>([]);
   patients: DoctorPatient[] = [
@@ -812,7 +846,163 @@ export class Doctordashboard implements OnInit {
     );
 
     if (res.isSuccess && res.data) {
-      this.Consultancy.set(res.data);
+      const merged = res.data.map(row => ({
+        ...row,
+        paymentMethod: row.paymentMethod ?? (row.paymentId ? this.savedPaymentMethods.get(row.paymentId) : undefined),
+      }));
+      this.Consultancy.set(merged);
     }
+  }
+
+  // ─── Payment Modal Methods ─────────────────────────────────────────────────
+  openPaymentModal(item: PatientConsultancyDetails): void {
+    this.selectedPaymentRow.set(item);
+    const savedMethod = item.paymentId ? this.savedPaymentMethods.get(item.paymentId) : undefined;
+    this.paymentMethod.set(savedMethod ?? this.normalizePaymentMethod(item.paymentMethod) ?? 'Cash');
+    this.paymentStatus.set(this.normalizePaymentStatus(item.paymentStatus) ?? 'Due');
+    this.paymentAmount.set(item.fees ?? 0);
+  }
+
+  onPaymentAmountChange(val: string | number): void {
+    const n = typeof val === 'string' ? parseFloat(val) : val;
+    this.paymentAmount.set(Number.isFinite(n) ? n : 0);
+  }
+
+  async submitPaymentUpdate(): Promise<void> {
+    const item = this.selectedPaymentRow();
+    if (!item?.paymentId) {
+      this.alertService.toastError('No linked payment record found for this consultation.');
+      return;
+    }
+
+    const status = this.paymentStatus()?.trim();
+    if (!status) {
+      this.alertService.toastWarning('Please select a payment status.');
+      return;
+    }
+
+    const amount = this.paymentAmount();
+    if (amount < 0 || Number.isNaN(amount)) {
+      this.alertService.toastWarning('Please enter a valid payment amount.');
+      return;
+    }
+
+    this.isUpdatingPayment.set(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('paymentId', String(item.paymentId));
+      params.set('paymentStatus', status);
+
+      const method = this.paymentMethod()?.trim();
+      if (method) {
+        params.set('paymentMethod', method);
+      }
+
+      if (amount > 0) {
+        params.set('amount', String(amount));
+      }
+
+      const res = await this.apiService.Put<any>(
+        `${ApiEndPoints.UpdatePayment}?${params.toString()}`,
+        {}
+      );
+
+      if (res?.isSuccess) {
+        const updatedStatus = res.data?.paymentStatus ?? status;
+        const updatedMethod = res.data?.paymentMethod ?? method;
+        const updatedAmount = typeof res.data?.amount === 'number' ? res.data.amount : (amount > 0 ? amount : item.fees);
+
+        if (updatedMethod) {
+          this.savedPaymentMethods.set(item.paymentId, updatedMethod);
+        }
+
+        // Update row in-place immediately
+        this.Consultancy.update(list =>
+          list.map(c =>
+            c.paymentId === item.paymentId
+              ? { ...c, paymentStatus: updatedStatus, fees: updatedAmount, paymentMethod: updatedMethod }
+              : c
+          )
+        );
+
+        this.isUpdatingPayment.set(false);
+        this.closePaymentModal();
+        this.alertService.toastSuccess('Payment updated successfully');
+        this.GetConsultancy();
+        this.fetchStats(this.selectedPeriod);
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to update payment.');
+      }
+    } catch (_) {
+      this.alertService.toastError('Unable to update payment. Please try again.');
+    } finally {
+      this.isUpdatingPayment.set(false);
+    }
+  }
+
+  closePaymentModal(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      const el = document.getElementById('paymentModal');
+      const bootstrapModal = (window as any)?.bootstrap?.Modal;
+      if (el && bootstrapModal) {
+        const modal = bootstrapModal.getInstance(el) ?? bootstrapModal.getOrCreateInstance(el);
+        if (modal) {
+          el.addEventListener(
+            'hidden.bs.modal',
+            () => {
+              if (!el.classList.contains('show')) {
+                this.selectedPaymentRow.set(null);
+              }
+            },
+            { once: true }
+          );
+          modal.hide();
+          return;
+        }
+      }
+
+      const closeBtn = this.paymentModalCloseBtn?.nativeElement;
+      if (closeBtn) {
+        closeBtn.disabled = false;
+        closeBtn.click();
+      }
+    }
+    this.selectedPaymentRow.set(null);
+  }
+
+  private normalizePaymentMethod(raw?: string): string | undefined {
+    if (!raw) return undefined;
+    const key = raw.trim().toLowerCase();
+    const map: Record<string, string> = {
+      cash: 'Cash',
+      card: 'Card',
+      'credit / debit card': 'Card',
+      upi: 'UPI',
+      'upi / qr': 'UPI',
+      'upi / qr code': 'UPI',
+      netbanking: 'NetBanking',
+      'net banking': 'NetBanking',
+      online: 'Online',
+    };
+    return map[key] ?? raw;
+  }
+
+  private normalizePaymentStatus(raw?: string): string | undefined {
+    if (!raw) return undefined;
+    const key = raw.trim().toLowerCase();
+    const map: Record<string, string> = {
+      paid: 'Paid',
+      success: 'Paid',
+      due: 'Due',
+      unpaid: 'Due',
+      pending: 'Pending',
+      partial: 'PartiallyPaid',
+      partiallypaid: 'PartiallyPaid',
+      'partially paid': 'PartiallyPaid',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+      refunded: 'Refunded',
+    };
+    return map[key] ?? raw;
   }
 }

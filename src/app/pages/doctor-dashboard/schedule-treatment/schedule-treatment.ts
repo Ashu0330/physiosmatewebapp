@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { DoctorPatient, DoctorTreatmentPlan } from '../../../models/doctor-dashboard.model';
+import { DoctorPatient, DoctorTreatmentPlan, PatientSearchItem } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 export interface TimeSlot {
   id: string;
@@ -49,9 +51,11 @@ export interface WeeklyDraftSession {
   templateUrl: './schedule-treatment.html',
   styleUrl: './schedule-treatment.css',
 })
-export class ScheduleTreatment implements OnInit {
+export class ScheduleTreatment implements OnInit, OnDestroy {
   private alertService = inject(SweetAlertService);
+  private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private elRef = inject(ElementRef);
 
   // ─── Active Tab ────────────────────────────────────────────────────────────
   activeTab = signal<'daily' | 'weekly' | 'assign-plan' | 'list'>('daily');
@@ -61,6 +65,11 @@ export class ScheduleTreatment implements OnInit {
   selectedPatientId = signal<string | null>(null);
   selectedPatient = signal<DoctorPatient | null>(null);
   isSearchDropdownOpen = signal<boolean>(false);
+  patientSearchResults = signal<PatientSearchItem[]>([]);
+  isSearchingPatients = signal<boolean>(false);
+  selectedPatientItem = signal<PatientSearchItem | null>(null);
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchRequestSeq = 0;
 
   // ─── Daily Treatment Form ──────────────────────────────────────────────────
   treatmentName = signal<string>('Physiotherapy Session');
@@ -246,16 +255,6 @@ export class ScheduleTreatment implements OnInit {
 
   // ─── Computed Properties ───────────────────────────────────────────────────
 
-  filteredPatients = computed(() => {
-    const q = this.patientSearchQuery().toLowerCase().trim();
-    if (!q) return this.patients();
-    return this.patients().filter(p =>
-      p.fullName.toLowerCase().includes(q) ||
-      (p.phone && p.phone.toLowerCase().includes(q)) ||
-      p.patientCode.toLowerCase().includes(q)
-    );
-  });
-
   patientActivePlan = computed<DoctorTreatmentPlan | null>(() => {
     const p = this.selectedPatient();
     if (!p) return null;
@@ -333,12 +332,146 @@ export class ScheduleTreatment implements OnInit {
     if (first) this.selectedSlot.set(first);
   }
 
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.searchRequestSeq++;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const searchRow = this.elRef.nativeElement.querySelector('.top-search-row');
+    if (searchRow && !searchRow.contains(event.target as Node)) {
+      this.isSearchDropdownOpen.set(false);
+    }
+  }
+
+  // ─── Live Patient Search via Backend API (GetMyPatients, no digit limit) ──
+
+  onPatientSearchChange(query: string): void {
+    this.patientSearchQuery.set(query);
+    this.isSearchDropdownOpen.set(true);
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+
+    const trimmed = query.trim();
+    const currentSeq = ++this.searchRequestSeq;
+
+    if (!trimmed) {
+      this.patientSearchResults.set([]);
+      this.isSearchingPatients.set(false);
+      return;
+    }
+
+    this.isSearchingPatients.set(true);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executePatientSearch(trimmed, currentSeq);
+    }, 250);
+  }
+
+  private async executePatientSearch(trimmed: string, seq: number): Promise<void> {
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, {
+        search: trimmed,
+        page: 1,
+        pageSize: 20
+      });
+      if (seq !== this.searchRequestSeq) return;
+
+      const items = Array.isArray(res?.data?.items)
+        ? res.data.items
+        : Array.isArray(res?.data)
+          ? res.data
+          : [];
+
+      if (res?.isSuccess && items.length > 0) {
+        this.patientSearchResults.set(items as PatientSearchItem[]);
+      } else {
+        this.patientSearchResults.set([]);
+      }
+    } catch (e) {
+      if (seq !== this.searchRequestSeq) return;
+      console.error('Patient search error', e);
+      this.patientSearchResults.set([]);
+    } finally {
+      if (seq === this.searchRequestSeq) {
+        this.isSearchingPatients.set(false);
+      }
+    }
+  }
+
+  selectPatientFromSearch(item: PatientSearchItem): void {
+    const ptCode = `PT-${item.patientId}`;
+    const existing = this.patients().find(p => p.id === ptCode || p.patientCode === ptCode);
+    const age = item.age && item.age > 0 ? item.age : this.calculateAge(item.dob);
+    const lastVisit =
+      item.lastVisitDate &&
+      !item.lastVisitDate.startsWith('0001-01-01') &&
+      !isNaN(new Date(item.lastVisitDate).getTime())
+        ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })
+        : 'N/A';
+
+    const patient: DoctorPatient = {
+      id: ptCode,
+      patientCode: ptCode,
+      fullName: item.fullName || '',
+      age,
+      gender: item.gender || '',
+      phone: item.mobile || '',
+      mobile: item.mobile || '',
+      email: item.email || '',
+      dob: item.dob || undefined,
+      address: item.address || undefined,
+      city: item.city || undefined,
+      state: item.state || undefined,
+      photoUrl: item.profileImage || undefined,
+      primaryCondition: existing?.primaryCondition,
+      currentPlan: existing?.currentPlan,
+      status: existing?.status || 'Active',
+      sessionsCompleted: existing?.sessionsCompleted ?? 0,
+      totalSessions: existing?.totalSessions ?? 0,
+      lastVisit
+    };
+
+    if (existing) {
+      this.patients.update(list => list.map(p => (p.id === existing.id ? patient : p)));
+    } else {
+      this.patients.update(list => [patient, ...list]);
+    }
+
+    this.selectedPatientItem.set(item);
+    this.selectPatient(patient);
+  }
+
+  private calculateAge(dob?: string | null): number {
+    if (!dob) return 0;
+    const birth = new Date(dob);
+    if (isNaN(birth.getTime())) return 0;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : 0;
+  }
+
   // ─── Patient Selection ─────────────────────────────────────────────────────
 
   selectPatient(pt: DoctorPatient): void {
     this.selectedPatientId.set(pt.id);
     this.selectedPatient.set(pt);
-    this.patientSearchQuery.set(pt.fullName);
+    this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
     this.isSearchDropdownOpen.set(false);
 
     // Expand plan if exists
@@ -350,10 +483,15 @@ export class ScheduleTreatment implements OnInit {
   }
 
   clearSearch(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.searchRequestSeq++;
     this.patientSearchQuery.set('');
-    this.selectedPatientId.set(null);
-    this.selectedPatient.set(null);
-    this.isSearchDropdownOpen.set(true);
+    this.patientSearchResults.set([]);
+    this.isSearchingPatients.set(false);
+    this.isSearchDropdownOpen.set(false);
   }
 
   getInitials(name: string): string {

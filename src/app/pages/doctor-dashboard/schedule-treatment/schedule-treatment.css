@@ -157,11 +157,28 @@
   color: #1F2937;
 }
 
+.search-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #E5E7EB;
+  border-top-color: var(--primary-color, #10A896);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn-clear-search {
   background: transparent;
   border: none;
   color: #9CA3AF;
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 1;
   cursor: pointer;
   padding: 0 4px;
 }
@@ -178,11 +195,44 @@
   right: 0;
   background-color: #FFFFFF;
   border: 1px solid #E5E7EB;
-  border-radius: 4px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  max-height: 240px;
-  overflow-y: auto;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-height: 320px;
+  overflow: hidden;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #EAEAEA;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.btn-close-dd {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #9CA3AF;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-close-dd:hover {
+  color: #374151;
+}
+
+.dropdown-scroll-list {
+  max-height: 270px;
+  overflow-y: auto;
 }
 
 .dropdown-item {
@@ -193,6 +243,10 @@
   border-bottom: 1px solid #F3F4F6;
   cursor: pointer;
   transition: background-color 0.12s ease;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
 }
 
 .dropdown-item:hover {
@@ -226,14 +280,32 @@
 
 .item-code {
   font-size: 11px;
-  color: #6B7280;
-  font-weight: normal;
+  color: #2563EB;
+  background: #EFF6FF;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+  margin-left: 4px;
 }
 
 .item-sub {
   font-size: 11px;
   color: #6B7280;
-  margin-top: 1px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.selected-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary-color, #10A896);
+  background-color: rgba(16, 168, 150, 0.1);
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
 .dropdown-empty {
