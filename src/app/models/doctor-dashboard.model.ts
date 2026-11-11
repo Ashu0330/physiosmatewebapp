@@ -357,3 +357,37 @@ export class PatientConsultancyDetails {
   paymentId?: number;
   paymentMethod?: string;
 }
+
+// ── Book Appointment (Daily Treatment) ──────────────────────────────────────
+
+export interface BookAppointmentRequest {
+  patientId: number;
+  userId: number;
+  userSubscriptionId: number;
+  appointmentSlotId: number;
+  appointmentDate: string;
+  homeVisitAddress?: string | null;
+  visitType?: string | null;
+  practitionerId: number;
+  clinicId: number;
+  assignedPractitionerId: number | null;
+  bookingType?: string | null;
+  amount?: number | null;
+  paymentMode?: string | null;
+  paymentStatus?: string | null;
+}
+
+export interface AppointmentBookedResponse {
+  appointmentId: number;
+  doctorName: string;
+  doctorImage?: string | null;
+  planName: string;
+  appointmentDate: string;
+  dayName: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  sessionNumber: number;
+  remainingSessions: number;
+  totalSessions: number;
+  status: string;
+}

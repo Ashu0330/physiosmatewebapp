@@ -68,6 +68,7 @@ export const ApiEndPoints = {
     ConsultancyPatient: 'Consultancy/ConsultancyPatient',
     GetPractitionerAppointments: 'Appointment/GetPractitionerAppointments',
     PatientAppointmentDetails: 'Appointment/PatientAppointmentDetails',
+    BookAppointment: 'Appointment/Book',
 
     // ── Payment ───────────────────────────────────────────────────────────────────
     UpdatePayment: 'PaymentJob/UpdatePayment',

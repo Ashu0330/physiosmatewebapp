@@ -180,53 +180,80 @@
 
           <div class="section-title-bar">
             <h4 class="card-heading">Schedule Daily Treatment</h4>
-            <span class="card-subheading">Select date, available time slot, and set payment.</span>
+            <span class="card-subheading">Select booking date, assigned practitioner, visit mode, available slot, and payment details.</span>
           </div>
 
           <div class="form-grid-2">
-            <!-- Treatment Date (Clean input, no Today/Tomorrow buttons) -->
+            <!-- Treatment Date -->
             <div class="form-group">
               <label class="form-label">Treatment Date</label>
-              <input type="date" class="form-input" [ngModel]="treatmentDate()"
-                (ngModelChange)="treatmentDate.set($event)" />
+              <input type="date" class="form-input" [min]="getTodayDateString()" [ngModel]="treatmentDate()"
+                (ngModelChange)="onTreatmentDateChange($event)" />
             </div>
 
-            <!-- Attending Doctor / Therapist -->
+            <!-- Assigned Practitioner -->
             <div class="form-group">
-              <label class="form-label">Attending Doctor / Physiotherapist</label>
-              <select class="form-select" [ngModel]="attendingTherapist()"
-                (ngModelChange)="attendingTherapist.set($event)">
-                @for (doc of therapists; track doc) {
-                <option [value]="doc">{{ doc }}</option>
+              <label class="form-label">Assigned Practitioner</label>
+              <select class="form-select" [ngModel]="selectedPractitionerId()"
+                (ngModelChange)="onPractitionerChange($event)" [disabled]="isLoadingPractitioners()">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingPractitioners() ? 'Loading practitioners...' : 'Select practitioner' }}
+                </option>
+                @for (doc of practitioners(); track doc.id) {
+                <option [ngValue]="doc.id">{{ doc.name }}</option>
                 }
               </select>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Treatment / Service Name</label>
-            <input type="text" class="form-input" [ngModel]="treatmentName()"
-              (ngModelChange)="treatmentName.set($event)" placeholder="e.g. Spinal Mobilization & Exercise" />
+          <!-- Visit Mode & Conditional Home Visit Address -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Visit Mode</label>
+              <select class="form-select" [ngModel]="visitType()" (ngModelChange)="onVisitTypeChange($event)">
+                <option value="Clinic">Clinic Visit</option>
+                <option value="Home">Home Visit</option>
+              </select>
+            </div>
+
+            @if (visitType() === 'Home') {
+            <div class="form-group">
+              <label class="form-label">Home Visit Address</label>
+              <input type="text" class="form-input" [ngModel]="homeVisitAddress()"
+                (ngModelChange)="homeVisitAddress.set($event)" placeholder="Enter address for home visit" />
+            </div>
+            }
           </div>
 
-          <!-- Time Slots Selection (No bay info, clean slots with availability) -->
+          <!-- Time Slots Selection -->
           <div class="form-group">
             <div class="slots-header-row">
               <label class="form-label">Select Time Slot</label>
               <span class="hint-text">Slots automatically prevent overlapping bookings</span>
             </div>
 
+            @if (isLoadingSlots()) {
+            <div class="slots-loading-msg">Loading available slots...</div>
+            } @else if (availableSlots().length === 0) {
+            <div class="slots-empty-msg">No available treatment slots found for the selected date and practitioner.</div>
+            } @else {
             <div class="slots-grid">
-              @for (slot of availableSlots(); track slot.id) {
-              <button type="button" class="slot-item-btn" [class.selected]="selectedSlot()?.id === slot.id"
-                [class.disabled]="!slot.isAvailable" [disabled]="!slot.isAvailable" (click)="selectSlot(slot)">
-                <span class="slot-time">{{ slot.time }}</span>
-                <span class="slot-status" [class.booked]="!slot.isAvailable">
-                  {{ slot.isAvailable ? 'Available' : 'Booked' }}
+              @for (slot of availableSlots(); track slot.slotId) {
+              <button type="button" class="slot-item-btn" [class.selected]="selectedSlot()?.slotId === slot.slotId"
+                [class.disabled]="!slot.isOpen || slot.remainingSpots <= 0"
+                [disabled]="!slot.isOpen || slot.remainingSpots <= 0" (click)="selectSlot(slot)">
+                <span class="slot-time">{{ formatSlotTime(slot.startTime) }} – {{ formatSlotTime(slot.endTime) }}</span>
+                <span class="slot-status" [class.booked]="!slot.isOpen || slot.remainingSpots <= 0">
+                  @if (slot.isOpen && slot.remainingSpots > 0) {
+                    Available ({{ slot.remainingSpots }} {{ slot.remainingSpots === 1 ? 'spot' : 'spots' }} left)
+                  } @else {
+                    Booked
+                  }
                 </span>
               </button>
               }
             </div>
+            }
           </div>
 
           <!-- Fees & Payment Options -->
@@ -284,19 +311,12 @@
             }
           </div>
 
-          <!-- Notes -->
-          <div class="form-group">
-            <label class="form-label">Clinical Notes / Comments (Optional)</label>
-            <input type="text" class="form-input" placeholder="e.g. Focus on cervical extension..."
-              [ngModel]="clinicalNotes()" (ngModelChange)="clinicalNotes.set($event)" />
-          </div>
-
           <!-- Submit -->
           <div class="action-footer">
             <button type="button" class="btn-primary"
-              [disabled]="!selectedPatient() || !selectedSlot() || !selectedSlot()?.isAvailable"
+              [disabled]="isBookingTreatment() || !selectedPatient() || !selectedSlot() || !selectedSlot()?.isOpen"
               (click)="submitDailyTreatment()">
-              Schedule Daily Treatment
+              {{ isBookingTreatment() ? 'Scheduling...' : 'Schedule Daily Treatment' }}
             </button>
           </div>
 
@@ -371,8 +391,8 @@
                       </select>
 
                       <select class="form-select doc-col" [(ngModel)]="sess.therapist">
-                        @for (doc of therapists; track doc) {
-                        <option [value]="doc">{{ doc }}</option>
+                        @for (doc of practitioners(); track doc.id) {
+                        <option [value]="doc.name">{{ doc.name }}</option>
                         }
                       </select>
 

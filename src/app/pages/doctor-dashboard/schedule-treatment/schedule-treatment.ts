@@ -1,18 +1,33 @@
-import { Component, OnInit, OnDestroy, ElementRef, HostListener, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, PLATFORM_ID, signal, computed, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { DoctorPatient, DoctorTreatmentPlan, PatientSearchItem } from '../../../models/doctor-dashboard.model';
+import {
+  DoctorPatient,
+  DoctorTreatmentPlan,
+  PatientSearchItem,
+  BookAppointmentRequest,
+  AppointmentBookedResponse
+} from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
+import { Authservice } from '../../../services/authservice';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 
-export interface TimeSlot {
-  id: string;
-  time: string;
-  capacity: number;
-  booked: number;
-  isAvailable: boolean;
+export interface TreatmentSlot {
+  slotId: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  currentBookings: number;
+  remainingSpots: number;
+  isOpen: boolean;
+}
+
+export interface PractitionerOption {
+  id: number;
+  name: string;
 }
 
 export interface ScheduledBooking {
@@ -26,6 +41,7 @@ export interface ScheduledBooking {
   timeSlot: string;
   treatmentName: string;
   therapist: string;
+  visitType?: string;
   fee: number;
   advancePaid: number;
   balanceDue: number;
@@ -34,7 +50,6 @@ export interface ScheduledBooking {
   planId?: string;
   planName?: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled';
-  notes?: string;
 }
 
 export interface WeeklyDraftSession {
@@ -54,8 +69,10 @@ export interface WeeklyDraftSession {
 export class ScheduleTreatment implements OnInit, OnDestroy {
   private alertService = inject(SweetAlertService);
   private apiService = inject(ApiService);
+  private auth = inject(Authservice);
   private route = inject(ActivatedRoute);
   private elRef = inject(ElementRef);
+  private platformId = inject(PLATFORM_ID);
 
   // ─── Active Tab ────────────────────────────────────────────────────────────
   activeTab = signal<'daily' | 'weekly' | 'assign-plan' | 'list'>('daily');
@@ -71,23 +88,26 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private searchRequestSeq = 0;
 
-  // ─── Daily Treatment Form ──────────────────────────────────────────────────
-  treatmentName = signal<string>('Physiotherapy Session');
+  // ─── Daily Treatment Form (Booking Details Only) ───────────────────────────
+  practitioners = signal<PractitionerOption[]>([]);
+  selectedPractitionerId = signal<number | null>(null);
+  isLoadingPractitioners = signal<boolean>(false);
+
   treatmentDate = signal<string>(this.getTodayDateString());
-  selectedSlot = signal<TimeSlot | null>(null);
-  attendingTherapist = signal<string>('Dr. Himanshu Suman (PT)');
+  availableSlots = signal<TreatmentSlot[]>([]);
+  isLoadingSlots = signal<boolean>(false);
+  selectedSlot = signal<TreatmentSlot | null>(null);
+
+  visitType = signal<'Clinic' | 'Home'>('Clinic');
+  homeVisitAddress = signal<string>('');
+
   treatmentFee = signal<number>(600);
   paymentType = signal<'advance' | 'due'>('advance');
   advanceAmount = signal<number>(600);
   paymentMode = signal<'UPI' | 'Cash' | 'Card' | 'NetBanking'>('UPI');
-  paymentRef = signal<string>('');
-  clinicalNotes = signal<string>('');
+  isBookingTreatment = signal<boolean>(false);
 
-  therapists: string[] = [
-    'Dr. Himanshu Suman (PT)',
-    'Dr. Priya Sharma (PT)',
-    'Dr. Rajesh Nair (PT)'
-  ];
+  private slotsRequestSeq = 0;
 
   // ─── Weekly Plan Scheduler (Accordion) ─────────────────────────────────────
   expandedPlanId = signal<string | null>(null);
@@ -151,51 +171,39 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     return Math.max(0, this.newPlanPrice() - this.newPlanAdvance());
   });
 
-  // Time Slots with Capacity Status
-  availableSlots = computed<TimeSlot[]>(() => {
-    const date = this.treatmentDate();
-    const existing = this.scheduledBookings().filter(b => b.date === date && b.status !== 'Cancelled');
+  get currentPractitionerId(): number {
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+    if (roleId === 3) {
+      return Number(user?.practitionerId || 0);
+    }
+    const profId = this.auth.getCurrentProfessionalId();
+    return Number(user?.practitionerId || profId || 0);
+  }
 
-    const baseSlots = [
-      { id: '1', time: '09:00 AM - 09:45 AM', capacity: 4, initialBooked: 2 },
-      { id: '2', time: '10:00 AM - 10:45 AM', capacity: 4, initialBooked: 3 },
-      { id: '3', time: '11:00 AM - 11:45 AM', capacity: 4, initialBooked: 4 }, // Full
-      { id: '4', time: '12:00 PM - 12:45 PM', capacity: 4, initialBooked: 1 },
-      { id: '5', time: '02:00 PM - 02:45 PM', capacity: 4, initialBooked: 2 },
-      { id: '6', time: '03:00 PM - 03:45 PM', capacity: 4, initialBooked: 0 },
-      { id: '7', time: '04:00 PM - 04:45 PM', capacity: 4, initialBooked: 3 },
-      { id: '8', time: '05:00 PM - 05:45 PM', capacity: 4, initialBooked: 1 },
-      { id: '9', time: '06:00 PM - 06:45 PM', capacity: 4, initialBooked: 4 }, // Full
-      { id: '10', time: '07:00 PM - 07:45 PM', capacity: 4, initialBooked: 2 },
-    ];
-
-    return baseSlots.map(s => {
-      const dynamicCount = existing.filter(b => b.timeSlot === s.time).length;
-      const booked = Math.min(s.capacity, s.initialBooked + dynamicCount);
-      const isAvailable = booked < s.capacity;
-      return {
-        id: s.id,
-        time: s.time,
-        capacity: s.capacity,
-        booked,
-        isAvailable
-      };
-    });
-  });
+  get currentClinicId(): number {
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+    if (roleId === 3) {
+      const profId = this.auth.getCurrentProfessionalId();
+      return Number(user?.clinicId || profId || 0);
+    }
+    return Number(user?.clinicId || 0);
+  }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.loadStorage();
+    this.loadPractitioners();
 
     const qp = this.route.snapshot.queryParams;
     if (qp['patientId']) {
       const pt = this.patients().find(p => p.id === qp['patientId'] || p.patientCode === qp['patientId']);
       if (pt) this.selectPatient(pt);
     }
-
-    const first = this.availableSlots().find(s => s.isAvailable);
-    if (first) this.selectedSlot.set(first);
   }
 
   ngOnDestroy(): void {
@@ -204,6 +212,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       this.searchDebounceTimer = null;
     }
     this.searchRequestSeq++;
+    this.slotsRequestSeq++;
   }
 
   @HostListener('document:click', ['$event'])
@@ -339,6 +348,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     this.patientSearchQuery.set('');
     this.patientSearchResults.set([]);
     this.isSearchDropdownOpen.set(false);
+    this.homeVisitAddress.set(this.selectedPatientItem()?.address || pt.address || '');
 
     // Expand plan if exists
     const plan = this.patientActivePlan();
@@ -365,7 +375,168 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   }
 
-  // ─── Daily Treatment Methods ───────────────────────────────────────────────
+  // ─── Daily Treatment Methods (Practitioners, Slots & Book API) ────────────
+
+  async loadPractitioners(): Promise<void> {
+    this.isLoadingPractitioners.set(true);
+    let loaded: PractitionerOption[] = [];
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitioners, {
+        page: 1,
+        pageSize: 100
+      });
+      if (res?.isSuccess && res.data) {
+        const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+        loaded = list
+          .map((p: any) => ({
+            id: Number(p.id ?? p.practitionerId ?? 0),
+            name: String(p.fullName ?? p.name ?? `Dr. ${p.id}`).trim()
+          }))
+          .filter((p: PractitionerOption) => p.id > 0);
+      }
+    } catch (e) {
+      console.error('Error loading practitioners', e);
+    } finally {
+      const currentPid = this.currentPractitionerId;
+      if (currentPid > 0 && !loaded.some(p => p.id === currentPid)) {
+        const currentName = this.auth.getUserName() || 'Assigned Doctor';
+        loaded = [{ id: currentPid, name: currentName }, ...loaded];
+      }
+
+      this.practitioners.set(loaded);
+
+      if (!this.selectedPractitionerId() && loaded.length > 0) {
+        const defaultId =
+          currentPid > 0 && loaded.some(p => p.id === currentPid)
+            ? currentPid
+            : loaded[0].id;
+        this.selectedPractitionerId.set(defaultId);
+      }
+
+      this.isLoadingPractitioners.set(false);
+      await this.loadAvailableSlots();
+    }
+  }
+
+  async loadAvailableSlots(): Promise<void> {
+    const seq = ++this.slotsRequestSeq;
+    const date = this.treatmentDate();
+    const today = this.getTodayDateString();
+
+    if (!date || date < today) {
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+      this.isLoadingSlots.set(false);
+      return;
+    }
+
+    const pid = this.selectedPractitionerId();
+    const cid = this.currentClinicId;
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+
+    if ((!pid || pid <= 0) && cid <= 0) {
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+      this.isLoadingSlots.set(false);
+      return;
+    }
+
+    this.isLoadingSlots.set(true);
+    try {
+      let slots: TreatmentSlot[] = [];
+
+      if (pid && pid > 0) {
+        slots = await this.fetchSlotsByQuery(`practitionerId=${pid}&date=${encodeURIComponent(date)}`);
+      }
+
+      if (slots.length === 0 && cid > 0 && (!pid || pid <= 0 || roleId === 3)) {
+        slots = await this.fetchSlotsByQuery(`clinicId=${cid}&date=${encodeURIComponent(date)}`);
+      }
+
+      if (seq !== this.slotsRequestSeq) return;
+
+      this.availableSlots.set(slots);
+
+      const prevSlotId = this.selectedSlot()?.slotId;
+      const retained = prevSlotId
+        ? slots.find(s => s.slotId === prevSlotId && s.isOpen && s.remainingSpots > 0)
+        : undefined;
+      const firstOpen = retained ?? slots.find(s => s.isOpen && s.remainingSpots > 0) ?? null;
+      this.selectedSlot.set(firstOpen);
+    } catch (e) {
+      if (seq !== this.slotsRequestSeq) return;
+      console.error('Error loading treatment slots', e);
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+    } finally {
+      if (seq === this.slotsRequestSeq) {
+        this.isLoadingSlots.set(false);
+      }
+    }
+  }
+
+  private async fetchSlotsByQuery(query: string): Promise<TreatmentSlot[]> {
+    const res = await this.apiService.Get<any>(
+      `${ApiEndPoints.GetAvailableAppointmentSlots}?${query}`
+    );
+    if (res?.isSuccess && res.data) {
+      const raw = Array.isArray(res.data) ? res.data : [res.data];
+      return raw
+        .map((s: any) => ({
+          slotId: Number(s.slotId ?? s.SlotId ?? 0),
+          slotDate: String(s.slotDate ?? s.SlotDate ?? ''),
+          startTime: String(s.startTime ?? s.StartTime ?? ''),
+          endTime: String(s.endTime ?? s.EndTime ?? ''),
+          maxCapacity: Number(s.maxCapacity ?? s.MaxCapacity ?? 0),
+          currentBookings: Number(s.currentBookings ?? s.CurrentBookings ?? 0),
+          remainingSpots: Number(s.remainingSpots ?? s.RemainingSpots ?? 0),
+          isOpen: Boolean(s.isOpen ?? s.IsOpen ?? true)
+        }))
+        .filter((s: TreatmentSlot) => s.slotId > 0);
+    }
+    return [];
+  }
+
+  onTreatmentDateChange(date: string): void {
+    this.treatmentDate.set(date);
+    this.selectedSlot.set(null);
+    this.loadAvailableSlots();
+  }
+
+  onPractitionerChange(practitionerId: number | string | null): void {
+    const numericId = practitionerId !== null && practitionerId !== '' ? Number(practitionerId) : null;
+    this.selectedPractitionerId.set(numericId && !isNaN(numericId) ? numericId : null);
+    this.selectedSlot.set(null);
+    this.loadAvailableSlots();
+  }
+
+  onVisitTypeChange(type: 'Clinic' | 'Home'): void {
+    this.visitType.set(type);
+    if (type === 'Home' && !this.homeVisitAddress().trim()) {
+      const addr = this.selectedPatientItem()?.address || this.selectedPatient()?.address || '';
+      if (addr) {
+        this.homeVisitAddress.set(addr);
+      }
+    }
+  }
+
+  formatSlotTime(t: string): string {
+    if (!t) return '';
+    const parts = t.split(':');
+    let h = parseInt(parts[0], 10);
+    if (isNaN(h)) return t;
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
+
+  getSelectedPractitionerName(): string {
+    const pid = this.selectedPractitionerId();
+    if (!pid) return this.auth.getUserName() || 'Assigned Doctor';
+    return this.practitioners().find(p => p.id === pid)?.name || this.auth.getUserName() || 'Assigned Doctor';
+  }
 
   setPaymentType(type: 'advance' | 'due'): void {
     this.paymentType.set(type);
@@ -382,57 +553,161 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
   }
 
-  selectSlot(slot: TimeSlot): void {
-    if (!slot.isAvailable) return;
+  selectSlot(slot: TreatmentSlot): void {
+    if (!slot.isOpen || slot.remainingSpots <= 0) return;
     this.selectedSlot.set(slot);
   }
 
-  submitDailyTreatment(): void {
+  async submitDailyTreatment(): Promise<void> {
+    if (this.isBookingTreatment()) return;
+
     const pt = this.selectedPatient();
-    if (!pt) {
+    const ptItem = this.selectedPatientItem();
+    const rawPatientId = ptItem?.patientId ?? Number(String(pt?.patientCode || pt?.id || '').replace(/\D/g, ''));
+    if (!pt || !rawPatientId || isNaN(rawPatientId)) {
       this.alertService.toastError('Please select a patient.');
       return;
     }
 
+    const date = this.treatmentDate();
+    if (!date) {
+      this.alertService.toastError('Please select a treatment date.');
+      return;
+    }
+    if (date < this.getTodayDateString()) {
+      this.alertService.toastError('Treatment date cannot be in the past.');
+      return;
+    }
+
     const slot = this.selectedSlot();
-    if (!slot || !slot.isAvailable) {
+    if (!slot || !slot.isOpen || slot.remainingSpots <= 0) {
       this.alertService.toastError('Please select an available time slot.');
       return;
     }
 
-    const fee = this.treatmentFee();
-    const adv = this.paymentType() === 'advance' ? this.advanceAmount() : 0;
+    const practitionerId = this.selectedPractitionerId();
+    if (!practitionerId && this.practitioners().length > 0) {
+      this.alertService.toastError('Please select an assigned practitioner.');
+      return;
+    }
+
+    const visitMode = this.visitType();
+    const trimmedAddress = this.homeVisitAddress().trim();
+    if (visitMode === 'Home' && !trimmedAddress) {
+      this.alertService.toastError('Please enter home visit address.');
+      return;
+    }
+
+    const fee = Number(this.treatmentFee()) || 0;
+    if (fee < 0) {
+      this.alertService.toastError('Treatment fee cannot be negative.');
+      return;
+    }
+
+    const isAdvance = this.paymentType() === 'advance';
+    const adv = isAdvance ? (Number(this.advanceAmount()) || 0) : 0;
+
+    if (isAdvance && adv < 0) {
+      this.alertService.toastError('Advance paid cannot be negative.');
+      return;
+    }
+    if (isAdvance && adv > fee) {
+      this.alertService.toastError('Advance paid cannot exceed the treatment fee.');
+      return;
+    }
+    if (isAdvance && fee > 0 && adv <= 0) {
+      this.alertService.toastError('Enter advance amount greater than 0 or switch to Payment Due.');
+      return;
+    }
+
     const due = Math.max(0, fee - adv);
 
-    let paymentStatus: 'Paid' | 'Advance' | 'Due' = 'Due';
-    if (due === 0 && adv > 0) paymentStatus = 'Paid';
-    else if (adv > 0 && due > 0) paymentStatus = 'Advance';
+    let apiPaymentStatus: 'Paid' | 'PartiallyPaid' | 'Due' = 'Due';
+    let uiPaymentStatus: 'Paid' | 'Advance' | 'Due' = 'Due';
+    let payloadAmount = fee;
+    let payloadPaymentMode: string | null = null;
 
-    const booking: ScheduledBooking = {
-      id: `bk-${Date.now()}`,
-      bookingCode: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      patientCode: pt.patientCode,
-      phone: pt.phone,
-      date: this.treatmentDate(),
-      timeSlot: slot.time,
-      treatmentName: this.treatmentName(),
-      therapist: this.attendingTherapist(),
-      fee,
-      advancePaid: adv,
-      balanceDue: due,
-      paymentStatus,
-      paymentMode: this.paymentMode(),
-      status: 'Scheduled',
-      notes: this.clinicalNotes()
+    if (isAdvance && adv > 0) {
+      payloadAmount = adv;
+      payloadPaymentMode = this.paymentMode();
+      if (due === 0) {
+        apiPaymentStatus = 'Paid';
+        uiPaymentStatus = 'Paid';
+      } else {
+        apiPaymentStatus = 'PartiallyPaid';
+        uiPaymentStatus = 'Advance';
+      }
+    }
+
+    const pid = practitionerId && practitionerId > 0 ? practitionerId : 0;
+    const payload: BookAppointmentRequest = {
+      patientId: rawPatientId,
+      userId: 0,
+      userSubscriptionId: 0,
+      appointmentSlotId: slot.slotId,
+      appointmentDate: date,
+      visitType: visitMode,
+      homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
+      practitionerId: pid,
+      clinicId: this.currentClinicId,
+      assignedPractitionerId: pid > 0 ? pid : null,
+      bookingType: 'Treatment',
+      amount: payloadAmount,
+      paymentMode: payloadPaymentMode,
+      paymentStatus: apiPaymentStatus
     };
 
-    this.scheduledBookings.update(list => [booking, ...list]);
-    this.saveStorage();
+    this.isBookingTreatment.set(true);
+    try {
+      const res = await this.apiService.Post<AppointmentBookedResponse>(
+        ApiEndPoints.BookAppointment,
+        payload
+      );
 
-    this.alertService.toastSuccess(`Treatment scheduled (${booking.bookingCode})`);
-    this.activeTab.set('list');
+      if (res?.isSuccess) {
+        const booked = res.data;
+        const slotLabel =
+          booked?.startTime && booked?.endTime
+            ? `${this.formatSlotTime(booked.startTime)} - ${this.formatSlotTime(booked.endTime)}`
+            : `${this.formatSlotTime(slot.startTime)} - ${this.formatSlotTime(slot.endTime)}`;
+
+        const booking: ScheduledBooking = {
+          id: `bk-${booked?.appointmentId || Date.now()}`,
+          bookingCode: booked?.appointmentId
+            ? `APT-${booked.appointmentId}`
+            : `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
+          patientId: pt.id,
+          patientName: pt.fullName,
+          patientCode: pt.patientCode,
+          phone: pt.phone || pt.mobile || '',
+          date,
+          timeSlot: slotLabel,
+          treatmentName: `${visitMode} Visit`,
+          therapist: booked?.doctorName || this.getSelectedPractitionerName(),
+          visitType: visitMode,
+          fee,
+          advancePaid: adv,
+          balanceDue: due,
+          paymentStatus: uiPaymentStatus,
+          paymentMode: this.paymentMode(),
+          status: (booked?.status as 'Scheduled' | 'Completed' | 'Cancelled') || 'Scheduled'
+        };
+
+        this.scheduledBookings.update(list => [booking, ...list]);
+        this.saveStorage();
+
+        this.alertService.toastSuccess(res.message || `Treatment scheduled (${booking.bookingCode})`);
+        await this.loadAvailableSlots();
+        this.activeTab.set('list');
+      } else if (res?.responseCode !== 500) {
+        this.alertService.toastError(res?.message || 'Failed to schedule treatment.');
+      }
+    } catch (e) {
+      console.error('Book appointment error', e);
+      this.alertService.toastError('Unable to book appointment. Please try again.');
+    } finally {
+      this.isBookingTreatment.set(false);
+    }
   }
 
   // ─── Weekly Protocol Methods ───────────────────────────────────────────────
@@ -454,9 +729,9 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       d.setDate(today.getDate() + (i * 2 - 1));
       draft.push({
         id: `draft-${i}`,
-        date: d.toISOString().split('T')[0],
+        date: this.formatLocalDate(d),
         timeSlot: i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM',
-        therapist: this.attendingTherapist()
+        therapist: this.getSelectedPractitionerName()
       });
     }
     this.weeklyDraftSessions.set(draft);
@@ -476,9 +751,9 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       ...list,
       {
         id: `draft-${Date.now()}`,
-        date: nextDate.toISOString().split('T')[0],
+        date: this.formatLocalDate(nextDate),
         timeSlot: '10:00 AM - 10:45 AM',
-        therapist: this.attendingTherapist()
+        therapist: this.getSelectedPractitionerName()
       }
     ]);
   }
@@ -587,7 +862,14 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   getTodayDateString(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.formatLocalDate(new Date());
+  }
+
+  private formatLocalDate(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   getVisitDay(dateStr: string): string {
