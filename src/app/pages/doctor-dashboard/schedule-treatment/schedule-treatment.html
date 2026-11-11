@@ -579,18 +579,25 @@
           <h3>Patient Overview</h3>
         </div>
 
+        @if (selectedPatient(); as pt) {
         <!-- Patient Info Card -->
         <div class="po-patient-header">
           <div class="po-patient-avatar">
-            <span>RD</span>
+            <span>{{ getInitials(pt.fullName) }}</span>
           </div>
           <div class="po-patient-meta">
             <div class="po-name-row">
-              <strong class="po-patient-name">Rohan Deshmukh</strong>
-              <span class="po-patient-code">PT-1064</span>
+              <strong class="po-patient-name">{{ pt.fullName }}</strong>
+              <span class="po-patient-code">{{ pt.patientCode }}</span>
             </div>
-            <span class="po-patient-sub">41 yrs, Male</span>
-          </div>          
+            @if (pt.age || pt.gender) {
+            <span class="po-patient-sub">
+              @if (pt.age) { {{ pt.age }} yrs }
+              @if (pt.age && pt.gender) { , }
+              @if (pt.gender) { {{ pt.gender }} }
+            </span>
+            }
+          </div>
         </div>
 
         <!-- 3-Col Metric Boxes -->
@@ -606,7 +613,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Last Visit</span>
-              <strong class="po-metric-val">29 Oct 2026</strong>
+              <strong class="po-metric-val">{{ pt.lastVisit || 'N/A' }}</strong>
             </div>
           </div>
 
@@ -618,7 +625,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Total Visits</span>
-              <strong class="po-metric-val">12</strong>
+              <strong class="po-metric-val">{{ patientBookings().length }}</strong>
             </div>
           </div>
 
@@ -628,7 +635,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Pending</span>
-              <strong class="po-metric-val">&#8377;0</strong>
+              <strong class="po-metric-val">&#8377;{{ patientPendingAmount() }}</strong>
             </div>
           </div>
         </div>
@@ -643,95 +650,42 @@
               </svg>
               <h4>Last Visits</h4>
             </div>
-            <button type="button" class="btn-po-view-all">
+            <button type="button" class="btn-po-view-all" (click)="activeTab.set('list')">
               <span>View All</span>
               <span class="view-all-arrow">&rarr;</span>
             </button>
           </div>
 
-          <!-- List of Visits (Static) -->
           <div class="po-visits-list">
-            <!-- Visit 1 (Highlighted/Active) -->
-            <div class="po-visit-item latest">
+            @for (visit of patientBookings(); track visit.id; let isFirst = $first) {
+            <div class="po-visit-item" [class.latest]="isFirst">
               <div class="po-visit-left">
                 <div class="po-date-badge">
-                  <span class="po-date-day">29</span>
-                  <span class="po-date-month">Oct</span>
+                  <span class="po-date-day">{{ getVisitDay(visit.date) }}</span>
+                  <span class="po-date-month">{{ getVisitMonth(visit.date) }}</span>
                 </div>
                 <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Cervical Mobilization</span>
+                  <strong class="po-visit-title">{{ visit.treatmentName }}</strong>
+                  <span class="po-visit-sub">{{ visit.therapist }}</span>
                 </div>
               </div>
               <div class="po-visit-right">
-                <span class="po-visit-fee">₹600</span>
+                <span class="po-visit-fee">&#8377;{{ visit.fee }}</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </div>
             </div>
-
-            <!-- Visit 2 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">27</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Posture Correction</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Visit 3 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">24</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Neck Strengthening</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Visit 4 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">22</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Pain Management</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
+            } @empty {
+            <div class="po-empty-state">No treatment visits found for this patient yet.</div>
+            }
           </div>
         </div>
+        } @else {
+        <div class="po-empty-state">
+          Search and select a patient to view their overview and treatment visits.
+        </div>
+        }
 
       </div>
     </div>

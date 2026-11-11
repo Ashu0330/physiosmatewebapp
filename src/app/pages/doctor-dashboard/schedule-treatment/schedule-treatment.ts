@@ -103,157 +103,25 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   newPlanPaymentMode = signal<'UPI' | 'Cash' | 'Card' | 'NetBanking'>('UPI');
 
   // ─── Patients Data ─────────────────────────────────────────────────────────
-  patients = signal<DoctorPatient[]>([
-    {
-      id: 'PT-1041',
-      patientCode: 'PT-1041',
-      fullName: 'Ananya Iyer',
-      age: 34,
-      gender: 'Female',
-      phone: '+91 98234 56789',
-      mobile: '+91 98234 56789',
-      email: 'ananya.iyer@example.com',
-      city: 'Delhi NCR',
-      primaryCondition: 'Lumbar Disc Herniation & Sciatica',
-      status: 'Active',
-      currentPlan: 'Spine Decompression & Core Stabilization',
-      sessionsCompleted: 6,
-      totalSessions: 12,
-      lastVisit: '24 Oct 2026'
-    },
-    {
-      id: 'PT-1042',
-      patientCode: 'PT-1042',
-      fullName: 'Vikramaditya Rao',
-      age: 28,
-      gender: 'Male',
-      phone: '+91 98450 12345',
-      mobile: '+91 98450 12345',
-      email: 'vikram.rao@example.com',
-      city: 'Gurugram',
-      primaryCondition: 'Right Knee ACL Reconstruction',
-      status: 'Active',
-      currentPlan: 'Knee ACL Accelerated Rehab Protocol',
-      sessionsCompleted: 10,
-      totalSessions: 16,
-      lastVisit: '23 Oct 2026'
-    },
-    {
-      id: 'PT-1043',
-      patientCode: 'PT-1043',
-      fullName: 'Meera Nambiar',
-      age: 52,
-      gender: 'Female',
-      phone: '+91 97112 34567',
-      mobile: '+91 97112 34567',
-      email: 'meera.nambiar@example.com',
-      city: 'Noida',
-      primaryCondition: 'Frozen Shoulder - Left',
-      status: 'Active',
-      currentPlan: 'Glenohumeral Joint Mobilization & ROM',
-      sessionsCompleted: 4,
-      totalSessions: 10,
-      lastVisit: '22 Oct 2026'
-    },
-    {
-      id: 'PT-1044',
-      patientCode: 'PT-1064',
-      fullName: 'Rohan Deshmukh',
-      age: 41,
-      gender: 'Male',
-      phone: '+91 99201 87654',
-      mobile: '+91 99201 87654',
-      email: 'rohan.deshmukh@example.com',
-      city: 'South Delhi',
-      primaryCondition: 'Cervical Radiculopathy',
-      status: 'Active',
-      sessionsCompleted: 12,
-      totalSessions: 12,
-      lastVisit: '29 Oct 2026'
-    },
-    {
-      id: 'PT-1045',
-      patientCode: 'PT-1045',
-      fullName: 'Siddharth Verma',
-      age: 23,
-      gender: 'Male',
-      phone: '+91 96500 43210',
-      mobile: '+91 96500 43210',
-      email: 'siddharth.v@example.com',
-      city: 'Faridabad',
-      primaryCondition: 'Lateral Ankle Sprain',
-      status: 'Completed',
-      sessionsCompleted: 8,
-      totalSessions: 8,
-      lastVisit: '15 Oct 2026'
-    }
-  ]);
+  patients = signal<DoctorPatient[]>([]);
 
   // ─── Treatment Plans Data ──────────────────────────────────────────────────
-  treatmentPlans = signal<DoctorTreatmentPlan[]>([
-    {
-      id: 'PLN-301',
-      planCode: 'PLN-301',
-      title: 'Spine Decompression & Core Stabilization Protocol',
-      patientId: 'PT-1041',
-      patientName: 'Ananya Iyer',
-      diagnosis: 'L4-L5 Disc Protrusion',
-      totalSessions: 12,
-      completedSessions: 6,
-      frequency: '3x weekly',
-      durationWeeks: 4,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '01 Oct 2026',
-      targetEndDate: '30 Oct 2026',
-      progressPercent: 50,
-      clinicalNotes: 'Neutral spine core activation.',
-      phases: []
-    },
-    {
-      id: 'PLN-302',
-      planCode: 'PLN-302',
-      title: 'Knee ACL Accelerated Rehab Protocol',
-      patientId: 'PT-1042',
-      patientName: 'Vikramaditya Rao',
-      diagnosis: 'Post-Op Knee ACL',
-      totalSessions: 16,
-      completedSessions: 10,
-      frequency: '3x weekly',
-      durationWeeks: 6,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '20 Sep 2026',
-      targetEndDate: '05 Nov 2026',
-      progressPercent: 63,
-      clinicalNotes: 'Quadriceps strength training.',
-      phases: []
-    },
-    {
-      id: 'PLN-303',
-      planCode: 'PLN-303',
-      title: 'Glenohumeral Joint Mobilization & ROM',
-      patientId: 'PT-1043',
-      patientName: 'Meera Nambiar',
-      diagnosis: 'Frozen Shoulder',
-      totalSessions: 10,
-      completedSessions: 4,
-      frequency: '2x weekly',
-      durationWeeks: 5,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '05 Oct 2026',
-      targetEndDate: '10 Nov 2026',
-      progressPercent: 40,
-      clinicalNotes: 'Passive stretch & glides.',
-      phases: []
-    }
-  ]);
+  treatmentPlans = signal<DoctorTreatmentPlan[]>([]);
 
   // ─── Scheduled Bookings Ledger ─────────────────────────────────────────────
   scheduledBookings = signal<ScheduledBooking[]>([]);
 
   // ─── Computed Properties ───────────────────────────────────────────────────
+
+  patientBookings = computed<ScheduledBooking[]>(() => {
+    const p = this.selectedPatient();
+    if (!p) return [];
+    return this.scheduledBookings().filter(b => b.patientId === p.id);
+  });
+
+  patientPendingAmount = computed<number>(() => {
+    return this.patientBookings().reduce((sum, b) => sum + (b.balanceDue || 0), 0);
+  });
 
   patientActivePlan = computed<DoctorTreatmentPlan | null>(() => {
     const p = this.selectedPatient();
@@ -324,8 +192,6 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     if (qp['patientId']) {
       const pt = this.patients().find(p => p.id === qp['patientId'] || p.patientCode === qp['patientId']);
       if (pt) this.selectPatient(pt);
-    } else if (this.patients().length > 0) {
-      this.selectPatient(this.patients()[0]);
     }
 
     const first = this.availableSlots().find(s => s.isAvailable);
@@ -724,69 +590,61 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     return new Date().toISOString().split('T')[0];
   }
 
+  getVisitDay(dateStr: string): string {
+    const d = this.parseLocalDate(dateStr);
+    return d ? String(d.getDate()).padStart(2, '0') : '--';
+  }
+
+  getVisitMonth(dateStr: string): string {
+    const d = this.parseLocalDate(dateStr);
+    return d ? d.toLocaleDateString('en-US', { month: 'short' }) : '';
+  }
+
+  private parseLocalDate(dateStr?: string | null): Date | null {
+    if (!dateStr) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+    if (match) {
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   private saveStorage(): void {
     try {
       localStorage.setItem('pm_st_bookings', JSON.stringify(this.scheduledBookings()));
       localStorage.setItem('pm_st_plans', JSON.stringify(this.treatmentPlans()));
-      localStorage.setItem('pm_st_patients', JSON.stringify(this.patients()));
     } catch {}
   }
 
   private loadStorage(): void {
+    const dummyBookingIds = new Set(['seed-1', 'seed-2']);
+    const dummyPlanIds = new Set(['PLN-301', 'PLN-302', 'PLN-303']);
+    const dummyPatientIds = new Set(['PT-1041', 'PT-1042', 'PT-1043', 'PT-1044', 'PT-1045', 'PT-1064']);
+
     try {
       const b = localStorage.getItem('pm_st_bookings');
-      if (b) this.scheduledBookings.set(JSON.parse(b));
-      else this.seedBookings();
+      if (b) {
+        const parsed: ScheduledBooking[] = JSON.parse(b);
+        if (Array.isArray(parsed)) {
+          this.scheduledBookings.set(
+            parsed.filter(item => !dummyBookingIds.has(item.id) && !dummyPatientIds.has(item.patientId))
+          );
+        }
+      }
 
       const p = localStorage.getItem('pm_st_plans');
-      if (p) this.treatmentPlans.set(JSON.parse(p));
-
-      const pts = localStorage.getItem('pm_st_patients');
-      if (pts) this.patients.set(JSON.parse(pts));
-    } catch {
-      this.seedBookings();
-    }
-  }
-
-  private seedBookings(): void {
-    const today = this.getTodayDateString();
-    this.scheduledBookings.set([
-      {
-        id: 'seed-1',
-        bookingCode: 'TRT-1082',
-        patientId: 'PT-1041',
-        patientName: 'Ananya Iyer',
-        patientCode: 'PT-1041',
-        phone: '+91 98234 56789',
-        date: today,
-        timeSlot: '09:00 AM - 09:45 AM',
-        treatmentName: 'Spinal Mobilization',
-        therapist: 'Dr. Himanshu Suman (PT)',
-        fee: 600,
-        advancePaid: 600,
-        balanceDue: 0,
-        paymentStatus: 'Paid',
-        paymentMode: 'UPI',
-        status: 'Scheduled'
-      },
-      {
-        id: 'seed-2',
-        bookingCode: 'TRT-1083',
-        patientId: 'PT-1042',
-        patientName: 'Vikramaditya Rao',
-        patientCode: 'PT-1042',
-        phone: '+91 98450 12345',
-        date: today,
-        timeSlot: '10:00 AM - 10:45 AM',
-        treatmentName: 'Knee ACL Rehab',
-        therapist: 'Dr. Priya Sharma (PT)',
-        fee: 800,
-        advancePaid: 400,
-        balanceDue: 400,
-        paymentStatus: 'Advance',
-        paymentMode: 'Card',
-        status: 'Scheduled'
+      if (p) {
+        const parsedPlans: DoctorTreatmentPlan[] = JSON.parse(p);
+        if (Array.isArray(parsedPlans)) {
+          this.treatmentPlans.set(
+            parsedPlans.filter(plan => !dummyPlanIds.has(plan.id) && !dummyPatientIds.has(plan.patientId))
+          );
+        }
       }
-    ]);
+    } catch {
+      this.scheduledBookings.set([]);
+      this.treatmentPlans.set([]);
+    }
   }
 }
