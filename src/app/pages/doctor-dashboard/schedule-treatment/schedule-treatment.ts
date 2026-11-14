@@ -314,7 +314,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       status: existing?.status || 'Active',
       sessionsCompleted: existing?.sessionsCompleted ?? 0,
       totalSessions: existing?.totalSessions ?? 0,
-      lastVisit
+      lastVisit,
+      notes: (item as any).notes || existing?.notes || undefined
     };
 
     if (existing) {

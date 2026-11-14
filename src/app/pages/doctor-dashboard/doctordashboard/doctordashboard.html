@@ -415,6 +415,180 @@
             </div>
           </div>
 
+          <!-- Today's Treatments Section -->
+          <div class="dashboard-section-card">
+            <div class="section-card-header">
+              <div>
+                <h4 class="section-heading">Today's Treatment Schedule</h4>
+                <span class="section-sub">Physical therapy &amp; clinical treatments scheduled for today</span>
+              </div>
+              <button type="button" class="link-btn-flat" routerLink="/doctor-dashboard/appointment-list">
+                View All Treatments
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <div class="schedule-table-container">
+              <table class="minimal-table">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Patient Details</th>
+                    <th>Mobile</th>
+                    <th>Fees</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of todayAppointmentsSchedule(); track item.appointmentId ?? item.paymentId ?? $index) {
+                  <tr>
+                    <!-- Time / Date -->
+                    <td>
+                      <div class="time-block">
+                        <span class="time-primary">{{ item.appointmentDate | date:'dd MMM yyyy' }}</span>
+                        <span class="time-sub">{{ item.appointmentDate | date:'hh:mm a' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Patient Info -->
+                    <td>
+                      <div class="pt-profile-row">
+                        <div class="pt-avatar">
+                          {{ getInitials(item.fullName) }}
+                        </div>
+                        <div class="pt-text">
+                          <span class="pt-name">{{ item.fullName }}</span>
+                          <span class="pt-code">PT-{{ item.patientId }}</span>
+                          @if (item.notes) {
+                          <div class="pt-notes-tag" [title]="item.notes">
+                            <span class="notes-lbl">Notes:</span> {{ item.notes }}
+                          </div>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Mobile -->
+                    <td>
+                      <span class="condition-name">{{ item.mobile || '—' }}</span>
+                    </td>
+
+                    <!-- Fees (with add-on fee breakdown) -->
+                    <td>
+                      <div class="fee-display-stack">
+                        <span class="condition-name font-semibold">&#8377;{{ item.fees }}</span>
+                        @if (item.addOns && item.addOns.length > 0) {
+                          @for (addon of item.addOns; track addon.addOnId) {
+                            <span class="fee-addon-sub" [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
+                              + {{ addon.addOnName }}: &#8377;{{ addon.amount }}
+                            </span>
+                          }
+                        } @else if (item.hasAddOnTreatment && (item.addOnFees ?? 0) > 0) {
+                        <span class="fee-addon-sub">+ Add-on: &#8377;{{ item.addOnFees }}</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Payment Status (Highlighting add-on fee due rule) -->
+                    <td>
+                      @if (isBothPaid(item)) {
+                      <span class="apt-status-pill completed">&#10003; Paid</span>
+                      } @else if (isAddOnDue(item)) {
+                      <div class="payment-status-stack">
+                        @if (item.paymentStatus === 'Paid' || item.paymentStatus === 'Success') {
+                        <span class="apt-status-pill completed">&#10003; Fee Paid</span>
+                        } @else {
+                        <span class="apt-status-pill in-progress">Fee: {{ item.paymentStatus || 'Due' }}</span>
+                        }
+                        <span class="apt-status-pill addon-due-pill" title="Add-on treatment fee is due">
+                          <span class="addon-due-dot"></span>
+                          Add-on Due: &#8377;{{ item.addOnFees || 0 }}
+                        </span>
+                      </div>
+                      } @else {
+                      <span class="apt-status-pill"
+                        [class.completed]="item.paymentStatus === 'Paid' || item.paymentStatus === 'Success'"
+                        [class.in-progress]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.scheduled]="item.paymentStatus === 'Refunded'"
+                        [class.failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
+                        {{ item.paymentStatus || 'Due' }}
+                      </span>
+                      }
+                    </td>
+
+                    <!-- Appointment Status -->
+                    <td>
+                      <span class="apt-status-pill"
+                        [class.scheduled]="item.appointmentStatus === 'Scheduled' || item.appointmentStatus === 'Booked'"
+                        [class.in-progress]="item.appointmentStatus === 'In-Progress'"
+                        [class.completed]="item.appointmentStatus === 'Completed'"
+                        [class.failed]="item.appointmentStatus === 'Cancelled'">
+                        {{ item.appointmentStatus || 'Scheduled' }}
+                      </span>
+                    </td>
+
+                    <!-- Registered -->
+                    <td>
+                      @if (item.isRegistered) {
+                      <span class="apt-status-pill completed">&#10003; Yes</span>
+                      } @else {
+                      <span class="apt-status-pill scheduled">No</span>
+                      }
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                      @if (isAddOnDue(item) && isMainDue(item)) {
+                      <div class="table-actions-stack">
+                        <button type="button" class="btn-status-action start"
+                          data-bs-toggle="modal"
+                          data-bs-target="#paymentModal"
+                          (click)="openAppointmentPaymentModal(item, 'main')">
+                          Pay Fee
+                        </button>
+                        <button type="button" class="btn-status-action addon-action"
+                          data-bs-toggle="modal"
+                          data-bs-target="#paymentModal"
+                          (click)="openAppointmentPaymentModal(item, 'addon')">
+                          Pay Add-on
+                        </button>
+                      </div>
+                      } @else if (isAddOnDue(item)) {
+                      <button type="button" class="btn-status-action addon-action"
+                        data-bs-toggle="modal"
+                        data-bs-target="#paymentModal"
+                        (click)="openAppointmentPaymentModal(item, 'addon')">
+                        Pay Add-on
+                      </button>
+                      } @else {
+                      <button type="button" class="btn-status-action start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#paymentModal"
+                        (click)="openAppointmentPaymentModal(item, 'main')">
+                        Payment
+                      </button>
+                      }
+                    </td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="8" style="padding: 32px 0; text-align: center; color: #94A3B8; font-size: 13px;">
+                      No treatment records found for today.
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- ── Shared Payment Modal (outside @for loop) ───────────────────── -->
           <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered payment-modal-dialog" role="document">
@@ -434,7 +608,7 @@
                       </span>
                       <span>
                         <h5 class="modal-title" id="paymentModalLabel">Update Payment</h5>
-                        <span class="payment-modal-subtitle">Process &amp; update consultancy payment</span>
+                        <span class="payment-modal-subtitle">Process &amp; update {{ item.serviceLabel || 'payment' }}</span>
                       </span>
                     </div>
                     <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
@@ -451,6 +625,7 @@
                         <span class="payment-patient-meta">
                           PT-{{ item.patientId }} &bull; {{ item.mobile || 'No mobile' }}
                           @if (item.paymentId) { &bull; Payment #{{ item.paymentId }} }
+                          @if (item.serviceLabel) { &bull; <strong style="color: #0F766E;">{{ item.serviceLabel }}</strong> }
                         </span>
                       </div>
                       <span class="payment-patient-status"

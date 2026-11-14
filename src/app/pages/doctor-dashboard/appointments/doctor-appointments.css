@@ -1509,3 +1509,373 @@
 .bk-btn-close:hover {
   background: var(--primary-hover, #0e9282);
 }
+
+/* ── Add-on Service Multiselect ──────────────────────────────────────────── */
+.addon-multiselect-wrap {
+  position: relative;
+}
+
+.addon-select-anchor {
+  position: relative;
+  width: 100%;
+}
+
+.addon-trigger-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  background-color: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 4px;
+  padding: 0 6px 0 10px;
+  min-height: 33px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.addon-trigger-box:hover,
+.addon-trigger-box.is-open {
+  border-color: var(--border-focus, #10A896);
+}
+
+.addon-trigger-btn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 6px 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-main, #1F2937);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+}
+
+.addon-trigger-text {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addon-trigger-text.is-placeholder {
+  color: var(--text-muted, #787887);
+}
+
+.addon-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background-color: var(--primary-color, #10A896);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.addon-clear-btn,
+.addon-chevron-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  color: var(--text-muted, #787887);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.addon-clear-btn {
+  font-size: 15px;
+}
+
+.addon-clear-btn:hover {
+  color: var(--danger, #EF4444);
+  background-color: #FEF2F2;
+}
+
+.addon-chevron {
+  transition: transform 0.18s ease;
+}
+
+.addon-chevron.rotated {
+  transform: rotate(180deg);
+  color: var(--primary-color, #10A896);
+}
+
+.addon-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.addon-options-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.addon-option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease;
+}
+
+.addon-option-item:hover {
+  background-color: #F6FCFA;
+}
+
+.addon-option-item.selected {
+  background-color: rgba(16, 168, 150, 0.08);
+}
+
+.addon-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.addon-custom-checkbox {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1.5px solid #CBD5E1;
+  background-color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s ease;
+}
+
+.addon-option-item.selected .addon-custom-checkbox {
+  background-color: var(--primary-color, #10A896);
+  border-color: var(--primary-color, #10A896);
+}
+
+.addon-option-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-main, #1F2937);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addon-option-item.selected .addon-option-name {
+  font-weight: 600;
+  color: var(--primary-dark, #087F76);
+}
+
+.addon-option-price {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-dark, #087F76);
+  background-color: var(--primary-light, #E8F8F5);
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.addon-empty-msg {
+  padding: 12px 10px;
+  font-size: 12px;
+  color: var(--text-muted, #787887);
+  text-align: center;
+}
+
+.addon-dropdown-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background-color: #F9FAFB;
+  border-top: 1px solid #EAEAEA;
+}
+
+.addon-footer-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary-dark, #087F76);
+}
+
+.addon-done-btn {
+  padding: 3px 10px;
+  background-color: var(--primary-color, #10A896);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addon-done-btn:hover {
+  background-color: var(--primary-hover, #0e9282);
+}
+
+.selected-addon-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.selected-addon-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background-color: var(--primary-light, #E8F8F5);
+  border: 1px solid var(--green-border, #D5F3EF);
+  color: var(--primary-dark, #087F76);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.addon-pill-remove {
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  color: var(--primary-dark, #087F76);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.addon-pill-remove:hover {
+  color: var(--danger, #EF4444);
+}
+
+/* ── Selected Appointment Badge in Patient Bar ──────────────────────────── */
+.pt-apt-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+}
+
+.pt-apt-badge.done {
+  background-color: #ECFDF5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
+
+/* ── History Card Actions ────────────────────────────────────────────────── */
+.hi-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed #E5E7EB;
+}
+
+.hi-view-btn {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted, #787887);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hi-view-btn:hover {
+  background-color: var(--primary-light, #E8F8F5);
+  color: var(--primary-dark, #087F76);
+  border-color: var(--primary-color, #10A896);
+}
+
+/* ── Complete Appointment Button States ──────────────────────────────────── */
+.btn-submit-appointment:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: #9CA3AF;
+}
+
+.btn-submit-appointment .search-spinner {
+  border-color: rgba(255, 255, 255, 0.4);
+  border-top-color: #FFFFFF;
+  margin-right: 6px;
+}
+
+/* ── Patient Notes Displays ────────────────────────────────────────────── */
+.pt-notes-sub {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #0F766E;
+  background-color: #F0FDFA;
+  border: 1px solid #CCFBF1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: fit-content;
+  line-height: 1.4;
+}
+
+.pt-notes-label {
+  font-weight: 700;
+  color: #115E59;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.item-notes-text {
+  font-size: 11px;
+  color: #0F766E;
+  margin-top: 3px;
+  background-color: #F0FDFA;
+  border: 1px solid #CCFBF1;
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  line-height: 1.3;
+}
+
+.notes-tag {
+  font-weight: 700;
+  font-size: 10px;
+  color: #115E59;
+  text-transform: uppercase;
+}

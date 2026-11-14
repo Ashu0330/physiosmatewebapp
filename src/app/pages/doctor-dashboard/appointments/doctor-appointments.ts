@@ -1,13 +1,15 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, OnInit, ElementRef, HostListener, PLATFORM_ID, signal, computed, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   DoctorPatient,
   DoctorAppointment,
   DoctorInquiryOrAppointment,
   AppointmentPatientSearchItem,
-  PatientAppointmentHistoryItem
+  PatientAppointmentHistoryItem,
+  CompleteAppointmentRequest
 } from '../../../models/doctor-dashboard.model';
+import { ProviderAddon } from '../../../models/mastermodel';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
@@ -22,6 +24,8 @@ import { ApiEndPoints } from '../../../helper/api-endpoints';
 export class DoctorAppointments implements OnInit {
   private alertService = inject(SweetAlertService);
   private apiService = inject(ApiService);
+  private elementRef = inject(ElementRef);
+  private platformId = inject(PLATFORM_ID);
 
   @Input() patients: DoctorPatient[] = [];
   @Input() appointments: DoctorAppointment[] = [];
@@ -36,11 +40,24 @@ export class DoctorAppointments implements OnInit {
   isSearchingPatients = signal<boolean>(false);
   selectedPatientItem = signal<AppointmentPatientSearchItem | null>(null);
 
+  // ─── Add-on Services (Multiselect via GetAllAddOns) ────────────────────────
+  addons = signal<ProviderAddon[]>([]);
+  isLoadingAddons = signal<boolean>(false);
+  selectedAddOns = signal<ProviderAddon[]>([]);
+  isAddonDropdownOpen = signal<boolean>(false);
+  selectedAddOnPayload = computed(() =>
+    this.selectedAddOns().map(addon => ({
+      addOnId: addon.id,
+      addOnService: addon.addOnName
+    }))
+  );
+
   // ─── Patient Appointment History State ──────────────────────────────────────
   patientAppointmentHistory = signal<PatientAppointmentHistoryItem[]>([]);
   isLoadingHistory = signal<boolean>(false);
   selectedAppointment = signal<PatientAppointmentHistoryItem | null>(null);
   appointmentDetailModal = signal<PatientAppointmentHistoryItem | null>(null);
+  isSubmitting = signal<boolean>(false);
 
   // ─── Time Slot Presets ─────────────────────────────────────────────────────
   availableSlots = [
@@ -76,6 +93,81 @@ export class DoctorAppointments implements OnInit {
   ngOnInit(): void {
     const today = new Date();
     this.formData.appointmentDate = today.toISOString().split('T')[0];
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadAddons();
+    }
+  }
+
+  // ─── Add-on Services Fetch & Multiselect Handlers ──────────────────────────
+  async loadAddons(): Promise<void> {
+    this.isLoadingAddons.set(true);
+    try {
+      const res = await this.apiService.Get<ProviderAddon[]>(ApiEndPoints.GetAllAddOns);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.addons.set(res.data);
+      } else {
+        this.addons.set([]);
+      }
+    } catch (e) {
+      console.error('Error loading add-ons', e);
+      this.addons.set([]);
+    } finally {
+      this.isLoadingAddons.set(false);
+    }
+  }
+
+  toggleAddonDropdown(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isAddonDropdownOpen.update(open => !open);
+  }
+
+  isAddOnSelected(addOnId: number): boolean {
+    return this.selectedAddOns().some(a => a.id === addOnId);
+  }
+
+  toggleAddOn(addon: ProviderAddon): void {
+    if (this.isAddOnSelected(addon.id)) {
+      this.selectedAddOns.update(list => list.filter(a => a.id !== addon.id));
+    } else {
+      this.selectedAddOns.update(list => [...list, addon]);
+    }
+  }
+
+  removeAddOn(addOnId: number, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedAddOns.update(list => list.filter(a => a.id !== addOnId));
+  }
+
+  clearAddOns(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedAddOns.set([]);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    if (
+      this.isAddonDropdownOpen() &&
+      !this.elementRef.nativeElement.querySelector('.addon-multiselect-wrap')?.contains(target)
+    ) {
+      this.isAddonDropdownOpen.set(false);
+    }
+
+    if (
+      this.isSearchDropdownOpen() &&
+      !this.elementRef.nativeElement.querySelector('.top-search-row')?.contains(target)
+    ) {
+      this.isSearchDropdownOpen.set(false);
+    }
   }
 
   // ─── Live Patient Search via Backend API (Matching Consultancy Approach) ───
@@ -130,10 +222,15 @@ export class DoctorAppointments implements OnInit {
       lastVisit: item.lastVisitDate
         ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
         : 'N/A',
+      notes: item.notes || undefined,
     };
 
     this.selectedPatientItem.set(item);
     this.selectPatient(patient);
+
+    if (item.notes && !this.formData.appointmentNotes) {
+      this.formData.appointmentNotes = item.notes;
+    }
 
     if (item.appointmentDate) {
       this.formData.appointmentDate = item.appointmentDate.split('T')[0];
@@ -155,8 +252,6 @@ export class DoctorAppointments implements OnInit {
   // ─── Load Patient Past Appointment History from Backend ────────────────────
   async loadPatientAppointmentHistory(patientId: number): Promise<void> {
     this.isLoadingHistory.set(true);
-    this.patientAppointmentHistory.set([]);
-    this.selectedAppointment.set(null);
 
     try {
       const res = await this.apiService.Get<PatientAppointmentHistoryItem[]>(
@@ -165,9 +260,28 @@ export class DoctorAppointments implements OnInit {
 
       if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
         this.patientAppointmentHistory.set(res.data);
+        const currentSelectedId = this.selectedAppointment()?.id;
+        const stillExists = currentSelectedId ? res.data.find(a => a.id === currentSelectedId) : null;
+        if (stillExists) {
+          this.selectedAppointment.set(stillExists);
+        } else {
+          // Auto-select scheduled/in-progress appointment, or the first appointment
+          const active = res.data.find(a => a.status === 'Scheduled' || a.status === 'In-Progress') || res.data[0];
+          if (active) {
+            this.selectedAppointment.set(active);
+            if (active.notes && !this.formData.appointmentNotes) {
+              this.formData.appointmentNotes = active.notes;
+            }
+          }
+        }
+      } else {
+        this.patientAppointmentHistory.set([]);
+        this.selectedAppointment.set(null);
       }
     } catch (e) {
       console.error('Appointment history error', e);
+      this.patientAppointmentHistory.set([]);
+      this.selectedAppointment.set(null);
     } finally {
       this.isLoadingHistory.set(false);
     }
@@ -201,9 +315,25 @@ export class DoctorAppointments implements OnInit {
     }
   }
 
-  // ─── Select Appointment from History (open modal) ───────────────────────────
+  // ─── Select Appointment from History ───────────────────────────────────────
   selectAppointment(apt: PatientAppointmentHistoryItem): void {
     this.selectedAppointment.set(apt);
+    if (apt.notes) {
+      this.formData.appointmentNotes = apt.notes;
+    }
+    if (apt.appointmentDate) {
+      this.formData.appointmentDate = apt.appointmentDate.split('T')[0];
+    }
+    if (apt.status && ['Scheduled', 'In-Progress', 'Completed'].includes(apt.status)) {
+      this.formData.appointmentStatus = apt.status as 'Scheduled' | 'In-Progress' | 'Completed';
+    }
+  }
+
+  viewAppointmentDetails(apt: PatientAppointmentHistoryItem, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectAppointment(apt);
     this.appointmentDetailModal.set(apt);
   }
 
@@ -222,6 +352,8 @@ export class DoctorAppointments implements OnInit {
     this.selectedAppointment.set(null);
     this.appointmentDetailModal.set(null);
     this.isSearchDropdownOpen.set(false);
+    this.selectedAddOns.set([]);
+    this.isAddonDropdownOpen.set(false);
 
     this.formData = { 
       patientCode: '',
@@ -246,40 +378,89 @@ export class DoctorAppointments implements OnInit {
     this.formData.timeSlot = slot;
   }
 
-  // ─── Save Appointment ─────────────────────────────────────────────────────
-  onSave(): void {
-    if (!this.formData.fullName.trim()) {
-      this.alertService.error('Missing Information', 'Please provide the patient name.');
-      return;
-    }
-    if (!this.formData.phone.trim()) {
-      this.alertService.error('Missing Information', 'Please provide a contact phone number.');
+  // ─── Complete Appointment API Call ─────────────────────────────────────────
+  async onCompleteAppointment(): Promise<void> {
+    const pt = this.selectedPatient();
+    if (!pt) {
+      this.alertService.error('Missing Information', 'Please search and select a patient first.');
       return;
     }
 
-    const code = `BKG-${Date.now().toString().slice(-4)}`;
-    const newAppointment: DoctorInquiryOrAppointment = {
-      id: `APT-${Date.now().toString().slice(-4)}`,
-      bookingCode: code,
-      entryType: 'appointment',
-      patientId: this.formData.patientCode || 'PT-NEW',
-      patientCode: this.formData.patientCode || 'PT-NEW',
-      patientName: this.formData.fullName,
-      phone: this.formData.phone,
-      email: this.formData.email,
-      age: this.formData.age || 30,
-      gender: this.formData.gender,
-      date: this.formData.appointmentDate,
-      timeSlot: this.formData.timeSlot,
-      visitType: this.formData.visitType,
-      conditionOrInterest: this.formData.condition || 'Physical Therapy Session',
-      notes: this.formData.appointmentNotes,
-      status: this.formData.appointmentStatus,
-      fee: this.formData.fee
+    const apt = this.selectedAppointment();
+    if (!apt?.id) {
+      this.alertService.error('No Appointment Selected', 'Please select an appointment from the appointment history on the right to complete.');
+      return;
+    }
+
+    if (apt.status === 'Completed') {
+      this.alertService.warning('Already Completed', 'This appointment has already been completed.');
+      return;
+    }
+
+    const addOnList = this.selectedAddOnPayload();
+    const payload: CompleteAppointmentRequest = {
+      appointmentId: apt.id,
+      clinicalNotes: this.formData.appointmentNotes?.trim() || null,
+      addOn: addOnList.length > 0 ? addOnList : null
     };
 
-    this.appointmentAdded.emit(newAppointment);
-    this.alertService.toastSuccess(`Appointment scheduled for ${newAppointment.patientName} (${newAppointment.timeSlot})!`);
+    this.isSubmitting.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.CompleteAppointment, payload);
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess(res.message || 'Appointment completed successfully!');
+
+        // Update local appointment status
+        apt.status = 'Completed';
+        this.formData.appointmentStatus = 'Completed';
+
+        // Refresh appointment history for this patient
+        const rawId = (pt.patientCode || pt.id).replace(/\D/g, '');
+        const numericId = parseInt(rawId, 10);
+        if (!isNaN(numericId) && numericId > 0) {
+          await this.loadPatientAppointmentHistory(numericId);
+        }
+
+        // Emit updated appointment to parent
+        const code = `BKG-${Date.now().toString().slice(-4)}`;
+        const updatedAppointment: DoctorInquiryOrAppointment = {
+          id: `APT-${apt.id}`,
+          bookingCode: code,
+          entryType: 'appointment',
+          patientId: pt.patientCode || pt.id,
+          patientCode: pt.patientCode || pt.id,
+          patientName: pt.fullName,
+          phone: this.formData.phone,
+          email: this.formData.email,
+          age: this.formData.age || 30,
+          gender: this.formData.gender,
+          date: this.formData.appointmentDate,
+          timeSlot: this.formData.timeSlot,
+          visitType: this.formData.visitType,
+          conditionOrInterest: this.formData.condition || 'Physical Therapy Session',
+          notes: this.formData.appointmentNotes,
+          status: 'Completed',
+          fee: this.formData.fee,
+          ...(addOnList.length > 0 ? { addOn: addOnList } : {})
+        };
+        this.appointmentAdded.emit(updatedAppointment);
+
+        // Reset add-on selection after completion
+        this.selectedAddOns.set([]);
+      } else {
+        this.alertService.error('Error', res?.message || 'Failed to complete appointment.');
+      }
+    } catch (e: any) {
+      console.error('CompleteAppointment error', e);
+      this.alertService.error('Error', e?.message || 'An error occurred while completing the appointment.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
+  // Alias onSave to onCompleteAppointment for backward-compatibility with form submit
+  onSave(): void {
+    this.onCompleteAppointment();
   }
 
   formatBookingDate(dateStr?: string | null): string {

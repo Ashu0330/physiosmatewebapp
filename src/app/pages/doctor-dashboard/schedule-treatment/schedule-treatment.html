@@ -134,6 +134,11 @@
                 <span>• {{ pt.city }}</span>
                 }
               </div>
+              @if (pt.notes) {
+              <div class="pt-notes-sub">
+                <span class="pt-notes-label">Notes:</span> {{ pt.notes }}
+              </div>
+              }
             </div>
           </div>
 
@@ -319,13 +324,9 @@
               {{ isBookingTreatment() ? 'Scheduling...' : 'Schedule Daily Treatment' }}
             </button>
           </div>
-
         </div>
         }
 
-        <!-- ====================================================================
-           TAB 2: WEEKLY TREATMENT PLAN (ACCORDION)
-           ==================================================================== -->
         @if (activeTab() === 'weekly') {
         <div class="workspace-card">
 

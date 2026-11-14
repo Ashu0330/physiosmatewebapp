@@ -350,15 +350,16 @@
         (click)="setSubTab('consultations')">
         <span>Consultations</span>
         <span class="p-tab-badge" [class.has-count]="patientConsultations().length > 0">
-          {{ patientConsultations().length || 1 }}
+          {{ patientConsultations().length }}
         </span>
       </button>
 
       <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'appointments'"
         (click)="setSubTab('appointments')">
-        <span>Appointments</span>
-        <span class="p-tab-badge" [class.zero-count]="(selectedPatient()!.counts.appointments || 0) === 0">
-          {{ selectedPatient()!.counts.appointments || 0 }}
+        <span>Treatments</span>
+        <span class="p-tab-badge" [class.has-count]="patientAppointments().length > 0"
+          [class.zero-count]="patientAppointments().length === 0">
+          {{ patientAppointments().length }}
         </span>
       </button>
 
@@ -739,51 +740,272 @@
         <div class="subtab-panel">
           <div class="subtab-header">
             <div>
-              <h3 class="subtab-title">Patient Appointments</h3>
-              <p class="subtab-subtitle">Session schedule and therapy booking history for {{ selectedPatient()!.fullName
-                }}</p>
+              <h3 class="subtab-title">Patient Treatments</h3>
+              <p class="subtab-subtitle">Treatment schedule and therapy booking history for {{ selectedPatient()!.fullName }}</p>
             </div>
-            <button type="button" class="btn-primary-action-sm" (click)="onAddPatientClick()">
-              Book Appointment
-            </button>
+            <div class="header-action-group">
+              <div class="view-mode-toggle me-2">
+                <button type="button" class="btn-toggle-view" [class.active]="appointmentViewMode() === 'cards'"
+                  (click)="appointmentViewMode.set('cards')">
+                  Cards
+                </button>
+                <button type="button" class="btn-toggle-view" [class.active]="appointmentViewMode() === 'table'"
+                  (click)="appointmentViewMode.set('table')">
+                  Table
+                </button>
+              </div>
+
+              <button type="button" class="btn-table-outline"
+                (click)="loadPatientAppointmentHistory(selectedPatient()!.patientId ?? 1)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+
+              <button type="button" class="btn-primary-action-sm" routerLink="/doctor-dashboard/schedule-treatment">
+                Schedule Treatment
+              </button>
+            </div>
           </div>
 
+          @if (isLoadingAppointments()) {
+          <div class="empty-subtab-state">
+            <p>Loading patient treatments...</p>
+          </div>
+          } @else if (patientAppointments().length === 0) {
+          <div class="empty-subtab-state">
+            <p>No treatment records found for this patient.</p>
+          </div>
+          } @else {
+
+          <!-- View Mode: Encounter Cards (Just like Consultancy) -->
+          @if (appointmentViewMode() === 'cards') {
+          <div class="consultation-cards-container">
+            @for (apt of patientAppointments(); track apt.id || $index) {
+            <div class="consultation-encounter-card">
+              <!-- Top Header Bar -->
+              <div class="c-card-header">
+                <div class="c-header-left">
+                  <div class="c-date-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="c-date-text">{{ apt.appointmentDate | date:'dd MMM yyyy' }}</span>
+                    <span class="c-time-text">{{ apt.timeSlot || (apt.startTime ? (apt.startTime + ' – ' + apt.endTime) : (apt.appointmentTime || 'Scheduled')) }}</span>
+                  </div>
+
+                  <span class="visit-type-badge">{{ apt.visitType || 'Clinic' }}</span>
+
+                  <span class="status-badge"
+                    [class.completed]="apt.status === 'Completed'"
+                    [class.in-progress]="apt.status === 'In-Progress'"
+                    [class.scheduled]="apt.status !== 'Completed' && apt.status !== 'In-Progress'">
+                    {{ apt.status || 'Scheduled' }}
+                  </span>
+                </div>
+
+                <div class="c-header-right">
+                  <span class="c-booking-chip">Session #{{ apt.sessionNumber || 1 }}</span>
+                  <span class="c-booking-chip">APT-{{ apt.id }}</span>
+                  <span class="c-amount-chip">&#8377;{{ apt.amount || 0 }}</span>
+                  @if (isBothPaid(apt)) {
+                  <span class="apt-status-pill completed">&#10003; Paid</span>
+                  } @else if (isAddOnDue(apt)) {
+                  <span class="apt-status-pill addon-due-pill">
+                    <span class="addon-due-dot"></span>
+                    Add-on Due: &#8377;{{ apt.addOnFees || 0 }}
+                  </span>
+                  } @else {
+                  <span class="apt-status-pill in-progress">{{ apt.paymentStatus || 'Due' }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Meta Bar: Practitioner & Location -->
+              <div class="c-meta-bar">
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span class="c-meta-label">Doctor / Specialist:</span>
+                  <strong class="c-meta-val">{{ apt.assignedPractitionerName || apt.practitionerName || 'Doctor' }}</strong>
+                </div>
+
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                  </svg>
+                  <span class="c-meta-label">Clinic:</span>
+                  <span class="c-meta-val">{{ apt.clinicName || 'Clinic' }}</span>
+                </div>
+
+                @if (apt.homeVisitAddress) {
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                  <span class="c-meta-label">Home Visit:</span>
+                  <span class="c-meta-val">{{ apt.homeVisitAddress }}</span>
+                </div>
+                }
+
+                @if (apt.assignmentStatus) {
+                <div class="c-meta-item">
+                  <span class="c-meta-label">Assignment:</span>
+                  <span class="c-meta-val">{{ apt.assignmentStatus }}</span>
+                </div>
+                }
+              </div>
+
+              <!-- Treatment Notes & Billing Grid -->
+              <div class="c-clinical-grid">
+                <div class="c-clinical-block" style="grid-column: span 2;">
+                  <div class="c-block-tag">Treatment Notes &amp; Precautions</div>
+                  <div class="c-block-content">{{ apt.notes || 'None recorded' }}</div>
+                </div>
+
+                @if ((apt.addOns && apt.addOns.length > 0) || apt.hasAddOnTreatment) {
+                <div class="c-clinical-block addon-clinical-block">
+                  <div class="c-block-tag">
+                    Add-on Services @if (apt.addOns && apt.addOns.length > 0) { ({{ apt.addOns.length }}) }
+                  </div>
+                  <div class="c-block-content">
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-chips-list">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <div class="addon-item-chip">
+                        <div class="addon-chip-info">
+                          <span class="addon-chip-name">{{ addon.addOnName }}</span>
+                          <span class="addon-chip-price">&#8377;{{ addon.amount }}</span>
+                        </div>
+                        <span class="addon-chip-status"
+                          [class.paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'"
+                          [class.due]="(addon.paymentStatus || '').toLowerCase() !== 'paid' && (addon.paymentStatus || '').toLowerCase() !== 'success'">
+                          {{ addon.paymentStatus || 'Due' }}
+                        </span>
+                      </div>
+                      }
+                    </div>
+                    } @else {
+                    Fee: <strong>&#8377;{{ apt.addOnFees }}</strong>
+                    &bull; Status: <span [class.text-danger]="apt.addOnPaymentStatus === 'Due'">{{ apt.addOnPaymentStatus || 'Due' }}</span>
+                    }
+                  </div>
+                </div>
+                }
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Financial &amp; Payment</div>
+                  <div class="c-block-content">
+                    Status: <strong>{{ apt.paymentStatus || 'Due' }}</strong>
+                    @if (apt.paymentMethod) { &bull; Method: {{ apt.paymentMethod }} }
+                    &bull; Amount: &#8377;{{ apt.amount || 0 }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+
+          <!-- View Mode: Table (Matching screenshot layout with real data) -->
+          @if (appointmentViewMode() === 'table') {
           <div class="subtab-table-box">
             <table class="subtab-table">
               <thead>
                 <tr>
-                  <th>Date & Time</th>
+                  <th>Date &amp; Time</th>
                   <th>Therapy / Reason</th>
                   <th>Assigned Specialist</th>
                   <th>Facility / Room</th>
+                  <th>Payment</th>
                   <th>Status</th>
-                  <th class="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
-                @for (apt of dummyAppointments; track apt.date) {
+                @for (apt of patientAppointments(); track apt.id || $index) {
                 <tr>
                   <td>
-                    <strong>{{ apt.date }}</strong>
-                    <div class="cell-sub">{{ apt.time }}</div>
+                    <strong>{{ apt.appointmentDate | date:'dd MMM yyyy' }}</strong>
+                    <div class="cell-sub">{{ apt.timeSlot || apt.startTime || apt.appointmentTime || 'Scheduled' }}</div>
                   </td>
-                  <td>{{ apt.type }}</td>
-                  <td>{{ apt.therapist }}</td>
-                  <td>{{ apt.room }}</td>
                   <td>
-                    <span class="status-badge" [class.completed]="apt.status === 'Completed'"
-                      [class.scheduled]="apt.status === 'Scheduled'">
-                      {{ apt.status }}
-                    </span>
+                    <strong>Session #{{ apt.sessionNumber || 1 }}</strong>
+                    <div class="cell-sub">{{ apt.visitType || 'In-Clinic' }}</div>
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-table-chips">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <span class="addon-table-pill" [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
+                        + {{ addon.addOnName }} <strong class="ms-1">&#8377;{{ addon.amount }}</strong>
+                        <span class="addon-table-status" [class.is-paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'">
+                          {{ addon.paymentStatus || 'Due' }}
+                        </span>
+                      </span>
+                      }
+                    </div>
+                    }
+                    @if (apt.notes) {
+                    <div class="cell-sub text-muted" style="max-width: 220px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                      {{ apt.notes }}
+                    </div>
+                    }
                   </td>
-                  <td class="text-right">
-                    <button type="button" class="btn-table-outline">View Details</button>
+                  <td>{{ apt.assignedPractitionerName || apt.practitionerName || 'Doctor' }}</td>
+                  <td>{{ apt.clinicName || 'Clinic' }}</td>
+                  <td>
+                    <strong>&#8377;{{ apt.amount || 0 }}</strong>
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-pay-summary">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <div class="addon-pay-line">
+                        <span class="addon-pay-name">+ {{ addon.addOnName }}:</span>
+                        <strong class="addon-pay-amt">&#8377;{{ addon.amount }}</strong>
+                        <span class="addon-pay-stat" [class.paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'">
+                          ({{ addon.paymentStatus || 'Due' }})
+                        </span>
+                      </div>
+                      }
+                    </div>
+                    } @else if (apt.hasAddOnTreatment && (apt.addOnFees ?? 0) > 0) {
+                    <div class="cell-sub text-warning">+ Add-on: &#8377;{{ apt.addOnFees }}</div>
+                    }
+                    <div class="mt-1">
+                      @if (isBothPaid(apt)) {
+                      <span class="apt-status-pill completed">&#10003; Paid</span>
+                      } @else if (isAddOnDue(apt)) {
+                      <span class="apt-status-pill addon-due-pill">
+                        <span class="addon-due-dot"></span>
+                        Add-on Due
+                      </span>
+                      } @else {
+                      <span class="apt-status-pill in-progress">{{ apt.paymentStatus || 'Due' }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge"
+                      [class.completed]="apt.status === 'Completed'"
+                      [class.in-progress]="apt.status === 'In-Progress'"
+                      [class.scheduled]="apt.status !== 'Completed' && apt.status !== 'In-Progress'">
+                      {{ apt.status || 'Scheduled' }}
+                    </span>
                   </td>
                 </tr>
                 }
               </tbody>
             </table>
           </div>
+          }
+
+          }
         </div>
         }
 

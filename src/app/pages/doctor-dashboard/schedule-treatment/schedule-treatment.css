@@ -384,6 +384,27 @@
   flex-wrap: wrap;
 }
 
+.pt-notes-sub {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: #0F766E;
+  background-color: #F0FDFA;
+  border: 1px solid #CCFBF1;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: fit-content;
+}
+
+.pt-notes-label {
+  font-weight: 700;
+  color: #115E59;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
 /* Active Plan Block on Right of Header */
 .pt-plan-block {
   display: flex;

@@ -169,7 +169,7 @@ export class ConsultancyList implements OnInit {
 
   goToDashboard(): void {
     this.backToDashboard.emit();
-    this.router.navigate(['/doctor-dashboard']);
+    this.router.navigate(['/doctor-dashboard/dashboard']);
   }
 
   openPayment(item: PatientConsultancyDetails): void {

@@ -188,6 +188,7 @@ export interface DoctorInquiryOrAppointment {
   inquirySource?: 'Phone Call' | 'Walk-in' | 'WhatsApp' | 'Referral';
   followUpDate?: string;
   fee?: number;
+  addOn?: { addOnId: number; addOnService: string }[];
 }
 
 // ── Consultation Search & Finalize ───────────────────────────────────────────
@@ -235,6 +236,7 @@ export interface AppointmentPatientSearchItem {
   fees?: number | null;
   startTime?: string | null;
   endTime?: string | null;
+  notes?: string | null;
 }
 
 export interface PatientAppointmentHistoryItem {
@@ -260,13 +262,36 @@ export interface PatientAppointmentHistoryItem {
   appointmentSlotId?: number | null;
   appointmentDate?: string;
   appointmentTime?: string | null;
+  timeSlot?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
   status?: string;
   notes?: string | null;
+  homeVisitAddress?: string | null;
   createdAt?: string;
   updatedAt?: string | null;
   treatments?: any[];
   billing?: any | null;
   amount?: number;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  paymentId?: number | null;
+  hasAddOnTreatment?: boolean;
+  addOnFees?: number;
+  addOnPaymentStatus?: string | null;
+  addOnPaymentId?: number | null;
+  addOns?: AppointmentAddOnItem[];
+}
+
+export interface AppointmentAddOnItem {
+  paymentId?: number | null;
+  addOnId: number;
+  treatmentAddOnMappingId?: number | null;
+  addOnName: string;
+  amount: number;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  paidAt?: string | null;
 }
 
 export interface PatientConsultancyBooking {
@@ -390,4 +415,58 @@ export interface AppointmentBookedResponse {
   remainingSessions: number;
   totalSessions: number;
   status: string;
+}
+
+export interface CompleteAppointmentRequest {
+  appointmentId: number;
+  clinicalNotes?: string | null;
+  addOn?: { addOnId: number; addOnService: string }[] | null;
+}
+
+export interface TodayAppointmentScheduleItem {
+  patientId: number;
+  consultancyId?: number;
+  appointmentId?: number;
+  paymentId?: number;
+  profile?: string;
+  fullName: string;
+  mobile?: string;
+  profileImage?: string;
+  email?: string;
+  gender?: string;
+  dob?: string;
+  age?: number;
+  isRegistered: boolean;
+  firstVisitDate?: string;
+  lastVisitDate?: string;
+  isPrimaryProvider?: boolean;
+  city?: string;
+  state?: string;
+  address?: string;
+  paymentStatus?: string;
+  addOnPaymentStatus?: string;
+  addOnFees?: number;
+  hasAddOnTreatment?: boolean;
+  addOnPaymentId?: number;
+  consultancyStatus?: string;
+  consultancyDate?: string;
+  appointmentStatus?: string;
+  appointmentDate?: string;
+  fees: number;
+  startTime?: string;
+  endTime?: string;
+  totalCount?: number;
+  notes?: string;
+  addOns?: AppointmentAddOnItem[];
+}
+
+export interface ActivePaymentModalItem {
+  patientId: number;
+  fullName: string;
+  mobile?: string;
+  paymentId?: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  fees: number;
+  serviceLabel?: string;
 }

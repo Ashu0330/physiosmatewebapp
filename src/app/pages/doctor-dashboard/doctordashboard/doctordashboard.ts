@@ -14,7 +14,10 @@ import {
   NewPatientFormData,
   DoctorConsultationRecord,
   DoctorInquiryOrAppointment,
-  PatientConsultancyDetails
+  PatientConsultancyDetails,
+  TodayAppointmentScheduleItem,
+  ActivePaymentModalItem,
+  AppointmentAddOnItem
 } from '../../../models/doctor-dashboard.model';
 
 // Child components
@@ -66,7 +69,7 @@ export class Doctordashboard implements OnInit {
   // ─── Payment Modal ─────────────────────────────────────────────────────────
   @ViewChild('paymentModalCloseBtn') paymentModalCloseBtn?: ElementRef<HTMLButtonElement>;
 
-  selectedPaymentRow = signal<PatientConsultancyDetails | null>(null);
+  selectedPaymentRow = signal<ActivePaymentModalItem | null>(null);
   paymentMethod = signal<string>('Cash');
   paymentStatus = signal<string>('Due');
   paymentAmount = signal<number>(0);
@@ -93,6 +96,8 @@ export class Doctordashboard implements OnInit {
   ];
 
   Consultancy = signal<PatientConsultancyDetails[]>([]);
+  todayAppointmentsSchedule = signal<TodayAppointmentScheduleItem[]>([]);
+  isLoadingTodayAppointments = signal<boolean>(false);
   patients: DoctorPatient[] = [
     {
       id: 'PT-1041',
@@ -518,6 +523,7 @@ export class Doctordashboard implements OnInit {
     this.resolveTabFromRoute();
     this.fetchData();
     this.GetConsultancy();
+    this.GetTodayAppointments();
   }
 
   /** Map each URL path segment → the tab that should be active */
@@ -855,12 +861,130 @@ export class Doctordashboard implements OnInit {
   }
 
   // ─── Payment Modal Methods ─────────────────────────────────────────────────
+  async GetTodayAppointments(): Promise<void> {
+    this.isLoadingTodayAppointments.set(true);
+    try {
+      const today = new Date();
+      const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
+      const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+
+      const model = {
+        page: 1,
+        pageSize: 100,
+        fromDate,
+        toDate,
+      };
+
+      const res = await this.apiService.Post<TodayAppointmentScheduleItem[]>(
+        ApiEndPoints.GetPractitionerAppointments,
+        model
+      );
+
+      if (res?.isSuccess && res.data) {
+        this.todayAppointmentsSchedule.set(res.data);
+      } else {
+        this.todayAppointmentsSchedule.set([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch today appointments schedule:', err);
+      this.todayAppointmentsSchedule.set([]);
+    } finally {
+      this.isLoadingTodayAppointments.set(false);
+    }
+  }
+
+  isMainDue(item: TodayAppointmentScheduleItem): boolean {
+    const s = item.paymentStatus?.trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid' || s === 'partiallypaid';
+  }
+
+  isIndividualAddOnDue(addon: AppointmentAddOnItem): boolean {
+    const s = (addon.paymentStatus || '').trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+  }
+
+  getDueAddOns(item: TodayAppointmentScheduleItem): AppointmentAddOnItem[] {
+    if (!item.addOns || item.addOns.length === 0) return [];
+    return item.addOns.filter(a => this.isIndividualAddOnDue(a));
+  }
+
+  isAddOnDue(item: TodayAppointmentScheduleItem): boolean {
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.some(a => this.isIndividualAddOnDue(a));
+    }
+    if (!item.hasAddOnTreatment) return false;
+    const s = item.addOnPaymentStatus?.trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+  }
+
+  isBothPaid(item: TodayAppointmentScheduleItem): boolean {
+    const mainPaid = item.paymentStatus?.trim().toLowerCase() === 'paid' || item.paymentStatus?.trim().toLowerCase() === 'success';
+    if (!mainPaid) return false;
+
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.every(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return s === 'paid' || s === 'success';
+      });
+    }
+
+    if (!item.hasAddOnTreatment) {
+      return !!mainPaid;
+    }
+    const addOnPaid = item.addOnPaymentStatus?.trim().toLowerCase() === 'paid' || item.addOnPaymentStatus?.trim().toLowerCase() === 'success';
+    return !!mainPaid && !!addOnPaid;
+  }
+
   openPaymentModal(item: PatientConsultancyDetails): void {
-    this.selectedPaymentRow.set(item);
+    this.selectedPaymentRow.set({
+      patientId: item.patientId,
+      fullName: item.fullName,
+      mobile: item.mobile,
+      paymentId: item.paymentId,
+      paymentStatus: item.paymentStatus,
+      paymentMethod: item.paymentMethod,
+      fees: item.fees ?? 0,
+      serviceLabel: 'Consultancy'
+    });
     const savedMethod = item.paymentId ? this.savedPaymentMethods.get(item.paymentId) : undefined;
     this.paymentMethod.set(savedMethod ?? this.normalizePaymentMethod(item.paymentMethod) ?? 'Cash');
     this.paymentStatus.set(this.normalizePaymentStatus(item.paymentStatus) ?? 'Due');
     this.paymentAmount.set(item.fees ?? 0);
+  }
+
+  openAppointmentPaymentModal(
+    item: TodayAppointmentScheduleItem,
+    target: 'main' | 'addon' = 'main',
+    specificAddon?: AppointmentAddOnItem
+  ): void {
+    const isAddon = target === 'addon';
+    const paymentId = isAddon
+      ? (specificAddon?.paymentId ?? item.addOnPaymentId)
+      : item.paymentId;
+    const currentStatus = isAddon
+      ? (specificAddon?.paymentStatus ?? item.addOnPaymentStatus)
+      : item.paymentStatus;
+    const currentFees = isAddon
+      ? (specificAddon?.amount ?? item.addOnFees ?? 0)
+      : (item.fees ?? 0);
+    const serviceLabel = isAddon
+      ? (specificAddon ? `Add-on: ${specificAddon.addOnName}` : 'Add-on Treatment')
+      : 'Treatment';
+
+    this.selectedPaymentRow.set({
+      patientId: item.patientId,
+      fullName: item.fullName,
+      mobile: item.mobile,
+      paymentId: paymentId,
+      paymentStatus: currentStatus,
+      fees: currentFees,
+      serviceLabel: serviceLabel
+    });
+
+    const savedMethod = specificAddon?.paymentMethod || (paymentId ? this.savedPaymentMethods.get(paymentId) : undefined);
+    this.paymentMethod.set(savedMethod ?? 'Cash');
+    this.paymentStatus.set(this.normalizePaymentStatus(currentStatus) ?? 'Paid');
+    this.paymentAmount.set(currentFees);
   }
 
   onPaymentAmountChange(val: string | number): void {
@@ -871,7 +995,7 @@ export class Doctordashboard implements OnInit {
   async submitPaymentUpdate(): Promise<void> {
     const item = this.selectedPaymentRow();
     if (!item?.paymentId) {
-      this.alertService.toastError('No linked payment record found for this consultation.');
+      this.alertService.toastError('No linked payment record found for this transaction.');
       return;
     }
 
@@ -916,7 +1040,7 @@ export class Doctordashboard implements OnInit {
           this.savedPaymentMethods.set(item.paymentId, updatedMethod);
         }
 
-        // Update row in-place immediately
+        // Update consultancy row in-place immediately
         this.Consultancy.update(list =>
           list.map(c =>
             c.paymentId === item.paymentId
@@ -925,10 +1049,24 @@ export class Doctordashboard implements OnInit {
           )
         );
 
+        // Update appointment row in-place immediately
+        this.todayAppointmentsSchedule.update(list =>
+          list.map(a => {
+            if (a.paymentId === item.paymentId) {
+              return { ...a, paymentStatus: updatedStatus, fees: updatedAmount };
+            }
+            if (a.addOnPaymentId === item.paymentId) {
+              return { ...a, addOnPaymentStatus: updatedStatus, addOnFees: updatedAmount };
+            }
+            return a;
+          })
+        );
+
         this.isUpdatingPayment.set(false);
         this.closePaymentModal();
         this.alertService.toastSuccess('Payment updated successfully');
         this.GetConsultancy();
+        this.GetTodayAppointments();
         this.fetchStats(this.selectedPeriod);
       } else {
         this.alertService.toastError(res?.message || 'Failed to update payment.');

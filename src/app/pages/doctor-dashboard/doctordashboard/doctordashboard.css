@@ -543,6 +543,30 @@
   color: #787887;
 }
 
+.pt-notes-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 1px 6px;
+  background-color: #F0FDFA;
+  border: 1px solid #CCFBF1;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #0F766E;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pt-notes-tag .notes-lbl {
+  font-weight: 700;
+  font-size: 10px;
+  color: #115E59;
+  text-transform: uppercase;
+}
+
 .condition-name {
   font-size: 12px;
   color: #334155;
@@ -601,6 +625,62 @@
   color: #DC2626;
 }
 
+.apt-status-pill.addon-due-pill {
+  background-color: #FFF1F2;
+  color: #BE123C;
+  border: 1px solid #FECDD3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: pulseAddonDue 2.2s infinite ease-in-out;
+}
+
+@keyframes pulseAddonDue {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
+  }
+}
+
+.addon-due-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #E11D48;
+  display: inline-block;
+}
+
+.payment-status-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.fee-display-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.fee-addon-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #D97706;
+  white-space: nowrap;
+}
+
+.table-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .btn-status-action {
   font-family: inherit;
   font-size: 11px;
@@ -629,6 +709,18 @@
 
 .btn-status-action.complete:hover {
   background-color: #D1FAE5;
+}
+
+.btn-status-action.addon-action {
+  background-color: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.btn-status-action.addon-action:hover {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border-color: #FCD34D;
 }
 
 .payment-modal-dialog {

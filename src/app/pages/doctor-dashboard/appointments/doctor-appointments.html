@@ -3,8 +3,8 @@
   <!-- ── Top Header Row ─────────────────────────────────────────────────────── -->
   <div class="appointments-header">
     <div class="header-titles">
-      <h3 class="panel-title">Appointments & Patient Scheduling</h3>
-      <p class="panel-subtitle">Schedule clinical therapy appointments and review patient appointment history.</p>
+      <h3 class="panel-title">Treatments &amp; Patient Scheduling</h3>
+      <p class="panel-subtitle">Schedule clinical therapy treatments and review patient treatment history.</p>
     </div>
   </div>
 
@@ -67,6 +67,11 @@
                     • {{ p.appointmentDate | date:'mediumDate' }}
                     }
                   </div>
+                  @if (p.notes) {
+                  <div class="item-notes-text">
+                    <span class="notes-tag">Notes:</span> {{ p.notes }}
+                  </div>
+                  }
                 </div>
                 @if (p.appointmentStatus) {
                 <span class="appointment-status-badge">{{ p.appointmentStatus }}</span>
@@ -97,6 +102,11 @@
               <div class="pt-name-row">
                 <h4 class="pt-name">{{ pt.fullName }}</h4>
                 <span class="pt-code">{{ pt.patientCode || pt.id }}</span>
+                @if (selectedAppointment(); as apt) {
+                <span class="pt-apt-badge" [class.done]="apt.status === 'Completed'">
+                  Treatment #{{ apt.id }} &bull; {{ apt.status || 'Scheduled' }}
+                </span>
+                }
               </div>
               <div class="pt-meta-row">
                 <span>{{ pt.phone || pt.mobile }}</span>
@@ -108,6 +118,11 @@
                 <span>• {{ pt.city }}</span>
                 }
               </div>
+              @if (pt.notes || selectedAppointment()?.notes || selectedPatientItem()?.notes) {
+              <div class="pt-notes-sub">
+                <span class="pt-notes-label">Notes:</span> {{ pt.notes || selectedAppointment()?.notes || selectedPatientItem()?.notes }}
+              </div>
+              }
             </div>
           </div>
 
@@ -168,11 +183,86 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group addon-multiselect-wrap" [class.is-open]="isAddonDropdownOpen()">
               <label class="form-label" for="apt-service">Addon service</label>
-              <select id="apt-service" name="aptservice" class="form-select" >
-                <option value="" disable selected>Addon Service</option>                
-              </select>
+              <div class="addon-select-anchor">
+                <div class="addon-trigger-box" [class.is-open]="isAddonDropdownOpen()">
+                  <button type="button" id="apt-service" class="addon-trigger-btn"
+                    [attr.aria-expanded]="isAddonDropdownOpen()"
+                    (click)="toggleAddonDropdown($event)">
+                    <span class="addon-trigger-text" [class.is-placeholder]="selectedAddOns().length === 0">
+                      @if (isLoadingAddons() && addons().length === 0) {
+                      Loading add-ons...
+                      } @else if (selectedAddOns().length === 0) {
+                      Addon Service
+                      } @else if (selectedAddOns().length === 1) {
+                      {{ selectedAddOns()[0].addOnName }}
+                      } @else {
+                      {{ selectedAddOns().length }} addons selected
+                      }
+                    </span>
+                  </button>
+                  @if (selectedAddOns().length > 0) {
+                  <span class="addon-count-badge">{{ selectedAddOns().length }}</span>
+                  <button type="button" class="addon-clear-btn" (click)="clearAddOns($event)"
+                    title="Clear all" aria-label="Clear selected add-ons">&times;</button>
+                  }
+                  <button type="button" class="addon-chevron-btn" (click)="toggleAddonDropdown($event)"
+                    aria-label="Toggle add-on services">
+                    <svg class="addon-chevron" [class.rotated]="isAddonDropdownOpen()" width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                </div>
+
+                @if (isAddonDropdownOpen()) {
+                <div class="addon-dropdown-panel" (click)="$event.stopPropagation()">
+                  <div class="addon-options-list">
+                    @if (isLoadingAddons()) {
+                    <div class="addon-empty-msg">Loading add-on services...</div>
+                    } @else {
+                    @for (addon of addons(); track addon.id) {
+                    <label class="addon-option-item" [class.selected]="isAddOnSelected(addon.id)">
+                      <input type="checkbox" class="addon-checkbox-input" [checked]="isAddOnSelected(addon.id)"
+                        (change)="toggleAddOn(addon)" />
+                      <span class="addon-custom-checkbox">
+                        @if (isAddOnSelected(addon.id)) {
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                          <polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        </svg>
+                        }
+                      </span>
+                      <span class="addon-option-name">{{ addon.addOnName }}</span>
+                      <span class="addon-option-price">&#8377;{{ addon.price | number:'1.0-2' }}</span>
+                    </label>
+                    } @empty {
+                    <div class="addon-empty-msg">No add-on services configured</div>
+                    }
+                    }
+                  </div>
+                  @if (addons().length > 0) {
+                  <div class="addon-dropdown-footer">
+                    <span class="addon-footer-count">{{ selectedAddOns().length }} selected</span>
+                    <button type="button" class="addon-done-btn" (click)="isAddonDropdownOpen.set(false)">Done</button>
+                  </div>
+                  }
+                </div>
+                }
+              </div>
+
+              @if (selectedAddOns().length > 0) {
+              <div class="selected-addon-pills">
+                @for (addon of selectedAddOns(); track addon.id) {
+                <span class="selected-addon-pill">
+                  {{ addon.addOnName }}
+                  <button type="button" class="addon-pill-remove" (click)="removeAddOn(addon.id, $event)"
+                    title="Remove">&times;</button>
+                </span>
+                }
+              </div>
+              }
             </div>
           </div>
         </div>
@@ -193,11 +283,22 @@
           <button type="button" class="btn-reset" (click)="clearForNewEntry()">
             Clear Form
           </button>
-          <button type="submit" class="btn-submit-appointment">
+          <button type="submit" class="btn-submit-appointment"
+            [disabled]="isSubmitting() || selectedAppointment()?.status === 'Completed'">
+            @if (isSubmitting()) {
+            <span class="search-spinner"></span>
+            Completing...
+            } @else if (selectedAppointment()?.status === 'Completed') {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-            Schedule Clinical Appointment
+            Appointment Completed
+            } @else {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Complete Treatment
+            }
           </button>
         </div>
 
@@ -208,14 +309,14 @@
     <aside class="appointment-history-sidebar">
       <div class="history-sidebar-card">
         <div class="qs-header">
-          <h4 class="qs-title">Appointment History</h4>
-          <span class="qs-sub">Past therapy & clinic appointments</span>
+          <h4 class="qs-title">Treatment History</h4>
+          <span class="qs-sub">Past therapy &amp; clinic treatments</span>
         </div>
 
         @if (selectedPatient()) {
         <div class="qs-section">
           <div class="qs-section-title-row">
-            <span class="qs-section-title">Past Appointments</span>
+            <span class="qs-section-title">Past Treatments</span>
             @if (isLoadingHistory()) {
             <span class="qs-loading-badge">Loading...</span>
             } @else if (patientAppointmentHistory().length > 0) {
@@ -224,9 +325,9 @@
           </div>
 
           @if (isLoadingHistory()) {
-          <div class="qs-empty-msg">Fetching appointment history...</div>
+          <div class="qs-empty-msg">Fetching treatment history...</div>
           } @else if (patientAppointmentHistory().length === 0) {
-          <div class="qs-empty-msg">No past appointments found for this patient.</div>
+          <div class="qs-empty-msg">No past treatments found for this patient.</div>
           } @else {
           <div class="history-items-list">
             @for (apt of patientAppointmentHistory(); track apt.id) {
@@ -252,16 +353,23 @@
                 }
               </div>
               @if (apt.notes) {
-              <div class="hi-complaint">{{ apt.notes }}</div>
+              <div class="hi-complaint"><span class="notes-tag">Notes:</span> {{ apt.notes }}</div>
               }
-              @if (selectedAppointment()?.id === apt.id) {
-              <div class="hi-selected-badge">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Selected
+              <div class="hi-actions-row">
+                @if (selectedAppointment()?.id === apt.id) {
+                <div class="hi-selected-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Selected
+                </div>
+                } @else {
+                <span></span>
+                }
+                <button type="button" class="hi-view-btn" (click)="viewAppointmentDetails(apt, $event)">
+                  View Details
+                </button>
               </div>
-              }
             </div>
             }
           </div>
@@ -273,7 +381,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <p>Select a patient to view their appointment history</p>
+          <p>Select a patient to view their treatment history</p>
         </div>
         }
       </div>
@@ -294,7 +402,7 @@
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          <span class="bk-modal-title">Appointment Details</span>
+          <span class="bk-modal-title">Treatment Details</span>
         </div>
         <button class="bk-modal-close" (click)="closeAppointmentModal()" aria-label="Close">&times;</button>
       </div>
@@ -313,7 +421,7 @@
           </div>
 
           <div class="bk-detail-row">
-            <span class="bk-detail-label">Appointment Date</span>
+            <span class="bk-detail-label">Treatment Date</span>
             <span class="bk-detail-value">{{ formatBookingDate(appointmentDetailModal()!.appointmentDate) }}</span>
           </div>
 
