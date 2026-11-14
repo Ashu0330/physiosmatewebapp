@@ -395,10 +395,8 @@
 
                     <!-- Action -->
                     <td>
-                      <button type="button" class="btn-status-action start"
-                        data-bs-toggle="modal"
-                        data-bs-target="#paymentModal"
-                        (click)="openPaymentModal(item)">
+                      <button type="button" class="btn-status-action start" data-bs-toggle="modal"
+                        data-bs-target="#paymentModal" (click)="openPaymentModal(item)">
                         Payment
                       </button>
                     </td>
@@ -485,11 +483,12 @@
                       <div class="fee-display-stack">
                         <span class="condition-name font-semibold">&#8377;{{ item.fees }}</span>
                         @if (item.addOns && item.addOns.length > 0) {
-                          @for (addon of item.addOns; track addon.addOnId) {
-                            <span class="fee-addon-sub" [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
-                              + {{ addon.addOnName }}: &#8377;{{ addon.amount }}
-                            </span>
-                          }
+                        @for (addon of item.addOns; track addon.addOnId) {
+                        <span class="fee-addon-sub"
+                          [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
+                          + {{ addon.addOnName }}: &#8377;{{ addon.amount }}
+                        </span>
+                        }
                         } @else if (item.hasAddOnTreatment && (item.addOnFees ?? 0) > 0) {
                         <span class="fee-addon-sub">+ Add-on: &#8377;{{ item.addOnFees }}</span>
                         }
@@ -545,35 +544,13 @@
 
                     <!-- Action -->
                     <td>
-                      @if (isAddOnDue(item) && isMainDue(item)) {
-                      <div class="table-actions-stack">
-                        <button type="button" class="btn-status-action start"
-                          data-bs-toggle="modal"
-                          data-bs-target="#paymentModal"
-                          (click)="openAppointmentPaymentModal(item, 'main')">
-                          Pay Fee
-                        </button>
-                        <button type="button" class="btn-status-action addon-action"
-                          data-bs-toggle="modal"
-                          data-bs-target="#paymentModal"
-                          (click)="openAppointmentPaymentModal(item, 'addon')">
-                          Pay Add-on
-                        </button>
-                      </div>
-                      } @else if (isAddOnDue(item)) {
-                      <button type="button" class="btn-status-action addon-action"
-                        data-bs-toggle="modal"
-                        data-bs-target="#paymentModal"
-                        (click)="openAppointmentPaymentModal(item, 'addon')">
-                        Pay Add-on
+                      @if (!isBothPaid(item)) {
+                      <button type="button" class="btn-status-action start" data-bs-toggle="modal"
+                        data-bs-target="#paymentModal" (click)="openAppointmentPaymentModal(item, 'all')">
+                        Pay
                       </button>
                       } @else {
-                      <button type="button" class="btn-status-action start"
-                        data-bs-toggle="modal"
-                        data-bs-target="#paymentModal"
-                        (click)="openAppointmentPaymentModal(item, 'main')">
-                        Payment
-                      </button>
+                      <span class="completed-text">&#10003; Paid</span>
                       }
                     </td>
                   </tr>
@@ -590,7 +567,8 @@
           </div>
 
           <!-- ── Shared Payment Modal (outside @for loop) ───────────────────── -->
-          <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+          <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered payment-modal-dialog" role="document">
               <div class="modal-content payment-modal-content">
                 @if (selectedPaymentRow(); as item) {
@@ -608,7 +586,8 @@
                       </span>
                       <span>
                         <h5 class="modal-title" id="paymentModalLabel">Update Payment</h5>
-                        <span class="payment-modal-subtitle">Process &amp; update {{ item.serviceLabel || 'payment' }}</span>
+                        <span class="payment-modal-subtitle">Process &amp; update {{ item.serviceLabel || 'payment'
+                          }}</span>
                       </span>
                     </div>
                     <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
@@ -625,7 +604,8 @@
                         <span class="payment-patient-meta">
                           PT-{{ item.patientId }} &bull; {{ item.mobile || 'No mobile' }}
                           @if (item.paymentId) { &bull; Payment #{{ item.paymentId }} }
-                          @if (item.serviceLabel) { &bull; <strong style="color: #0F766E;">{{ item.serviceLabel }}</strong> }
+                          @if (item.serviceLabel) { &bull; <strong style="color: #0F766E;">{{ item.serviceLabel
+                            }}</strong> }
                         </span>
                       </div>
                       <span class="payment-patient-status"
@@ -643,11 +623,75 @@
 
                     <!-- Form fields -->
                     <div class="payment-details-form">
+                      <!-- Multi-select for Payment Items (Treatment + Add-ons) -->
+                      <!-- Multi-select for Payment Items (Treatment + Add-ons) matching Screenshot 3 -->
+                      @if (paymentItems().length > 1) {
+                      <div class="mb-3 position-relative payment-select-container">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                          SELECT PAYMENT <span class="text-danger">*</span>
+                        </label>
+                        <div class="custom-payment-select" [class.is-open]="isPaymentDropdownOpen()"
+                          (click)="isPaymentDropdownOpen.set(!isPaymentDropdownOpen())">
+                          <span class="custom-select-text text-truncate">
+                            {{ getDropdownTriggerText() }}
+                          </span>
+                          <span class="custom-select-arrow">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                              <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                          </span>
+                        </div>
+
+                        @if (isPaymentDropdownOpen()) {
+                        <div class="custom-payment-dropdown shadow">
+                          <!-- All Pending Payments option -->
+                          <div class="custom-dropdown-row" [class.is-active]="isAllSelected()"
+                            (click)="toggleSelectAll(!isAllSelected()); $event.stopPropagation()">
+                            <span class="row-icon">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/>
+                              </svg>
+                            </span>
+                            <span class="row-label">All Pending Payments (&#8377;{{ totalUnpaidAmount() | number }})</span>
+                            <input type="checkbox" class="form-check-input ms-auto"
+                              [checked]="isAllSelected()"
+                              (click)="$event.stopPropagation()"
+                              (change)="toggleSelectAll($any($event.target).checked)">
+                          </div>
+
+                          <!-- Individual items -->
+                          @for (pItem of paymentItems(); track pItem.id + '_' + pItem.isTreatment) {
+                          <div class="custom-dropdown-row"
+                            [class.is-active]="pItem.selected"
+                            [class.is-disabled]="pItem.isAlreadyPaid"
+                            (click)="!pItem.isAlreadyPaid && toggleItem(pItem); $event.stopPropagation()">
+                            <span class="row-icon">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L4.088 8.42 1.265 9.92a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L13.912 8.42l2.823-1.5a.5.5 0 0 0 0-.882zM2.062 6 8 2.833 13.938 6 8 9.167zM2.062 10.5 8 7.333 13.938 10.5 8 13.667z"/>
+                              </svg>
+                            </span>
+                            <span class="row-label">
+                              {{ pItem.name }} &ndash; &#8377;{{ pItem.amount | number }}
+                              <span class="status-tag" [class.is-paid]="pItem.isAlreadyPaid" [class.is-due]="!pItem.isAlreadyPaid">
+                                ({{ pItem.isAlreadyPaid ? 'Paid' : 'Due' }})
+                              </span>
+                            </span>
+                            <input type="checkbox" class="form-check-input ms-auto"
+                              [checked]="pItem.selected"
+                              [disabled]="pItem.isAlreadyPaid"
+                              (click)="$event.stopPropagation()"
+                              (change)="toggleItem(pItem)">
+                          </div>
+                          }
+                        </div>
+                        }
+                      </div>
+                      }
+
                       <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
-                        <select class="form-select form-select-sm"
-                          [ngModel]="paymentMethod()" (ngModelChange)="paymentMethod.set($event)"
-                          name="paymentMethod">
+                        <select class="form-select form-select-sm" [ngModel]="paymentMethod()"
+                          (ngModelChange)="paymentMethod.set($event)" name="paymentMethod">
                           @for (opt of paymentMethodOptions; track opt.value) {
                           <option [value]="opt.value">{{ opt.label }}</option>
                           }
@@ -656,9 +700,8 @@
 
                       <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
-                        <select class="form-select form-select-sm" required
-                          [ngModel]="paymentStatus()" (ngModelChange)="paymentStatus.set($event)"
-                          name="paymentStatus">
+                        <select class="form-select form-select-sm" required [ngModel]="paymentStatus()"
+                          (ngModelChange)="paymentStatus.set($event)" name="paymentStatus">
                           @for (opt of paymentStatusOptions; track opt.value) {
                           <option [value]="opt.value">{{ opt.label }}</option>
                           }
@@ -667,8 +710,8 @@
 
                       <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">AMOUNT (&#8377;)</label>
-                        <input type="number" class="form-control form-control-sm payment-amount-input" min="0" step="0.01"
-                          [ngModel]="paymentAmount()" (ngModelChange)="onPaymentAmountChange($event)"
+                        <input type="number" class="form-control form-control-sm payment-amount-input" min="0"
+                          step="0.01" [ngModel]="paymentAmount()" (ngModelChange)="onPaymentAmountChange($event)"
                           name="paymentAmount" placeholder="e.g. 500" />
                       </div>
                     </div>
@@ -676,12 +719,12 @@
 
                   <!-- Footer -->
                   <div class="modal-footer payment-modal-footer">
-                    <button type="button" class="payment-close-button" data-bs-dismiss="modal"
-                      #paymentModalCloseBtn [disabled]="isUpdatingPayment()">
+                    <button type="button" class="payment-close-button" data-bs-dismiss="modal" #paymentModalCloseBtn
+                      [disabled]="isUpdatingPayment()">
                       Cancel
                     </button>
                     <button type="submit" class="payment-submit-button"
-                      [disabled]="isUpdatingPayment() || !item.paymentId">
+                      [disabled]="isUpdatingPayment() || (paymentItems().length > 1 && selectedCount() === 0) || (paymentItems().length <= 1 && !item.paymentId)">
                       {{ isUpdatingPayment() ? 'Submitting...' : 'Submit' }}
                     </button>
                   </div>

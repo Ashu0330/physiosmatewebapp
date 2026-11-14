@@ -445,6 +445,45 @@
             <span class="card-subheading">Enroll patient in a treatment package with sessions and payment option.</span>
           </div>
 
+          <!-- Patient indicator -->
+          @if (selectedPatient(); as pt) {
+          <div class="assign-patient-card mb-3">
+            <div class="ap-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="ap-details">
+              <strong class="ap-name">{{ pt.fullName }}</strong>
+              <span class="ap-sub">{{ pt.patientCode }} &bull; {{ pt.phone || pt.mobile }} &bull; {{ pt.gender }}</span>
+            </div>
+            <span class="ap-badge">Selected Patient</span>
+          </div>
+          } @else {
+          <div class="alert alert-warning py-2 px-3 mb-3 small d-flex align-items-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2 flex-shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Please search and select a patient in the top search bar first.</span>
+          </div>
+          }
+
+          <!-- Plan selector from catalog -->
+          <div class="form-group mb-3">
+            <label class="form-label">Select Treatment Plan / Package <span class="text-danger">*</span></label>
+            @if (isLoadingPlans()) {
+            <div class="small text-muted py-2">Loading provider subscription plans...</div>
+            } @else {
+            <select class="form-select" [ngModel]="selectedPlanId()" (ngModelChange)="onPlanSelect($event)">
+              <option [ngValue]="null">-- Select a Subscription Plan --</option>
+              @for (p of availablePlans(); track p.id) {
+              <option [value]="p.id">
+                {{ p.planName }} &bull; {{ p.totalSessions }} Sessions &bull; &#8377;{{ p.price }} ({{ p.validityDays }} Days)
+              </option>
+              }
+              <option value="0">+ Custom / New Plan</option>
+            </select>
+            }
+          </div>
+
           <div class="form-grid-2">
             <div class="form-group">
               <label class="form-label">Plan Name / Protocol</label>
@@ -517,8 +556,8 @@
           </div>
 
           <div class="action-footer">
-            <button type="button" class="btn-primary" [disabled]="!selectedPatient()" (click)="submitAssignPlan()">
-              Assign Plan to {{ selectedPatient()?.fullName || 'Patient' }}
+            <button type="button" class="btn-primary" [disabled]="!selectedPatient() || isAssigningPlan()" (click)="submitAssignPlan()">
+              {{ isAssigningPlan() ? 'Assigning Subscription...' : ('Assign Plan to ' + (selectedPatient()?.fullName || 'Patient')) }}
             </button>
           </div>
 

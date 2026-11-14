@@ -7,7 +7,9 @@ import {
   DoctorTreatmentPlan,
   PatientSearchItem,
   BookAppointmentRequest,
-  AppointmentBookedResponse
+  AppointmentBookedResponse,
+  UserSubscriptionViewModel,
+  ProviderSubscriptionPlanItem
 } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
@@ -114,6 +116,12 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   weeklyDraftSessions = signal<WeeklyDraftSession[]>([]);
 
   // ─── Assign Plan Form ──────────────────────────────────────────────────────
+  availablePlans = signal<ProviderSubscriptionPlanItem[]>([]);
+  isLoadingPlans = signal<boolean>(false);
+  selectedPlanId = signal<number | null>(null);
+  isAssigningPlan = signal<boolean>(false);
+  selectedPlan = computed(() => this.availablePlans().find(p => p.id === this.selectedPlanId()) || null);
+
   newPlanTitle = signal<string>('Lumbar Spine Protocol');
   newPlanSessions = signal<number>(10);
   newPlanWeeks = signal<number>(4);
@@ -198,6 +206,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
 
     this.loadStorage();
     this.loadPractitioners();
+    this.loadProviderPlans();
 
     const qp = this.route.snapshot.queryParams;
     if (qp['patientId']) {
@@ -803,6 +812,46 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
 
   // ─── Assign Plan Methods ───────────────────────────────────────────────────
 
+  async loadProviderPlans(): Promise<void> {
+    this.isLoadingPlans.set(true);
+    try {
+      const res = await this.apiService.Get<any>(ApiEndPoints.GetProviderPlans);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.availablePlans.set(res.data);
+        if (res.data.length > 0 && !this.selectedPlanId()) {
+          this.onPlanSelect(res.data[0].id);
+        }
+      } else {
+        this.availablePlans.set([]);
+      }
+    } catch (e) {
+      console.error('Error loading provider plans', e);
+      this.availablePlans.set([]);
+    } finally {
+      this.isLoadingPlans.set(false);
+    }
+  }
+
+  onPlanSelect(planId: number | string | null): void {
+    if (planId === null || planId === undefined) {
+      this.selectedPlanId.set(null);
+      return;
+    }
+    const numericId = Number(planId);
+    this.selectedPlanId.set(numericId);
+    if (numericId === 0) {
+      return;
+    }
+    const plan = this.availablePlans().find(p => p.id === numericId);
+    if (plan) {
+      this.newPlanTitle.set(plan.planName);
+      this.newPlanSessions.set(plan.totalSessions || 1);
+      this.newPlanWeeks.set(Math.ceil((plan.validityDays || 28) / 7) || 4);
+      this.newPlanPrice.set(plan.price || 0);
+      this.setNewPlanPaymentType('full');
+    }
+  }
+
   setNewPlanPaymentType(type: 'full' | 'advance' | 'due'): void {
     this.newPlanPaymentType.set(type);
     if (type === 'full') {
@@ -814,50 +863,137 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
   }
 
-  submitAssignPlan(): void {
+  async submitAssignPlan(): Promise<void> {
     const pt = this.selectedPatient();
-    if (!pt) {
-      this.alertService.toastError('Please select a patient first.');
+    const patientItem = this.selectedPatientItem();
+    let patientId = patientItem?.patientId;
+    if (!patientId && pt?.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) patientId = parseInt(match[0], 10);
+    }
+
+    if (!patientId || patientId <= 0) {
+      this.alertService.toastError('Please search and select a patient first.');
       return;
     }
 
-    const planCode = `PLN-${Math.floor(300 + Math.random() * 600)}`;
-    const title = this.newPlanTitle();
-    const totalSessions = this.newPlanSessions();
-    const durationWeeks = this.newPlanWeeks();
-    const price = this.newPlanPrice();
+    let planId = this.selectedPlanId();
+    let plan = this.availablePlans().find(p => p.id === planId);
 
-    const plan: DoctorTreatmentPlan = {
-      id: planCode,
-      planCode,
-      title,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      diagnosis: pt.primaryCondition || 'Physiotherapy Treatment',
-      totalSessions,
+    // If custom/new plan entered without selecting existing one, create provider plan first
+    if (!planId || planId <= 0) {
+      const title = this.newPlanTitle()?.trim();
+      if (!title) {
+        this.alertService.toastError('Please enter a plan name.');
+        return;
+      }
+
+      try {
+        const createPlanPayload = {
+          id: 0,
+          planName: title,
+          totalSessions: this.newPlanSessions() || 1,
+          validityDays: (this.newPlanWeeks() || 4) * 7,
+          price: this.newPlanPrice() || 0,
+          isActive: true,
+          isPopular: false
+        };
+        const createRes = await this.apiService.Post<any>(ApiEndPoints.AddProviderPlans, createPlanPayload);
+        if (createRes?.isSuccess) {
+          await this.loadProviderPlans();
+          plan = this.availablePlans().find(p => p.planName.toLowerCase() === title.toLowerCase()) || this.availablePlans()[0];
+          if (plan) planId = plan.id;
+        }
+      } catch (e) {
+        console.error('Error creating new provider plan', e);
+      }
+    }
+
+    if (!planId || planId <= 0) {
+      this.alertService.toastError('Please select a valid treatment plan.');
+      return;
+    }
+
+    const practitionerId = this.currentPractitionerId;
+    const clinicId = this.currentClinicId;
+    const providerType = practitionerId > 0 ? 'Practitioner' : 'Clinic';
+    const providerId = practitionerId > 0 ? practitionerId : clinicId;
+
+    const payload: UserSubscriptionViewModel = {
+      id: 0,
+      userId: (patientItem as any)?.userId ?? 0,
+      providerId: providerId,
+      clinicId: clinicId,
+      practitionerId: practitionerId,
+      providerType: providerType,
+      planId: planId,
+      planName: plan?.planName || this.newPlanTitle(),
+      price: plan?.price ?? this.newPlanPrice(),
+      validityDays: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
+      providerName: this.auth.getCurrentUser()?.fullName || '',
+      totalSessions: plan?.totalSessions ?? this.newPlanSessions(),
       completedSessions: 0,
-      frequency: `${Math.round(totalSessions / durationWeeks)}x weekly`,
-      durationWeeks,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: this.getTodayDateString(),
-      targetEndDate: this.getTodayDateString(),
-      progressPercent: 0,
-      clinicalNotes: '',
-      phases: []
+      remainingSessions: plan?.totalSessions ?? this.newPlanSessions(),
+      isCurrent: true,
+      status: 'ApprovalPending',
+      startDate: new Date().toISOString(),
+      endDate: null,
+      daysRemaining: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
+      patientId: patientId
     };
 
-    this.treatmentPlans.update(list => [plan, ...list]);
-    this.patients.update(list =>
-      list.map(p => p.id === pt.id ? { ...p, currentPlan: title, totalSessions, sessionsCompleted: 0 } : p)
-    );
-    this.selectedPatient.set({ ...pt, currentPlan: title, totalSessions, sessionsCompleted: 0 });
+    this.isAssigningPlan.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.AddUserSubscription, payload);
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess('Subscription plan assigned to patient successfully.');
 
-    this.saveStorage();
-    this.alertService.toastSuccess('Treatment plan assigned successfully.');
-    this.expandedPlanId.set(plan.id);
-    this.initWeeklyDraft();
-    this.activeTab.set('weekly');
+        const planCode = `PLN-${planId}`;
+        const title = payload.planName || 'Treatment Plan';
+        const totalSessions = payload.totalSessions || 1;
+        const durationWeeks = Math.ceil((payload.validityDays || 28) / 7);
+
+        const localPlan: DoctorTreatmentPlan = {
+          id: planCode,
+          planCode,
+          title,
+          patientId: pt ? pt.id : `PT-${patientId}`,
+          patientName: pt?.fullName || patientItem?.fullName || '',
+          diagnosis: pt?.primaryCondition || 'Physiotherapy Treatment',
+          totalSessions,
+          completedSessions: 0,
+          frequency: `${Math.round(totalSessions / durationWeeks)}x weekly`,
+          durationWeeks,
+          status: 'In Progress',
+          statusType: 'in-progress',
+          startDate: this.getTodayDateString(),
+          targetEndDate: this.getTodayDateString(),
+          progressPercent: 0,
+          clinicalNotes: '',
+          phases: []
+        };
+
+        this.treatmentPlans.update(list => [localPlan, ...list]);
+        if (pt) {
+          this.patients.update(list =>
+            list.map(p => p.id === pt.id ? { ...p, currentPlan: title, totalSessions, sessionsCompleted: 0 } : p)
+          );
+          this.selectedPatient.set({ ...pt, currentPlan: title, totalSessions, sessionsCompleted: 0 });
+        }
+
+        this.saveStorage();
+        this.expandedPlanId.set(localPlan.id);
+        this.initWeeklyDraft();
+        this.activeTab.set('weekly');
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to assign plan.');
+      }
+    } catch (err: any) {
+      console.error('Error in AddUserSubscription', err);
+      this.alertService.toastError(err?.message || 'Unable to assign subscription. Please try again.');
+    } finally {
+      this.isAssigningPlan.set(false);
+    }
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────

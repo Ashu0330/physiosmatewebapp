@@ -243,6 +243,8 @@ export interface PatientAppointmentHistoryItem {
   id: number;
   patientId: number;
   patientName?: string | null;
+  fullName?: string | null;
+  mobile?: string | null;
   gender?: string | null;
   dob?: string | null;
   userId?: number;
@@ -444,6 +446,7 @@ export interface TodayAppointmentScheduleItem {
   state?: string;
   address?: string;
   paymentStatus?: string;
+  paymentMethod?: string;
   addOnPaymentStatus?: string;
   addOnFees?: number;
   hasAddOnTreatment?: boolean;
@@ -469,4 +472,65 @@ export interface ActivePaymentModalItem {
   paymentMethod?: string;
   fees: number;
   serviceLabel?: string;
+}
+
+export interface PaymentSelectableItem {
+  id: number;
+  name: string;
+  amount: number;
+  isTreatment: boolean;
+  isAlreadyPaid: boolean;
+  selected: boolean;
+}
+
+export interface PaymentModel {
+  paymentId: number;
+  amount: number;
+  status?: string | null;
+  paymentMethod?: string | null;
+  addOns?: PaymentAddOnModel[] | null;
+}
+
+export interface PaymentAddOnModel {
+  paymentId: number;
+  amount: number;
+  status?: string | null;
+  paymentMethod?: string | null;
+}
+
+export interface UserSubscriptionViewModel {
+  id?: number;
+  userId?: number;
+  providerId?: number;
+  clinicId?: number;
+  practitionerId?: number;
+  providerType?: string;
+  planId: number;
+  planName?: string;
+  price?: number;
+  validityDays?: number;
+  providerName?: string;
+  totalSessions?: number;
+  completedSessions?: number;
+  remainingSessions?: number;
+  isCurrent?: boolean;
+  status?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  daysRemaining?: number;
+  patientId: number;
+}
+
+export interface ProviderSubscriptionPlanItem {
+  id: number;
+  planName: string;
+  totalSessions: number;
+  validityDays: number;
+  price: number;
+  isPopular?: boolean;
+  isActive?: boolean;
+  providerType?: string;
+  providerId?: number;
+  expertiseId?: number | null;
+  benefits?: Array<{ id?: number; planId?: number; title?: string; description?: string }>;
 }

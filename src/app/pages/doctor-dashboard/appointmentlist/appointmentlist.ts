@@ -1,11 +1,17 @@
-import { Component, OnInit, inject, signal, computed, output } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
-import { TodayAppointmentScheduleItem } from '../../../models/doctor-dashboard.model';
+import {
+  TodayAppointmentScheduleItem,
+  AppointmentAddOnItem,
+  PaymentSelectableItem,
+  PaymentModel,
+  PaymentAddOnModel
+} from '../../../models/doctor-dashboard.model';
 import { SharedModule } from '../../../shared/shared-module';
 
 @Component({
@@ -37,12 +43,27 @@ export class Appointmentlist implements OnInit {
 
   // Selected item for payment modal
   selectedPaymentItem = signal<TodayAppointmentScheduleItem | null>(null);
+  paymentItems = signal<PaymentSelectableItem[]>([]);
+  isPaymentDropdownOpen = signal<boolean>(false);
   activePaymentTarget = signal<'main' | 'addon'>('main');
   activePaymentId = signal<number | null>(null);
   activeServiceLabel = signal<string>('Treatment');
   paymentAmount = signal<number>(0);
   paymentMode = signal<string>('Cash');
   paymentStatusInput = signal<string>('Paid');
+
+  isAllSelected = computed(() => {
+    const unpaid = this.paymentItems().filter(x => !x.isAlreadyPaid);
+    return unpaid.length > 0 && unpaid.every(x => x.selected);
+  });
+
+  selectedCount = computed(() => {
+    return this.paymentItems().filter(x => x.selected).length;
+  });
+
+  totalUnpaidAmount = computed(() => {
+    return this.paymentItems().filter(x => !x.isAlreadyPaid).reduce((s, x) => s + x.amount, 0);
+  });
 
   // Pagination
   currentPage = signal<number>(1);
@@ -54,7 +75,15 @@ export class Appointmentlist implements OnInit {
     return !s || s === 'due' || s === 'pending' || s === 'unpaid' || s === 'partiallypaid';
   }
 
+  isIndividualAddOnDue(addon: AppointmentAddOnItem): boolean {
+    const s = (addon.paymentStatus || '').trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+  }
+
   isAddOnDue(item: TodayAppointmentScheduleItem): boolean {
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.some(a => this.isIndividualAddOnDue(a));
+    }
     if (!item.hasAddOnTreatment) return false;
     const s = item.addOnPaymentStatus?.trim().toLowerCase();
     return !s || s === 'due' || s === 'pending' || s === 'unpaid';
@@ -62,6 +91,13 @@ export class Appointmentlist implements OnInit {
 
   isBothPaid(item: TodayAppointmentScheduleItem): boolean {
     const mainPaid = item.paymentStatus?.trim().toLowerCase() === 'paid' || item.paymentStatus?.trim().toLowerCase() === 'success';
+    if (!mainPaid) return false;
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.every(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return s === 'paid' || s === 'success';
+      });
+    }
     if (!item.hasAddOnTreatment) {
       return !!mainPaid;
     }
@@ -233,70 +269,244 @@ export class Appointmentlist implements OnInit {
     this.router.navigate(['/doctor-dashboard/dashboard']);
   }
 
-  openPayment(item: TodayAppointmentScheduleItem, target: 'main' | 'addon' = 'main'): void {
+  toggleSelectAll(checked: boolean): void {
+    this.paymentItems.update(items =>
+      items.map(it => it.isAlreadyPaid ? it : { ...it, selected: checked })
+    );
+    this.recalculatePaymentAmount();
+  }
+
+  toggleItem(item: PaymentSelectableItem): void {
+    if (item.isAlreadyPaid) return;
+    this.paymentItems.update(items =>
+      items.map(it => it.id === item.id && it.isTreatment === item.isTreatment ? { ...it, selected: !it.selected } : it)
+    );
+    this.recalculatePaymentAmount();
+  }
+
+  recalculatePaymentAmount(): void {
+    const total = this.paymentItems().filter(x => x.selected).reduce((s, x) => s + x.amount, 0);
+    this.paymentAmount.set(total);
+  }
+
+  getDropdownTriggerText(): string {
+    const items = this.paymentItems();
+    if (!items || items.length === 0) return 'Select item to update';
+    if (this.isAllSelected()) {
+      return `All Pending Payments (₹${this.totalUnpaidAmount().toLocaleString()})`;
+    }
+    const selected = items.filter(x => x.selected);
+    if (selected.length === 1) {
+      const it = selected[0];
+      return `${it.name} – ₹${it.amount.toLocaleString()} (${it.isAlreadyPaid ? 'Paid' : 'Due'})`;
+    }
+    if (selected.length > 1) {
+      return `${selected.length} items selected (₹${this.paymentAmount().toLocaleString()})`;
+    }
+    return 'Select item to update';
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.isPaymentDropdownOpen()) {
+      const target = event.target as HTMLElement;
+      if (target && !target.closest('.payment-select-container')) {
+        this.isPaymentDropdownOpen.set(false);
+      }
+    }
+  }
+
+  openPayment(
+    item: TodayAppointmentScheduleItem,
+    target: 'main' | 'addon' | 'all' = 'main',
+    specificAddon?: AppointmentAddOnItem
+  ): void {
     this.selectedPaymentItem.set(item);
-    this.activePaymentTarget.set(target);
+    this.isPaymentDropdownOpen.set(false);
+
+    const items: PaymentSelectableItem[] = [];
+
+    // Main treatment fee
+    const isMainPaid = !this.isMainDue(item);
+    items.push({
+      id: item.paymentId ?? 0,
+      name: 'Treatment Fee',
+      amount: item.fees ?? 0,
+      isTreatment: true,
+      isAlreadyPaid: isMainPaid,
+      selected: false
+    });
+
+    // Addons
+    if (item.addOns && item.addOns.length > 0) {
+      item.addOns.forEach(addon => {
+        const isAddonPaid = !this.isIndividualAddOnDue(addon);
+        items.push({
+          id: addon.paymentId ?? 0,
+          name: addon.addOnName || 'Add-on Treatment',
+          amount: addon.amount ?? 0,
+          isTreatment: false,
+          isAlreadyPaid: isAddonPaid,
+          selected: false
+        });
+      });
+    } else if (item.hasAddOnTreatment && (item.addOnFees ?? 0) > 0) {
+      const isAddonPaid = !this.isAddOnDue(item);
+      items.push({
+        id: item.addOnPaymentId ?? 0,
+        name: 'Add-on Treatment',
+        amount: item.addOnFees ?? 0,
+        isTreatment: false,
+        isAlreadyPaid: isAddonPaid,
+        selected: false
+      });
+    }
+
+    // Set initial selection
+    if (target === 'all') {
+      items.forEach(it => { if (!it.isAlreadyPaid) it.selected = true; });
+    } else if (target === 'addon' && specificAddon) {
+      const match = items.find(it => !it.isTreatment && it.id === specificAddon.paymentId);
+      if (match) match.selected = true;
+      else {
+        const firstUnpaidAddon = items.find(it => !it.isTreatment && !it.isAlreadyPaid);
+        if (firstUnpaidAddon) firstUnpaidAddon.selected = true;
+      }
+    } else if (target === 'addon') {
+      const firstUnpaidAddon = items.find(it => !it.isTreatment && !it.isAlreadyPaid);
+      if (firstUnpaidAddon) firstUnpaidAddon.selected = true;
+    } else {
+      const mainIt = items.find(it => it.isTreatment);
+      if (mainIt && !mainIt.isAlreadyPaid) {
+        mainIt.selected = true;
+      } else {
+        const firstUnpaid = items.find(it => !it.isAlreadyPaid);
+        if (firstUnpaid) firstUnpaid.selected = true;
+      }
+    }
+
+    this.paymentItems.set(items);
 
     const isAddon = target === 'addon';
-    const paymentId = isAddon ? item.addOnPaymentId : item.paymentId;
-    const currentStatus = isAddon ? item.addOnPaymentStatus : item.paymentStatus;
-    const currentFees = isAddon ? (item.addOnFees ?? 0) : (item.fees ?? 0);
-    const serviceLabel = isAddon ? 'Add-on Treatment' : 'Treatment';
+    const paymentId = isAddon
+      ? (specificAddon?.paymentId ?? item.addOnPaymentId)
+      : item.paymentId;
+    const currentStatus = isAddon
+      ? (specificAddon?.paymentStatus ?? item.addOnPaymentStatus)
+      : item.paymentStatus;
+    const serviceLabel = items.length > 1 ? 'Treatment & Add-ons' : 'Treatment';
 
+    this.activePaymentTarget.set(isAddon ? 'addon' : 'main');
     this.activePaymentId.set(paymentId ?? null);
     this.activeServiceLabel.set(serviceLabel);
-    this.paymentAmount.set(currentFees);
-    this.paymentStatusInput.set(currentStatus && currentStatus !== 'Pending' ? currentStatus : 'Paid');
-    this.paymentMode.set('Cash');
+    this.paymentStatusInput.set('Paid');
+    this.paymentMode.set(specificAddon?.paymentMethod || item.paymentMethod || 'Cash');
+
+    this.recalculatePaymentAmount();
   }
 
   async confirmPayment(): Promise<void> {
     const item = this.selectedPaymentItem();
-    const paymentId = this.activePaymentId();
-    const status = this.paymentStatusInput();
-    const amount = this.paymentAmount();
-    const target = this.activePaymentTarget();
-
-    if (!paymentId) {
-      this.alertService.toastError('No linked payment transaction found.');
-      return;
-    }
+    const pItems = this.paymentItems();
+    const status = this.paymentStatusInput()?.trim();
 
     if (!status) {
       this.alertService.toastWarning('Please select a payment status.');
       return;
     }
 
+    const method = this.paymentMode();
+    let payload: PaymentModel;
+
+    if (item && pItems.length > 1) {
+      const selected = pItems.filter(x => x.selected);
+      if (selected.length === 0) {
+        this.alertService.toastWarning('Please select at least one item to update.');
+        return;
+      }
+
+      const treatmentItem = selected.find(x => x.isTreatment);
+      const addOnItems = selected.filter(x => !x.isTreatment);
+
+      if (treatmentItem) {
+        payload = {
+          paymentId: treatmentItem.id,
+          amount: treatmentItem.amount,
+          status: status,
+          paymentMethod: method,
+          addOns: addOnItems.map(ao => ({
+            paymentId: ao.id,
+            amount: ao.amount,
+            status: status,
+            paymentMethod: method
+          }))
+        };
+      } else {
+        const firstAddon = addOnItems[0];
+        const remainingAddons = addOnItems.slice(1);
+        payload = {
+          paymentId: firstAddon.id,
+          amount: firstAddon.amount,
+          status: status,
+          paymentMethod: method,
+          addOns: remainingAddons.map(ao => ({
+            paymentId: ao.id,
+            amount: ao.amount,
+            status: status,
+            paymentMethod: method
+          }))
+        };
+      }
+    } else {
+      const paymentId = this.activePaymentId();
+      if (!paymentId) {
+        this.alertService.toastError('No linked payment transaction found.');
+        return;
+      }
+      const amount = this.paymentAmount();
+      payload = {
+        paymentId: paymentId,
+        amount: amount > 0 ? amount : (item?.fees ?? 0),
+        status: status,
+        paymentMethod: method,
+        addOns: []
+      };
+    }
+
     this.isUpdatingPayment.set(true);
     try {
-      const params = new URLSearchParams();
-      params.set('paymentId', String(paymentId));
-      params.set('paymentStatus', status);
-
-      if (this.paymentMode()) {
-        params.set('paymentMethod', this.paymentMode());
-      }
-
-      if (amount > 0) {
-        params.set('amount', String(amount));
-      }
-
-      const res = await this.apiService.Put<any>(
-        `${ApiEndPoints.UpdatePayment}?${params.toString()}`,
-        {}
+      const res = await this.apiService.Post<any>(
+        ApiEndPoints.UpdatePayment,
+        payload
       );
 
       if (res && res.isSuccess) {
-        // Update item in local state immediately
+        const updatedIds = new Set<number>();
+        if (payload.paymentId) updatedIds.add(payload.paymentId);
+        if (payload.addOns) {
+          payload.addOns.forEach(ao => { if (ao.paymentId) updatedIds.add(ao.paymentId); });
+        }
+
         this.appointments.update(list =>
           list.map(a => {
-            if (target === 'addon' && a.addOnPaymentId === paymentId) {
-              return { ...a, addOnPaymentStatus: status, addOnFees: amount };
+            let updatedA = { ...a };
+            if (a.paymentId && updatedIds.has(a.paymentId)) {
+              updatedA = { ...updatedA, paymentStatus: status, paymentMethod: method };
             }
-            if (target === 'main' && a.paymentId === paymentId) {
-              return { ...a, paymentStatus: status, fees: amount };
+            if (a.addOnPaymentId && updatedIds.has(a.addOnPaymentId)) {
+              updatedA = { ...updatedA, addOnPaymentStatus: status };
             }
-            return a;
+            if (a.addOns && a.addOns.length > 0) {
+              updatedA = {
+                ...updatedA,
+                addOns: a.addOns.map(ao =>
+                  ao.paymentId && updatedIds.has(ao.paymentId)
+                    ? { ...ao, paymentStatus: status, paymentMethod: method }
+                    : ao
+                )
+              };
+            }
+            return updatedA;
           })
         );
 

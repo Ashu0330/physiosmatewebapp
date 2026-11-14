@@ -810,3 +810,130 @@
   gap: 8px;
 }
 
+/* Custom Payment Select matching Screenshot 3 */
+.payment-select-container {
+  position: relative;
+}
+
+.custom-payment-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #d5dbe3;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.custom-payment-select:hover,
+.custom-payment-select.is-open {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.12);
+}
+
+.custom-select-text {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.custom-payment-select.is-open .custom-select-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-payment-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1060;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.custom-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #334155;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.custom-dropdown-row:hover:not(.is-disabled) {
+  background: #f1f5f9;
+}
+
+.custom-dropdown-row.is-active {
+  background: #e6f7f4;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.custom-dropdown-row.is-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.custom-dropdown-row .row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+.custom-dropdown-row.is-disabled .row-icon {
+  color: #94a3b8;
+}
+
+.custom-dropdown-row .row-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-dropdown-row .status-tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.custom-dropdown-row .status-tag.is-due {
+  color: #b45309;
+}
+
+.custom-dropdown-row .status-tag.is-paid {
+  color: #15803d;
+}
+
+.custom-dropdown-row .form-check-input {
+  cursor: pointer;
+  margin: 0;
+}
+
