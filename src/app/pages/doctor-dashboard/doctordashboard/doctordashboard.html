@@ -122,11 +122,11 @@
                       <circle cx="12" cy="17" r="1" fill="currentColor" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Total Appointments</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number">{{ stats.totalAppointments }}</span>
-                  <span class="metric-meta">Total booked & scheduled</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Total Appointments</span>
+                    <span class="metric-number">{{ stats.totalAppointments }}</span>
+                    <span class="metric-meta">Total booked & scheduled</span>
+                  </div>
                 </div>
               </div>
 
@@ -141,11 +141,11 @@
                         stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Completed</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
-                  <span class="metric-meta">Successfully completed</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Completed</span>
+                    <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
+                    <span class="metric-meta">Successfully completed</span>
+                  </div>
                 </div>
               </div>
 
@@ -160,11 +160,11 @@
                         stroke-linejoin="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Pending</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
-                  <span class="metric-meta">Awaiting session</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Pending</span>
+                    <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
+                    <span class="metric-meta">Awaiting session</span>
+                  </div>
                 </div>
               </div>
 
@@ -181,11 +181,11 @@
                         stroke-linecap="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Cancelled</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
-                  <span class="metric-meta">Rescheduled / void</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Cancelled</span>
+                    <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
+                    <span class="metric-meta">Rescheduled / void</span>
+                  </div>
                 </div>
               </div>
 
@@ -201,12 +201,12 @@
                       <path d="M3 17L9 11L13 15L21 7V20H3V17Z" fill="currentColor" fill-opacity="0.12" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Completion Rate</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
-                  <div class="kpi-rate-bar">
-                    <div class="kpi-rate-fill" [style.width.%]="stats.completionRate"></div>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Completion Rate</span>
+                    <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
+                    <div class="kpi-rate-bar">
+                      <div class="kpi-rate-fill" [style.width.%]="stats.completionRate"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -230,11 +230,11 @@
                         stroke-linecap="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Active Patients</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-blue">{{ stats.activePatients }}</span>
-                  <span class="metric-meta">Under rehabilitation</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Active Patients</span>
+                    <span class="metric-number text-blue">{{ stats.activePatients }}</span>
+                    <span class="metric-meta">Under rehabilitation</span>
+                  </div>
                 </div>
               </div>
 
@@ -251,11 +251,11 @@
                         stroke-linecap="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">New Patients</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-purple">{{ stats.newPatients }}</span>
-                  <span class="metric-meta">First-time consultations</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">New Patients</span>
+                    <span class="metric-number text-purple">{{ stats.newPatients }}</span>
+                    <span class="metric-meta">First-time consultations</span>
+                  </div>
                 </div>
               </div>
 
@@ -270,11 +270,11 @@
                         stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Revenue</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
-                  <span class="metric-meta">Consultations & therapy</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Revenue</span>
+                    <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
+                    <span class="metric-meta">Consultations & therapy</span>
+                  </div>
                 </div>
               </div>
 
@@ -289,12 +289,12 @@
                       <path d="M6.5 14.5H10.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Pending Payments</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
-                    stats.pendingPayments | number:'1.2-2' }}</span>
-                  <span class="metric-meta">{{ stats.pendingPaymentCount }} Pending invoice(s)</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Pending Payments</span>
+                    <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
+                      stats.pendingPayments | number:'1.2-2' }}</span>
+                    <span class="metric-meta">{{ stats.pendingPaymentCount }} Pending invoice(s)</span>
+                  </div>
                 </div>
               </div>
 
@@ -309,14 +309,14 @@
                         stroke-linejoin="round" />
                     </svg>
                   </div>
-                  <span class="metric-card-label">Average Rating</span>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-gold">
-                    {{ stats.averageRating > 0 ? (stats.averageRating | number:'1.1-2') : '4.9' }} <small
-                      class="star-sym">&#9733;</small>
-                  </span>
-                  <span class="metric-meta">{{ stats.totalReviews }} Patient review(s)</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Average Rating</span>
+                    <span class="metric-number text-gold">
+                      {{ stats.averageRating > 0 ? (stats.averageRating | number:'1.1-2') : '4.9' }} <small
+                        class="star-sym">&#9733;</small>
+                    </span>
+                    <span class="metric-meta">{{ stats.totalReviews }} Patient review(s)</span>
+                  </div>
                 </div>
               </div>
 
