@@ -4,7 +4,7 @@
 <!-- <div class="top-grey-div"></div> -->
 <aside class="physios-sidebar">
   <button class="physios-nav-btn">
-    <h1 class="drive-heading">Doctor Console</h1>
+    <h1 class="drive-heading">{{ consoleTitle() }}</h1>
   </button>
   <nav class="physios-nav">
     @for (item of menulist(); track item.menuId || item.path || $index) {

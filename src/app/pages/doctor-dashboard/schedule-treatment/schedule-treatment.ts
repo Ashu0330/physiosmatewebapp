@@ -9,7 +9,13 @@ import {
   BookAppointmentRequest,
   AppointmentBookedResponse,
   UserSubscriptionViewModel,
-  ProviderSubscriptionPlanItem
+  ProviderSubscriptionPlanItem,
+  WeeklyAppointmentSelectionViewModel,
+  CreateWeeklyAppointmentsViewModel,
+  WeeklyAppointmentsBookedViewModel,
+  SubscriptionSummaryDto,
+  SlotTemplateDto,
+  PatientAppointmentDetailsDto
 } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
@@ -59,6 +65,9 @@ export interface WeeklyDraftSession {
   date: string;
   timeSlot: string;
   therapist: string;
+  slotId?: number;
+  practitionerId?: number;
+  daySlots?: SlotTemplateDto[];
 }
 
 @Component({
@@ -114,6 +123,11 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   // ─── Weekly Plan Scheduler (Accordion) ─────────────────────────────────────
   expandedPlanId = signal<string | null>(null);
   weeklyDraftSessions = signal<WeeklyDraftSession[]>([]);
+  isSavingWeeklySchedule = signal<boolean>(false);
+  slotTemplates = signal<SlotTemplateDto[]>([]);
+  isLoadingSlotTemplates = signal<boolean>(false);
+  activeSubscriptionSummary = signal<SubscriptionSummaryDto | null>(null);
+  isLoadingPatientData = signal<boolean>(false);
 
   // ─── Assign Plan Form ──────────────────────────────────────────────────────
   availablePlans = signal<ProviderSubscriptionPlanItem[]>([]);
@@ -207,6 +221,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     this.loadStorage();
     this.loadPractitioners();
     this.loadProviderPlans();
+    this.loadSlotTemplates();
 
     const qp = this.route.snapshot.queryParams;
     if (qp['patientId']) {
@@ -360,11 +375,21 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     this.isSearchDropdownOpen.set(false);
     this.homeVisitAddress.set(this.selectedPatientItem()?.address || pt.address || '');
 
-    // Expand plan if exists
-    const plan = this.patientActivePlan();
-    if (plan) {
-      this.expandedPlanId.set(plan.id);
-      this.initWeeklyDraft();
+    let rawPatientId = this.selectedPatientItem()?.patientId;
+    if (!rawPatientId && pt.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) rawPatientId = parseInt(match[0], 10);
+    }
+
+    if (rawPatientId && rawPatientId > 0) {
+      this.loadPatientSubscription(rawPatientId);
+      this.loadPatientAppointments(rawPatientId);
+    } else {
+      const plan = this.patientActivePlan();
+      if (plan) {
+        this.expandedPlanId.set(plan.id);
+        this.initWeeklyDraft();
+      }
     }
   }
 
@@ -731,17 +756,153 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
   }
 
+  async loadSlotTemplates(): Promise<void> {
+    this.isLoadingSlotTemplates.set(true);
+    try {
+      const res = await this.apiService.Get<SlotTemplateDto[]>(ApiEndPoints.GetAppointmentSlots);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.slotTemplates.set(res.data.filter(s => s.isActive));
+      }
+    } catch (e) {
+      console.error('Error loading slot templates', e);
+    } finally {
+      this.isLoadingSlotTemplates.set(false);
+    }
+  }
+
+  async loadPatientSubscription(patientId: number): Promise<void> {
+    try {
+      const res = await this.apiService.Get<SubscriptionSummaryDto>(
+        `${ApiEndPoints.GetSubscriptionCurrent}?userId=${patientId}`
+      );
+      if (res?.isSuccess && res.data) {
+        const sub = res.data;
+        const planCode = `PLN-${sub.planId}`;
+        const plan: DoctorTreatmentPlan = {
+          id: planCode,
+          planCode,
+          title: sub.planName,
+          patientId: `PT-${patientId}`,
+          patientName: this.selectedPatient()?.fullName || '',
+          diagnosis: this.selectedPatient()?.primaryCondition || 'Physiotherapy Treatment',
+          totalSessions: sub.totalSessions,
+          completedSessions: sub.completedSessions,
+          frequency: `${Math.round(sub.totalSessions / 4)}x weekly`,
+          durationWeeks: 4,
+          status: sub.status === 'Active' ? 'In Progress' : 'Pending Approval',
+          statusType: sub.status === 'Active' ? 'in-progress' : 'pending',
+          startDate: sub.startDate ? sub.startDate.split('T')[0] : this.getTodayDateString(),
+          targetEndDate: sub.expiryDate ? sub.expiryDate.split('T')[0] : this.getTodayDateString(),
+          progressPercent: sub.totalSessions > 0 ? Math.round((sub.completedSessions / sub.totalSessions) * 100) : 0,
+          clinicalNotes: '',
+          phases: [],
+          userSubscriptionId: sub.id
+        };
+
+        this.activeSubscriptionSummary.set(sub);
+        this.treatmentPlans.update(list => {
+          const filtered = list.filter(p => p.patientId !== `PT-${patientId}` && p.id !== planCode);
+          return [plan, ...filtered];
+        });
+
+        this.expandedPlanId.set(planCode);
+        this.initWeeklyDraft();
+      }
+    } catch (e) {
+      console.error('Error loading patient subscription', e);
+    }
+  }
+
+  async loadPatientAppointments(patientId: number): Promise<void> {
+    this.isLoadingPatientData.set(true);
+    try {
+      const res = await this.apiService.Get<PatientAppointmentDetailsDto[]>(
+        `${ApiEndPoints.PatientAppointmentDetails}?patientId=${patientId}`
+      );
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        const pt = this.selectedPatient();
+        const activePlan = this.patientActivePlan();
+        const mapped: ScheduledBooking[] = res.data.map(a => {
+          const datePart = a.appointmentDate ? a.appointmentDate.split('T')[0] : '';
+          const slotLabel = a.timeSlot
+            ? a.timeSlot
+            : (a.startTime && a.endTime ? `${this.formatSlotTime(a.startTime)} - ${this.formatSlotTime(a.endTime)}` : a.appointmentTime || '');
+
+          const isPlanSession = (a.userSubscriptionId && a.userSubscriptionId > 0) || (a.sessionNumber && a.sessionNumber > 0);
+          const treatmentTitle = isPlanSession
+            ? (activePlan?.title || 'Basic Plan')
+            : (a.visitType ? `${a.visitType} Visit` : 'Clinic Visit');
+
+          const fee = a.amount ?? (isPlanSession ? 0 : 600);
+          const isPaid = a.paymentStatus === 'Paid' || a.paymentStatus === 'Success' || (isPlanSession && fee === 0);
+          const adv = isPaid ? fee : 0;
+          const due = isPaid ? 0 : fee;
+
+          return {
+            id: `apt-${a.id}`,
+            bookingCode: `TRT-${a.id}`,
+            patientId: `PT-${a.patientId || patientId}`,
+            patientName: a.patientName || pt?.fullName || 'Patient',
+            patientCode: `PT-${a.patientId || patientId}`,
+            phone: pt?.phone || pt?.mobile || '',
+            date: datePart,
+            timeSlot: slotLabel,
+            treatmentName: treatmentTitle,
+            therapist: a.assignedPractitionerName || a.practitionerName || this.getSelectedPractitionerName(),
+            visitType: a.visitType,
+            fee: fee,
+            advancePaid: adv,
+            balanceDue: due,
+            paymentStatus: isPaid ? 'Paid' : 'Due',
+            paymentMode: (a.paymentMethod as any) || 'Cash',
+            status: (a.status as any) || 'Scheduled',
+            planId: a.userSubscriptionId ? `PLN-${a.userSubscriptionId}` : undefined,
+            planName: isPlanSession ? treatmentTitle : undefined
+          };
+        });
+
+        this.scheduledBookings.update(currentList => {
+          const otherBookings = currentList.filter(b => b.patientId !== `PT-${patientId}` && b.patientId !== String(patientId));
+          return [...mapped, ...otherBookings];
+        });
+        this.saveStorage();
+      }
+    } catch (e) {
+      console.error('Error loading patient appointments', e);
+    } finally {
+      this.isLoadingPatientData.set(false);
+    }
+  }
+
   initWeeklyDraft(): void {
     const today = new Date();
     const draft: WeeklyDraftSession[] = [];
+    const templates = this.slotTemplates();
+    const therapistName = this.getSelectedPractitionerName();
+
     for (let i = 1; i <= 3; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + (i * 2 - 1));
+      const dateStr = this.formatLocalDate(d);
+      const dow = d.getDay();
+      const daySlots = templates.filter(s => s.dayOfWeek === dow && s.isActive);
+
+      const chosenSlot = i === 1
+        ? (daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0])
+        : (daySlots.find(s => s.startTime.startsWith('14:')) || daySlots[0]);
+
+      const slotId = chosenSlot?.id;
+      const timeSlot = chosenSlot
+        ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
+        : (i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM');
+
       draft.push({
-        id: `draft-${i}`,
-        date: this.formatLocalDate(d),
-        timeSlot: i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM',
-        therapist: this.getSelectedPractitionerName()
+        id: `draft-${Date.now()}-${i}`,
+        date: dateStr,
+        timeSlot: timeSlot,
+        therapist: therapistName,
+        slotId: slotId,
+        daySlots: daySlots
       });
     }
     this.weeklyDraftSessions.set(draft);
@@ -751,19 +912,31 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     const current = this.weeklyDraftSessions();
     let nextDate = new Date();
     if (current.length > 0) {
-      nextDate = new Date(current[current.length - 1].date);
+      const last = current[current.length - 1];
+      nextDate = new Date(last.date + 'T00:00:00');
       nextDate.setDate(nextDate.getDate() + 2);
     } else {
       nextDate.setDate(nextDate.getDate() + 1);
     }
 
+    const dateStr = this.formatLocalDate(nextDate);
+    const dow = nextDate.getDay();
+    const daySlots = this.slotTemplates().filter(s => s.dayOfWeek === dow && s.isActive);
+    const chosenSlot = daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0];
+    const slotId = chosenSlot?.id;
+    const timeSlot = chosenSlot
+      ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
+      : '10:00 AM - 10:45 AM';
+
     this.weeklyDraftSessions.update(list => [
       ...list,
       {
         id: `draft-${Date.now()}`,
-        date: this.formatLocalDate(nextDate),
-        timeSlot: '10:00 AM - 10:45 AM',
-        therapist: this.getSelectedPractitionerName()
+        date: dateStr,
+        timeSlot: timeSlot,
+        therapist: this.getSelectedPractitionerName(),
+        slotId: slotId,
+        daySlots: daySlots
       }
     ]);
   }
@@ -772,9 +945,47 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     this.weeklyDraftSessions.update(list => list.filter((_, i) => i !== idx));
   }
 
-  submitWeeklySchedule(plan: DoctorTreatmentPlan): void {
+  onDraftDateChange(sess: WeeklyDraftSession, newDate: string): void {
+    sess.date = newDate;
+    if (!newDate) return;
+    const d = new Date(newDate + 'T00:00:00');
+    if (isNaN(d.getTime())) return;
+    const dow = d.getDay();
+    const daySlots = this.slotTemplates().filter(s => s.dayOfWeek === dow && s.isActive);
+    sess.daySlots = daySlots;
+    if (daySlots.length > 0) {
+      const match = daySlots.find(s => s.id === sess.slotId) || daySlots[0];
+      sess.slotId = match.id;
+      sess.timeSlot = `${this.formatSlotTime(match.startTime)} - ${this.formatSlotTime(match.endTime)}`;
+    }
+  }
+
+  onDraftSlotChange(sess: WeeklyDraftSession, slotIdOrTime: any): void {
+    const numericId = Number(slotIdOrTime);
+    const found = (sess.daySlots || this.slotTemplates()).find(s => s.id === numericId);
+    if (found) {
+      sess.slotId = found.id;
+      sess.timeSlot = `${this.formatSlotTime(found.startTime)} - ${this.formatSlotTime(found.endTime)}`;
+    } else {
+      sess.timeSlot = String(slotIdOrTime);
+    }
+  }
+
+  async submitWeeklySchedule(plan: DoctorTreatmentPlan): Promise<void> {
+    if (this.isSavingWeeklySchedule()) return;
+
     const pt = this.selectedPatient();
-    if (!pt) return;
+    const patientItem = this.selectedPatientItem();
+    let rawPatientId = patientItem?.patientId;
+    if (!rawPatientId && pt?.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) rawPatientId = parseInt(match[0], 10);
+    }
+
+    if (!rawPatientId || rawPatientId <= 0) {
+      this.alertService.toastError('Please select a patient first.');
+      return;
+    }
 
     const draft = this.weeklyDraftSessions();
     if (draft.length === 0) {
@@ -782,32 +993,81 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       return;
     }
 
-    const newBookings: ScheduledBooking[] = draft.map((s, idx) => ({
-      id: `bk-wk-${Date.now()}-${idx}`,
-      bookingCode: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      patientCode: pt.patientCode,
-      phone: pt.phone,
-      date: s.date,
-      timeSlot: s.timeSlot,
-      treatmentName: plan.title,
-      therapist: s.therapist,
-      fee: 0,
-      advancePaid: 0,
-      balanceDue: 0,
-      paymentStatus: 'Paid',
-      paymentMode: 'Cash',
-      planId: plan.id,
-      planName: plan.title,
-      status: 'Scheduled'
-    }));
+    let userSubscriptionId = plan.userSubscriptionId || this.activeSubscriptionSummary()?.id;
+    if (!userSubscriptionId) {
+      await this.loadPatientSubscription(rawPatientId);
+      userSubscriptionId = this.activeSubscriptionSummary()?.id || plan.userSubscriptionId;
+    }
 
-    this.scheduledBookings.update(list => [...newBookings, ...list]);
-    this.saveStorage();
+    if (!userSubscriptionId || userSubscriptionId <= 0) {
+      this.alertService.toastError('No active subscription found for this patient. Please assign a plan first.');
+      return;
+    }
 
-    this.alertService.toastSuccess(`${draft.length} weekly sessions scheduled.`);
-    this.activeTab.set('list');
+    const appointments: WeeklyAppointmentSelectionViewModel[] = [];
+    for (let idx = 0; idx < draft.length; idx++) {
+      const s = draft[idx];
+      if (!s.date) {
+        this.alertService.toastError(`Please select a valid date for Day ${idx + 1}.`);
+        return;
+      }
+      const d = new Date(s.date + 'T00:00:00');
+      if (isNaN(d.getTime())) {
+        this.alertService.toastError(`Invalid date for Day ${idx + 1}.`);
+        return;
+      }
+      const dow = d.getDay();
+
+      let slotId = s.slotId;
+      if (!slotId) {
+        const match = this.slotTemplates().find(t => t.dayOfWeek === dow && t.isActive);
+        slotId = match ? match.id : 0;
+      }
+
+      if (!slotId || slotId <= 0) {
+        this.alertService.toastError(`No available slot found for Day ${idx + 1} (${s.date}).`);
+        return;
+      }
+
+      appointments.push({
+        appointmentSlotId: slotId,
+        appointmentDate: `${s.date}T12:00:00`
+      });
+    }
+
+    const payload: CreateWeeklyAppointmentsViewModel = {
+      userSubscriptionId: userSubscriptionId,
+      patientId: rawPatientId,
+      appointments: appointments
+    };
+
+    this.isSavingWeeklySchedule.set(true);
+    try {
+      const res = await this.apiService.Post<WeeklyAppointmentsBookedViewModel>(
+        ApiEndPoints.CreateWeeklyAppointments,
+        payload
+      );
+
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess(
+          res.message || `${res.data?.totalBooked || draft.length} weekly sessions scheduled successfully!`
+        );
+
+        // Refresh appointments and subscription from backend
+        await this.loadPatientAppointments(rawPatientId);
+        await this.loadPatientSubscription(rawPatientId);
+
+        // Switch to scheduled list tab
+        this.activeTab.set('list');
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to schedule weekly appointments.');
+      }
+    } catch (err: any) {
+      console.error('Error in CreateWeeklyAppointments', err);
+      this.alertService.toastError(err?.message || 'Failed to schedule weekly appointments. Please try again.');
+    } finally {
+      this.isSavingWeeklySchedule.set(false);
+    }
   }
 
   // ─── Assign Plan Methods ───────────────────────────────────────────────────
@@ -919,6 +1179,25 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     const providerType = practitionerId > 0 ? 'Practitioner' : 'Clinic';
     const providerId = practitionerId > 0 ? practitionerId : clinicId;
 
+    const planPrice = plan?.price ?? this.newPlanPrice();
+    const payType = this.newPlanPaymentType();
+    const payMethod = this.newPlanPaymentMode();
+    const adv = this.newPlanAdvance();
+    const due = this.assignBalanceDue();
+
+    let paymentStatus = 'Due';
+    let paidAmount = 0;
+    if (payType === 'full') {
+      paymentStatus = 'Paid';
+      paidAmount = planPrice;
+    } else if (payType === 'advance') {
+      paymentStatus = due === 0 ? 'Paid' : 'PartiallyPaid';
+      paidAmount = adv;
+    } else {
+      paymentStatus = 'Due';
+      paidAmount = 0;
+    }
+
     const payload: UserSubscriptionViewModel = {
       id: 0,
       userId: (patientItem as any)?.userId ?? 0,
@@ -928,18 +1207,23 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       providerType: providerType,
       planId: planId,
       planName: plan?.planName || this.newPlanTitle(),
-      price: plan?.price ?? this.newPlanPrice(),
+      price: planPrice,
       validityDays: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
       providerName: this.auth.getCurrentUser()?.fullName || '',
       totalSessions: plan?.totalSessions ?? this.newPlanSessions(),
       completedSessions: 0,
       remainingSessions: plan?.totalSessions ?? this.newPlanSessions(),
       isCurrent: true,
-      status: 'ApprovalPending',
+      status: 'Active',
       startDate: new Date().toISOString(),
       endDate: null,
       daysRemaining: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
-      patientId: patientId
+      patientId: patientId,
+      paymentType: payType,
+      paymentMethod: payMethod,
+      paymentMode: payMethod,
+      paymentStatus: paymentStatus,
+      amount: paidAmount > 0 ? paidAmount : planPrice
     };
 
     this.isAssigningPlan.set(true);
@@ -982,6 +1266,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
         }
 
         this.saveStorage();
+        await this.loadPatientSubscription(patientId);
+        await this.loadPatientAppointments(patientId);
         this.expandedPlanId.set(localPlan.id);
         this.initWeeklyDraft();
         this.activeTab.set('weekly');

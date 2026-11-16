@@ -59,6 +59,7 @@ export interface DoctorTreatmentPlan {
   phases: DoctorTreatmentPhase[];
   clinicalNotes: string;
   isExpanded?: boolean;
+  userSubscriptionId?: number;
 }
 
 export interface DoctorAppointment {
@@ -519,6 +520,12 @@ export interface UserSubscriptionViewModel {
   endDate?: string | null;
   daysRemaining?: number;
   patientId: number;
+  paymentType?: string;
+  paymentMethod?: string;
+  paymentMode?: string;
+  paymentStatus?: string;
+  amount?: number;
+  transactionId?: string;
 }
 
 export interface ProviderSubscriptionPlanItem {
@@ -533,4 +540,94 @@ export interface ProviderSubscriptionPlanItem {
   providerId?: number;
   expertiseId?: number | null;
   benefits?: Array<{ id?: number; planId?: number; title?: string; description?: string }>;
+}
+
+export interface WeeklyAppointmentSelectionViewModel {
+  appointmentSlotId: number;
+  appointmentDate: string;
+}
+
+export interface CreateWeeklyAppointmentsViewModel {
+  userSubscriptionId: number;
+  patientId?: number | null;
+  appointments: WeeklyAppointmentSelectionViewModel[];
+}
+
+export interface BookedWeeklyAppointmentItem {
+  appointmentId: number;
+  doctorName?: string;
+  planName?: string;
+  appointmentDate: string;
+  dayName?: string;
+  sessionNumber: number;
+  remainingSessions: number;
+  totalSessions: number;
+  status: string;
+}
+
+export interface WeeklyAppointmentsBookedViewModel {
+  totalBooked: number;
+  remainingSessions: number;
+  appointments: BookedWeeklyAppointmentItem[];
+}
+
+export interface SubscriptionSummaryDto {
+  id: number;
+  planId: number;
+  planName: string;
+  price: number;
+  totalSessions: number;
+  completedSessions: number;
+  remainingSessions: number;
+  providerType: string;
+  providerId: number;
+  providerName: string;
+  status: string;
+  startDate?: string | null;
+  expiryDate?: string | null;
+  amount: number;
+}
+
+export interface SlotTemplateDto {
+  id: number;
+  providerType?: string;
+  providerId?: number;
+  dayOfWeek: number;
+  dayOfWeekName: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  isActive: boolean;
+}
+
+export interface PatientAppointmentDetailsDto {
+  id: number;
+  patientId?: number;
+  patientName?: string;
+  gender?: string;
+  dob?: string;
+  status: string;
+  visitType?: string;
+  homeVisitAddress?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  startTime?: string;
+  endTime?: string;
+  timeSlot?: string;
+  sessionNumber?: number;
+  notes?: string;
+  assignedPractitionerId?: number;
+  assignedPractitionerName?: string;
+  practitionerName?: string;
+  clinicName?: string;
+  amount: number;
+  paymentId?: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  userSubscriptionId?: number;
+  hasAddOnTreatment?: boolean;
+  addOnFees?: number;
+  addOnPaymentStatus?: string;
+  addOnPaymentId?: number;
+  addOns?: any[];
 }

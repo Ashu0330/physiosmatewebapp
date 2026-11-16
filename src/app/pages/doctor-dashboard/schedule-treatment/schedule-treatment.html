@@ -378,17 +378,18 @@
                     <div class="session-row">
                       <span class="row-num">Day {{ idx + 1 }}</span>
 
-                      <input type="date" class="form-input date-col" [(ngModel)]="sess.date" />
+                      <input type="date" class="form-input date-col" [ngModel]="sess.date" (ngModelChange)="onDraftDateChange(sess, $event)" />
 
-                      <select class="form-select slot-col" [(ngModel)]="sess.timeSlot">
-                        <option value="09:00 AM - 09:45 AM">09:00 AM - 09:45 AM</option>
-                        <option value="10:00 AM - 10:45 AM">10:00 AM - 10:45 AM</option>
-                        <option value="12:00 PM - 12:45 PM">12:00 PM - 12:45 PM</option>
-                        <option value="02:00 PM - 02:45 PM">02:00 PM - 02:45 PM</option>
-                        <option value="03:00 PM - 03:45 PM">03:00 PM - 03:45 PM</option>
-                        <option value="04:00 PM - 04:45 PM">04:00 PM - 04:45 PM</option>
-                        <option value="05:00 PM - 05:45 PM">05:00 PM - 05:45 PM</option>
-                        <option value="07:00 PM - 07:45 PM">07:00 PM - 07:45 PM</option>
+                      <select class="form-select slot-col" [ngModel]="sess.slotId" (ngModelChange)="onDraftSlotChange(sess, $event)">
+                        @if (sess.daySlots && sess.daySlots.length > 0) {
+                          @for (slot of sess.daySlots; track slot.id) {
+                          <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
+                          }
+                        } @else {
+                          <option [value]="sess.slotId || 2">{{ sess.timeSlot || '10:00 AM - 10:45 AM' }}</option>
+                          <option value="2">10:00 AM - 10:45 AM</option>
+                          <option value="3">02:00 PM - 02:45 PM</option>
+                        }
                       </select>
 
                       <select class="form-select doc-col" [(ngModel)]="sess.therapist">
@@ -410,9 +411,9 @@
                 </div>
 
                 <div class="action-footer">
-                  <button type="button" class="btn-primary" [disabled]="weeklyDraftSessions().length === 0"
+                  <button type="button" class="btn-primary" [disabled]="weeklyDraftSessions().length === 0 || isSavingWeeklySchedule()"
                     (click)="submitWeeklySchedule(plan)">
-                    Save Weekly Schedule ({{ weeklyDraftSessions().length }} Days)
+                    {{ isSavingWeeklySchedule() ? 'Saving Weekly Schedule...' : ('Save Weekly Schedule (' + weeklyDraftSessions().length + ' Days)') }}
                   </button>
                 </div>
 

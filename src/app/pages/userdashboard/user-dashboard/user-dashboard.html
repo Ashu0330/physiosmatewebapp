@@ -23,5 +23,40 @@
         </div>
       </div>
     </div>
+
+    <!-- Main 2-Column Body: Left Sidebar Space + Right Content -->
+    <div class="physios-drive-body">
+
+      <!-- Left space matching sidebar width (220px) -->
+      <div class="topbar-left"></div>
+
+      <!-- Right Content Area -->
+      <main class="physios-content">
+
+        @if (activeTab === 'consultancies') {
+        <app-patient-consultancy></app-patient-consultancy>
+        }
+
+        @if (activeTab === 'appointments') {
+        <app-patient-appointments></app-patient-appointments>
+        }
+
+        @if (activeTab === 'subscriptions') {
+        <app-patient-subscription></app-patient-subscription>
+        }
+
+        @if (activeTab === 'medical-reports') {
+        <app-patient-medicalrecords [currentUser]="currentUser">
+        </app-patient-medicalrecords>
+        }
+
+        @if (activeTab === 'payments') {
+        <app-patient-transaction [currentUser]="currentUser">
+        </app-patient-transaction>
+        }
+
+      </main>
+    </div>
+
   </div>
 </div>
