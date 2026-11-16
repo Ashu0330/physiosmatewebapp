@@ -888,7 +888,6 @@ export class Doctordashboard implements OnInit {
       const today = new Date();
       const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
       const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
-      debugger
       const model = {
         page: 1,
         pageSize: 100,

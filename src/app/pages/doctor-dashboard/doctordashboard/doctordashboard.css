@@ -390,7 +390,7 @@
 
 .star-sym {
   font-size: 16px;
-  color: #EAB308;
+  color: #f8ce26;
 }
 
 .metric-meta {
@@ -418,9 +418,8 @@
 .dashboard-section-card {
   /* border: 1px solid var(--border-color, #E5E7EB); */
   padding: 15px;
-  border-radius: 6px;
-  background-color: #FFFFFF;
   overflow: hidden;
+  border-radius: 6px;
 }
 
 .section-card-header {
@@ -467,6 +466,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  background-color: #FFFFFF;
 }
 
 .minimal-table th {
@@ -638,9 +638,12 @@
 }
 
 @keyframes pulseAddonDue {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.25);
   }
+
   50% {
     box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
   }
@@ -1126,7 +1129,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  padding: 16px;
 }
 
 @media (max-width: 768px) {
