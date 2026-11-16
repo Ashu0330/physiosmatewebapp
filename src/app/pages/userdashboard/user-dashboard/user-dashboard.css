@@ -108,12 +108,19 @@
   min-height: 520px;
 }
 
+.physios-drive-body .topbar-left {
+  width: 220px;
+  flex-shrink: 0;
+}
+
 /* Right Content Area */
 .physios-content {
   flex: 1;
   padding: 20px 24px;
   background-color: var(--bg-card, #FFFFFF);
   overflow-x: hidden;
+  border-left: 1px solid var(--border-light, #EAEAEA);
+  min-width: 0;
 }
 
 .physios-tab-panel {

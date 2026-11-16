@@ -42,29 +42,63 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" class="search-input" placeholder="Search patient by name or phone..."
+            <input type="text" class="search-input" placeholder="Search patient by name, mobile, or email..."
               [ngModel]="patientSearchQuery()"
-              (ngModelChange)="patientSearchQuery.set($event); isSearchDropdownOpen.set(true)"
+              (ngModelChange)="onPatientSearchChange($event)"
               (focus)="isSearchDropdownOpen.set(true)" />
+            @if (isSearchingPatients()) {
+            <span class="search-spinner"></span>
+            }
             @if (patientSearchQuery()) {
-            <button type="button" class="btn-clear-search" (click)="clearSearch()">✕</button>
+            <button type="button" class="btn-clear-search" (click)="clearSearch()">&times;</button>
             }
           </div>
 
           <!-- Autocomplete Suggestions Dropdown -->
           @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
           <div class="search-dropdown">
-            @for (pt of filteredPatients(); track pt.id) {
-            <div class="dropdown-item" (click)="selectPatient(pt)">
-              <div class="item-avatar">{{ getInitials(pt.fullName) }}</div>
-              <div class="item-info">
-                <div class="item-name">{{ pt.fullName }} <span class="item-code">({{ pt.patientCode }})</span></div>
-                <div class="item-sub">{{ pt.phone }} • {{ pt.gender }}, {{ pt.age }}y • {{ pt.primaryCondition }}</div>
-              </div>
+            <div class="dropdown-header">
+              @if (isSearchingPatients()) {
+              <span>Searching...</span>
+              } @else {
+              <span>{{ patientSearchResults().length }} Patients Matched</span>
+              }
+              <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
             </div>
-            } @empty {
-            <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
-            }
+            <div class="dropdown-scroll-list">
+              @for (p of patientSearchResults(); track p.patientId) {
+              <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
+                <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
+                <div class="item-info">
+                  <div class="item-name">{{ p.fullName }} <span class="item-code">(PT-{{ p.patientId }})</span></div>
+                  <div class="item-sub">
+                    @if (p.mobile) {
+                    <span>{{ p.mobile }}</span>
+                    }
+                    @if (p.age) {
+                    <span>{{ p.mobile ? ' • ' : '' }}{{ p.age }} yrs</span>
+                    }
+                    @if (p.gender) {
+                    <span>{{ (p.mobile || p.age) ? ' • ' : '' }}{{ p.gender }}</span>
+                    }
+                    @if (p.city) {
+                    <span> • {{ p.city }}</span>
+                    }
+                    @if (p.email) {
+                    <span> • {{ p.email }}</span>
+                    }
+                  </div>
+                </div>
+                @if (selectedPatientItem()?.patientId === p.patientId) {
+                <span class="selected-pill">Active</span>
+                }
+              </div>
+              } @empty {
+              @if (!isSearchingPatients()) {
+              <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
+              }
+              }
+            </div>
           </div>
           }
         </div>
@@ -82,8 +116,17 @@
                 <span class="pt-code">{{ pt.patientCode }}</span>
               </div>
               <div class="pt-meta-row">
-                <span>{{ pt.phone }}</span>
-                <span>• {{ pt.age }} yrs, {{ pt.gender }}</span>
+                @if (pt.phone || pt.mobile) {
+                <span>{{ pt.phone || pt.mobile }}</span>
+                }
+                @if (pt.age || pt.gender) {
+                <span>
+                  @if (pt.phone || pt.mobile) { • }
+                  @if (pt.age) { {{ pt.age }} yrs }
+                  @if (pt.age && pt.gender) { , }
+                  @if (pt.gender) { {{ pt.gender }} }
+                </span>
+                }
                 @if (pt.primaryCondition) {
                 <span>• {{ pt.primaryCondition }}</span>
                 }
@@ -91,6 +134,11 @@
                 <span>• {{ pt.city }}</span>
                 }
               </div>
+              @if (pt.notes) {
+              <div class="pt-notes-sub">
+                <span class="pt-notes-label">Notes:</span> {{ pt.notes }}
+              </div>
+              }
             </div>
           </div>
 
@@ -137,53 +185,80 @@
 
           <div class="section-title-bar">
             <h4 class="card-heading">Schedule Daily Treatment</h4>
-            <span class="card-subheading">Select date, available time slot, and set payment.</span>
+            <span class="card-subheading">Select booking date, assigned practitioner, visit mode, available slot, and payment details.</span>
           </div>
 
           <div class="form-grid-2">
-            <!-- Treatment Date (Clean input, no Today/Tomorrow buttons) -->
+            <!-- Treatment Date -->
             <div class="form-group">
               <label class="form-label">Treatment Date</label>
-              <input type="date" class="form-input" [ngModel]="treatmentDate()"
-                (ngModelChange)="treatmentDate.set($event)" />
+              <input type="date" class="form-input" [min]="getTodayDateString()" [ngModel]="treatmentDate()"
+                (ngModelChange)="onTreatmentDateChange($event)" />
             </div>
 
-            <!-- Attending Doctor / Therapist -->
+            <!-- Assigned Practitioner -->
             <div class="form-group">
-              <label class="form-label">Attending Doctor / Physiotherapist</label>
-              <select class="form-select" [ngModel]="attendingTherapist()"
-                (ngModelChange)="attendingTherapist.set($event)">
-                @for (doc of therapists; track doc) {
-                <option [value]="doc">{{ doc }}</option>
+              <label class="form-label">Assigned Practitioner</label>
+              <select class="form-select" [ngModel]="selectedPractitionerId()"
+                (ngModelChange)="onPractitionerChange($event)" [disabled]="isLoadingPractitioners()">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingPractitioners() ? 'Loading practitioners...' : 'Select practitioner' }}
+                </option>
+                @for (doc of practitioners(); track doc.id) {
+                <option [ngValue]="doc.id">{{ doc.name }}</option>
                 }
               </select>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Treatment / Service Name</label>
-            <input type="text" class="form-input" [ngModel]="treatmentName()"
-              (ngModelChange)="treatmentName.set($event)" placeholder="e.g. Spinal Mobilization & Exercise" />
+          <!-- Visit Mode & Conditional Home Visit Address -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Visit Mode</label>
+              <select class="form-select" [ngModel]="visitType()" (ngModelChange)="onVisitTypeChange($event)">
+                <option value="Clinic">Clinic Visit</option>
+                <option value="Home">Home Visit</option>
+              </select>
+            </div>
+
+            @if (visitType() === 'Home') {
+            <div class="form-group">
+              <label class="form-label">Home Visit Address</label>
+              <input type="text" class="form-input" [ngModel]="homeVisitAddress()"
+                (ngModelChange)="homeVisitAddress.set($event)" placeholder="Enter address for home visit" />
+            </div>
+            }
           </div>
 
-          <!-- Time Slots Selection (No bay info, clean slots with availability) -->
+          <!-- Time Slots Selection -->
           <div class="form-group">
             <div class="slots-header-row">
               <label class="form-label">Select Time Slot</label>
               <span class="hint-text">Slots automatically prevent overlapping bookings</span>
             </div>
 
+            @if (isLoadingSlots()) {
+            <div class="slots-loading-msg">Loading available slots...</div>
+            } @else if (availableSlots().length === 0) {
+            <div class="slots-empty-msg">No available treatment slots found for the selected date and practitioner.</div>
+            } @else {
             <div class="slots-grid">
-              @for (slot of availableSlots(); track slot.id) {
-              <button type="button" class="slot-item-btn" [class.selected]="selectedSlot()?.id === slot.id"
-                [class.disabled]="!slot.isAvailable" [disabled]="!slot.isAvailable" (click)="selectSlot(slot)">
-                <span class="slot-time">{{ slot.time }}</span>
-                <span class="slot-status" [class.booked]="!slot.isAvailable">
-                  {{ slot.isAvailable ? 'Available' : 'Booked' }}
+              @for (slot of availableSlots(); track slot.slotId) {
+              <button type="button" class="slot-item-btn" [class.selected]="selectedSlot()?.slotId === slot.slotId"
+                [class.disabled]="!slot.isOpen || slot.remainingSpots <= 0"
+                [disabled]="!slot.isOpen || slot.remainingSpots <= 0" (click)="selectSlot(slot)">
+                <span class="slot-time">{{ formatSlotTime(slot.startTime) }} – {{ formatSlotTime(slot.endTime) }}</span>
+                <span class="slot-status" [class.booked]="!slot.isOpen || slot.remainingSpots <= 0">
+                  @if (slot.isOpen && slot.remainingSpots > 0) {
+                    Available ({{ slot.remainingSpots }} {{ slot.remainingSpots === 1 ? 'spot' : 'spots' }} left)
+                  } @else {
+                    Booked
+                  }
                 </span>
               </button>
               }
             </div>
+            }
           </div>
 
           <!-- Fees & Payment Options -->
@@ -241,28 +316,17 @@
             }
           </div>
 
-          <!-- Notes -->
-          <div class="form-group">
-            <label class="form-label">Clinical Notes / Comments (Optional)</label>
-            <input type="text" class="form-input" placeholder="e.g. Focus on cervical extension..."
-              [ngModel]="clinicalNotes()" (ngModelChange)="clinicalNotes.set($event)" />
-          </div>
-
           <!-- Submit -->
           <div class="action-footer">
             <button type="button" class="btn-primary"
-              [disabled]="!selectedPatient() || !selectedSlot() || !selectedSlot()?.isAvailable"
+              [disabled]="isBookingTreatment() || !selectedPatient() || !selectedSlot() || !selectedSlot()?.isOpen"
               (click)="submitDailyTreatment()">
-              Schedule Daily Treatment
+              {{ isBookingTreatment() ? 'Scheduling...' : 'Schedule Daily Treatment' }}
             </button>
           </div>
-
         </div>
         }
 
-        <!-- ====================================================================
-           TAB 2: WEEKLY TREATMENT PLAN (ACCORDION)
-           ==================================================================== -->
         @if (activeTab() === 'weekly') {
         <div class="workspace-card">
 
@@ -314,22 +378,23 @@
                     <div class="session-row">
                       <span class="row-num">Day {{ idx + 1 }}</span>
 
-                      <input type="date" class="form-input date-col" [(ngModel)]="sess.date" />
+                      <input type="date" class="form-input date-col" [ngModel]="sess.date" (ngModelChange)="onDraftDateChange(sess, $event)" />
 
-                      <select class="form-select slot-col" [(ngModel)]="sess.timeSlot">
-                        <option value="09:00 AM - 09:45 AM">09:00 AM - 09:45 AM</option>
-                        <option value="10:00 AM - 10:45 AM">10:00 AM - 10:45 AM</option>
-                        <option value="12:00 PM - 12:45 PM">12:00 PM - 12:45 PM</option>
-                        <option value="02:00 PM - 02:45 PM">02:00 PM - 02:45 PM</option>
-                        <option value="03:00 PM - 03:45 PM">03:00 PM - 03:45 PM</option>
-                        <option value="04:00 PM - 04:45 PM">04:00 PM - 04:45 PM</option>
-                        <option value="05:00 PM - 05:45 PM">05:00 PM - 05:45 PM</option>
-                        <option value="07:00 PM - 07:45 PM">07:00 PM - 07:45 PM</option>
+                      <select class="form-select slot-col" [ngModel]="sess.slotId" (ngModelChange)="onDraftSlotChange(sess, $event)">
+                        @if (sess.daySlots && sess.daySlots.length > 0) {
+                          @for (slot of sess.daySlots; track slot.id) {
+                          <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
+                          }
+                        } @else {
+                          <option [value]="sess.slotId || 2">{{ sess.timeSlot || '10:00 AM - 10:45 AM' }}</option>
+                          <option value="2">10:00 AM - 10:45 AM</option>
+                          <option value="3">02:00 PM - 02:45 PM</option>
+                        }
                       </select>
 
                       <select class="form-select doc-col" [(ngModel)]="sess.therapist">
-                        @for (doc of therapists; track doc) {
-                        <option [value]="doc">{{ doc }}</option>
+                        @for (doc of practitioners(); track doc.id) {
+                        <option [value]="doc.name">{{ doc.name }}</option>
                         }
                       </select>
 
@@ -346,9 +411,9 @@
                 </div>
 
                 <div class="action-footer">
-                  <button type="button" class="btn-primary" [disabled]="weeklyDraftSessions().length === 0"
+                  <button type="button" class="btn-primary" [disabled]="weeklyDraftSessions().length === 0 || isSavingWeeklySchedule()"
                     (click)="submitWeeklySchedule(plan)">
-                    Save Weekly Schedule ({{ weeklyDraftSessions().length }} Days)
+                    {{ isSavingWeeklySchedule() ? 'Saving Weekly Schedule...' : ('Save Weekly Schedule (' + weeklyDraftSessions().length + ' Days)') }}
                   </button>
                 </div>
 
@@ -379,6 +444,45 @@
           <div class="section-title-bar">
             <h4 class="card-heading">Assign Treatment Plan</h4>
             <span class="card-subheading">Enroll patient in a treatment package with sessions and payment option.</span>
+          </div>
+
+          <!-- Patient indicator -->
+          @if (selectedPatient(); as pt) {
+          <div class="assign-patient-card mb-3">
+            <div class="ap-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="ap-details">
+              <strong class="ap-name">{{ pt.fullName }}</strong>
+              <span class="ap-sub">{{ pt.patientCode }} &bull; {{ pt.phone || pt.mobile }} &bull; {{ pt.gender }}</span>
+            </div>
+            <span class="ap-badge">Selected Patient</span>
+          </div>
+          } @else {
+          <div class="alert alert-warning py-2 px-3 mb-3 small d-flex align-items-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2 flex-shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Please search and select a patient in the top search bar first.</span>
+          </div>
+          }
+
+          <!-- Plan selector from catalog -->
+          <div class="form-group mb-3">
+            <label class="form-label">Select Treatment Plan / Package <span class="text-danger">*</span></label>
+            @if (isLoadingPlans()) {
+            <div class="small text-muted py-2">Loading provider subscription plans...</div>
+            } @else {
+            <select class="form-select" [ngModel]="selectedPlanId()" (ngModelChange)="onPlanSelect($event)">
+              <option [ngValue]="null">-- Select a Subscription Plan --</option>
+              @for (p of availablePlans(); track p.id) {
+              <option [value]="p.id">
+                {{ p.planName }} &bull; {{ p.totalSessions }} Sessions &bull; &#8377;{{ p.price }} ({{ p.validityDays }} Days)
+              </option>
+              }
+              <option value="0">+ Custom / New Plan</option>
+            </select>
+            }
           </div>
 
           <div class="form-grid-2">
@@ -453,8 +557,8 @@
           </div>
 
           <div class="action-footer">
-            <button type="button" class="btn-primary" [disabled]="!selectedPatient()" (click)="submitAssignPlan()">
-              Assign Plan to {{ selectedPatient()?.fullName || 'Patient' }}
+            <button type="button" class="btn-primary" [disabled]="!selectedPatient() || isAssigningPlan()" (click)="submitAssignPlan()">
+              {{ isAssigningPlan() ? 'Assigning Subscription...' : ('Assign Plan to ' + (selectedPatient()?.fullName || 'Patient')) }}
             </button>
           </div>
 
@@ -536,18 +640,25 @@
           <h3>Patient Overview</h3>
         </div>
 
+        @if (selectedPatient(); as pt) {
         <!-- Patient Info Card -->
         <div class="po-patient-header">
           <div class="po-patient-avatar">
-            <span>RD</span>
+            <span>{{ getInitials(pt.fullName) }}</span>
           </div>
           <div class="po-patient-meta">
             <div class="po-name-row">
-              <strong class="po-patient-name">Rohan Deshmukh</strong>
-              <span class="po-patient-code">PT-1064</span>
+              <strong class="po-patient-name">{{ pt.fullName }}</strong>
+              <span class="po-patient-code">{{ pt.patientCode }}</span>
             </div>
-            <span class="po-patient-sub">41 yrs, Male</span>
-          </div>          
+            @if (pt.age || pt.gender) {
+            <span class="po-patient-sub">
+              @if (pt.age) { {{ pt.age }} yrs }
+              @if (pt.age && pt.gender) { , }
+              @if (pt.gender) { {{ pt.gender }} }
+            </span>
+            }
+          </div>
         </div>
 
         <!-- 3-Col Metric Boxes -->
@@ -563,7 +674,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Last Visit</span>
-              <strong class="po-metric-val">29 Oct 2026</strong>
+              <strong class="po-metric-val">{{ pt.lastVisit || 'N/A' }}</strong>
             </div>
           </div>
 
@@ -575,7 +686,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Total Visits</span>
-              <strong class="po-metric-val">12</strong>
+              <strong class="po-metric-val">{{ patientBookings().length }}</strong>
             </div>
           </div>
 
@@ -585,7 +696,7 @@
             </div>
             <div class="po-metric-data">
               <span class="po-metric-label">Pending</span>
-              <strong class="po-metric-val">&#8377;0</strong>
+              <strong class="po-metric-val">&#8377;{{ patientPendingAmount() }}</strong>
             </div>
           </div>
         </div>
@@ -600,95 +711,42 @@
               </svg>
               <h4>Last Visits</h4>
             </div>
-            <button type="button" class="btn-po-view-all">
+            <button type="button" class="btn-po-view-all" (click)="activeTab.set('list')">
               <span>View All</span>
               <span class="view-all-arrow">&rarr;</span>
             </button>
           </div>
 
-          <!-- List of Visits (Static) -->
           <div class="po-visits-list">
-            <!-- Visit 1 (Highlighted/Active) -->
-            <div class="po-visit-item latest">
+            @for (visit of patientBookings(); track visit.id; let isFirst = $first) {
+            <div class="po-visit-item" [class.latest]="isFirst">
               <div class="po-visit-left">
                 <div class="po-date-badge">
-                  <span class="po-date-day">29</span>
-                  <span class="po-date-month">Oct</span>
+                  <span class="po-date-day">{{ getVisitDay(visit.date) }}</span>
+                  <span class="po-date-month">{{ getVisitMonth(visit.date) }}</span>
                 </div>
                 <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Cervical Mobilization</span>
+                  <strong class="po-visit-title">{{ visit.treatmentName }}</strong>
+                  <span class="po-visit-sub">{{ visit.therapist }}</span>
                 </div>
               </div>
               <div class="po-visit-right">
-                <span class="po-visit-fee">₹600</span>
+                <span class="po-visit-fee">&#8377;{{ visit.fee }}</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </div>
             </div>
-
-            <!-- Visit 2 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">27</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Posture Correction</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Visit 3 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">24</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Neck Strengthening</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Visit 4 -->
-            <div class="po-visit-item">
-              <div class="po-visit-left">
-                <div class="po-date-badge">
-                  <span class="po-date-day">22</span>
-                  <span class="po-date-month">Oct</span>
-                </div>
-                <div class="po-visit-info">
-                  <strong class="po-visit-title">Physiotherapy Session</strong>
-                  <span class="po-visit-sub">Pain Management</span>
-                </div>
-              </div>
-              <div class="po-visit-right">
-                <span class="po-visit-fee">&#8377;600</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
+            } @empty {
+            <div class="po-empty-state">No treatment visits found for this patient yet.</div>
+            }
           </div>
         </div>
+        } @else {
+        <div class="po-empty-state">
+          Search and select a patient to view their overview and treatment visits.
+        </div>
+        }
 
       </div>
     </div>

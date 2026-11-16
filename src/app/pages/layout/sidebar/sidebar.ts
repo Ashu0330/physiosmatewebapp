@@ -50,6 +50,15 @@ export class Sidebar extends BaseComponent {
     });
   });
 
+  readonly consoleTitle = computed<string>(() => {
+    const url = this.currentUrl();
+    const parentId = this.parentMenuId() || this.getStoredParentId();
+    if (parentId === 2 || (url && url.includes('/user-dashboard'))) {
+      return 'Patient Dashboard';
+    }
+    return 'Doctor Console';
+  });
+
   constructor() {
     super();
     effect(() => {

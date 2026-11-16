@@ -59,6 +59,7 @@ export interface DoctorTreatmentPlan {
   phases: DoctorTreatmentPhase[];
   clinicalNotes: string;
   isExpanded?: boolean;
+  userSubscriptionId?: number;
 }
 
 export interface DoctorAppointment {
@@ -188,6 +189,7 @@ export interface DoctorInquiryOrAppointment {
   inquirySource?: 'Phone Call' | 'Walk-in' | 'WhatsApp' | 'Referral';
   followUpDate?: string;
   fee?: number;
+  addOn?: { addOnId: number; addOnService: string }[];
 }
 
 // ── Consultation Search & Finalize ───────────────────────────────────────────
@@ -235,12 +237,15 @@ export interface AppointmentPatientSearchItem {
   fees?: number | null;
   startTime?: string | null;
   endTime?: string | null;
+  notes?: string | null;
 }
 
 export interface PatientAppointmentHistoryItem {
   id: number;
   patientId: number;
   patientName?: string | null;
+  fullName?: string | null;
+  mobile?: string | null;
   gender?: string | null;
   dob?: string | null;
   userId?: number;
@@ -260,13 +265,36 @@ export interface PatientAppointmentHistoryItem {
   appointmentSlotId?: number | null;
   appointmentDate?: string;
   appointmentTime?: string | null;
+  timeSlot?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
   status?: string;
   notes?: string | null;
+  homeVisitAddress?: string | null;
   createdAt?: string;
   updatedAt?: string | null;
   treatments?: any[];
   billing?: any | null;
   amount?: number;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  paymentId?: number | null;
+  hasAddOnTreatment?: boolean;
+  addOnFees?: number;
+  addOnPaymentStatus?: string | null;
+  addOnPaymentId?: number | null;
+  addOns?: AppointmentAddOnItem[];
+}
+
+export interface AppointmentAddOnItem {
+  paymentId?: number | null;
+  addOnId: number;
+  treatmentAddOnMappingId?: number | null;
+  addOnName: string;
+  amount: number;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  paidAt?: string | null;
 }
 
 export interface PatientConsultancyBooking {
@@ -352,4 +380,254 @@ export class PatientConsultancyDetails {
   consultancyDate: string;
   fees: number;
   path: string;
+  // Payment modal fields
+  consultancyId?: number;
+  paymentId?: number;
+  paymentMethod?: string;
+}
+
+// ── Book Appointment (Daily Treatment) ──────────────────────────────────────
+
+export interface BookAppointmentRequest {
+  patientId: number;
+  userId: number;
+  userSubscriptionId: number;
+  appointmentSlotId: number;
+  appointmentDate: string;
+  homeVisitAddress?: string | null;
+  visitType?: string | null;
+  practitionerId: number;
+  clinicId: number;
+  assignedPractitionerId: number | null;
+  bookingType?: string | null;
+  amount?: number | null;
+  paymentMode?: string | null;
+  paymentStatus?: string | null;
+}
+
+export interface AppointmentBookedResponse {
+  appointmentId: number;
+  doctorName: string;
+  doctorImage?: string | null;
+  planName: string;
+  appointmentDate: string;
+  dayName: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  sessionNumber: number;
+  remainingSessions: number;
+  totalSessions: number;
+  status: string;
+}
+
+export interface CompleteAppointmentRequest {
+  appointmentId: number;
+  clinicalNotes?: string | null;
+  addOn?: { addOnId: number; addOnService: string }[] | null;
+}
+
+export interface TodayAppointmentScheduleItem {
+  patientId: number;
+  consultancyId?: number;
+  appointmentId?: number;
+  paymentId?: number;
+  profile?: string;
+  fullName: string;
+  mobile?: string;
+  profileImage?: string;
+  email?: string;
+  gender?: string;
+  dob?: string;
+  age?: number;
+  isRegistered: boolean;
+  firstVisitDate?: string;
+  lastVisitDate?: string;
+  isPrimaryProvider?: boolean;
+  city?: string;
+  state?: string;
+  address?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  addOnPaymentStatus?: string;
+  addOnFees?: number;
+  hasAddOnTreatment?: boolean;
+  addOnPaymentId?: number;
+  consultancyStatus?: string;
+  consultancyDate?: string;
+  appointmentStatus?: string;
+  appointmentDate?: string;
+  fees: number;
+  startTime?: string;
+  endTime?: string;
+  totalCount?: number;
+  notes?: string;
+  addOns?: AppointmentAddOnItem[];
+}
+
+export interface ActivePaymentModalItem {
+  patientId: number;
+  fullName: string;
+  mobile?: string;
+  paymentId?: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  fees: number;
+  serviceLabel?: string;
+}
+
+export interface PaymentSelectableItem {
+  id: number;
+  name: string;
+  amount: number;
+  isTreatment: boolean;
+  isAlreadyPaid: boolean;
+  selected: boolean;
+}
+
+export interface PaymentModel {
+  paymentId: number;
+  amount: number;
+  status?: string | null;
+  paymentMethod?: string | null;
+  addOns?: PaymentAddOnModel[] | null;
+}
+
+export interface PaymentAddOnModel {
+  paymentId: number;
+  amount: number;
+  status?: string | null;
+  paymentMethod?: string | null;
+}
+
+export interface UserSubscriptionViewModel {
+  id?: number;
+  userId?: number;
+  providerId?: number;
+  clinicId?: number;
+  practitionerId?: number;
+  providerType?: string;
+  planId: number;
+  planName?: string;
+  price?: number;
+  validityDays?: number;
+  providerName?: string;
+  totalSessions?: number;
+  completedSessions?: number;
+  remainingSessions?: number;
+  isCurrent?: boolean;
+  status?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  daysRemaining?: number;
+  patientId: number;
+  paymentType?: string;
+  paymentMethod?: string;
+  paymentMode?: string;
+  paymentStatus?: string;
+  amount?: number;
+  transactionId?: string;
+}
+
+export interface ProviderSubscriptionPlanItem {
+  id: number;
+  planName: string;
+  totalSessions: number;
+  validityDays: number;
+  price: number;
+  isPopular?: boolean;
+  isActive?: boolean;
+  providerType?: string;
+  providerId?: number;
+  expertiseId?: number | null;
+  benefits?: Array<{ id?: number; planId?: number; title?: string; description?: string }>;
+}
+
+export interface WeeklyAppointmentSelectionViewModel {
+  appointmentSlotId: number;
+  appointmentDate: string;
+}
+
+export interface CreateWeeklyAppointmentsViewModel {
+  userSubscriptionId: number;
+  patientId?: number | null;
+  appointments: WeeklyAppointmentSelectionViewModel[];
+}
+
+export interface BookedWeeklyAppointmentItem {
+  appointmentId: number;
+  doctorName?: string;
+  planName?: string;
+  appointmentDate: string;
+  dayName?: string;
+  sessionNumber: number;
+  remainingSessions: number;
+  totalSessions: number;
+  status: string;
+}
+
+export interface WeeklyAppointmentsBookedViewModel {
+  totalBooked: number;
+  remainingSessions: number;
+  appointments: BookedWeeklyAppointmentItem[];
+}
+
+export interface SubscriptionSummaryDto {
+  id: number;
+  planId: number;
+  planName: string;
+  price: number;
+  totalSessions: number;
+  completedSessions: number;
+  remainingSessions: number;
+  providerType: string;
+  providerId: number;
+  providerName: string;
+  status: string;
+  startDate?: string | null;
+  expiryDate?: string | null;
+  amount: number;
+}
+
+export interface SlotTemplateDto {
+  id: number;
+  providerType?: string;
+  providerId?: number;
+  dayOfWeek: number;
+  dayOfWeekName: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  isActive: boolean;
+}
+
+export interface PatientAppointmentDetailsDto {
+  id: number;
+  patientId?: number;
+  patientName?: string;
+  gender?: string;
+  dob?: string;
+  status: string;
+  visitType?: string;
+  homeVisitAddress?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  startTime?: string;
+  endTime?: string;
+  timeSlot?: string;
+  sessionNumber?: number;
+  notes?: string;
+  assignedPractitionerId?: number;
+  assignedPractitionerName?: string;
+  practitionerName?: string;
+  clinicName?: string;
+  amount: number;
+  paymentId?: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  userSubscriptionId?: number;
+  hasAddOnTreatment?: boolean;
+  addOnFees?: number;
+  addOnPaymentStatus?: string;
+  addOnPaymentId?: number;
+  addOns?: any[];
 }

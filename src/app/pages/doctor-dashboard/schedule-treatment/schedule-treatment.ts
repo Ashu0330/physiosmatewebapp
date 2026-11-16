@@ -1,16 +1,41 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, PLATFORM_ID, signal, computed, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { DoctorPatient, DoctorTreatmentPlan } from '../../../models/doctor-dashboard.model';
+import {
+  DoctorPatient,
+  DoctorTreatmentPlan,
+  PatientSearchItem,
+  BookAppointmentRequest,
+  AppointmentBookedResponse,
+  UserSubscriptionViewModel,
+  ProviderSubscriptionPlanItem,
+  WeeklyAppointmentSelectionViewModel,
+  CreateWeeklyAppointmentsViewModel,
+  WeeklyAppointmentsBookedViewModel,
+  SubscriptionSummaryDto,
+  SlotTemplateDto,
+  PatientAppointmentDetailsDto
+} from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiService } from '../../../services/api.service';
+import { Authservice } from '../../../services/authservice';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
-export interface TimeSlot {
-  id: string;
-  time: string;
-  capacity: number;
-  booked: number;
-  isAvailable: boolean;
+export interface TreatmentSlot {
+  slotId: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  currentBookings: number;
+  remainingSpots: number;
+  isOpen: boolean;
+}
+
+export interface PractitionerOption {
+  id: number;
+  name: string;
 }
 
 export interface ScheduledBooking {
@@ -24,6 +49,7 @@ export interface ScheduledBooking {
   timeSlot: string;
   treatmentName: string;
   therapist: string;
+  visitType?: string;
   fee: number;
   advancePaid: number;
   balanceDue: number;
@@ -32,7 +58,6 @@ export interface ScheduledBooking {
   planId?: string;
   planName?: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled';
-  notes?: string;
 }
 
 export interface WeeklyDraftSession {
@@ -40,6 +65,9 @@ export interface WeeklyDraftSession {
   date: string;
   timeSlot: string;
   therapist: string;
+  slotId?: number;
+  practitionerId?: number;
+  daySlots?: SlotTemplateDto[];
 }
 
 @Component({
@@ -49,9 +77,13 @@ export interface WeeklyDraftSession {
   templateUrl: './schedule-treatment.html',
   styleUrl: './schedule-treatment.css',
 })
-export class ScheduleTreatment implements OnInit {
+export class ScheduleTreatment implements OnInit, OnDestroy {
   private alertService = inject(SweetAlertService);
+  private apiService = inject(ApiService);
+  private auth = inject(Authservice);
   private route = inject(ActivatedRoute);
+  private elRef = inject(ElementRef);
+  private platformId = inject(PLATFORM_ID);
 
   // ─── Active Tab ────────────────────────────────────────────────────────────
   activeTab = signal<'daily' | 'weekly' | 'assign-plan' | 'list'>('daily');
@@ -61,30 +93,49 @@ export class ScheduleTreatment implements OnInit {
   selectedPatientId = signal<string | null>(null);
   selectedPatient = signal<DoctorPatient | null>(null);
   isSearchDropdownOpen = signal<boolean>(false);
+  patientSearchResults = signal<PatientSearchItem[]>([]);
+  isSearchingPatients = signal<boolean>(false);
+  selectedPatientItem = signal<PatientSearchItem | null>(null);
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private searchRequestSeq = 0;
 
-  // ─── Daily Treatment Form ──────────────────────────────────────────────────
-  treatmentName = signal<string>('Physiotherapy Session');
+  // ─── Daily Treatment Form (Booking Details Only) ───────────────────────────
+  practitioners = signal<PractitionerOption[]>([]);
+  selectedPractitionerId = signal<number | null>(null);
+  isLoadingPractitioners = signal<boolean>(false);
+
   treatmentDate = signal<string>(this.getTodayDateString());
-  selectedSlot = signal<TimeSlot | null>(null);
-  attendingTherapist = signal<string>('Dr. Himanshu Suman (PT)');
+  availableSlots = signal<TreatmentSlot[]>([]);
+  isLoadingSlots = signal<boolean>(false);
+  selectedSlot = signal<TreatmentSlot | null>(null);
+
+  visitType = signal<'Clinic' | 'Home'>('Clinic');
+  homeVisitAddress = signal<string>('');
+
   treatmentFee = signal<number>(600);
   paymentType = signal<'advance' | 'due'>('advance');
   advanceAmount = signal<number>(600);
   paymentMode = signal<'UPI' | 'Cash' | 'Card' | 'NetBanking'>('UPI');
-  paymentRef = signal<string>('');
-  clinicalNotes = signal<string>('');
+  isBookingTreatment = signal<boolean>(false);
 
-  therapists: string[] = [
-    'Dr. Himanshu Suman (PT)',
-    'Dr. Priya Sharma (PT)',
-    'Dr. Rajesh Nair (PT)'
-  ];
+  private slotsRequestSeq = 0;
 
   // ─── Weekly Plan Scheduler (Accordion) ─────────────────────────────────────
   expandedPlanId = signal<string | null>(null);
   weeklyDraftSessions = signal<WeeklyDraftSession[]>([]);
+  isSavingWeeklySchedule = signal<boolean>(false);
+  slotTemplates = signal<SlotTemplateDto[]>([]);
+  isLoadingSlotTemplates = signal<boolean>(false);
+  activeSubscriptionSummary = signal<SubscriptionSummaryDto | null>(null);
+  isLoadingPatientData = signal<boolean>(false);
 
   // ─── Assign Plan Form ──────────────────────────────────────────────────────
+  availablePlans = signal<ProviderSubscriptionPlanItem[]>([]);
+  isLoadingPlans = signal<boolean>(false);
+  selectedPlanId = signal<number | null>(null);
+  isAssigningPlan = signal<boolean>(false);
+  selectedPlan = computed(() => this.availablePlans().find(p => p.id === this.selectedPlanId()) || null);
+
   newPlanTitle = signal<string>('Lumbar Spine Protocol');
   newPlanSessions = signal<number>(10);
   newPlanWeeks = signal<number>(4);
@@ -94,166 +145,24 @@ export class ScheduleTreatment implements OnInit {
   newPlanPaymentMode = signal<'UPI' | 'Cash' | 'Card' | 'NetBanking'>('UPI');
 
   // ─── Patients Data ─────────────────────────────────────────────────────────
-  patients = signal<DoctorPatient[]>([
-    {
-      id: 'PT-1041',
-      patientCode: 'PT-1041',
-      fullName: 'Ananya Iyer',
-      age: 34,
-      gender: 'Female',
-      phone: '+91 98234 56789',
-      mobile: '+91 98234 56789',
-      email: 'ananya.iyer@example.com',
-      city: 'Delhi NCR',
-      primaryCondition: 'Lumbar Disc Herniation & Sciatica',
-      status: 'Active',
-      currentPlan: 'Spine Decompression & Core Stabilization',
-      sessionsCompleted: 6,
-      totalSessions: 12,
-      lastVisit: '24 Oct 2026'
-    },
-    {
-      id: 'PT-1042',
-      patientCode: 'PT-1042',
-      fullName: 'Vikramaditya Rao',
-      age: 28,
-      gender: 'Male',
-      phone: '+91 98450 12345',
-      mobile: '+91 98450 12345',
-      email: 'vikram.rao@example.com',
-      city: 'Gurugram',
-      primaryCondition: 'Right Knee ACL Reconstruction',
-      status: 'Active',
-      currentPlan: 'Knee ACL Accelerated Rehab Protocol',
-      sessionsCompleted: 10,
-      totalSessions: 16,
-      lastVisit: '23 Oct 2026'
-    },
-    {
-      id: 'PT-1043',
-      patientCode: 'PT-1043',
-      fullName: 'Meera Nambiar',
-      age: 52,
-      gender: 'Female',
-      phone: '+91 97112 34567',
-      mobile: '+91 97112 34567',
-      email: 'meera.nambiar@example.com',
-      city: 'Noida',
-      primaryCondition: 'Frozen Shoulder - Left',
-      status: 'Active',
-      currentPlan: 'Glenohumeral Joint Mobilization & ROM',
-      sessionsCompleted: 4,
-      totalSessions: 10,
-      lastVisit: '22 Oct 2026'
-    },
-    {
-      id: 'PT-1044',
-      patientCode: 'PT-1064',
-      fullName: 'Rohan Deshmukh',
-      age: 41,
-      gender: 'Male',
-      phone: '+91 99201 87654',
-      mobile: '+91 99201 87654',
-      email: 'rohan.deshmukh@example.com',
-      city: 'South Delhi',
-      primaryCondition: 'Cervical Radiculopathy',
-      status: 'Active',
-      sessionsCompleted: 12,
-      totalSessions: 12,
-      lastVisit: '29 Oct 2026'
-    },
-    {
-      id: 'PT-1045',
-      patientCode: 'PT-1045',
-      fullName: 'Siddharth Verma',
-      age: 23,
-      gender: 'Male',
-      phone: '+91 96500 43210',
-      mobile: '+91 96500 43210',
-      email: 'siddharth.v@example.com',
-      city: 'Faridabad',
-      primaryCondition: 'Lateral Ankle Sprain',
-      status: 'Completed',
-      sessionsCompleted: 8,
-      totalSessions: 8,
-      lastVisit: '15 Oct 2026'
-    }
-  ]);
+  patients = signal<DoctorPatient[]>([]);
 
   // ─── Treatment Plans Data ──────────────────────────────────────────────────
-  treatmentPlans = signal<DoctorTreatmentPlan[]>([
-    {
-      id: 'PLN-301',
-      planCode: 'PLN-301',
-      title: 'Spine Decompression & Core Stabilization Protocol',
-      patientId: 'PT-1041',
-      patientName: 'Ananya Iyer',
-      diagnosis: 'L4-L5 Disc Protrusion',
-      totalSessions: 12,
-      completedSessions: 6,
-      frequency: '3x weekly',
-      durationWeeks: 4,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '01 Oct 2026',
-      targetEndDate: '30 Oct 2026',
-      progressPercent: 50,
-      clinicalNotes: 'Neutral spine core activation.',
-      phases: []
-    },
-    {
-      id: 'PLN-302',
-      planCode: 'PLN-302',
-      title: 'Knee ACL Accelerated Rehab Protocol',
-      patientId: 'PT-1042',
-      patientName: 'Vikramaditya Rao',
-      diagnosis: 'Post-Op Knee ACL',
-      totalSessions: 16,
-      completedSessions: 10,
-      frequency: '3x weekly',
-      durationWeeks: 6,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '20 Sep 2026',
-      targetEndDate: '05 Nov 2026',
-      progressPercent: 63,
-      clinicalNotes: 'Quadriceps strength training.',
-      phases: []
-    },
-    {
-      id: 'PLN-303',
-      planCode: 'PLN-303',
-      title: 'Glenohumeral Joint Mobilization & ROM',
-      patientId: 'PT-1043',
-      patientName: 'Meera Nambiar',
-      diagnosis: 'Frozen Shoulder',
-      totalSessions: 10,
-      completedSessions: 4,
-      frequency: '2x weekly',
-      durationWeeks: 5,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: '05 Oct 2026',
-      targetEndDate: '10 Nov 2026',
-      progressPercent: 40,
-      clinicalNotes: 'Passive stretch & glides.',
-      phases: []
-    }
-  ]);
+  treatmentPlans = signal<DoctorTreatmentPlan[]>([]);
 
   // ─── Scheduled Bookings Ledger ─────────────────────────────────────────────
   scheduledBookings = signal<ScheduledBooking[]>([]);
 
   // ─── Computed Properties ───────────────────────────────────────────────────
 
-  filteredPatients = computed(() => {
-    const q = this.patientSearchQuery().toLowerCase().trim();
-    if (!q) return this.patients();
-    return this.patients().filter(p =>
-      p.fullName.toLowerCase().includes(q) ||
-      (p.phone && p.phone.toLowerCase().includes(q)) ||
-      p.patientCode.toLowerCase().includes(q)
-    );
+  patientBookings = computed<ScheduledBooking[]>(() => {
+    const p = this.selectedPatient();
+    if (!p) return [];
+    return this.scheduledBookings().filter(b => b.patientId === p.id);
+  });
+
+  patientPendingAmount = computed<number>(() => {
+    return this.patientBookings().reduce((sum, b) => sum + (b.balanceDue || 0), 0);
   });
 
   patientActivePlan = computed<DoctorTreatmentPlan | null>(() => {
@@ -284,53 +193,176 @@ export class ScheduleTreatment implements OnInit {
     return Math.max(0, this.newPlanPrice() - this.newPlanAdvance());
   });
 
-  // Time Slots with Capacity Status
-  availableSlots = computed<TimeSlot[]>(() => {
-    const date = this.treatmentDate();
-    const existing = this.scheduledBookings().filter(b => b.date === date && b.status !== 'Cancelled');
+  get currentPractitionerId(): number {
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+    if (roleId === 3) {
+      return Number(user?.practitionerId || 0);
+    }
+    const profId = this.auth.getCurrentProfessionalId();
+    return Number(user?.practitionerId || profId || 0);
+  }
 
-    const baseSlots = [
-      { id: '1', time: '09:00 AM - 09:45 AM', capacity: 4, initialBooked: 2 },
-      { id: '2', time: '10:00 AM - 10:45 AM', capacity: 4, initialBooked: 3 },
-      { id: '3', time: '11:00 AM - 11:45 AM', capacity: 4, initialBooked: 4 }, // Full
-      { id: '4', time: '12:00 PM - 12:45 PM', capacity: 4, initialBooked: 1 },
-      { id: '5', time: '02:00 PM - 02:45 PM', capacity: 4, initialBooked: 2 },
-      { id: '6', time: '03:00 PM - 03:45 PM', capacity: 4, initialBooked: 0 },
-      { id: '7', time: '04:00 PM - 04:45 PM', capacity: 4, initialBooked: 3 },
-      { id: '8', time: '05:00 PM - 05:45 PM', capacity: 4, initialBooked: 1 },
-      { id: '9', time: '06:00 PM - 06:45 PM', capacity: 4, initialBooked: 4 }, // Full
-      { id: '10', time: '07:00 PM - 07:45 PM', capacity: 4, initialBooked: 2 },
-    ];
-
-    return baseSlots.map(s => {
-      const dynamicCount = existing.filter(b => b.timeSlot === s.time).length;
-      const booked = Math.min(s.capacity, s.initialBooked + dynamicCount);
-      const isAvailable = booked < s.capacity;
-      return {
-        id: s.id,
-        time: s.time,
-        capacity: s.capacity,
-        booked,
-        isAvailable
-      };
-    });
-  });
+  get currentClinicId(): number {
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+    if (roleId === 3) {
+      const profId = this.auth.getCurrentProfessionalId();
+      return Number(user?.clinicId || profId || 0);
+    }
+    return Number(user?.clinicId || 0);
+  }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.loadStorage();
+    this.loadPractitioners();
+    this.loadProviderPlans();
+    this.loadSlotTemplates();
 
     const qp = this.route.snapshot.queryParams;
     if (qp['patientId']) {
       const pt = this.patients().find(p => p.id === qp['patientId'] || p.patientCode === qp['patientId']);
       if (pt) this.selectPatient(pt);
-    } else if (this.patients().length > 0) {
-      this.selectPatient(this.patients()[0]);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.searchRequestSeq++;
+    this.slotsRequestSeq++;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const searchRow = this.elRef.nativeElement.querySelector('.top-search-row');
+    if (searchRow && !searchRow.contains(event.target as Node)) {
+      this.isSearchDropdownOpen.set(false);
+    }
+  }
+
+  // ─── Live Patient Search via Backend API (GetMyPatients, no digit limit) ──
+
+  onPatientSearchChange(query: string): void {
+    this.patientSearchQuery.set(query);
+    this.isSearchDropdownOpen.set(true);
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
     }
 
-    const first = this.availableSlots().find(s => s.isAvailable);
-    if (first) this.selectedSlot.set(first);
+    const trimmed = query.trim();
+    const currentSeq = ++this.searchRequestSeq;
+
+    if (!trimmed) {
+      this.patientSearchResults.set([]);
+      this.isSearchingPatients.set(false);
+      return;
+    }
+
+    this.isSearchingPatients.set(true);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executePatientSearch(trimmed, currentSeq);
+    }, 250);
+  }
+
+  private async executePatientSearch(trimmed: string, seq: number): Promise<void> {
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, {
+        search: trimmed,
+        page: 1,
+        pageSize: 20
+      });
+      if (seq !== this.searchRequestSeq) return;
+
+      const items = Array.isArray(res?.data?.items)
+        ? res.data.items
+        : Array.isArray(res?.data)
+          ? res.data
+          : [];
+
+      if (res?.isSuccess && items.length > 0) {
+        this.patientSearchResults.set(items as PatientSearchItem[]);
+      } else {
+        this.patientSearchResults.set([]);
+      }
+    } catch (e) {
+      if (seq !== this.searchRequestSeq) return;
+      console.error('Patient search error', e);
+      this.patientSearchResults.set([]);
+    } finally {
+      if (seq === this.searchRequestSeq) {
+        this.isSearchingPatients.set(false);
+      }
+    }
+  }
+
+  selectPatientFromSearch(item: PatientSearchItem): void {
+    const ptCode = `PT-${item.patientId}`;
+    const existing = this.patients().find(p => p.id === ptCode || p.patientCode === ptCode);
+    const age = item.age && item.age > 0 ? item.age : this.calculateAge(item.dob);
+    const lastVisit =
+      item.lastVisitDate &&
+      !item.lastVisitDate.startsWith('0001-01-01') &&
+      !isNaN(new Date(item.lastVisitDate).getTime())
+        ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })
+        : 'N/A';
+
+    const patient: DoctorPatient = {
+      id: ptCode,
+      patientCode: ptCode,
+      fullName: item.fullName || '',
+      age,
+      gender: item.gender || '',
+      phone: item.mobile || '',
+      mobile: item.mobile || '',
+      email: item.email || '',
+      dob: item.dob || undefined,
+      address: item.address || undefined,
+      city: item.city || undefined,
+      state: item.state || undefined,
+      photoUrl: item.profileImage || undefined,
+      primaryCondition: existing?.primaryCondition,
+      currentPlan: existing?.currentPlan,
+      status: existing?.status || 'Active',
+      sessionsCompleted: existing?.sessionsCompleted ?? 0,
+      totalSessions: existing?.totalSessions ?? 0,
+      lastVisit,
+      notes: (item as any).notes || existing?.notes || undefined
+    };
+
+    if (existing) {
+      this.patients.update(list => list.map(p => (p.id === existing.id ? patient : p)));
+    } else {
+      this.patients.update(list => [patient, ...list]);
+    }
+
+    this.selectedPatientItem.set(item);
+    this.selectPatient(patient);
+  }
+
+  private calculateAge(dob?: string | null): number {
+    if (!dob) return 0;
+    const birth = new Date(dob);
+    if (isNaN(birth.getTime())) return 0;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : 0;
   }
 
   // ─── Patient Selection ─────────────────────────────────────────────────────
@@ -338,22 +370,39 @@ export class ScheduleTreatment implements OnInit {
   selectPatient(pt: DoctorPatient): void {
     this.selectedPatientId.set(pt.id);
     this.selectedPatient.set(pt);
-    this.patientSearchQuery.set(pt.fullName);
+    this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
     this.isSearchDropdownOpen.set(false);
+    this.homeVisitAddress.set(this.selectedPatientItem()?.address || pt.address || '');
 
-    // Expand plan if exists
-    const plan = this.patientActivePlan();
-    if (plan) {
-      this.expandedPlanId.set(plan.id);
-      this.initWeeklyDraft();
+    let rawPatientId = this.selectedPatientItem()?.patientId;
+    if (!rawPatientId && pt.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) rawPatientId = parseInt(match[0], 10);
+    }
+
+    if (rawPatientId && rawPatientId > 0) {
+      this.loadPatientSubscription(rawPatientId);
+      this.loadPatientAppointments(rawPatientId);
+    } else {
+      const plan = this.patientActivePlan();
+      if (plan) {
+        this.expandedPlanId.set(plan.id);
+        this.initWeeklyDraft();
+      }
     }
   }
 
   clearSearch(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.searchRequestSeq++;
     this.patientSearchQuery.set('');
-    this.selectedPatientId.set(null);
-    this.selectedPatient.set(null);
-    this.isSearchDropdownOpen.set(true);
+    this.patientSearchResults.set([]);
+    this.isSearchingPatients.set(false);
+    this.isSearchDropdownOpen.set(false);
   }
 
   getInitials(name: string): string {
@@ -361,7 +410,168 @@ export class ScheduleTreatment implements OnInit {
     return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   }
 
-  // ─── Daily Treatment Methods ───────────────────────────────────────────────
+  // ─── Daily Treatment Methods (Practitioners, Slots & Book API) ────────────
+
+  async loadPractitioners(): Promise<void> {
+    this.isLoadingPractitioners.set(true);
+    let loaded: PractitionerOption[] = [];
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitioners, {
+        page: 1,
+        pageSize: 100
+      });
+      if (res?.isSuccess && res.data) {
+        const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
+        loaded = list
+          .map((p: any) => ({
+            id: Number(p.id ?? p.practitionerId ?? 0),
+            name: String(p.fullName ?? p.name ?? `Dr. ${p.id}`).trim()
+          }))
+          .filter((p: PractitionerOption) => p.id > 0);
+      }
+    } catch (e) {
+      console.error('Error loading practitioners', e);
+    } finally {
+      const currentPid = this.currentPractitionerId;
+      if (currentPid > 0 && !loaded.some(p => p.id === currentPid)) {
+        const currentName = this.auth.getUserName() || 'Assigned Doctor';
+        loaded = [{ id: currentPid, name: currentName }, ...loaded];
+      }
+
+      this.practitioners.set(loaded);
+
+      if (!this.selectedPractitionerId() && loaded.length > 0) {
+        const defaultId =
+          currentPid > 0 && loaded.some(p => p.id === currentPid)
+            ? currentPid
+            : loaded[0].id;
+        this.selectedPractitionerId.set(defaultId);
+      }
+
+      this.isLoadingPractitioners.set(false);
+      await this.loadAvailableSlots();
+    }
+  }
+
+  async loadAvailableSlots(): Promise<void> {
+    const seq = ++this.slotsRequestSeq;
+    const date = this.treatmentDate();
+    const today = this.getTodayDateString();
+
+    if (!date || date < today) {
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+      this.isLoadingSlots.set(false);
+      return;
+    }
+
+    const pid = this.selectedPractitionerId();
+    const cid = this.currentClinicId;
+    const user = this.auth.getCurrentUser();
+    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
+
+    if ((!pid || pid <= 0) && cid <= 0) {
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+      this.isLoadingSlots.set(false);
+      return;
+    }
+
+    this.isLoadingSlots.set(true);
+    try {
+      let slots: TreatmentSlot[] = [];
+
+      if (pid && pid > 0) {
+        slots = await this.fetchSlotsByQuery(`practitionerId=${pid}&date=${encodeURIComponent(date)}`);
+      }
+
+      if (slots.length === 0 && cid > 0 && (!pid || pid <= 0 || roleId === 3)) {
+        slots = await this.fetchSlotsByQuery(`clinicId=${cid}&date=${encodeURIComponent(date)}`);
+      }
+
+      if (seq !== this.slotsRequestSeq) return;
+
+      this.availableSlots.set(slots);
+
+      const prevSlotId = this.selectedSlot()?.slotId;
+      const retained = prevSlotId
+        ? slots.find(s => s.slotId === prevSlotId && s.isOpen && s.remainingSpots > 0)
+        : undefined;
+      const firstOpen = retained ?? slots.find(s => s.isOpen && s.remainingSpots > 0) ?? null;
+      this.selectedSlot.set(firstOpen);
+    } catch (e) {
+      if (seq !== this.slotsRequestSeq) return;
+      console.error('Error loading treatment slots', e);
+      this.availableSlots.set([]);
+      this.selectedSlot.set(null);
+    } finally {
+      if (seq === this.slotsRequestSeq) {
+        this.isLoadingSlots.set(false);
+      }
+    }
+  }
+
+  private async fetchSlotsByQuery(query: string): Promise<TreatmentSlot[]> {
+    const res = await this.apiService.Get<any>(
+      `${ApiEndPoints.GetAvailableAppointmentSlots}?${query}`
+    );
+    if (res?.isSuccess && res.data) {
+      const raw = Array.isArray(res.data) ? res.data : [res.data];
+      return raw
+        .map((s: any) => ({
+          slotId: Number(s.slotId ?? s.SlotId ?? 0),
+          slotDate: String(s.slotDate ?? s.SlotDate ?? ''),
+          startTime: String(s.startTime ?? s.StartTime ?? ''),
+          endTime: String(s.endTime ?? s.EndTime ?? ''),
+          maxCapacity: Number(s.maxCapacity ?? s.MaxCapacity ?? 0),
+          currentBookings: Number(s.currentBookings ?? s.CurrentBookings ?? 0),
+          remainingSpots: Number(s.remainingSpots ?? s.RemainingSpots ?? 0),
+          isOpen: Boolean(s.isOpen ?? s.IsOpen ?? true)
+        }))
+        .filter((s: TreatmentSlot) => s.slotId > 0);
+    }
+    return [];
+  }
+
+  onTreatmentDateChange(date: string): void {
+    this.treatmentDate.set(date);
+    this.selectedSlot.set(null);
+    this.loadAvailableSlots();
+  }
+
+  onPractitionerChange(practitionerId: number | string | null): void {
+    const numericId = practitionerId !== null && practitionerId !== '' ? Number(practitionerId) : null;
+    this.selectedPractitionerId.set(numericId && !isNaN(numericId) ? numericId : null);
+    this.selectedSlot.set(null);
+    this.loadAvailableSlots();
+  }
+
+  onVisitTypeChange(type: 'Clinic' | 'Home'): void {
+    this.visitType.set(type);
+    if (type === 'Home' && !this.homeVisitAddress().trim()) {
+      const addr = this.selectedPatientItem()?.address || this.selectedPatient()?.address || '';
+      if (addr) {
+        this.homeVisitAddress.set(addr);
+      }
+    }
+  }
+
+  formatSlotTime(t: string): string {
+    if (!t) return '';
+    const parts = t.split(':');
+    let h = parseInt(parts[0], 10);
+    if (isNaN(h)) return t;
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
+
+  getSelectedPractitionerName(): string {
+    const pid = this.selectedPractitionerId();
+    if (!pid) return this.auth.getUserName() || 'Assigned Doctor';
+    return this.practitioners().find(p => p.id === pid)?.name || this.auth.getUserName() || 'Assigned Doctor';
+  }
 
   setPaymentType(type: 'advance' | 'due'): void {
     this.paymentType.set(type);
@@ -378,57 +588,161 @@ export class ScheduleTreatment implements OnInit {
     }
   }
 
-  selectSlot(slot: TimeSlot): void {
-    if (!slot.isAvailable) return;
+  selectSlot(slot: TreatmentSlot): void {
+    if (!slot.isOpen || slot.remainingSpots <= 0) return;
     this.selectedSlot.set(slot);
   }
 
-  submitDailyTreatment(): void {
+  async submitDailyTreatment(): Promise<void> {
+    if (this.isBookingTreatment()) return;
+
     const pt = this.selectedPatient();
-    if (!pt) {
+    const ptItem = this.selectedPatientItem();
+    const rawPatientId = ptItem?.patientId ?? Number(String(pt?.patientCode || pt?.id || '').replace(/\D/g, ''));
+    if (!pt || !rawPatientId || isNaN(rawPatientId)) {
       this.alertService.toastError('Please select a patient.');
       return;
     }
 
+    const date = this.treatmentDate();
+    if (!date) {
+      this.alertService.toastError('Please select a treatment date.');
+      return;
+    }
+    if (date < this.getTodayDateString()) {
+      this.alertService.toastError('Treatment date cannot be in the past.');
+      return;
+    }
+
     const slot = this.selectedSlot();
-    if (!slot || !slot.isAvailable) {
+    if (!slot || !slot.isOpen || slot.remainingSpots <= 0) {
       this.alertService.toastError('Please select an available time slot.');
       return;
     }
 
-    const fee = this.treatmentFee();
-    const adv = this.paymentType() === 'advance' ? this.advanceAmount() : 0;
+    const practitionerId = this.selectedPractitionerId();
+    if (!practitionerId && this.practitioners().length > 0) {
+      this.alertService.toastError('Please select an assigned practitioner.');
+      return;
+    }
+
+    const visitMode = this.visitType();
+    const trimmedAddress = this.homeVisitAddress().trim();
+    if (visitMode === 'Home' && !trimmedAddress) {
+      this.alertService.toastError('Please enter home visit address.');
+      return;
+    }
+
+    const fee = Number(this.treatmentFee()) || 0;
+    if (fee < 0) {
+      this.alertService.toastError('Treatment fee cannot be negative.');
+      return;
+    }
+
+    const isAdvance = this.paymentType() === 'advance';
+    const adv = isAdvance ? (Number(this.advanceAmount()) || 0) : 0;
+
+    if (isAdvance && adv < 0) {
+      this.alertService.toastError('Advance paid cannot be negative.');
+      return;
+    }
+    if (isAdvance && adv > fee) {
+      this.alertService.toastError('Advance paid cannot exceed the treatment fee.');
+      return;
+    }
+    if (isAdvance && fee > 0 && adv <= 0) {
+      this.alertService.toastError('Enter advance amount greater than 0 or switch to Payment Due.');
+      return;
+    }
+
     const due = Math.max(0, fee - adv);
 
-    let paymentStatus: 'Paid' | 'Advance' | 'Due' = 'Due';
-    if (due === 0 && adv > 0) paymentStatus = 'Paid';
-    else if (adv > 0 && due > 0) paymentStatus = 'Advance';
+    let apiPaymentStatus: 'Paid' | 'PartiallyPaid' | 'Due' = 'Due';
+    let uiPaymentStatus: 'Paid' | 'Advance' | 'Due' = 'Due';
+    let payloadAmount = fee;
+    let payloadPaymentMode: string | null = null;
 
-    const booking: ScheduledBooking = {
-      id: `bk-${Date.now()}`,
-      bookingCode: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      patientCode: pt.patientCode,
-      phone: pt.phone,
-      date: this.treatmentDate(),
-      timeSlot: slot.time,
-      treatmentName: this.treatmentName(),
-      therapist: this.attendingTherapist(),
-      fee,
-      advancePaid: adv,
-      balanceDue: due,
-      paymentStatus,
-      paymentMode: this.paymentMode(),
-      status: 'Scheduled',
-      notes: this.clinicalNotes()
+    if (isAdvance && adv > 0) {
+      payloadAmount = adv;
+      payloadPaymentMode = this.paymentMode();
+      if (due === 0) {
+        apiPaymentStatus = 'Paid';
+        uiPaymentStatus = 'Paid';
+      } else {
+        apiPaymentStatus = 'PartiallyPaid';
+        uiPaymentStatus = 'Advance';
+      }
+    }
+
+    const pid = practitionerId && practitionerId > 0 ? practitionerId : 0;
+    const payload: BookAppointmentRequest = {
+      patientId: rawPatientId,
+      userId: 0,
+      userSubscriptionId: 0,
+      appointmentSlotId: slot.slotId,
+      appointmentDate: date,
+      visitType: visitMode,
+      homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
+      practitionerId: pid,
+      clinicId: this.currentClinicId,
+      assignedPractitionerId: pid > 0 ? pid : null,
+      bookingType: 'Treatment',
+      amount: payloadAmount,
+      paymentMode: payloadPaymentMode,
+      paymentStatus: apiPaymentStatus
     };
 
-    this.scheduledBookings.update(list => [booking, ...list]);
-    this.saveStorage();
+    this.isBookingTreatment.set(true);
+    try {
+      const res = await this.apiService.Post<AppointmentBookedResponse>(
+        ApiEndPoints.BookAppointment,
+        payload
+      );
 
-    this.alertService.toastSuccess(`Treatment scheduled (${booking.bookingCode})`);
-    this.activeTab.set('list');
+      if (res?.isSuccess) {
+        const booked = res.data;
+        const slotLabel =
+          booked?.startTime && booked?.endTime
+            ? `${this.formatSlotTime(booked.startTime)} - ${this.formatSlotTime(booked.endTime)}`
+            : `${this.formatSlotTime(slot.startTime)} - ${this.formatSlotTime(slot.endTime)}`;
+
+        const booking: ScheduledBooking = {
+          id: `bk-${booked?.appointmentId || Date.now()}`,
+          bookingCode: booked?.appointmentId
+            ? `APT-${booked.appointmentId}`
+            : `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
+          patientId: pt.id,
+          patientName: pt.fullName,
+          patientCode: pt.patientCode,
+          phone: pt.phone || pt.mobile || '',
+          date,
+          timeSlot: slotLabel,
+          treatmentName: `${visitMode} Visit`,
+          therapist: booked?.doctorName || this.getSelectedPractitionerName(),
+          visitType: visitMode,
+          fee,
+          advancePaid: adv,
+          balanceDue: due,
+          paymentStatus: uiPaymentStatus,
+          paymentMode: this.paymentMode(),
+          status: (booked?.status as 'Scheduled' | 'Completed' | 'Cancelled') || 'Scheduled'
+        };
+
+        this.scheduledBookings.update(list => [booking, ...list]);
+        this.saveStorage();
+
+        this.alertService.toastSuccess(res.message || `Treatment scheduled (${booking.bookingCode})`);
+        await this.loadAvailableSlots();
+        this.activeTab.set('list');
+      } else if (res?.responseCode !== 500) {
+        this.alertService.toastError(res?.message || 'Failed to schedule treatment.');
+      }
+    } catch (e) {
+      console.error('Book appointment error', e);
+      this.alertService.toastError('Unable to book appointment. Please try again.');
+    } finally {
+      this.isBookingTreatment.set(false);
+    }
   }
 
   // ─── Weekly Protocol Methods ───────────────────────────────────────────────
@@ -442,17 +756,153 @@ export class ScheduleTreatment implements OnInit {
     }
   }
 
+  async loadSlotTemplates(): Promise<void> {
+    this.isLoadingSlotTemplates.set(true);
+    try {
+      const res = await this.apiService.Get<SlotTemplateDto[]>(ApiEndPoints.GetAppointmentSlots);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.slotTemplates.set(res.data.filter(s => s.isActive));
+      }
+    } catch (e) {
+      console.error('Error loading slot templates', e);
+    } finally {
+      this.isLoadingSlotTemplates.set(false);
+    }
+  }
+
+  async loadPatientSubscription(patientId: number): Promise<void> {
+    try {
+      const res = await this.apiService.Get<SubscriptionSummaryDto>(
+        `${ApiEndPoints.GetSubscriptionCurrent}?userId=${patientId}`
+      );
+      if (res?.isSuccess && res.data) {
+        const sub = res.data;
+        const planCode = `PLN-${sub.planId}`;
+        const plan: DoctorTreatmentPlan = {
+          id: planCode,
+          planCode,
+          title: sub.planName,
+          patientId: `PT-${patientId}`,
+          patientName: this.selectedPatient()?.fullName || '',
+          diagnosis: this.selectedPatient()?.primaryCondition || 'Physiotherapy Treatment',
+          totalSessions: sub.totalSessions,
+          completedSessions: sub.completedSessions,
+          frequency: `${Math.round(sub.totalSessions / 4)}x weekly`,
+          durationWeeks: 4,
+          status: sub.status === 'Active' ? 'In Progress' : 'Pending Approval',
+          statusType: sub.status === 'Active' ? 'in-progress' : 'pending',
+          startDate: sub.startDate ? sub.startDate.split('T')[0] : this.getTodayDateString(),
+          targetEndDate: sub.expiryDate ? sub.expiryDate.split('T')[0] : this.getTodayDateString(),
+          progressPercent: sub.totalSessions > 0 ? Math.round((sub.completedSessions / sub.totalSessions) * 100) : 0,
+          clinicalNotes: '',
+          phases: [],
+          userSubscriptionId: sub.id
+        };
+
+        this.activeSubscriptionSummary.set(sub);
+        this.treatmentPlans.update(list => {
+          const filtered = list.filter(p => p.patientId !== `PT-${patientId}` && p.id !== planCode);
+          return [plan, ...filtered];
+        });
+
+        this.expandedPlanId.set(planCode);
+        this.initWeeklyDraft();
+      }
+    } catch (e) {
+      console.error('Error loading patient subscription', e);
+    }
+  }
+
+  async loadPatientAppointments(patientId: number): Promise<void> {
+    this.isLoadingPatientData.set(true);
+    try {
+      const res = await this.apiService.Get<PatientAppointmentDetailsDto[]>(
+        `${ApiEndPoints.PatientAppointmentDetails}?patientId=${patientId}`
+      );
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        const pt = this.selectedPatient();
+        const activePlan = this.patientActivePlan();
+        const mapped: ScheduledBooking[] = res.data.map(a => {
+          const datePart = a.appointmentDate ? a.appointmentDate.split('T')[0] : '';
+          const slotLabel = a.timeSlot
+            ? a.timeSlot
+            : (a.startTime && a.endTime ? `${this.formatSlotTime(a.startTime)} - ${this.formatSlotTime(a.endTime)}` : a.appointmentTime || '');
+
+          const isPlanSession = (a.userSubscriptionId && a.userSubscriptionId > 0) || (a.sessionNumber && a.sessionNumber > 0);
+          const treatmentTitle = isPlanSession
+            ? (activePlan?.title || 'Basic Plan')
+            : (a.visitType ? `${a.visitType} Visit` : 'Clinic Visit');
+
+          const fee = a.amount ?? (isPlanSession ? 0 : 600);
+          const isPaid = a.paymentStatus === 'Paid' || a.paymentStatus === 'Success' || (isPlanSession && fee === 0);
+          const adv = isPaid ? fee : 0;
+          const due = isPaid ? 0 : fee;
+
+          return {
+            id: `apt-${a.id}`,
+            bookingCode: `TRT-${a.id}`,
+            patientId: `PT-${a.patientId || patientId}`,
+            patientName: a.patientName || pt?.fullName || 'Patient',
+            patientCode: `PT-${a.patientId || patientId}`,
+            phone: pt?.phone || pt?.mobile || '',
+            date: datePart,
+            timeSlot: slotLabel,
+            treatmentName: treatmentTitle,
+            therapist: a.assignedPractitionerName || a.practitionerName || this.getSelectedPractitionerName(),
+            visitType: a.visitType,
+            fee: fee,
+            advancePaid: adv,
+            balanceDue: due,
+            paymentStatus: isPaid ? 'Paid' : 'Due',
+            paymentMode: (a.paymentMethod as any) || 'Cash',
+            status: (a.status as any) || 'Scheduled',
+            planId: a.userSubscriptionId ? `PLN-${a.userSubscriptionId}` : undefined,
+            planName: isPlanSession ? treatmentTitle : undefined
+          };
+        });
+
+        this.scheduledBookings.update(currentList => {
+          const otherBookings = currentList.filter(b => b.patientId !== `PT-${patientId}` && b.patientId !== String(patientId));
+          return [...mapped, ...otherBookings];
+        });
+        this.saveStorage();
+      }
+    } catch (e) {
+      console.error('Error loading patient appointments', e);
+    } finally {
+      this.isLoadingPatientData.set(false);
+    }
+  }
+
   initWeeklyDraft(): void {
     const today = new Date();
     const draft: WeeklyDraftSession[] = [];
+    const templates = this.slotTemplates();
+    const therapistName = this.getSelectedPractitionerName();
+
     for (let i = 1; i <= 3; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + (i * 2 - 1));
+      const dateStr = this.formatLocalDate(d);
+      const dow = d.getDay();
+      const daySlots = templates.filter(s => s.dayOfWeek === dow && s.isActive);
+
+      const chosenSlot = i === 1
+        ? (daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0])
+        : (daySlots.find(s => s.startTime.startsWith('14:')) || daySlots[0]);
+
+      const slotId = chosenSlot?.id;
+      const timeSlot = chosenSlot
+        ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
+        : (i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM');
+
       draft.push({
-        id: `draft-${i}`,
-        date: d.toISOString().split('T')[0],
-        timeSlot: i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM',
-        therapist: this.attendingTherapist()
+        id: `draft-${Date.now()}-${i}`,
+        date: dateStr,
+        timeSlot: timeSlot,
+        therapist: therapistName,
+        slotId: slotId,
+        daySlots: daySlots
       });
     }
     this.weeklyDraftSessions.set(draft);
@@ -462,19 +912,31 @@ export class ScheduleTreatment implements OnInit {
     const current = this.weeklyDraftSessions();
     let nextDate = new Date();
     if (current.length > 0) {
-      nextDate = new Date(current[current.length - 1].date);
+      const last = current[current.length - 1];
+      nextDate = new Date(last.date + 'T00:00:00');
       nextDate.setDate(nextDate.getDate() + 2);
     } else {
       nextDate.setDate(nextDate.getDate() + 1);
     }
 
+    const dateStr = this.formatLocalDate(nextDate);
+    const dow = nextDate.getDay();
+    const daySlots = this.slotTemplates().filter(s => s.dayOfWeek === dow && s.isActive);
+    const chosenSlot = daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0];
+    const slotId = chosenSlot?.id;
+    const timeSlot = chosenSlot
+      ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
+      : '10:00 AM - 10:45 AM';
+
     this.weeklyDraftSessions.update(list => [
       ...list,
       {
         id: `draft-${Date.now()}`,
-        date: nextDate.toISOString().split('T')[0],
-        timeSlot: '10:00 AM - 10:45 AM',
-        therapist: this.attendingTherapist()
+        date: dateStr,
+        timeSlot: timeSlot,
+        therapist: this.getSelectedPractitionerName(),
+        slotId: slotId,
+        daySlots: daySlots
       }
     ]);
   }
@@ -483,9 +945,47 @@ export class ScheduleTreatment implements OnInit {
     this.weeklyDraftSessions.update(list => list.filter((_, i) => i !== idx));
   }
 
-  submitWeeklySchedule(plan: DoctorTreatmentPlan): void {
+  onDraftDateChange(sess: WeeklyDraftSession, newDate: string): void {
+    sess.date = newDate;
+    if (!newDate) return;
+    const d = new Date(newDate + 'T00:00:00');
+    if (isNaN(d.getTime())) return;
+    const dow = d.getDay();
+    const daySlots = this.slotTemplates().filter(s => s.dayOfWeek === dow && s.isActive);
+    sess.daySlots = daySlots;
+    if (daySlots.length > 0) {
+      const match = daySlots.find(s => s.id === sess.slotId) || daySlots[0];
+      sess.slotId = match.id;
+      sess.timeSlot = `${this.formatSlotTime(match.startTime)} - ${this.formatSlotTime(match.endTime)}`;
+    }
+  }
+
+  onDraftSlotChange(sess: WeeklyDraftSession, slotIdOrTime: any): void {
+    const numericId = Number(slotIdOrTime);
+    const found = (sess.daySlots || this.slotTemplates()).find(s => s.id === numericId);
+    if (found) {
+      sess.slotId = found.id;
+      sess.timeSlot = `${this.formatSlotTime(found.startTime)} - ${this.formatSlotTime(found.endTime)}`;
+    } else {
+      sess.timeSlot = String(slotIdOrTime);
+    }
+  }
+
+  async submitWeeklySchedule(plan: DoctorTreatmentPlan): Promise<void> {
+    if (this.isSavingWeeklySchedule()) return;
+
     const pt = this.selectedPatient();
-    if (!pt) return;
+    const patientItem = this.selectedPatientItem();
+    let rawPatientId = patientItem?.patientId;
+    if (!rawPatientId && pt?.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) rawPatientId = parseInt(match[0], 10);
+    }
+
+    if (!rawPatientId || rawPatientId <= 0) {
+      this.alertService.toastError('Please select a patient first.');
+      return;
+    }
 
     const draft = this.weeklyDraftSessions();
     if (draft.length === 0) {
@@ -493,35 +993,124 @@ export class ScheduleTreatment implements OnInit {
       return;
     }
 
-    const newBookings: ScheduledBooking[] = draft.map((s, idx) => ({
-      id: `bk-wk-${Date.now()}-${idx}`,
-      bookingCode: `TRT-${Math.floor(1000 + Math.random() * 9000)}`,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      patientCode: pt.patientCode,
-      phone: pt.phone,
-      date: s.date,
-      timeSlot: s.timeSlot,
-      treatmentName: plan.title,
-      therapist: s.therapist,
-      fee: 0,
-      advancePaid: 0,
-      balanceDue: 0,
-      paymentStatus: 'Paid',
-      paymentMode: 'Cash',
-      planId: plan.id,
-      planName: plan.title,
-      status: 'Scheduled'
-    }));
+    let userSubscriptionId = plan.userSubscriptionId || this.activeSubscriptionSummary()?.id;
+    if (!userSubscriptionId) {
+      await this.loadPatientSubscription(rawPatientId);
+      userSubscriptionId = this.activeSubscriptionSummary()?.id || plan.userSubscriptionId;
+    }
 
-    this.scheduledBookings.update(list => [...newBookings, ...list]);
-    this.saveStorage();
+    if (!userSubscriptionId || userSubscriptionId <= 0) {
+      this.alertService.toastError('No active subscription found for this patient. Please assign a plan first.');
+      return;
+    }
 
-    this.alertService.toastSuccess(`${draft.length} weekly sessions scheduled.`);
-    this.activeTab.set('list');
+    const appointments: WeeklyAppointmentSelectionViewModel[] = [];
+    for (let idx = 0; idx < draft.length; idx++) {
+      const s = draft[idx];
+      if (!s.date) {
+        this.alertService.toastError(`Please select a valid date for Day ${idx + 1}.`);
+        return;
+      }
+      const d = new Date(s.date + 'T00:00:00');
+      if (isNaN(d.getTime())) {
+        this.alertService.toastError(`Invalid date for Day ${idx + 1}.`);
+        return;
+      }
+      const dow = d.getDay();
+
+      let slotId = s.slotId;
+      if (!slotId) {
+        const match = this.slotTemplates().find(t => t.dayOfWeek === dow && t.isActive);
+        slotId = match ? match.id : 0;
+      }
+
+      if (!slotId || slotId <= 0) {
+        this.alertService.toastError(`No available slot found for Day ${idx + 1} (${s.date}).`);
+        return;
+      }
+
+      appointments.push({
+        appointmentSlotId: slotId,
+        appointmentDate: `${s.date}T12:00:00`
+      });
+    }
+
+    const payload: CreateWeeklyAppointmentsViewModel = {
+      userSubscriptionId: userSubscriptionId,
+      patientId: rawPatientId,
+      appointments: appointments
+    };
+
+    this.isSavingWeeklySchedule.set(true);
+    try {
+      const res = await this.apiService.Post<WeeklyAppointmentsBookedViewModel>(
+        ApiEndPoints.CreateWeeklyAppointments,
+        payload
+      );
+
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess(
+          res.message || `${res.data?.totalBooked || draft.length} weekly sessions scheduled successfully!`
+        );
+
+        // Refresh appointments and subscription from backend
+        await this.loadPatientAppointments(rawPatientId);
+        await this.loadPatientSubscription(rawPatientId);
+
+        // Switch to scheduled list tab
+        this.activeTab.set('list');
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to schedule weekly appointments.');
+      }
+    } catch (err: any) {
+      console.error('Error in CreateWeeklyAppointments', err);
+      this.alertService.toastError(err?.message || 'Failed to schedule weekly appointments. Please try again.');
+    } finally {
+      this.isSavingWeeklySchedule.set(false);
+    }
   }
 
   // ─── Assign Plan Methods ───────────────────────────────────────────────────
+
+  async loadProviderPlans(): Promise<void> {
+    this.isLoadingPlans.set(true);
+    try {
+      const res = await this.apiService.Get<any>(ApiEndPoints.GetProviderPlans);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.availablePlans.set(res.data);
+        if (res.data.length > 0 && !this.selectedPlanId()) {
+          this.onPlanSelect(res.data[0].id);
+        }
+      } else {
+        this.availablePlans.set([]);
+      }
+    } catch (e) {
+      console.error('Error loading provider plans', e);
+      this.availablePlans.set([]);
+    } finally {
+      this.isLoadingPlans.set(false);
+    }
+  }
+
+  onPlanSelect(planId: number | string | null): void {
+    if (planId === null || planId === undefined) {
+      this.selectedPlanId.set(null);
+      return;
+    }
+    const numericId = Number(planId);
+    this.selectedPlanId.set(numericId);
+    if (numericId === 0) {
+      return;
+    }
+    const plan = this.availablePlans().find(p => p.id === numericId);
+    if (plan) {
+      this.newPlanTitle.set(plan.planName);
+      this.newPlanSessions.set(plan.totalSessions || 1);
+      this.newPlanWeeks.set(Math.ceil((plan.validityDays || 28) / 7) || 4);
+      this.newPlanPrice.set(plan.price || 0);
+      this.setNewPlanPaymentType('full');
+    }
+  }
 
   setNewPlanPaymentType(type: 'full' | 'advance' | 'due'): void {
     this.newPlanPaymentType.set(type);
@@ -534,121 +1123,233 @@ export class ScheduleTreatment implements OnInit {
     }
   }
 
-  submitAssignPlan(): void {
+  async submitAssignPlan(): Promise<void> {
     const pt = this.selectedPatient();
-    if (!pt) {
-      this.alertService.toastError('Please select a patient first.');
+    const patientItem = this.selectedPatientItem();
+    let patientId = patientItem?.patientId;
+    if (!patientId && pt?.id) {
+      const match = pt.id.match(/\d+/);
+      if (match) patientId = parseInt(match[0], 10);
+    }
+
+    if (!patientId || patientId <= 0) {
+      this.alertService.toastError('Please search and select a patient first.');
       return;
     }
 
-    const planCode = `PLN-${Math.floor(300 + Math.random() * 600)}`;
-    const title = this.newPlanTitle();
-    const totalSessions = this.newPlanSessions();
-    const durationWeeks = this.newPlanWeeks();
-    const price = this.newPlanPrice();
+    let planId = this.selectedPlanId();
+    let plan = this.availablePlans().find(p => p.id === planId);
 
-    const plan: DoctorTreatmentPlan = {
-      id: planCode,
-      planCode,
-      title,
-      patientId: pt.id,
-      patientName: pt.fullName,
-      diagnosis: pt.primaryCondition || 'Physiotherapy Treatment',
-      totalSessions,
+    // If custom/new plan entered without selecting existing one, create provider plan first
+    if (!planId || planId <= 0) {
+      const title = this.newPlanTitle()?.trim();
+      if (!title) {
+        this.alertService.toastError('Please enter a plan name.');
+        return;
+      }
+
+      try {
+        const createPlanPayload = {
+          id: 0,
+          planName: title,
+          totalSessions: this.newPlanSessions() || 1,
+          validityDays: (this.newPlanWeeks() || 4) * 7,
+          price: this.newPlanPrice() || 0,
+          isActive: true,
+          isPopular: false
+        };
+        const createRes = await this.apiService.Post<any>(ApiEndPoints.AddProviderPlans, createPlanPayload);
+        if (createRes?.isSuccess) {
+          await this.loadProviderPlans();
+          plan = this.availablePlans().find(p => p.planName.toLowerCase() === title.toLowerCase()) || this.availablePlans()[0];
+          if (plan) planId = plan.id;
+        }
+      } catch (e) {
+        console.error('Error creating new provider plan', e);
+      }
+    }
+
+    if (!planId || planId <= 0) {
+      this.alertService.toastError('Please select a valid treatment plan.');
+      return;
+    }
+
+    const practitionerId = this.currentPractitionerId;
+    const clinicId = this.currentClinicId;
+    const providerType = practitionerId > 0 ? 'Practitioner' : 'Clinic';
+    const providerId = practitionerId > 0 ? practitionerId : clinicId;
+
+    const planPrice = plan?.price ?? this.newPlanPrice();
+    const payType = this.newPlanPaymentType();
+    const payMethod = this.newPlanPaymentMode();
+    const adv = this.newPlanAdvance();
+    const due = this.assignBalanceDue();
+
+    let paymentStatus = 'Due';
+    let paidAmount = 0;
+    if (payType === 'full') {
+      paymentStatus = 'Paid';
+      paidAmount = planPrice;
+    } else if (payType === 'advance') {
+      paymentStatus = due === 0 ? 'Paid' : 'PartiallyPaid';
+      paidAmount = adv;
+    } else {
+      paymentStatus = 'Due';
+      paidAmount = 0;
+    }
+
+    const payload: UserSubscriptionViewModel = {
+      id: 0,
+      userId: (patientItem as any)?.userId ?? 0,
+      providerId: providerId,
+      clinicId: clinicId,
+      practitionerId: practitionerId,
+      providerType: providerType,
+      planId: planId,
+      planName: plan?.planName || this.newPlanTitle(),
+      price: planPrice,
+      validityDays: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
+      providerName: this.auth.getCurrentUser()?.fullName || '',
+      totalSessions: plan?.totalSessions ?? this.newPlanSessions(),
       completedSessions: 0,
-      frequency: `${Math.round(totalSessions / durationWeeks)}x weekly`,
-      durationWeeks,
-      status: 'In Progress',
-      statusType: 'in-progress',
-      startDate: this.getTodayDateString(),
-      targetEndDate: this.getTodayDateString(),
-      progressPercent: 0,
-      clinicalNotes: '',
-      phases: []
+      remainingSessions: plan?.totalSessions ?? this.newPlanSessions(),
+      isCurrent: true,
+      status: 'Active',
+      startDate: new Date().toISOString(),
+      endDate: null,
+      daysRemaining: plan?.validityDays ?? ((this.newPlanWeeks() || 4) * 7),
+      patientId: patientId,
+      paymentType: payType,
+      paymentMethod: payMethod,
+      paymentMode: payMethod,
+      paymentStatus: paymentStatus,
+      amount: paidAmount > 0 ? paidAmount : planPrice
     };
 
-    this.treatmentPlans.update(list => [plan, ...list]);
-    this.patients.update(list =>
-      list.map(p => p.id === pt.id ? { ...p, currentPlan: title, totalSessions, sessionsCompleted: 0 } : p)
-    );
-    this.selectedPatient.set({ ...pt, currentPlan: title, totalSessions, sessionsCompleted: 0 });
+    this.isAssigningPlan.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.AddUserSubscription, payload);
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess('Subscription plan assigned to patient successfully.');
 
-    this.saveStorage();
-    this.alertService.toastSuccess('Treatment plan assigned successfully.');
-    this.expandedPlanId.set(plan.id);
-    this.initWeeklyDraft();
-    this.activeTab.set('weekly');
+        const planCode = `PLN-${planId}`;
+        const title = payload.planName || 'Treatment Plan';
+        const totalSessions = payload.totalSessions || 1;
+        const durationWeeks = Math.ceil((payload.validityDays || 28) / 7);
+
+        const localPlan: DoctorTreatmentPlan = {
+          id: planCode,
+          planCode,
+          title,
+          patientId: pt ? pt.id : `PT-${patientId}`,
+          patientName: pt?.fullName || patientItem?.fullName || '',
+          diagnosis: pt?.primaryCondition || 'Physiotherapy Treatment',
+          totalSessions,
+          completedSessions: 0,
+          frequency: `${Math.round(totalSessions / durationWeeks)}x weekly`,
+          durationWeeks,
+          status: 'In Progress',
+          statusType: 'in-progress',
+          startDate: this.getTodayDateString(),
+          targetEndDate: this.getTodayDateString(),
+          progressPercent: 0,
+          clinicalNotes: '',
+          phases: []
+        };
+
+        this.treatmentPlans.update(list => [localPlan, ...list]);
+        if (pt) {
+          this.patients.update(list =>
+            list.map(p => p.id === pt.id ? { ...p, currentPlan: title, totalSessions, sessionsCompleted: 0 } : p)
+          );
+          this.selectedPatient.set({ ...pt, currentPlan: title, totalSessions, sessionsCompleted: 0 });
+        }
+
+        this.saveStorage();
+        await this.loadPatientSubscription(patientId);
+        await this.loadPatientAppointments(patientId);
+        this.expandedPlanId.set(localPlan.id);
+        this.initWeeklyDraft();
+        this.activeTab.set('weekly');
+      } else {
+        this.alertService.toastError(res?.message || 'Failed to assign plan.');
+      }
+    } catch (err: any) {
+      console.error('Error in AddUserSubscription', err);
+      this.alertService.toastError(err?.message || 'Unable to assign subscription. Please try again.');
+    } finally {
+      this.isAssigningPlan.set(false);
+    }
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   getTodayDateString(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.formatLocalDate(new Date());
+  }
+
+  private formatLocalDate(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  getVisitDay(dateStr: string): string {
+    const d = this.parseLocalDate(dateStr);
+    return d ? String(d.getDate()).padStart(2, '0') : '--';
+  }
+
+  getVisitMonth(dateStr: string): string {
+    const d = this.parseLocalDate(dateStr);
+    return d ? d.toLocaleDateString('en-US', { month: 'short' }) : '';
+  }
+
+  private parseLocalDate(dateStr?: string | null): Date | null {
+    if (!dateStr) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+    if (match) {
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private saveStorage(): void {
     try {
       localStorage.setItem('pm_st_bookings', JSON.stringify(this.scheduledBookings()));
       localStorage.setItem('pm_st_plans', JSON.stringify(this.treatmentPlans()));
-      localStorage.setItem('pm_st_patients', JSON.stringify(this.patients()));
     } catch {}
   }
 
   private loadStorage(): void {
+    const dummyBookingIds = new Set(['seed-1', 'seed-2']);
+    const dummyPlanIds = new Set(['PLN-301', 'PLN-302', 'PLN-303']);
+    const dummyPatientIds = new Set(['PT-1041', 'PT-1042', 'PT-1043', 'PT-1044', 'PT-1045', 'PT-1064']);
+
     try {
       const b = localStorage.getItem('pm_st_bookings');
-      if (b) this.scheduledBookings.set(JSON.parse(b));
-      else this.seedBookings();
+      if (b) {
+        const parsed: ScheduledBooking[] = JSON.parse(b);
+        if (Array.isArray(parsed)) {
+          this.scheduledBookings.set(
+            parsed.filter(item => !dummyBookingIds.has(item.id) && !dummyPatientIds.has(item.patientId))
+          );
+        }
+      }
 
       const p = localStorage.getItem('pm_st_plans');
-      if (p) this.treatmentPlans.set(JSON.parse(p));
-
-      const pts = localStorage.getItem('pm_st_patients');
-      if (pts) this.patients.set(JSON.parse(pts));
-    } catch {
-      this.seedBookings();
-    }
-  }
-
-  private seedBookings(): void {
-    const today = this.getTodayDateString();
-    this.scheduledBookings.set([
-      {
-        id: 'seed-1',
-        bookingCode: 'TRT-1082',
-        patientId: 'PT-1041',
-        patientName: 'Ananya Iyer',
-        patientCode: 'PT-1041',
-        phone: '+91 98234 56789',
-        date: today,
-        timeSlot: '09:00 AM - 09:45 AM',
-        treatmentName: 'Spinal Mobilization',
-        therapist: 'Dr. Himanshu Suman (PT)',
-        fee: 600,
-        advancePaid: 600,
-        balanceDue: 0,
-        paymentStatus: 'Paid',
-        paymentMode: 'UPI',
-        status: 'Scheduled'
-      },
-      {
-        id: 'seed-2',
-        bookingCode: 'TRT-1083',
-        patientId: 'PT-1042',
-        patientName: 'Vikramaditya Rao',
-        patientCode: 'PT-1042',
-        phone: '+91 98450 12345',
-        date: today,
-        timeSlot: '10:00 AM - 10:45 AM',
-        treatmentName: 'Knee ACL Rehab',
-        therapist: 'Dr. Priya Sharma (PT)',
-        fee: 800,
-        advancePaid: 400,
-        balanceDue: 400,
-        paymentStatus: 'Advance',
-        paymentMode: 'Card',
-        status: 'Scheduled'
+      if (p) {
+        const parsedPlans: DoctorTreatmentPlan[] = JSON.parse(p);
+        if (Array.isArray(parsedPlans)) {
+          this.treatmentPlans.set(
+            parsedPlans.filter(plan => !dummyPlanIds.has(plan.id) && !dummyPatientIds.has(plan.patientId))
+          );
+        }
       }
-    ]);
+    } catch {
+      this.scheduledBookings.set([]);
+      this.treatmentPlans.set([]);
+    }
   }
 }

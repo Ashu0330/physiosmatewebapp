@@ -107,6 +107,7 @@ export class PracticeManagement extends BaseComponent implements OnInit {
     { label: '07:00 PM', value: '19:00:00' },
     { label: '07:30 PM', value: '19:30:00' },
     { label: '08:00 PM', value: '20:00:00' },
+    { label: '11:00 PM', value: '23:00:00' },
   ];
 
   showAddForm: boolean = true;

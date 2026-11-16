@@ -1,8 +1,8 @@
 import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { DoctorPatient, PatientConsultancyBooking, Payment } from '../../../models/doctor-dashboard.model';
+import { Router, RouterModule } from '@angular/router';
+import { DoctorPatient, PatientConsultancyBooking, PatientAppointmentHistoryItem, Payment } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
@@ -43,7 +43,7 @@ export interface EMRPatient {
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './patients.html',
   styleUrl: './patients.css',
 })
@@ -82,6 +82,12 @@ export class Patients implements OnInit {
   selectedConsultation = signal<PatientConsultancyBooking | null>(null);
   consultationDetailModal = signal<PatientConsultancyBooking | null>(null);
   PatientPayments = signal<Payment[]>([]);
+
+  // ─── Patient Appointments State ──────────────────────────────────────────
+  patientAppointments = signal<PatientAppointmentHistoryItem[]>([]);
+  isLoadingAppointments = signal<boolean>(false);
+  selectedAppointment = signal<PatientAppointmentHistoryItem | null>(null);
+  appointmentViewMode = signal<'cards' | 'table'>('cards');
 
   // ─── Infinite Scroll / API State ─────────────────────────────────────────
   private readonly PAGE_SIZE = 20;
@@ -324,6 +330,7 @@ export class Patients implements OnInit {
     this.viewMode.set('emr');
     const pid = patient.patientId ?? (Number(String(patient.id).replace(/\D/g, '')) || 1);
     this.loadPatientBookingHistory(pid);
+    this.loadPatientAppointmentHistory(pid);
   }
 
   backToCards(): void {
@@ -336,13 +343,67 @@ export class Patients implements OnInit {
 
   setSubTab(tab: string): void {
     this.activeSubTab.set(tab);
-    if (tab === 'consultations') {
-      const p = this.selectedPatient();
-      if (p) {
-        const pid = p.patientId ?? (Number(String(p.id).replace(/\D/g, '')) || 1);
+    const p = this.selectedPatient();
+    if (p) {
+      const pid = p.patientId ?? (Number(String(p.id).replace(/\D/g, '')) || 1);
+      if (tab === 'consultations') {
         this.loadPatientBookingHistory(pid);
+      } else if (tab === 'appointments') {
+        this.loadPatientAppointmentHistory(pid);
       }
     }
+  }
+
+  // ─── Patient Appointment History ─────────────────────────────────────────
+  async loadPatientAppointmentHistory(patientId: number): Promise<void> {
+    this.isLoadingAppointments.set(true);
+    this.patientAppointments.set([]);
+    this.selectedAppointment.set(null);
+
+    try {
+      const res = await this.apiService.Get<PatientAppointmentHistoryItem[]>(
+        `${ApiEndPoints.PatientAppointmentDetails}?patientId=${patientId}`
+      );
+
+      if (res && res.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientAppointments.set(res.data);
+      }
+    } catch (e) {
+      console.error('Patient appointment history error', e);
+      this.showError('Error loading appointment history.');
+    } finally {
+      this.isLoadingAppointments.set(false);
+    }
+  }
+
+  isAddOnDue(item: PatientAppointmentHistoryItem): boolean {
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.some(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+      });
+    }
+    if (!item.hasAddOnTreatment) return false;
+    const s = item.addOnPaymentStatus?.trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+  }
+
+  isBothPaid(item: PatientAppointmentHistoryItem): boolean {
+    const mainPaid = item.paymentStatus?.trim().toLowerCase() === 'paid' || item.paymentStatus?.trim().toLowerCase() === 'success';
+    if (!mainPaid) return false;
+
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.every(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return s === 'paid' || s === 'success';
+      });
+    }
+
+    if (!item.hasAddOnTreatment) {
+      return !!mainPaid;
+    }
+    const addOnPaid = item.addOnPaymentStatus?.trim().toLowerCase() === 'paid' || item.addOnPaymentStatus?.trim().toLowerCase() === 'success';
+    return !!mainPaid && !!addOnPaid;
   }
 
   // ─── Patient Consultation Booking History (Same pattern as in Consultations) ─

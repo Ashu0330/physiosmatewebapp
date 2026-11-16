@@ -32,6 +32,7 @@ export const ApiEndPoints = {
     AddAvailability: 'ProviderCatalog/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
+    MyAppointments: 'Appointment/MyAppointments',
     FinalizeConsultancy: 'Consultancy/FinalizeConsultancy',
     PatientConsultancyBookingDetails: 'Consultancy/PatientConsultancyBookingDetails',
 
@@ -41,6 +42,7 @@ export const ApiEndPoints = {
     RemoveSavedPractitioner: 'User/RemoveSavedPractitioner',
     AddUserSubscription: 'User/AddUserSubscription',
     GetUserSubscription: 'User/GetUserSubscription',
+    GetSubscriptions: 'Subscription/GetSubscriptions',
     GetUserProfile: 'User/GetProfile',
     GetPatientProfile: 'User/GetProfile',
     GetPractitionerProfile: 'Explore/GetPractitionerById',
@@ -68,6 +70,13 @@ export const ApiEndPoints = {
     ConsultancyPatient: 'Consultancy/ConsultancyPatient',
     GetPractitionerAppointments: 'Appointment/GetPractitionerAppointments',
     PatientAppointmentDetails: 'Appointment/PatientAppointmentDetails',
+    BookAppointment: 'Appointment/Book',
+    CreateWeeklyAppointments: 'Appointment/CreateWeeklyAppointments',
+    CompleteAppointment: 'Appointment/CompleteAppointment',
+    GetSubscriptionCurrent: 'Subscription/Current',
+
+    // ── Payment ───────────────────────────────────────────────────────────────────
+    UpdatePayment: 'PaymentJob/UpdatePayment',
 
 
     // ── Provider Catalog ──────────────────────────────────────────────────────────
