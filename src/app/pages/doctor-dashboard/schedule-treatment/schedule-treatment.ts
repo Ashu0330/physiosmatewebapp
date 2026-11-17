@@ -15,65 +15,22 @@ import {
   WeeklyAppointmentsBookedViewModel,
   SubscriptionSummaryDto,
   SlotTemplateDto,
-  PatientAppointmentDetailsDto
+  PatientAppointmentDetailsDto,
+  TreatmentSlot,
+  PractitionerOption,
+  ScheduledBooking,
+  WeeklyDraftSession
 } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
 import { Authservice } from '../../../services/authservice';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
-
-export interface TreatmentSlot {
-  slotId: number;
-  slotDate: string;
-  startTime: string;
-  endTime: string;
-  maxCapacity: number;
-  currentBookings: number;
-  remainingSpots: number;
-  isOpen: boolean;
-}
-
-export interface PractitionerOption {
-  id: number;
-  name: string;
-}
-
-export interface ScheduledBooking {
-  id: string;
-  bookingCode: string;
-  patientId: string;
-  patientName: string;
-  patientCode: string;
-  phone: string;
-  date: string;
-  timeSlot: string;
-  treatmentName: string;
-  therapist: string;
-  visitType?: string;
-  fee: number;
-  advancePaid: number;
-  balanceDue: number;
-  paymentStatus: 'Paid' | 'Advance' | 'Due';
-  paymentMode: 'UPI' | 'Cash' | 'Card' | 'NetBanking';
-  planId?: string;
-  planName?: string;
-  status: 'Scheduled' | 'Completed' | 'Cancelled';
-}
-
-export interface WeeklyDraftSession {
-  id: string;
-  date: string;
-  timeSlot: string;
-  therapist: string;
-  slotId?: number;
-  practitionerId?: number;
-  daySlots?: SlotTemplateDto[];
-}
+import { SharedModule } from '../../../shared/shared-module';
 
 @Component({
   selector: 'app-schedule-treatment',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [SharedModule],
   templateUrl: './schedule-treatment.html',
   styleUrl: './schedule-treatment.css',
 })
@@ -136,12 +93,12 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   isAssigningPlan = signal<boolean>(false);
   selectedPlan = computed(() => this.availablePlans().find(p => p.id === this.selectedPlanId()) || null);
 
-  newPlanTitle = signal<string>('Lumbar Spine Protocol');
-  newPlanSessions = signal<number>(10);
+  newPlanTitle = signal<string>('');
+  newPlanSessions = signal<number>(1);
   newPlanWeeks = signal<number>(4);
-  newPlanPrice = signal<number>(4500);
+  newPlanPrice = signal<number>(0);
   newPlanPaymentType = signal<'full' | 'advance' | 'due'>('full');
-  newPlanAdvance = signal<number>(4500);
+  newPlanAdvance = signal<number>(0);
   newPlanPaymentMode = signal<'UPI' | 'Cash' | 'Card' | 'NetBanking'>('UPI');
 
   // ─── Patients Data ─────────────────────────────────────────────────────────
@@ -193,32 +150,11 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     return Math.max(0, this.newPlanPrice() - this.newPlanAdvance());
   });
 
-  get currentPractitionerId(): number {
-    const user = this.auth.getCurrentUser();
-    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
-    if (roleId === 3) {
-      return Number(user?.practitionerId || 0);
-    }
-    const profId = this.auth.getCurrentProfessionalId();
-    return Number(user?.practitionerId || profId || 0);
-  }
-
-  get currentClinicId(): number {
-    const user = this.auth.getCurrentUser();
-    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
-    if (roleId === 3) {
-      const profId = this.auth.getCurrentProfessionalId();
-      return Number(user?.clinicId || profId || 0);
-    }
-    return Number(user?.clinicId || 0);
-  }
-
   // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.loadStorage();
     this.loadPractitioners();
     this.loadProviderPlans();
     this.loadSlotTemplates();
@@ -251,72 +187,58 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
 
   onPatientSearchChange(query: string): void {
     this.patientSearchQuery.set(query);
-    this.isSearchDropdownOpen.set(true);
-
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = null;
     }
-
     const trimmed = query.trim();
     const currentSeq = ++this.searchRequestSeq;
-
     if (!trimmed) {
       this.patientSearchResults.set([]);
       this.isSearchingPatients.set(false);
+      this.isSearchDropdownOpen.set(false);
       return;
     }
-
     this.isSearchingPatients.set(true);
-    this.searchDebounceTimer = setTimeout(() => {
-      this.executePatientSearch(trimmed, currentSeq);
-    }, 250);
-  }
-
-  private async executePatientSearch(trimmed: string, seq: number): Promise<void> {
-    try {
-      const res = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, {
-        search: trimmed,
-        page: 1,
-        pageSize: 20
-      });
-      if (seq !== this.searchRequestSeq) return;
-
-      const items = Array.isArray(res?.data?.items)
-        ? res.data.items
-        : Array.isArray(res?.data)
-          ? res.data
-          : [];
-
-      if (res?.isSuccess && items.length > 0) {
-        this.patientSearchResults.set(items as PatientSearchItem[]);
-      } else {
+    this.isSearchDropdownOpen.set(true);
+    this.searchDebounceTimer = setTimeout(async () => {
+      try {
+        const res = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, {
+          search: trimmed, page: 1, pageSize: 20
+        });
+        if (currentSeq !== this.searchRequestSeq) return;
+        const items = Array.isArray(res?.data?.items) ? res.data.items : Array.isArray(res?.data) ? res.data : [];
+        if (res?.isSuccess && items.length > 0) {
+          this.patientSearchResults.set(items as PatientSearchItem[]);
+        } else {
+          this.patientSearchResults.set([]);
+        }
+      } catch (e) {
+        if (currentSeq !== this.searchRequestSeq) return;
+        console.error('Patient search error', e);
         this.patientSearchResults.set([]);
+      } finally {
+        if (currentSeq === this.searchRequestSeq) {
+          this.isSearchingPatients.set(false);
+        }
       }
-    } catch (e) {
-      if (seq !== this.searchRequestSeq) return;
-      console.error('Patient search error', e);
-      this.patientSearchResults.set([]);
-    } finally {
-      if (seq === this.searchRequestSeq) {
-        this.isSearchingPatients.set(false);
-      }
-    }
+    }, 500);
   }
 
   selectPatientFromSearch(item: PatientSearchItem): void {
+    debugger;
     const ptCode = `PT-${item.patientId}`;
     const existing = this.patients().find(p => p.id === ptCode || p.patientCode === ptCode);
     const age = item.age && item.age > 0 ? item.age : this.calculateAge(item.dob);
     const lastVisit =
       item.lastVisitDate &&
-      !item.lastVisitDate.startsWith('0001-01-01') &&
-      !isNaN(new Date(item.lastVisitDate).getTime())
+        !item.lastVisitDate.startsWith('0001-01-01') &&
+        !isNaN(new Date(item.lastVisitDate).getTime())
         ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-          })
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        })
         : 'N/A';
 
     const patient: DoctorPatient = {
@@ -432,20 +354,10 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     } catch (e) {
       console.error('Error loading practitioners', e);
     } finally {
-      const currentPid = this.currentPractitionerId;
-      if (currentPid > 0 && !loaded.some(p => p.id === currentPid)) {
-        const currentName = this.auth.getUserName() || 'Assigned Doctor';
-        loaded = [{ id: currentPid, name: currentName }, ...loaded];
-      }
-
       this.practitioners.set(loaded);
 
       if (!this.selectedPractitionerId() && loaded.length > 0) {
-        const defaultId =
-          currentPid > 0 && loaded.some(p => p.id === currentPid)
-            ? currentPid
-            : loaded[0].id;
-        this.selectedPractitionerId.set(defaultId);
+        this.selectedPractitionerId.set(loaded[0].id);
       }
 
       this.isLoadingPractitioners.set(false);
@@ -466,28 +378,14 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
 
     const pid = this.selectedPractitionerId();
-    const cid = this.currentClinicId;
-    const user = this.auth.getCurrentUser();
-    const roleId = Number(this.auth.getRoleId() || user?.roleId || 0);
-
-    if ((!pid || pid <= 0) && cid <= 0) {
-      this.availableSlots.set([]);
-      this.selectedSlot.set(null);
-      this.isLoadingSlots.set(false);
-      return;
-    }
 
     this.isLoadingSlots.set(true);
     try {
-      let slots: TreatmentSlot[] = [];
+      const query = pid && pid > 0
+        ? `practitionerId=${pid}&date=${encodeURIComponent(date)}`
+        : `date=${encodeURIComponent(date)}`;
 
-      if (pid && pid > 0) {
-        slots = await this.fetchSlotsByQuery(`practitionerId=${pid}&date=${encodeURIComponent(date)}`);
-      }
-
-      if (slots.length === 0 && cid > 0 && (!pid || pid <= 0 || roleId === 3)) {
-        slots = await this.fetchSlotsByQuery(`clinicId=${cid}&date=${encodeURIComponent(date)}`);
-      }
+      const slots = await this.fetchSlotsByQuery(query);
 
       if (seq !== this.slotsRequestSeq) return;
 
@@ -684,7 +582,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       visitType: visitMode,
       homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
       practitionerId: pid,
-      clinicId: this.currentClinicId,
+      clinicId: 0,
       assignedPractitionerId: pid > 0 ? pid : null,
       bookingType: 'Treatment',
       amount: payloadAmount,
@@ -729,7 +627,6 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
         };
 
         this.scheduledBookings.update(list => [booking, ...list]);
-        this.saveStorage();
 
         this.alertService.toastSuccess(res.message || `Treatment scheduled (${booking.bookingCode})`);
         await this.loadAvailableSlots();
@@ -830,7 +727,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
 
           const isPlanSession = (a.userSubscriptionId && a.userSubscriptionId > 0) || (a.sessionNumber && a.sessionNumber > 0);
           const treatmentTitle = isPlanSession
-            ? (activePlan?.title || 'Basic Plan')
+            ? (activePlan?.title || 'Treatment Plan')
             : (a.visitType ? `${a.visitType} Visit` : 'Clinic Visit');
 
           const fee = a.amount ?? (isPlanSession ? 0 : 600);
@@ -865,7 +762,6 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
           const otherBookings = currentList.filter(b => b.patientId !== `PT-${patientId}` && b.patientId !== String(patientId));
           return [...mapped, ...otherBookings];
         });
-        this.saveStorage();
       }
     } catch (e) {
       console.error('Error loading patient appointments', e);
@@ -888,13 +784,13 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       const daySlots = templates.filter(s => s.dayOfWeek === dow && s.isActive);
 
       const chosenSlot = i === 1
-        ? (daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0])
-        : (daySlots.find(s => s.startTime.startsWith('14:')) || daySlots[0]);
+        ? (daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0] || templates[0])
+        : (daySlots.find(s => s.startTime.startsWith('14:')) || daySlots[0] || templates[0]);
 
       const slotId = chosenSlot?.id;
       const timeSlot = chosenSlot
         ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
-        : (i === 1 ? '10:00 AM - 10:45 AM' : '02:00 PM - 02:45 PM');
+        : '';
 
       draft.push({
         id: `draft-${Date.now()}-${i}`,
@@ -902,7 +798,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
         timeSlot: timeSlot,
         therapist: therapistName,
         slotId: slotId,
-        daySlots: daySlots
+        daySlots: daySlots.length > 0 ? daySlots : templates
       });
     }
     this.weeklyDraftSessions.set(draft);
@@ -921,12 +817,13 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
 
     const dateStr = this.formatLocalDate(nextDate);
     const dow = nextDate.getDay();
-    const daySlots = this.slotTemplates().filter(s => s.dayOfWeek === dow && s.isActive);
-    const chosenSlot = daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0];
+    const templates = this.slotTemplates();
+    const daySlots = templates.filter(s => s.dayOfWeek === dow && s.isActive);
+    const chosenSlot = daySlots.find(s => s.startTime.startsWith('10:')) || daySlots[0] || templates[0];
     const slotId = chosenSlot?.id;
     const timeSlot = chosenSlot
       ? `${this.formatSlotTime(chosenSlot.startTime)} - ${this.formatSlotTime(chosenSlot.endTime)}`
-      : '10:00 AM - 10:45 AM';
+      : '';
 
     this.weeklyDraftSessions.update(list => [
       ...list,
@@ -936,7 +833,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
         timeSlot: timeSlot,
         therapist: this.getSelectedPractitionerName(),
         slotId: slotId,
-        daySlots: daySlots
+        daySlots: daySlots.length > 0 ? daySlots : templates
       }
     ]);
   }
@@ -1174,11 +1071,6 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       return;
     }
 
-    const practitionerId = this.currentPractitionerId;
-    const clinicId = this.currentClinicId;
-    const providerType = practitionerId > 0 ? 'Practitioner' : 'Clinic';
-    const providerId = practitionerId > 0 ? practitionerId : clinicId;
-
     const planPrice = plan?.price ?? this.newPlanPrice();
     const payType = this.newPlanPaymentType();
     const payMethod = this.newPlanPaymentMode();
@@ -1201,10 +1093,10 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     const payload: UserSubscriptionViewModel = {
       id: 0,
       userId: (patientItem as any)?.userId ?? 0,
-      providerId: providerId,
-      clinicId: clinicId,
-      practitionerId: practitionerId,
-      providerType: providerType,
+      providerId: plan?.providerId ?? 0,
+      clinicId: 0,
+      practitionerId: 0,
+      providerType: plan?.providerType || 'Practitioner',
       planId: planId,
       planName: plan?.planName || this.newPlanTitle(),
       price: planPrice,
@@ -1265,7 +1157,6 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
           this.selectedPatient.set({ ...pt, currentPlan: title, totalSessions, sessionsCompleted: 0 });
         }
 
-        this.saveStorage();
         await this.loadPatientSubscription(patientId);
         await this.loadPatientAppointments(patientId);
         this.expandedPlanId.set(localPlan.id);
@@ -1313,43 +1204,5 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
     const parsed = new Date(dateStr);
     return isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  private saveStorage(): void {
-    try {
-      localStorage.setItem('pm_st_bookings', JSON.stringify(this.scheduledBookings()));
-      localStorage.setItem('pm_st_plans', JSON.stringify(this.treatmentPlans()));
-    } catch {}
-  }
-
-  private loadStorage(): void {
-    const dummyBookingIds = new Set(['seed-1', 'seed-2']);
-    const dummyPlanIds = new Set(['PLN-301', 'PLN-302', 'PLN-303']);
-    const dummyPatientIds = new Set(['PT-1041', 'PT-1042', 'PT-1043', 'PT-1044', 'PT-1045', 'PT-1064']);
-
-    try {
-      const b = localStorage.getItem('pm_st_bookings');
-      if (b) {
-        const parsed: ScheduledBooking[] = JSON.parse(b);
-        if (Array.isArray(parsed)) {
-          this.scheduledBookings.set(
-            parsed.filter(item => !dummyBookingIds.has(item.id) && !dummyPatientIds.has(item.patientId))
-          );
-        }
-      }
-
-      const p = localStorage.getItem('pm_st_plans');
-      if (p) {
-        const parsedPlans: DoctorTreatmentPlan[] = JSON.parse(p);
-        if (Array.isArray(parsedPlans)) {
-          this.treatmentPlans.set(
-            parsedPlans.filter(plan => !dummyPlanIds.has(plan.id) && !dummyPatientIds.has(plan.patientId))
-          );
-        }
-      }
-    } catch {
-      this.scheduledBookings.set([]);
-      this.treatmentPlans.set([]);
-    }
   }
 }

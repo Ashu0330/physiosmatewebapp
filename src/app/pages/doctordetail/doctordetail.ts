@@ -39,6 +39,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   practitionerId: number = 0;
   readonly isClinic = signal<boolean>(false);
   readonly doctorDetail = signal<PractitionerDetailedData | null>(null);
+  readonly isSaved = signal<boolean>(false);
+  readonly isSavingDoctor = signal<boolean>(false);
 
   readonly availabilitySlots = signal<Availability[]>([]);
   readonly isLoadingAvailability = signal<boolean>(false);
@@ -365,17 +367,116 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
   /** API 1: Fetch Doctor or Clinic Profile Details */
   async GetDoctorById(): Promise<void> {
+    const userId = Number(this.authService.getuserid() || 0);
     const endpoint = this.isClinic()
-      ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}`
-      : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}`;
+      ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}&userId=${userId}`
+      : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}&UserId=${userId}`;
     const res = await this.apiService.Get<PractitionerDetailedData>(endpoint);
     this.doctorDetail.set(res?.data ?? null);
+    if (res?.data) {
+      const isSaved = this.isClinic()
+        ? Boolean((res.data as any).savedClinic)
+        : Boolean(res.data.savedPractitioner || (res.data as any).savedDoctor);
+      this.isSaved.set(isSaved);
+    }
     if (this.bookingForm && res?.data) {
       this.bookingForm.patchValue({
         practitionerId: this.practitionerId || res.data.practitionerId || 1,
         doctorName: res.data.fullName || this.practitioner.name,
         consultationFee: res.data.consultationFee ?? this.practitioner.consultationFee ?? 500
       });
+    }
+  }
+
+  /** Bookmark / Save Doctor toggle */
+  async toggleSaveDoctor(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.showError('Please log in to save to your bookmarks.');
+      return;
+    }
+
+    if (this.isSavingDoctor()) return;
+
+    const userId = Number(this.authService.getuserid() || 0);
+    if (!userId) {
+      this.showError('User session expired. Please log in again.');
+      return;
+    }
+
+    const doc = this.doctorDetail();
+    const id = Number(this.practitionerId || doc?.practitionerId || doc?.id || 0);
+    if (!id) {
+      this.showError('Doctor details not loaded.');
+      return;
+    }
+
+    this.isSavingDoctor.set(true);
+
+    try {
+      if (this.isClinic()) {
+        if (this.isSaved()) {
+          const res = await this.apiService.Get<boolean>(
+            `${ApiEndPoints.RemoveSavedClinic}?userId=${userId}&clinicId=${id}`
+          );
+          if (res?.isSuccess) {
+            this.isSaved.set(false);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? ({ ...d, savedClinic: false } as any) : null);
+            }
+            this.showSuccess('Clinic removed from bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to remove saved clinic.');
+          }
+        } else {
+          const res = await this.apiService.Post<boolean>(ApiEndPoints.SaveClinic, {
+            userId,
+            clinicId: id
+          });
+          if (res?.isSuccess) {
+            this.isSaved.set(true);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? ({ ...d, savedClinic: true } as any) : null);
+            }
+            this.showSuccess('Clinic saved to bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to save clinic.');
+          }
+        }
+      } else {
+        if (this.isSaved()) {
+          const res = await this.apiService.Get<boolean>(
+            `${ApiEndPoints.RemoveSavedPractitioner}?practitionerId=${id}`
+          );
+          if (res?.isSuccess) {
+            this.isSaved.set(false);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? { ...d, savedPractitioner: false } : null);
+            }
+            this.showSuccess('Doctor removed from bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to remove saved doctor.');
+          }
+        } else {
+          const res = await this.apiService.Post<boolean>(ApiEndPoints.SavePractitioner, {
+            userId,
+            practitionerId: id
+          });
+          if (res?.isSuccess) {
+            this.isSaved.set(true);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? { ...d, savedPractitioner: true } : null);
+            }
+            this.showSuccess('Doctor saved to bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to save doctor.');
+          }
+        }
+      }
+    } catch (e: any) {
+      console.error('Error toggling save status', e);
+      this.showError('An error occurred. Please try again.');
+    } finally {
+      this.isSavingDoctor.set(false);
     }
   }
 

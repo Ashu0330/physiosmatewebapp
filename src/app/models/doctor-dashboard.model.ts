@@ -631,3 +631,51 @@ export interface PatientAppointmentDetailsDto {
   addOnPaymentId?: number;
   addOns?: any[];
 }
+
+export interface TreatmentSlot {
+  slotId: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+  maxCapacity: number;
+  currentBookings: number;
+  remainingSpots: number;
+  isOpen: boolean;
+}
+
+export interface PractitionerOption {
+  id: number;
+  name: string;
+}
+
+export interface ScheduledBooking {
+  id: string;
+  bookingCode: string;
+  patientId: string;
+  patientName: string;
+  patientCode: string;
+  phone: string;
+  date: string;
+  timeSlot: string;
+  treatmentName: string;
+  therapist: string;
+  visitType?: string;
+  fee: number;
+  advancePaid: number;
+  balanceDue: number;
+  paymentStatus: 'Paid' | 'Advance' | 'Due';
+  paymentMode: 'UPI' | 'Cash' | 'Card' | 'NetBanking';
+  planId?: string;
+  planName?: string;
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
+}
+
+export interface WeeklyDraftSession {
+  id: string;
+  date: string;
+  timeSlot: string;
+  therapist: string;
+  slotId?: number;
+  practitionerId?: number;
+  daySlots?: SlotTemplateDto[];
+}

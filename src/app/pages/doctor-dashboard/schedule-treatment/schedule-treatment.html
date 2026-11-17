@@ -385,10 +385,12 @@
                           @for (slot of sess.daySlots; track slot.id) {
                           <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
                           }
+                        } @else if (slotTemplates().length > 0) {
+                          @for (slot of slotTemplates(); track slot.id) {
+                          <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
+                          }
                         } @else {
-                          <option [value]="sess.slotId || 2">{{ sess.timeSlot || '10:00 AM - 10:45 AM' }}</option>
-                          <option value="2">10:00 AM - 10:45 AM</option>
-                          <option value="3">02:00 PM - 02:45 PM</option>
+                          <option [ngValue]="null" disabled>No slots configured</option>
                         }
                       </select>
 

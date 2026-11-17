@@ -88,6 +88,7 @@ export interface PractitionerSubscriptionPlan {
 
 export class PractitionerModel {
   name: string;
+  id: number;
   specialty: string;
   rating: number;
   reviewsCount: number;

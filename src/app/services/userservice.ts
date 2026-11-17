@@ -20,6 +20,15 @@ export class Userservice {
   RemoveSavedPractitioner(practitionerId: number) {
     return this.http.get<ApiResponse<any>>(environment.baseUrl + `User/RemoveSavedPractitioner?practitionerId=${practitionerId}`);
   }
+  SaveClinic(model: any) {
+    return this.http.post<ApiResponse<any>>(environment.baseUrl + `User/SaveClinic`, model);
+  }
+  GetSavedClinics(userId: number) {
+    return this.http.get<ApiResponse<any[]>>(environment.baseUrl + `User/SavedClinics?userId=${userId}`);
+  }
+  RemoveSavedClinic(userId: number, clinicId: number) {
+    return this.http.get<ApiResponse<any>>(environment.baseUrl + `User/RemoveSavedClinic?userId=${userId}&clinicId=${clinicId}`);
+  }
   GetProviderAvailability(practitionerid: number) {
     return this.http.get<ApiResponse<any>>(environment.baseUrl + `Consultancy/GetAvailability?practitionerId=${practitionerid}`);
   }
