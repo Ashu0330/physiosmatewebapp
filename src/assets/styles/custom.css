@@ -1213,7 +1213,7 @@ a {
  * Built with design tokens from variable.css
  * ========================================================= */
 
-.physios-site-footer {
+/* .physios-site-footer {
   width: 100%;
   background-color: var(--footer-bg, #1a2b56);
   color: var(--footer-link, #d8e2ed);
@@ -1223,7 +1223,7 @@ a {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
-}
+} */
 
 .physios-footer-container {
   max-width: 1200px;
@@ -3023,4 +3023,37 @@ a {
 .payment-patient-meta {
   font-size: 11px;
   color: #64748B;
+}
+
+.sec-title-row {
+  display: flex;
+  /* align-items: center; */
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.sec-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--primary-subtle, #E6F7F5);
+  color: var(--primary-dark, #087F76);
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.sec-heading {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main, #1F2937);
+  margin: 0;
+}
+
+.sec-sub {
+  font-size: 12px;
+  color: var(--text-muted, #6B7280);
 }
