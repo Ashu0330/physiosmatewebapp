@@ -1,8 +1,18 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, OnInit, ElementRef, HostListener, PLATFORM_ID, signal, computed, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient, DoctorAppointment, DoctorInquiryOrAppointment } from '../../../models/doctor-dashboard.model';
+import {
+  DoctorPatient,
+  DoctorAppointment,
+  DoctorInquiryOrAppointment,
+  AppointmentPatientSearchItem,
+  PatientAppointmentHistoryItem,
+  CompleteAppointmentRequest
+} from '../../../models/doctor-dashboard.model';
+import { ProviderAddon } from '../../../models/mastermodel';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
   selector: 'app-doctor-appointments',
@@ -13,6 +23,9 @@ import { SweetAlertService } from '../../../services/sweet-alert.service';
 })
 export class DoctorAppointments implements OnInit {
   private alertService = inject(SweetAlertService);
+  private apiService = inject(ApiService);
+  private elementRef = inject(ElementRef);
+  private platformId = inject(PLATFORM_ID);
 
   @Input() patients: DoctorPatient[] = [];
   @Input() appointments: DoctorAppointment[] = [];
@@ -21,9 +34,30 @@ export class DoctorAppointments implements OnInit {
   // ─── Search & Selection State ───────────────────────────────────────────────
   patientSearchQuery = signal<string>('');
   selectedPatientId = signal<string | null>(null);
+  selectedPatient = signal<DoctorPatient | null>(null);
+  isSearchDropdownOpen = signal<boolean>(false);
+  patientSearchResults = signal<AppointmentPatientSearchItem[]>([]);
+  isSearchingPatients = signal<boolean>(false);
+  selectedPatientItem = signal<AppointmentPatientSearchItem | null>(null);
 
-  // ─── Entry Mode Toggle: Appointment vs Inquiry ─────────────────────────────
-  entryType: 'appointment' | 'inquiry' = 'appointment';
+  // ─── Add-on Services (Multiselect via GetAllAddOns) ────────────────────────
+  addons = signal<ProviderAddon[]>([]);
+  isLoadingAddons = signal<boolean>(false);
+  selectedAddOns = signal<ProviderAddon[]>([]);
+  isAddonDropdownOpen = signal<boolean>(false);
+  selectedAddOnPayload = computed(() =>
+    this.selectedAddOns().map(addon => ({
+      addOnId: addon.id,
+      addOnService: addon.addOnName
+    }))
+  );
+
+  // ─── Patient Appointment History State ──────────────────────────────────────
+  patientAppointmentHistory = signal<PatientAppointmentHistoryItem[]>([]);
+  isLoadingHistory = signal<boolean>(false);
+  selectedAppointment = signal<PatientAppointmentHistoryItem | null>(null);
+  appointmentDetailModal = signal<PatientAppointmentHistoryItem | null>(null);
+  isSubmitting = signal<boolean>(false);
 
   // ─── Time Slot Presets ─────────────────────────────────────────────────────
   availableSlots = [
@@ -34,14 +68,6 @@ export class DoctorAppointments implements OnInit {
     '03:15 PM - 04:00 PM',
     '04:30 PM - 05:15 PM',
     '05:30 PM - 06:15 PM'
-  ];
-
-  inquirySources = [
-    'Phone Call',
-    'Walk-in Reception',
-    'WhatsApp / Website',
-    'Doctor Referral',
-    'Past Patient Family'
   ];
 
   // ─── Active Form Model ─────────────────────────────────────────────────────
@@ -61,185 +87,213 @@ export class DoctorAppointments implements OnInit {
     condition: '',
     fee: 500,
     appointmentNotes: '',
-    appointmentStatus: 'Scheduled' as 'Scheduled' | 'In-Progress' | 'Completed',
-
-    // Inquiry Specifics
-    inquirySource: 'Phone Call',
-    inquiryInterest: '',
-    followUpDate: '',
-    priority: 'Medium' as 'High' | 'Medium' | 'Low',
-    inquiryNotes: '',
-    inquiryStatus: 'Open Lead' as 'Open Lead' | 'Follow-up Needed' | 'Converted' | 'Cancelled'
+    appointmentStatus: 'Scheduled' as 'Scheduled' | 'In-Progress' | 'Completed'
   };
-
-  // ─── Active Bottom Tab Filter ──────────────────────────────────────────────
-  activeListTab: 'appointments' | 'inquiries' | 'completed' = 'appointments';
-
-  // ─── Active Inquiries Ledger ───────────────────────────────────────────────
-  inquiriesList: DoctorInquiryOrAppointment[] = [
-    {
-      id: 'INQ-201',
-      bookingCode: 'INQ-201',
-      entryType: 'inquiry',
-      patientName: 'Kavita Menon',
-      phone: '+91 98110 55432',
-      email: 'kavita.menon@example.com',
-      age: 48,
-      gender: 'Female',
-      date: 'Today, 05 Sep 2026',
-      conditionOrInterest: 'Frozen Shoulder Therapy Package & Pricing',
-      inquirySource: 'Phone Call',
-      followUpDate: '07 Sep 2026',
-      notes: 'Inquired about home visit feasibility for left shoulder pain. Wants callback with senior discount details.',
-      status: 'Open Lead'
-    },
-    {
-      id: 'INQ-202',
-      bookingCode: 'INQ-202',
-      entryType: 'inquiry',
-      patientName: 'Deepak Saxena',
-      phone: '+91 99880 12340',
-      email: 'deepak.s@example.com',
-      age: 62,
-      gender: 'Male',
-      date: '04 Sep 2026',
-      conditionOrInterest: 'Total Knee Replacement Pre-Op Rehab Plan',
-      inquirySource: 'Walk-in',
-      followUpDate: '08 Sep 2026',
-      notes: 'Undergoing surgery next month. Requested literature on accelerated post-op recovery protocol.',
-      status: 'Follow-up Needed'
-    },
-    {
-      id: 'INQ-203',
-      bookingCode: 'INQ-203',
-      entryType: 'inquiry',
-      patientName: 'Pooja Agarwal',
-      phone: '+91 97550 99881',
-      email: 'pooja.agarwal@example.com',
-      age: 31,
-      gender: 'Female',
-      date: '02 Sep 2026',
-      conditionOrInterest: 'Postnatal Pelvic Floor & Core Strengthening',
-      inquirySource: 'WhatsApp',
-      followUpDate: '09 Sep 2026',
-      notes: 'Looking for 2x weekly morning sessions after 10 AM. Interested in introductory trial session.',
-      status: 'Open Lead'
-    }
-  ];
-
-  // ─── Combined Appointments Ledger ──────────────────────────────────────────
-  allAppointments: DoctorInquiryOrAppointment[] = [];
 
   ngOnInit(): void {
     const today = new Date();
     this.formData.appointmentDate = today.toISOString().split('T')[0];
 
-    const followUp = new Date();
-    followUp.setDate(today.getDate() + 3);
-    this.formData.followUpDate = followUp.toISOString().split('T')[0];
-
-    this.initializeAppointmentsLedger();
-
-    // Auto-select first patient if available
-    if (this.patients.length > 0) {
-      this.selectPatient(this.patients[0]);
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadAddons();
     }
   }
 
-  initializeAppointmentsLedger(): void {
-    this.allAppointments = [
-      {
-        id: 'APT-901',
-        bookingCode: 'BKG-7721',
-        entryType: 'appointment',
-        patientId: 'PT-1041',
-        patientCode: 'PT-1041',
-        patientName: 'Ananya Iyer',
-        phone: '+91 98234 56789',
-        age: 34,
-        gender: 'Female',
-        date: 'Today, 05 Sep 2026',
-        timeSlot: '09:30 AM - 10:15 AM',
-        visitType: 'In-Clinic',
-        conditionOrInterest: 'Lumbar Disc Herniation',
-        notes: 'Session 6 of 12. Focus on neutral spine core activation.',
-        status: 'Completed',
-        fee: 500
-      },
-      {
-        id: 'APT-902',
-        bookingCode: 'BKG-7722',
-        entryType: 'appointment',
-        patientId: 'PT-1042',
-        patientCode: 'PT-1042',
-        patientName: 'Vikramaditya Rao',
-        phone: '+91 98450 12345',
-        age: 28,
-        gender: 'Male',
-        date: 'Today, 05 Sep 2026',
-        timeSlot: '11:15 AM - 12:00 PM',
-        visitType: 'In-Clinic',
-        conditionOrInterest: 'Right Knee ACL Post-Op',
-        notes: 'Session 10 of 16. Concentrating on eccentric quadriceps strength.',
-        status: 'In-Progress',
-        fee: 500
-      },
-      {
-        id: 'APT-903',
-        bookingCode: 'BKG-7723',
-        entryType: 'appointment',
-        patientId: 'PT-1043',
-        patientCode: 'PT-1043',
-        patientName: 'Meera Nambiar',
-        phone: '+91 97112 34567',
-        age: 52,
-        gender: 'Female',
-        date: 'Today, 05 Sep 2026',
-        timeSlot: '02:00 PM - 02:45 PM',
-        visitType: 'Video Call',
-        conditionOrInterest: 'Frozen Shoulder (Adhesive Capsulitis)',
-        notes: 'Session 4 of 10. Grade II mobilization review.',
-        status: 'Scheduled',
-        fee: 500
-      },
-      {
-        id: 'APT-904',
-        bookingCode: 'BKG-7724',
-        entryType: 'appointment',
-        patientId: 'PT-1044',
-        patientCode: 'PT-1044',
-        patientName: 'Rohan Deshmukh',
-        phone: '+91 99201 87654',
-        age: 41,
-        gender: 'Male',
-        date: 'Today, 05 Sep 2026',
-        timeSlot: '04:30 PM - 05:15 PM',
-        visitType: 'In-Clinic',
-        conditionOrInterest: 'Cervical Spondylosis',
-        notes: 'Session 2 of 8. Postural workstation review.',
-        status: 'Scheduled',
-        fee: 500
+  // ─── Add-on Services Fetch & Multiselect Handlers ──────────────────────────
+  async loadAddons(): Promise<void> {
+    this.isLoadingAddons.set(true);
+    try {
+      const res = await this.apiService.Get<ProviderAddon[]>(ApiEndPoints.GetAllAddOns);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        this.addons.set(res.data);
+      } else {
+        this.addons.set([]);
       }
-    ];
+    } catch (e) {
+      console.error('Error loading add-ons', e);
+      this.addons.set([]);
+    } finally {
+      this.isLoadingAddons.set(false);
+    }
   }
 
-  // ─── Filtered Patients for Left Search Box ────────────────────────────────
-  filteredPatients = computed(() => {
-    const query = this.patientSearchQuery().toLowerCase().trim();
-    if (!query) return this.patients;
+  toggleAddonDropdown(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isAddonDropdownOpen.update(open => !open);
+  }
 
-    return this.patients.filter(p =>
-      p.fullName.toLowerCase().includes(query) ||
-      (p.phone && p.phone.toLowerCase().includes(query)) ||
-      (p.mobile && p.mobile.toLowerCase().includes(query)) ||
-      (p.patientCode && p.patientCode.toLowerCase().includes(query)) ||
-      (p.primaryCondition && p.primaryCondition.toLowerCase().includes(query))
-    );
-  });
+  isAddOnSelected(addOnId: number): boolean {
+    return this.selectedAddOns().some(a => a.id === addOnId);
+  }
+
+  toggleAddOn(addon: ProviderAddon): void {
+    if (this.isAddOnSelected(addon.id)) {
+      this.selectedAddOns.update(list => list.filter(a => a.id !== addon.id));
+    } else {
+      this.selectedAddOns.update(list => [...list, addon]);
+    }
+  }
+
+  removeAddOn(addOnId: number, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedAddOns.update(list => list.filter(a => a.id !== addOnId));
+  }
+
+  clearAddOns(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedAddOns.set([]);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    if (
+      this.isAddonDropdownOpen() &&
+      !this.elementRef.nativeElement.querySelector('.addon-multiselect-wrap')?.contains(target)
+    ) {
+      this.isAddonDropdownOpen.set(false);
+    }
+
+    if (
+      this.isSearchDropdownOpen() &&
+      !this.elementRef.nativeElement.querySelector('.top-search-row')?.contains(target)
+    ) {
+      this.isSearchDropdownOpen.set(false);
+    }
+  }
+
+  // ─── Live Patient Search via Backend API (Matching Consultancy Approach) ───
+  async onPatientSearchChange(query: string): Promise<void> {
+    this.patientSearchQuery.set(query);
+    this.isSearchDropdownOpen.set(true);
+
+    if (!query.trim()) {
+      this.patientSearchResults.set([]);
+      return;
+    }
+
+    this.isSearchingPatients.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitionerAppointments, {
+        search: query.trim(),
+        page: 1,
+        pageSize: 10
+      });
+      if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientSearchResults.set(res.data as AppointmentPatientSearchItem[]);
+      } else {
+        this.patientSearchResults.set([]);
+      }
+    } catch (e) {
+      console.error('Patient search error', e);
+      this.patientSearchResults.set([]);
+    } finally {
+      this.isSearchingPatients.set(false);
+    }
+  }
+
+  // ─── Select Patient from Search Results ─────────────────────────────────────
+  async selectPatientFromSearch(item: AppointmentPatientSearchItem): Promise<void> {
+    const ptCode = `PT-${item.patientId}`;
+    const patient: DoctorPatient = {
+      id: ptCode,
+      patientCode: ptCode,
+      fullName: item.fullName,
+      age: item.age,
+      gender: (item.gender as 'Male' | 'Female' | 'Other') || 'Male',
+      phone: item.mobile,
+      mobile: item.mobile,
+      email: item.email || '',
+      address: item.address || undefined,
+      city: item.city || undefined,
+      state: item.state || undefined,
+      photoUrl: item.profileImage || undefined,
+      status: 'Active',
+      sessionsCompleted: 0,
+      totalSessions: 0,
+      lastVisit: item.lastVisitDate
+        ? new Date(item.lastVisitDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A',
+      notes: item.notes || undefined,
+    };
+
+    this.selectedPatientItem.set(item);
+    this.selectPatient(patient);
+
+    if (item.notes && !this.formData.appointmentNotes) {
+      this.formData.appointmentNotes = item.notes;
+    }
+
+    if (item.appointmentDate) {
+      this.formData.appointmentDate = item.appointmentDate.split('T')[0];
+    }
+    if (item.fees) {
+      this.formData.fee = item.fees;
+    }
+    if (item.appointmentStatus && ['Scheduled', 'In-Progress', 'Completed'].includes(item.appointmentStatus)) {
+      this.formData.appointmentStatus = item.appointmentStatus as 'Scheduled' | 'In-Progress' | 'Completed';
+    }
+    if (item.startTime && item.endTime) {
+      this.formData.timeSlot = `${item.startTime} - ${item.endTime}`;
+    }
+
+    // Load Appointment History for this patient
+    await this.loadPatientAppointmentHistory(item.patientId);
+  }
+
+  // ─── Load Patient Past Appointment History from Backend ────────────────────
+  async loadPatientAppointmentHistory(patientId: number): Promise<void> {
+    this.isLoadingHistory.set(true);
+
+    try {
+      const res = await this.apiService.Get<PatientAppointmentHistoryItem[]>(
+        `${ApiEndPoints.PatientAppointmentDetails}?patientId=${patientId}`
+      );
+
+      if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientAppointmentHistory.set(res.data);
+        const currentSelectedId = this.selectedAppointment()?.id;
+        const stillExists = currentSelectedId ? res.data.find(a => a.id === currentSelectedId) : null;
+        if (stillExists) {
+          this.selectedAppointment.set(stillExists);
+        } else {
+          // Auto-select scheduled/in-progress appointment, or the first appointment
+          const active = res.data.find(a => a.status === 'Scheduled' || a.status === 'In-Progress') || res.data[0];
+          if (active) {
+            this.selectedAppointment.set(active);
+            if (active.notes && !this.formData.appointmentNotes) {
+              this.formData.appointmentNotes = active.notes;
+            }
+          }
+        }
+      } else {
+        this.patientAppointmentHistory.set([]);
+        this.selectedAppointment.set(null);
+      }
+    } catch (e) {
+      console.error('Appointment history error', e);
+      this.patientAppointmentHistory.set([]);
+      this.selectedAppointment.set(null);
+    } finally {
+      this.isLoadingHistory.set(false);
+    }
+  }
 
   // ─── Auto-Fill Form on Patient Selection ───────────────────────────────────
   selectPatient(patient: DoctorPatient): void {
+    this.selectedPatient.set(patient);
     this.selectedPatientId.set(patient.id);
+    this.isSearchDropdownOpen.set(false);
+    this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
 
     this.formData.patientCode = patient.patientCode || patient.id;
     this.formData.fullName = patient.fullName;
@@ -248,18 +302,61 @@ export class DoctorAppointments implements OnInit {
     this.formData.age = patient.age;
     this.formData.gender = (patient.gender as 'Male' | 'Female' | 'Other') || 'Male';
     this.formData.condition = patient.primaryCondition || '';
-    this.formData.inquiryInterest = patient.primaryCondition || '';
     this.formData.appointmentNotes = patient.notes || '';
-    this.formData.fee = 500;
+    if (!this.formData.fee) {
+      this.formData.fee = 500;
+    }
+
+    // Attempt to load appointment history if patient has numeric ID
+    const rawId = (patient.patientCode || patient.id).replace(/\D/g, '');
+    const numericId = parseInt(rawId, 10);
+    if (!isNaN(numericId) && numericId > 0 && !this.selectedPatientItem()) {
+      this.loadPatientAppointmentHistory(numericId);
+    }
   }
 
-  // ─── Clear Form for New Patient / Inquiry ─────────────────────────────────
-  clearForNewEntry(): void {
-    this.selectedPatientId.set(null);
-    const newCode = `PT-${1040 + this.patients.length + 1}`;
+  // ─── Select Appointment from History ───────────────────────────────────────
+  selectAppointment(apt: PatientAppointmentHistoryItem): void {
+    this.selectedAppointment.set(apt);
+    if (apt.notes) {
+      this.formData.appointmentNotes = apt.notes;
+    }
+    if (apt.appointmentDate) {
+      this.formData.appointmentDate = apt.appointmentDate.split('T')[0];
+    }
+    if (apt.status && ['Scheduled', 'In-Progress', 'Completed'].includes(apt.status)) {
+      this.formData.appointmentStatus = apt.status as 'Scheduled' | 'In-Progress' | 'Completed';
+    }
+  }
 
-    this.formData = {
-      patientCode: newCode,
+  viewAppointmentDetails(apt: PatientAppointmentHistoryItem, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectAppointment(apt);
+    this.appointmentDetailModal.set(apt);
+  }
+
+  closeAppointmentModal(): void {
+    this.appointmentDetailModal.set(null);
+  }
+
+  // ─── Clear Form for New Patient ───────────────────────────────────────────
+  clearForNewEntry(): void {
+    this.selectedPatient.set(null);
+    this.selectedPatientId.set(null);
+    this.selectedPatientItem.set(null);
+    this.patientSearchQuery.set('');
+    this.patientSearchResults.set([]);
+    this.patientAppointmentHistory.set([]);
+    this.selectedAppointment.set(null);
+    this.appointmentDetailModal.set(null);
+    this.isSearchDropdownOpen.set(false);
+    this.selectedAddOns.set([]);
+    this.isAddonDropdownOpen.set(false);
+
+    this.formData = { 
+      patientCode: '',
       fullName: '',
       phone: '',
       email: '',
@@ -273,113 +370,106 @@ export class DoctorAppointments implements OnInit {
       condition: '',
       fee: 500,
       appointmentNotes: '',
-      appointmentStatus: 'Scheduled',
-
-      inquirySource: 'Phone Call',
-      inquiryInterest: '',
-      followUpDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-      priority: 'Medium',
-      inquiryNotes: '',
-      inquiryStatus: 'Open Lead'
+      appointmentStatus: 'Scheduled'
     };
-  }
-
-  setEntryType(type: 'appointment' | 'inquiry'): void {
-    this.entryType = type;
   }
 
   setTimeSlot(slot: string): void {
     this.formData.timeSlot = slot;
   }
 
-  // ─── Save Appointment or Inquiry ──────────────────────────────────────────
+  // ─── Complete Appointment API Call ─────────────────────────────────────────
+  async onCompleteAppointment(): Promise<void> {
+    const pt = this.selectedPatient();
+    if (!pt) {
+      this.alertService.error('Missing Information', 'Please search and select a patient first.');
+      return;
+    }
+
+    const apt = this.selectedAppointment();
+    if (!apt?.id) {
+      this.alertService.error('No Appointment Selected', 'Please select an appointment from the appointment history on the right to complete.');
+      return;
+    }
+
+    if (apt.status === 'Completed') {
+      this.alertService.warning('Already Completed', 'This appointment has already been completed.');
+      return;
+    }
+
+    const addOnList = this.selectedAddOnPayload();
+    const payload: CompleteAppointmentRequest = {
+      appointmentId: apt.id,
+      clinicalNotes: this.formData.appointmentNotes?.trim() || null,
+      addOn: addOnList.length > 0 ? addOnList : null
+    };
+
+    this.isSubmitting.set(true);
+    try {
+      const res = await this.apiService.Post<any>(ApiEndPoints.CompleteAppointment, payload);
+      if (res?.isSuccess) {
+        this.alertService.toastSuccess(res.message || 'Appointment completed successfully!');
+
+        // Update local appointment status
+        apt.status = 'Completed';
+        this.formData.appointmentStatus = 'Completed';
+
+        // Refresh appointment history for this patient
+        const rawId = (pt.patientCode || pt.id).replace(/\D/g, '');
+        const numericId = parseInt(rawId, 10);
+        if (!isNaN(numericId) && numericId > 0) {
+          await this.loadPatientAppointmentHistory(numericId);
+        }
+
+        // Emit updated appointment to parent
+        const code = `BKG-${Date.now().toString().slice(-4)}`;
+        const updatedAppointment: DoctorInquiryOrAppointment = {
+          id: `APT-${apt.id}`,
+          bookingCode: code,
+          entryType: 'appointment',
+          patientId: pt.patientCode || pt.id,
+          patientCode: pt.patientCode || pt.id,
+          patientName: pt.fullName,
+          phone: this.formData.phone,
+          email: this.formData.email,
+          age: this.formData.age || 30,
+          gender: this.formData.gender,
+          date: this.formData.appointmentDate,
+          timeSlot: this.formData.timeSlot,
+          visitType: this.formData.visitType,
+          conditionOrInterest: this.formData.condition || 'Physical Therapy Session',
+          notes: this.formData.appointmentNotes,
+          status: 'Completed',
+          fee: this.formData.fee,
+          ...(addOnList.length > 0 ? { addOn: addOnList } : {})
+        };
+        this.appointmentAdded.emit(updatedAppointment);
+
+        // Reset add-on selection after completion
+        this.selectedAddOns.set([]);
+      } else {
+        this.alertService.error('Error', res?.message || 'Failed to complete appointment.');
+      }
+    } catch (e: any) {
+      console.error('CompleteAppointment error', e);
+      this.alertService.error('Error', e?.message || 'An error occurred while completing the appointment.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+
+  // Alias onSave to onCompleteAppointment for backward-compatibility with form submit
   onSave(): void {
-    if (!this.formData.fullName.trim()) {
-      this.alertService.error('Missing Information', 'Please provide the patient or prospect name.');
-      return;
-    }
-    if (!this.formData.phone.trim()) {
-      this.alertService.error('Missing Information', 'Please provide a contact phone number.');
-      return;
-    }
-
-    if (this.entryType === 'appointment') {
-      const code = `BKG-${7720 + this.allAppointments.length + 1}`;
-      const newAppointment: DoctorInquiryOrAppointment = {
-        id: `APT-${900 + this.allAppointments.length + 1}`,
-        bookingCode: code,
-        entryType: 'appointment',
-        patientId: this.formData.patientCode || 'PT-NEW',
-        patientCode: this.formData.patientCode || 'PT-NEW',
-        patientName: this.formData.fullName,
-        phone: this.formData.phone,
-        email: this.formData.email,
-        age: this.formData.age || 30,
-        gender: this.formData.gender,
-        date: this.formData.appointmentDate,
-        timeSlot: this.formData.timeSlot,
-        visitType: this.formData.visitType,
-        conditionOrInterest: this.formData.condition || 'Physical Therapy Session',
-        notes: this.formData.appointmentNotes,
-        status: this.formData.appointmentStatus,
-        fee: this.formData.fee
-      };
-
-      this.allAppointments = [newAppointment, ...this.allAppointments];
-      this.activeListTab = 'appointments';
-      this.appointmentAdded.emit(newAppointment);
-
-      this.alertService.toastSuccess(`Appointment scheduled for ${newAppointment.patientName} (${newAppointment.timeSlot})!`);
-    } else {
-      // General Inquiry / Future Prospect (Does NOT enter consultation ledger!)
-      const code = `INQ-${200 + this.inquiriesList.length + 1}`;
-      const now = new Date();
-      const formattedDate = `Today, ${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`;
-
-      const newInquiry: DoctorInquiryOrAppointment = {
-        id: code,
-        bookingCode: code,
-        entryType: 'inquiry',
-        patientName: this.formData.fullName,
-        phone: this.formData.phone,
-        email: this.formData.email,
-        age: this.formData.age,
-        gender: this.formData.gender,
-        date: formattedDate,
-        conditionOrInterest: this.formData.inquiryInterest || 'General Inquiry',
-        inquirySource: this.formData.inquirySource as any,
-        followUpDate: this.formData.followUpDate,
-        notes: this.formData.inquiryNotes || 'Follow-up scheduled.',
-        status: this.formData.inquiryStatus
-      };
-
-      this.inquiriesList = [newInquiry, ...this.inquiriesList];
-      this.activeListTab = 'inquiries';
-
-      this.alertService.toastSuccess(`Prospect inquiry ${code} saved for future follow-up without creating a billed consultation!`);
-    }
+    this.onCompleteAppointment();
   }
 
-  // ─── Quick Conversion: Convert an Inquiry into a Booked Appointment ───────
-  convertInquiryToAppointment(inquiry: DoctorInquiryOrAppointment): void {
-    this.entryType = 'appointment';
-    this.formData.fullName = inquiry.patientName;
-    this.formData.phone = inquiry.phone;
-    this.formData.email = inquiry.email || '';
-    this.formData.age = inquiry.age || null;
-    this.formData.gender = (inquiry.gender as any) || 'Male';
-    this.formData.condition = inquiry.conditionOrInterest;
-    this.formData.appointmentNotes = `Converted from inquiry ${inquiry.bookingCode}. Notes: ${inquiry.notes || ''}`;
-
-    inquiry.status = 'Converted';
-
-    this.alertService.info('Inquiry Converted', `Details for ${inquiry.patientName} loaded into appointment form.`);
-    window.scrollTo({ top: 120, behavior: 'smooth' });
-  }
-
-  updateAppointmentStatus(apt: DoctorInquiryOrAppointment, status: 'Scheduled' | 'In-Progress' | 'Completed'): void {
-    apt.status = status;
-    this.alertService.toastSuccess(`Appointment ${apt.bookingCode} updated to ${status}.`);
+  formatBookingDate(dateStr?: string | null): string {
+    if (!dateStr || dateStr.startsWith('0001-01-01')) return 'N/A';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
   }
 
   getInitials(name: string): string {

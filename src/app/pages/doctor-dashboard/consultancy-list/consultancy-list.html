@@ -1,0 +1,384 @@
+<div class="grey-bg">
+  <div class="cl-page-wrapper">
+    <div class="consultancy-list-container">
+
+      <!-- ── 1. Top Header Row ───────────────────────────────────────────── -->
+      <div class="cl-top-header">
+        <div class="cl-title-wrap">
+          <button type="button" class="btn-back-link" (click)="goToDashboard()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Dashboard</span>
+          </button>
+          <h2 class="cl-heading">Consultancy Sessions &amp; Encounters</h2>
+          <p class="cl-subheading">Complete directory of all clinical consultations, appointments, visit schedules, and
+            payment records.</p>
+        </div>
+
+        <div class="cl-header-actions">
+          <button type="button" class="btn-refresh" (click)="loadConsultancies()" [disabled]="isLoading()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              [class.spin-anim]="isLoading()">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            <span>{{ isLoading() ? 'Refreshing...' : 'Refresh' }}</span>
+          </button>
+
+          <button type="button" class="btn-primary-action" routerLink="/doctor-dashboard/consultations">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Consultation</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── 2. KPI / Metrics Summary Strip ──────────────────────────────── -->
+      <div class="cl-kpi-grid">
+        <div class="cl-kpi-card">
+          <div class="kpi-icon-box teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Total Consultations</span>
+            <strong class="kpi-value">{{ totalCount() }}</strong>
+            <span class="kpi-sub">Lifetime records</span>
+          </div>
+        </div>
+
+        <div class="cl-kpi-card">
+          <div class="kpi-icon-box blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Today's Sessions</span>
+            <strong class="kpi-value">{{ todayCount() }}</strong>
+            <span class="kpi-sub">Scheduled for today</span>
+          </div>
+        </div>
+
+        <div class="cl-kpi-card">
+          <div class="kpi-icon-box green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Completed Sessions</span>
+            <strong class="kpi-value">{{ completedCount() }}</strong>
+            <span class="kpi-sub">Encounters finalized</span>
+          </div>
+        </div>
+
+        <div class="cl-kpi-card">
+          <div class="kpi-icon-box amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Pending Payments</span>
+            <strong class="kpi-value">&#8377;{{ pendingPaymentAmount() }}</strong>
+            <span class="kpi-sub">{{ pendingPaymentCount() }} unpaid booking(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3. Filters & Controls Bar ───────────────────────────────────── -->
+      <div class="cl-filter-card">
+        <div class="cl-filter-row">
+          <!-- Search Box -->
+          <div class="cl-search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="cl-search-input" placeholder="Search by patient name, mobile, or PT ID..."
+              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); currentPage.set(1)" />
+            @if (searchQuery()) {
+            <button type="button" class="btn-clear" (click)="searchQuery.set('')">&times;</button>
+            }
+          </div>
+
+          <!-- Date Presets -->
+          <div class="cl-date-pills">
+            <button type="button" class="date-pill" [class.active]="dateRangePreset() === 'all'"
+              (click)="setDatePreset('all')">
+              All Time
+            </button>
+            <button type="button" class="date-pill" [class.active]="dateRangePreset() === 'today'"
+              (click)="setDatePreset('today')">
+              Today
+            </button>
+            <button type="button" class="date-pill" [class.active]="dateRangePreset() === 'week'"
+              (click)="setDatePreset('week')">
+              This Week
+            </button>
+            <button type="button" class="date-pill" [class.active]="dateRangePreset() === 'month'"
+              (click)="setDatePreset('month')">
+              This Month
+            </button>            
+          </div>
+
+          <!-- Status Filter -->
+          <div class="cl-select-wrap">
+            <select class="cl-select" [ngModel]="statusFilter()"
+              (ngModelChange)="statusFilter.set($event); currentPage.set(1)">
+              <option value="all">All Status</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="In-Progress">In-Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          <!-- Payment Filter -->
+          <div class="cl-select-wrap">
+            <select class="cl-select" [ngModel]="paymentFilter()"
+              (ngModelChange)="paymentFilter.set($event); currentPage.set(1)">
+              <option value="all">All Payments</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Pending / Unpaid</option>
+            </select>
+          </div>
+        </div>
+        
+      </div>
+
+      <!-- ── 4. Main Consultancy Table ───────────────────────────────────── -->
+      <div class="cl-table-card">
+        <div class="table-responsive">
+          <table class="cl-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Patient Details</th>
+                <th>Mobile</th>
+                <th>Consultation Fees</th>
+                <th>Payment Status</th>
+                <th>Encounter Status</th>
+                <th>Registration</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (isLoading()) {
+              <tr>
+                <td colspan="8" class="text-center py-5">
+                  <div class="loading-wrap">
+                    <span class="spinner-border text-teal spinner-border-sm me-2" role="status"></span>
+                    <span>Loading consultation records...</span>
+                  </div>
+                </td>
+              </tr>
+              } @else {
+              @for (item of pagedConsultancies(); track item.patientId || $index) {
+              <tr>
+                <!-- Time / Date -->
+                <td>
+                  <div class="time-block">
+                    <span class="time-primary">{{ item.consultancyDate | date:'dd MMM yyyy' }}</span>
+                    <span class="time-sub">{{ item.consultancyDate | date:'hh:mm a' }}</span>
+                  </div>
+                </td>
+
+                <!-- Patient Details -->
+                <td>
+                  <div class="patient-cell-wrap">
+                    <div class="patient-avatar-ph">
+                      <span>{{ getInitials(item.fullName) }}</span>
+                    </div>
+                    <div class="patient-cell-info">
+                      <span class="patient-name-text">{{ item.fullName }}</span>
+                      <span class="patient-id-sub">PT-{{ item.patientId }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Mobile -->
+                <td>
+                  <span class="cell-phone">{{ item.mobile || '—' }}</span>
+                </td>
+
+                <!-- Fees -->
+                <td>
+                  <span class="cell-fees">&#8377;{{ item.fees || 0 }}</span>
+                </td>
+
+                <!-- Payment Status -->
+                <td>
+                  <span class="cell-payment-status" [class.paid]="(item.paymentStatus || '').toLowerCase() === 'paid'"
+                    [class.unpaid]="(item.paymentStatus || '').toLowerCase() !== 'paid'">
+                    {{ item.paymentStatus || 'Pending' }}
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <span class="apt-status-pill"
+                    [class.completed]="(item.consultancyStatus || '').toLowerCase() === 'completed'"
+                    [class.scheduled]="(item.consultancyStatus || '').toLowerCase() !== 'completed'">
+                    {{ item.consultancyStatus || 'Scheduled' }}
+                  </span>
+                </td>
+
+                <!-- Registered -->
+                <td>
+                  @if (item.isRegistered) {
+                  <span class="apt-status-pill completed">&#10003; Registered</span>
+                  } @else {
+                  <span class="apt-status-pill scheduled">Guest</span>
+                  }
+                </td>
+
+                <!-- Action -->
+                <td class="text-right">
+                  <div class="cl-action-group">                    
+                    <button class="btn-action-payment" type="button" data-bs-toggle="modal"
+                      data-bs-target="#consultancyPaymentModal" (click)="openPayment(item)">
+                      Payment
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              } @empty {
+              <tr>
+                <td colspan="8" class="text-center py-5">
+                  <div class="empty-state-wrap">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h5 class="empty-title">No Consultations Found</h5>
+                    <p class="empty-sub">No matching records match your filter criteria or search query.</p>
+                  </div>
+                </td>
+              </tr>
+              }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        @if (!isLoading() && filteredConsultancies().length > 0) {
+        <div class="cl-pagination-footer">
+          <div class="pagination-info">
+            Showing <strong>{{ (currentPage() - 1) * pageSize() + 1 }}</strong> &ndash;
+            <strong>{{ Math.min(currentPage() * pageSize(), filteredConsultancies().length) }}</strong> of
+            <strong>{{ filteredConsultancies().length }}</strong> consultations
+          </div>
+
+          <div class="pagination-controls">
+            <button type="button" class="btn-page" [disabled]="currentPage() === 1"
+              (click)="onPageChange(currentPage() - 1)">
+               Prev
+            </button>
+
+            <span class="page-current">Page {{ currentPage() }} of {{ totalPages() }}</span>
+
+            <button type="button" class="btn-page" [disabled]="currentPage() === totalPages()"
+              (click)="onPageChange(currentPage() + 1)">
+              Next
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- ── 5. Integrated Bootstrap 5 Payment Modal ────────────────────── -->
+      <div class="modal fade" id="consultancyPaymentModal" tabindex="-1" aria-labelledby="consultancyPaymentModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered payment-modal-dialog">
+          <div class="modal-content payment-modal-content">
+            <div class="modal-header payment-modal-header">
+              <div class="payment-modal-heading">
+                <span class="payment-modal-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                  </svg>
+                </span>
+                <div>
+                  <h5 class="modal-title" id="consultancyPaymentModalLabel">Consultancy Payment</h5>
+                  <span class="payment-modal-subtitle">Process payment and update encounter financial status</span>
+                </div>
+              </div>
+              <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
+                aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body payment-modal-body">
+              @if (selectedPaymentItem(); as item) {
+              <div class="payment-patient-card mb-3">
+                <span class="payment-patient-avatar">{{ getInitials(item.fullName) }}</span>
+                <div class="payment-patient-info">
+                  <span class="payment-patient-name">{{ item.fullName }}</span>
+                  <span class="payment-patient-meta">ID: PT-{{ item.patientId }} &bull; {{ item.mobile || 'No Mobile'
+                    }}</span>
+                </div>
+              </div>
+
+              <div class="payment-details-form">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
+                  <select class="form-select form-select-sm" [ngModel]="paymentMode()"
+                    (ngModelChange)="paymentMode.set($event)">
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Credit / Debit Card</option>
+                    <option value="UPI">UPI / QR Code</option>
+                    <option value="NetBanking">Net Banking</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
+                  <select class="form-select form-select-sm" [ngModel]="paymentStatusInput()"
+                    (ngModelChange)="paymentStatusInput.set($event)">
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-muted">CONSULTATION AMOUNT (&#8377;)</label>
+                  <input type="number" class="form-control form-control-sm" [ngModel]="paymentAmount()"
+                    (ngModelChange)="paymentAmount.set($event)" />
+                </div>
+              </div>
+              }
+            </div>
+
+            <div class="modal-footer payment-modal-footer">
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-sm btn-primary-action" data-bs-dismiss="modal"
+                (click)="confirmPayment()">
+                Save Payment Status
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -39,3 +39,34 @@ export class ServiceItem {
   id: number = 0;
   serviceName: string = '';
 }
+
+export class PlanBenefit {
+  id: number;
+  planId: number;
+  type: number;
+  benefitName: string;
+  isSystem: boolean;
+}
+
+export class ProviderPlan {
+  id: number;
+  planName: string;
+  totalSessions: number;
+  validityDays: number;
+  price: number;
+  isPopular: boolean;
+  isActive: boolean;
+  providerType: string;
+  providerId: number;
+  expertiseId: number | null;
+  benefits: PlanBenefit[];
+}
+
+export class ProviderAddon {
+  id: number;
+  providerType: string;
+  providerId: number;
+  addOnName: string;
+  price: number;
+  createdAt: string;
+}

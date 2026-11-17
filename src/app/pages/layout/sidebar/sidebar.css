@@ -4,6 +4,20 @@
    Uses design tokens from variables.css: #10A896, #087F76, #F4F5F8
    ========================================================================== */
 
+.topbar-left {
+  width: 100%;
+  border-bottom: 1px solid var(--border-light, #EAEAEA);
+}
+
+.drive-heading {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #1F2937);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
 /* Left Sidebar Shell */
 .physios-sidebar {
   width: 220px;
@@ -19,6 +33,7 @@
   position: sticky;
   top: 15px;
   z-index: 10;
+  padding: 0 10px;
 }
 
 /* Nav Button — base */
@@ -33,7 +48,6 @@
   font-size: 13px;
   color: var(--text-body, #414146);
   cursor: pointer;
-  border-left: 3px solid transparent;
   transition: background-color 0.15s ease, color 0.15s ease;
   outline: none;
   box-sizing: border-box;
@@ -50,10 +64,10 @@
 
 /* Nav Button — active */
 .physios-nav-btn.active {
-  border-left-color: var(--primary-color, #10A896);
   background-color: #F6FCFA;
   font-weight: 600;
   color: var(--primary-dark, #087F76);
+  border-radius: 12px;
 }
 
 /* Sidebar Icon (doctor view) */

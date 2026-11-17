@@ -88,6 +88,7 @@ export interface PractitionerSubscriptionPlan {
 
 export class PractitionerModel {
   name: string;
+  id: number;
   specialty: string;
   rating: number;
   reviewsCount: number;
@@ -298,6 +299,8 @@ export interface BookingState {
   selectedDay?: string;
   selectedDate?: string | Date;
   selectedTime?: string;
+  startTime?: string;
+  endTime?: string;
   bookingId?: string;
 }
 export class providerReview {

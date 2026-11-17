@@ -1,52 +1,446 @@
-import { Component, input, output, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DoctorPatient } from '../../../models/doctor-dashboard.model';
+import { Router, RouterModule } from '@angular/router';
+import { DoctorPatient, PatientConsultancyBooking, PatientAppointmentHistoryItem, Payment } from '../../../models/doctor-dashboard.model';
+import { ApiService } from '../../../services/api.service';
+import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
+
+export interface EMRPatient {
+  id: string;
+  patientId?: number;
+  patientCode: string;
+  fullName: string;
+  age: number;
+  gender: 'Female' | 'Male';
+  phone: string;
+  email: string;
+  bloodGroup: string;
+  dob: string;
+  address: string;
+  emergencyContact: string;
+  primaryCondition: string;
+  status: 'Active' | 'Completed' | 'Pending';
+  visitedCategory: 'recent-visited' | 'recent-added' | 'regular';
+  clinicalGroup: string;
+  notes: string;
+  medicalHistory: string[];
+  groups: string[];
+  memberships: string;
+  counts: {
+    appointments: number;
+    clinicalNotes: number;
+    treatmentPlans: number;
+    completedProcedures: number;
+    files: number;
+    prescriptions: number;
+    invoices: number;
+    payments: number;
+  };
+}
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './patients.html',
   styleUrl: './patients.css',
 })
-export class Patients {
+export class Patients implements OnInit {
+  private apiService = inject(ApiService);
+  private alert = inject(SweetAlertService);
+  private router = inject(Router);
+
+  // Inputs & Outputs for parent component
   patients = input<DoctorPatient[]>([]);
   navigateToAdd = output<void>();
   navigateToPlans = output<void>();
 
-  searchQuery = signal<string>('');
-  selectedStatus = signal<'All' | 'Active' | 'Pending' | 'Completed'>('All');
-  selectedPatient = signal<DoctorPatient | null>(null);
+  // View mode: starts on 'cards' (the patient directory cards screen from screenshot), switches to 'emr' on card click
+  viewMode = signal<'cards' | 'emr'>('cards');
 
-  filteredPatients = computed<DoctorPatient[]>(() => {
-    const list = this.patients() || [];
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.selectedStatus();
+  // Currently selected patient for the EMR view
+  selectedPatient = signal<EMRPatient | null>(null);
+
+  // Active subtab inside EMR view
+  activeSubTab = signal<string>('profile');
+
+  // Search query & filter inside cards view
+  cardSearchQuery = signal<string>('');
+  selectedGroupFilter = signal<string>('all');
+
+  // Sidebar toggle & modal states
+  isSidebarCollapsed = signal<boolean>(false);
+  newNoteText = signal<string>('');
+  showEditModal = signal<boolean>(false);
+  showPhotoModal = signal<boolean>(false);
+
+  // ─── Patient Consultations State (Matches pattern from Consultations component) ─
+  patientConsultations = signal<PatientConsultancyBooking[]>([]);
+  isLoadingConsultations = signal<boolean>(false);
+  selectedConsultation = signal<PatientConsultancyBooking | null>(null);
+  consultationDetailModal = signal<PatientConsultancyBooking | null>(null);
+  PatientPayments = signal<Payment[]>([]);
+
+  // ─── Patient Appointments State ──────────────────────────────────────────
+  patientAppointments = signal<PatientAppointmentHistoryItem[]>([]);
+  isLoadingAppointments = signal<boolean>(false);
+  selectedAppointment = signal<PatientAppointmentHistoryItem | null>(null);
+  appointmentViewMode = signal<'cards' | 'table'>('cards');
+
+  // ─── Infinite Scroll / API State ─────────────────────────────────────────
+  private readonly PAGE_SIZE = 20;
+  private currentPage = 1;
+  isLoadingPatients = signal<boolean>(false);
+  hasMorePatients = signal<boolean>(true);
+
+  formData: any = {
+    fullName: '',
+    mobile: '',
+    email: '',
+    gender: 'Male',
+    dob: '',
+    address: '',
+    city: '',
+    state: '',
+    userId: 1,
+    roleId: 3,
+    phone: '',
+    primaryCondition: 'General Assessment'
+  };
+
+  private showError(msg: string): void { this.alert.toastError(msg); }
+  private showSuccess(msg: string): void { this.alert.toastSuccess(msg); }
+
+  allEMRPatients = signal<EMRPatient[]>([]);
+
+  // Filtered patient cards computed based on search query and left filter selection
+  filteredPatientCards = computed<EMRPatient[]>(() => {
+    const list = this.allEMRPatients();
+    const query = this.cardSearchQuery().toLowerCase().trim();
+    const filter = this.selectedGroupFilter();
 
     return list.filter(p => {
-      const matchesStatus = status === 'All' || p.status === status;
-      const matchesQuery = !query ||
-        p.fullName.toLowerCase().includes(query) ||
-        (p.patientCode && p.patientCode.toLowerCase().includes(query)) ||
-        (p.primaryCondition && p.primaryCondition.toLowerCase().includes(query)) ||
-        (p.phone && p.phone.includes(query)) ||
-        (p.mobile && p.mobile.includes(query));
+      // Group filter logic
+      let matchesGroup = true;
+      if (filter === 'recent-visited') matchesGroup = p.visitedCategory === 'recent-visited';
+      else if (filter === 'recent-added') matchesGroup = p.visitedCategory === 'recent-added';
+      else if (filter === 'male') matchesGroup = p.gender === 'Male';
+      else if (filter === 'female') matchesGroup = p.gender === 'Female';
+      else if (filter === 'active') matchesGroup = p.status === 'Active';
+      else if (filter === 'completed') matchesGroup = p.status === 'Completed';
+      else if (filter === 'spine') matchesGroup = p.clinicalGroup === 'Spine Care';
+      else if (filter === 'sports') matchesGroup = p.clinicalGroup === 'Sports Rehab';
+      else if (filter === 'shoulder') matchesGroup = p.clinicalGroup === 'Shoulder Rehab';
 
-      return matchesStatus && matchesQuery;
+      // Search match
+      const matchesSearch = !query ||
+        p.fullName.toLowerCase().includes(query) ||
+        p.patientCode.toLowerCase().includes(query) ||
+        p.phone.includes(query) ||
+        p.primaryCondition.toLowerCase().includes(query);
+
+      return matchesGroup && matchesSearch;
     });
   });
 
-  setFilter(status: 'All' | 'Active' | 'Pending' | 'Completed'): void {
-    this.selectedStatus.set(status);
+  // ─── Lifecycle ───────────────────────────────────────────────────────────
+  ngOnInit(): void {
+    this.loadPatients();
   }
 
-  openPatientDetails(patient: DoctorPatient): void {
+  // ─── Window Scroll for Infinite Scrolling ─────────────────────────────────
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (this.viewMode() !== 'cards') return;
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+
+    // Load next page when user scrolls near bottom (300px threshold)
+    if (windowHeight + scrollY >= documentHeight - 300) {
+      if (this.hasMorePatients() && !this.isLoadingPatients()) {
+        this.loadMorePatients();
+      }
+    }
+  }
+
+  // ─── API: Load patients with pagination ──────────────────────────────────
+  async loadPatients(page: number = 1): Promise<void> {
+    if (this.isLoadingPatients()) return;
+    this.isLoadingPatients.set(true);
+    try {
+      const request: any = {
+        page,
+        pageSize: this.PAGE_SIZE
+      };
+      const query = this.cardSearchQuery()?.trim();
+      if (query) {
+        request.search = query;
+      }
+      const response = await this.apiService.Post<any>(
+        ApiEndPoints.GetMyPatients,
+        request
+      );
+      if (response?.isSuccess && response.data?.items?.length > 0) {
+        const items: EMRPatient[] = response.data.items.map((p: any) => this.mapToEMRPatient(p));
+        if (page === 1) {
+          this.allEMRPatients.set(items);
+        } else {
+          this.allEMRPatients.update(existing => [...existing, ...items]);
+        }
+        this.currentPage = page;
+        // If fewer items returned than page size, no more pages
+        this.hasMorePatients.set(items.length === this.PAGE_SIZE);
+      } else {
+        if (page === 1) {
+          this.allEMRPatients.set([]);
+        }
+        this.hasMorePatients.set(false);
+      }
+    } catch (error) {
+      console.error('Load patients error:', error);
+      this.showError('Error loading patients. Please try again.');
+    } finally {
+      this.isLoadingPatients.set(false);
+    }
+  }
+
+  async loadMorePatients(): Promise<void> {
+    if (!this.hasMorePatients() || this.isLoadingPatients()) return;
+    await this.loadPatients(this.currentPage + 1);
+  }
+
+  // ─── Map API patient object to EMRPatient ─────────────────────────────────
+  private mapToEMRPatient(p: any): EMRPatient {
+    const gender: 'Male' | 'Female' =
+      (p.gender === 'Female' || p.gender === 'female') ? 'Female' : 'Male';
+
+    let age = p.age ?? 0;
+    if (!age && p.dob) {
+      const birth = new Date(p.dob);
+      const now = new Date();
+      let calc = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) calc--;
+      age = calc >= 0 ? calc : 0;
+    }
+
+    const patientId = p.patientId ?? p.id ?? p.userId ?? (parseInt(String(p.patientCode || p.id).replace(/\D/g, ''), 10) || 1);
+
+    return {
+      id: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
+      patientId: Number(patientId),
+      patientCode: p.patientCode ?? `PT-${p.userId ?? p.id ?? ''}`,
+      fullName: p.fullName ?? '',
+      age,
+      gender,
+      phone: p.mobile ?? p.phone ?? '',
+      email: p.email ?? '',
+      bloodGroup: p.bloodGroup ?? '',
+      dob: p.dob ?? '',
+      address: p.address ?? '',
+      emergencyContact: p.emergencyContact ?? '',
+      primaryCondition: p.primaryCondition ?? 'General Assessment',
+      status: (p.status === 'Completed' || p.status === 'Pending') ? p.status : 'Active',
+      visitedCategory: p.visitedCategory ?? 'regular',
+      clinicalGroup: p.clinicalGroup ?? 'General',
+      notes: p.notes ?? '',
+      medicalHistory: Array.isArray(p.medicalHistory) ? p.medicalHistory : [],
+      groups: Array.isArray(p.groups) ? p.groups : [],
+      memberships: p.memberships ?? '',
+      counts: {
+        appointments: p.counts?.appointments ?? p.appointmentCount ?? 0,
+        clinicalNotes: p.counts?.clinicalNotes ?? 0,
+        treatmentPlans: p.counts?.treatmentPlans ?? 0,
+        completedProcedures: p.counts?.completedProcedures ?? 0,
+        files: p.counts?.files ?? 0,
+        prescriptions: p.counts?.prescriptions ?? 0,
+        invoices: p.counts?.invoices ?? 0,
+        payments: p.counts?.payments ?? 0
+      }
+    };
+  }
+
+  // Dummy Appointments for selected patient
+  dummyAppointments = [
+    { date: '28 Oct 2026', time: '10:00 AM - 10:45 AM', type: 'In-Clinic Consultation', therapist: 'Dr. Himanshu Suman', status: 'Scheduled', room: 'Rehab Suite 2' },
+    { date: '25 Oct 2026', time: '11:30 AM - 12:15 PM', type: 'Cervical Traction & IFT', therapist: 'Dr. Himanshu Suman', status: 'Completed', room: 'Therapy Room 1' },
+    { date: '22 Oct 2026', time: '11:00 AM - 11:45 AM', type: 'Manual Mobilization & ROM', therapist: 'Dr. Himanshu Suman', status: 'Completed', room: 'Therapy Room 1' },
+    { date: '18 Oct 2026', time: '04:00 PM - 04:45 PM', type: 'Ultrasound & Heat Therapy', therapist: 'Dr. Preeti Sharma', status: 'Completed', room: 'Electrotherapy Bay' },
+    { date: '15 Oct 2026', time: '10:30 AM - 11:15 AM', type: 'Initial Clinical Evaluation', therapist: 'Dr. Himanshu Suman', status: 'Completed', room: 'Consultation Suite' }
+  ];
+
+
+
+
+  // Dummy Treatment Plans
+  dummyTreatmentPlans = [
+    { name: 'Cervical Spine Decompression Protocol', sessions: '6 / 12', status: 'Active', progress: 50 },
+    { name: 'Deep Neck Flexor & Scapular Stabilization', sessions: '4 / 8', status: 'Active', progress: 50 },
+    { name: 'Postural Kyphosis Ergonomic Re-education', sessions: '2 / 6', status: 'Active', progress: 33 },
+    { name: 'Upper Trapezius Trigger Point Release', sessions: '3 / 4', status: 'In Progress', progress: 75 },
+    { name: 'Home Neck Isometric Exercise Regimen', sessions: 'Daily', status: 'Ongoing', progress: 80 },
+    { name: 'Final Proprioceptive Maintenance Phase', sessions: '0 / 4', status: 'Upcoming', progress: 0 }
+  ];
+
+  // Dummy Completed Procedures
+  dummyProcedures = [
+    { name: 'Motorized Intermittent Cervical Traction', date: '25 Oct 2026', duration: '20 mins', therapist: 'Dr. Himanshu Suman' },
+    { name: 'Interferential Therapy (IFT) Cervical Spine', date: '25 Oct 2026', duration: '15 mins', therapist: 'Dr. Himanshu Suman' },
+    { name: 'Grade II Maitland Joint Mobilization (C5-C6)', date: '22 Oct 2026', duration: '15 mins', therapist: 'Dr. Himanshu Suman' },
+    { name: 'Myofascial Trigger Point Release (Levator Scapulae)', date: '22 Oct 2026', duration: '15 mins', therapist: 'Dr. Preeti Sharma' },
+    { name: 'Therapeutic Ultrasound (1 MHz, 1.2 W/cm²)', date: '18 Oct 2026', duration: '10 mins', therapist: 'Dr. Preeti Sharma' },
+    { name: 'Moist Heat Pack Application', date: '18 Oct 2026', duration: '15 mins', therapist: 'Dr. Preeti Sharma' },
+    { name: 'Scapular Retraction & Chin Tucks Instruction', date: '15 Oct 2026', duration: '20 mins', therapist: 'Dr. Himanshu Suman' },
+    { name: 'Comprehensive Functional Movement Assessment', date: '15 Oct 2026', duration: '30 mins', therapist: 'Dr. Himanshu Suman' }
+  ];
+
+  // Dummy Prescriptions
+  dummyPrescriptions = [
+    { type: 'Medication', title: 'Thiocolchicoside (4mg)', dosage: '1 tablet twice daily after meals', duration: '5 days', instructions: 'Muscle relaxant for cervical spasms' },
+    { type: 'Medication', title: 'Paracetamol (650mg)', dosage: '1 tablet SOS for acute pain', duration: 'As needed', instructions: 'Take only if pain exceeds 5/10' },
+    { type: 'Rehab Exercise', title: 'Cervical Isometric Flexion & Extension', dosage: '10 reps x 3 sets', duration: 'Daily morning & evening', instructions: 'Hold for 5 seconds against palm resistance' },
+    { type: 'Rehab Exercise', title: 'Chin Tucks with Scapular Squeeze', dosage: '15 reps x 2 sets', duration: 'Twice daily', instructions: 'Maintain neutral spine, do not look down' },
+    { type: 'Support / Ergonomic', title: 'Contoured Orthopedic Cervical Pillow', dosage: 'Nightly sleep', duration: 'Permanent', instructions: 'Sleep in supine or side-lying position only' }
+  ];
+
+  // Dummy Invoices
+  dummyInvoices = [
+    { invNo: 'INV-2026-904', date: '25 Oct 2026', service: 'Physiotherapy Session (Traction + IFT)', amount: '₹1,200', status: 'Paid', mode: 'UPI' },
+    { invNo: 'INV-2026-872', date: '22 Oct 2026', service: 'Physiotherapy Session (Mobilization)', amount: '₹1,200', status: 'Paid', mode: 'Credit Card' },
+    { invNo: 'INV-2026-831', date: '18 Oct 2026', service: 'Physiotherapy Session (Ultrasound)', amount: '₹1,200', status: 'Paid', mode: 'Cash' },
+    { invNo: 'INV-2026-789', date: '15 Oct 2026', service: 'Initial Specialist Doctor Consultation', amount: '₹1,500', status: 'Paid', mode: 'UPI' }
+  ];
+
+  // Dummy Files
+  dummyFiles = [
+    { title: 'Cervical Spine X-Ray (AP & Lateral View).pdf', size: '2.4 MB', date: '15 Oct 2026', doctor: 'Dr. Himanshu Suman' },
+    { title: 'MRI Cervical Spine Scan Report.pdf', size: '5.1 MB', date: '14 Oct 2026', doctor: 'Radiology Lab' },
+    { title: 'Postural Spine Alignment Analysis.pdf', size: '1.2 MB', date: '15 Oct 2026', doctor: 'PhysiosMate Clinical' },
+    { title: 'Discharge Summary & Home Rehab Guidelines.pdf', size: '850 KB', date: '25 Oct 2026', doctor: 'Dr. Himanshu Suman' }
+  ];
+
+
+  // User Actions
+  openPatientEMR(patient: EMRPatient): void {
     this.selectedPatient.set(patient);
+    this.activeSubTab.set('profile');
+    this.viewMode.set('emr');
+    const pid = patient.patientId ?? (Number(String(patient.id).replace(/\D/g, '')) || 1);
+    this.loadPatientBookingHistory(pid);
+    this.loadPatientAppointmentHistory(pid);
   }
 
-  closePatientDetails(): void {
-    this.selectedPatient.set(null);
+  backToCards(): void {
+    this.viewMode.set('cards');
+  }
+
+  setGroupFilter(group: string): void {
+    this.selectedGroupFilter.set(group);
+  }
+
+  setSubTab(tab: string): void {
+    this.activeSubTab.set(tab);
+    const p = this.selectedPatient();
+    if (p) {
+      const pid = p.patientId ?? (Number(String(p.id).replace(/\D/g, '')) || 1);
+      if (tab === 'consultations') {
+        this.loadPatientBookingHistory(pid);
+      } else if (tab === 'appointments') {
+        this.loadPatientAppointmentHistory(pid);
+      }
+    }
+  }
+
+  // ─── Patient Appointment History ─────────────────────────────────────────
+  async loadPatientAppointmentHistory(patientId: number): Promise<void> {
+    this.isLoadingAppointments.set(true);
+    this.patientAppointments.set([]);
+    this.selectedAppointment.set(null);
+
+    try {
+      const res = await this.apiService.Get<PatientAppointmentHistoryItem[]>(
+        `${ApiEndPoints.PatientAppointmentDetails}?patientId=${patientId}`
+      );
+
+      if (res && res.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientAppointments.set(res.data);
+      }
+    } catch (e) {
+      console.error('Patient appointment history error', e);
+      this.showError('Error loading appointment history.');
+    } finally {
+      this.isLoadingAppointments.set(false);
+    }
+  }
+
+  isAddOnDue(item: PatientAppointmentHistoryItem): boolean {
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.some(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+      });
+    }
+    if (!item.hasAddOnTreatment) return false;
+    const s = item.addOnPaymentStatus?.trim().toLowerCase();
+    return !s || s === 'due' || s === 'pending' || s === 'unpaid';
+  }
+
+  isBothPaid(item: PatientAppointmentHistoryItem): boolean {
+    const mainPaid = item.paymentStatus?.trim().toLowerCase() === 'paid' || item.paymentStatus?.trim().toLowerCase() === 'success';
+    if (!mainPaid) return false;
+
+    if (item.addOns && item.addOns.length > 0) {
+      return item.addOns.every(a => {
+        const s = (a.paymentStatus || '').trim().toLowerCase();
+        return s === 'paid' || s === 'success';
+      });
+    }
+
+    if (!item.hasAddOnTreatment) {
+      return !!mainPaid;
+    }
+    const addOnPaid = item.addOnPaymentStatus?.trim().toLowerCase() === 'paid' || item.addOnPaymentStatus?.trim().toLowerCase() === 'success';
+    return !!mainPaid && !!addOnPaid;
+  }
+
+  // ─── Patient Consultation Booking History (Same pattern as in Consultations) ─
+  async loadPatientBookingHistory(patientId: number): Promise<void> {
+    this.isLoadingConsultations.set(true);
+    this.patientConsultations.set([]);
+    this.selectedConsultation.set(null);
+
+    try {
+      const res = await this.apiService.Get<PatientConsultancyBooking[]>(
+        `${ApiEndPoints.PatientConsultancyBookingDetails}?patientId=${patientId}`
+      );
+
+      if (res && res.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.patientConsultations.set(res.data);
+      }
+    } catch (e) {
+      console.error('Patient booking history error', e);
+      this.showError('Error loading consultation history.');
+    } finally {
+      this.isLoadingConsultations.set(false);
+    }
+  }
+
+  selectBooking(booking: PatientConsultancyBooking): void {
+    this.selectedConsultation.set(booking);
+    this.consultationDetailModal.set(booking);
+  }
+
+  closeBookingModal(): void {
+    this.consultationDetailModal.set(null);
+  }
+
+
+
+  toggleSidebar(): void {
+    this.isSidebarCollapsed.update(val => !val);
   }
 
   onAddPatientClick(): void {
@@ -57,9 +451,88 @@ export class Patients {
     this.navigateToPlans.emit();
   }
 
+  onScheduleTreatment(): void {
+    this.router.navigate(['/doctor-dashboard/schedule-treatment']);
+  }
+
+  onNewConsultation(): void {
+    this.setSubTab('consultations');
+  }
+
+  addNote(): void {
+    const note = this.newNoteText().trim();
+    const current = this.selectedPatient();
+    if (note && current) {
+      const updatedNotes = current.notes ? `${current.notes}\n• ${note}` : note;
+      this.selectedPatient.set({
+        ...current,
+        notes: updatedNotes
+      });
+      this.newNoteText.set('');
+    }
+  }
+
   getInitials(name: string): string {
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
   }
+  async Getpatient(e?: any): Promise<void> {
+    if (typeof e === 'string' && e.trim().length === 10) {
+      const mobile = e.trim();
+      try {
+        const request = { search: mobile };
+        const response = await this.apiService.Post<any>(ApiEndPoints.GetMyPatients, request
+        );
+
+        if (response?.isSuccess && response.data?.items?.length > 0) {
+          const patient = response.data.items[0];
+          this.formData = {
+            ...this.formData,
+            fullName: patient.fullName ?? '',
+            mobile: patient.mobile ?? mobile,
+            email: patient.email ?? '',
+            gender: patient.gender ?? 'Male',
+            dob: patient.dob ?? '',
+            address: patient.address ?? '',
+            city: patient.city ?? '',
+            state: patient.state ?? '',
+            userId: patient.userId ?? 1,
+            roleId: patient.roleId ?? 3,
+            phone: patient.phone ?? patient.mobile ?? mobile,
+            primaryCondition: patient.primaryCondition ?? 'General Assessment'
+          };
+
+          this.showSuccess('Patient details fetched successfully.');
+        } else {
+          this.showError(response?.message || 'Patient not found.');
+        }
+      } catch (error) {
+        console.error('Get patient error:', error);
+        this.showError('Error fetching patient details. Please try again.');
+      }
+      return;
+    }
+    await this.loadPatients(1);
+  }
+
+  async GetPayment(patientid: any): Promise<void> {
+    try {
+      const response = await this.apiService.Get<any>(
+        `${ApiEndPoints.GetAllPayment}?patientId=${patientid}`);
+      if (response?.isSuccess) {
+        debugger
+        this.PatientPayments.set(response.data);
+      }
+      else {
+        this.alert.error(response.message)
+      }
+    }
+    catch (error) {
+      console.error('Get patient error:', error);
+      this.showError('Error fetching patient details. Please try again.');
+    }
+    return;
+  }
+
 }

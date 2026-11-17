@@ -217,38 +217,7 @@
   width: 100%;
 }
 
-.sec-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
 
-.sec-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: var(--primary-subtle, #E6F7F5);
-  color: var(--primary-dark, #087F76);
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.sec-heading {
-  font-family: var(--font-heading, 'Inter Tight', sans-serif);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-main, #1F2937);
-  margin: 0;
-}
-
-.sec-sub {
-  font-size: 12px;
-  color: var(--text-muted, #6B7280);
-}
 
 /* User requirement: "in 1 row i want 4 columns" */
 .form-row-4 {
@@ -258,9 +227,9 @@
   width: 100%;
 }
 
-.form-row-4 div:nth-child(7) {
+/* .form-row-4 div:nth-child(7) {
   grid-column: span 2;
-}
+} */
 
 .mt-16 {
   margin-top: 14px;

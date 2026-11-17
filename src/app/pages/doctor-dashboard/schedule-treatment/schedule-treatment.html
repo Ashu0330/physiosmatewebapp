@@ -1,0 +1,756 @@
+<div class="schedule-treatment-page">
+  <div class="schedule-box">
+    <div class="schedule-treatment-box">
+
+      <!-- ── TOP HEADER ROW: TITLE & SUBTABS ─────────────────────────────────── -->
+      <div class="treatment-topbar">
+        <div class="header-titles">
+          <h3 class="panel-title">Schedule Treatment</h3>
+          <p class="panel-subtitle">Search patient, check active treatment plans, and schedule daily or weekly sessions.
+          </p>
+        </div>
+
+        <!-- Mode Filter Pills -->
+        <div class="filter-pills">
+          <button type="button" class="filter-pill" [class.active]="activeTab() === 'daily'"
+            (click)="activeTab.set('daily')">
+            Daily Treatment
+          </button>
+          <button type="button" class="filter-pill" [class.active]="activeTab() === 'weekly'"
+            (click)="activeTab.set('weekly')">
+            Weekly Plan
+          </button>
+          <button type="button" class="filter-pill" [class.active]="activeTab() === 'assign-plan'"
+            (click)="activeTab.set('assign-plan')">
+            + Add Plan
+          </button>
+          <button type="button" class="filter-pill" [class.active]="activeTab() === 'list'"
+            (click)="activeTab.set('list')">
+            Scheduled List ({{ scheduledBookings().length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- ── TOP PATIENT SEARCH & DATA BAR (FULL WIDTH ON TOP) ───────────────── -->
+      <div class="top-patient-section">
+
+        <!-- Patient Search Input -->
+        <div class="top-search-row">
+          <div class="search-box">
+            <svg class="search-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="search-input" placeholder="Search patient by name, mobile, or email..."
+              [ngModel]="patientSearchQuery()"
+              (ngModelChange)="onPatientSearchChange($event)"
+              (focus)="isSearchDropdownOpen.set(true)" />
+            @if (isSearchingPatients()) {
+            <span class="search-spinner"></span>
+            }
+            @if (patientSearchQuery()) {
+            <button type="button" class="btn-clear-search" (click)="clearSearch()">&times;</button>
+            }
+          </div>
+
+          <!-- Autocomplete Suggestions Dropdown -->
+          @if (isSearchDropdownOpen() && patientSearchQuery().trim()) {
+          <div class="search-dropdown">
+            <div class="dropdown-header">
+              @if (isSearchingPatients()) {
+              <span>Searching...</span>
+              } @else {
+              <span>{{ patientSearchResults().length }} Patients Matched</span>
+              }
+              <button type="button" class="btn-close-dd" (click)="isSearchDropdownOpen.set(false)">&times;</button>
+            </div>
+            <div class="dropdown-scroll-list">
+              @for (p of patientSearchResults(); track p.patientId) {
+              <div class="dropdown-item" (click)="selectPatientFromSearch(p)">
+                <div class="item-avatar">{{ getInitials(p.fullName) }}</div>
+                <div class="item-info">
+                  <div class="item-name">{{ p.fullName }} <span class="item-code">(PT-{{ p.patientId }})</span></div>
+                  <div class="item-sub">
+                    @if (p.mobile) {
+                    <span>{{ p.mobile }}</span>
+                    }
+                    @if (p.age) {
+                    <span>{{ p.mobile ? ' • ' : '' }}{{ p.age }} yrs</span>
+                    }
+                    @if (p.gender) {
+                    <span>{{ (p.mobile || p.age) ? ' • ' : '' }}{{ p.gender }}</span>
+                    }
+                    @if (p.city) {
+                    <span> • {{ p.city }}</span>
+                    }
+                    @if (p.email) {
+                    <span> • {{ p.email }}</span>
+                    }
+                  </div>
+                </div>
+                @if (selectedPatientItem()?.patientId === p.patientId) {
+                <span class="selected-pill">Active</span>
+                }
+              </div>
+              } @empty {
+              @if (!isSearchingPatients()) {
+              <div class="dropdown-empty">No patient matching "{{ patientSearchQuery() }}"</div>
+              }
+              }
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- Selected Patient Horizontal Summary & Treatment Plan Retrieval -->
+        @if (selectedPatient(); as pt) {
+        <div class="selected-patient-bar">
+
+          <!-- Left: Patient Basic Data -->
+          <div class="pt-basic-block">
+            <div class="pt-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="pt-info">
+              <div class="pt-name-row">
+                <h4 class="pt-name">{{ pt.fullName }}</h4>
+                <span class="pt-code">{{ pt.patientCode }}</span>
+              </div>
+              <div class="pt-meta-row">
+                @if (pt.phone || pt.mobile) {
+                <span>{{ pt.phone || pt.mobile }}</span>
+                }
+                @if (pt.age || pt.gender) {
+                <span>
+                  @if (pt.phone || pt.mobile) { • }
+                  @if (pt.age) { {{ pt.age }} yrs }
+                  @if (pt.age && pt.gender) { , }
+                  @if (pt.gender) { {{ pt.gender }} }
+                </span>
+                }
+                @if (pt.primaryCondition) {
+                <span>• {{ pt.primaryCondition }}</span>
+                }
+                @if (pt.city) {
+                <span>• {{ pt.city }}</span>
+                }
+              </div>
+              @if (pt.notes) {
+              <div class="pt-notes-sub">
+                <span class="pt-notes-label">Notes:</span> {{ pt.notes }}
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right: Active Treatment Plan Retrieval -->
+          <div class="pt-plan-block">
+            @if (patientActivePlan(); as plan) {
+            <div class="plan-chip-active">
+              <div class="pca-header">
+                <span class="pca-label">Active Plan:</span>
+                <strong class="pca-title">{{ plan.title }}</strong>
+                <span class="pca-code">({{ plan.planCode }})</span>
+              </div>
+              <div class="pca-meta">
+                <span>{{ plan.completedSessions }} of {{ plan.totalSessions }} Sessions Done</span>
+                <span class="pca-rem">({{ remainingSessions() }} Remaining)</span>
+                <button type="button" class="btn-pca-link" (click)="activeTab.set('weekly')">
+                  Weekly Schedule &rarr;
+                </button>
+              </div>
+            </div>
+            } @else {
+            <div class="plan-chip-none">
+              <span class="none-text">No active treatment plan found.</span>
+              <button type="button" class="btn-add-plan-link" (click)="activeTab.set('assign-plan')">
+                + Add Plan to Patient
+              </button>
+            </div>
+            }
+          </div>
+
+        </div>
+        }
+
+      </div>
+
+      <!-- ── MAIN CONTENT WORKSPACE BELOW ────────────────────────────────────── -->
+      <main class="content-workspace">
+
+        <!-- ====================================================================
+           TAB 1: DAILY TREATMENT
+           ==================================================================== -->
+        @if (activeTab() === 'daily') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Schedule Daily Treatment</h4>
+            <span class="card-subheading">Select booking date, assigned practitioner, visit mode, available slot, and payment details.</span>
+          </div>
+
+          <div class="form-grid-2">
+            <!-- Treatment Date -->
+            <div class="form-group">
+              <label class="form-label">Treatment Date</label>
+              <input type="date" class="form-input" [min]="getTodayDateString()" [ngModel]="treatmentDate()"
+                (ngModelChange)="onTreatmentDateChange($event)" />
+            </div>
+
+            <!-- Assigned Practitioner -->
+            <div class="form-group">
+              <label class="form-label">Assigned Practitioner</label>
+              <select class="form-select" [ngModel]="selectedPractitionerId()"
+                (ngModelChange)="onPractitionerChange($event)" [disabled]="isLoadingPractitioners()">
+                <option [ngValue]="null" disabled>
+                  {{ isLoadingPractitioners() ? 'Loading practitioners...' : 'Select practitioner' }}
+                </option>
+                @for (doc of practitioners(); track doc.id) {
+                <option [ngValue]="doc.id">{{ doc.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Visit Mode & Conditional Home Visit Address -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Visit Mode</label>
+              <select class="form-select" [ngModel]="visitType()" (ngModelChange)="onVisitTypeChange($event)">
+                <option value="Clinic">Clinic Visit</option>
+                <option value="Home">Home Visit</option>
+              </select>
+            </div>
+
+            @if (visitType() === 'Home') {
+            <div class="form-group">
+              <label class="form-label">Home Visit Address</label>
+              <input type="text" class="form-input" [ngModel]="homeVisitAddress()"
+                (ngModelChange)="homeVisitAddress.set($event)" placeholder="Enter address for home visit" />
+            </div>
+            }
+          </div>
+
+          <!-- Time Slots Selection -->
+          <div class="form-group">
+            <div class="slots-header-row">
+              <label class="form-label">Select Time Slot</label>
+              <span class="hint-text">Slots automatically prevent overlapping bookings</span>
+            </div>
+
+            @if (isLoadingSlots()) {
+            <div class="slots-loading-msg">Loading available slots...</div>
+            } @else if (availableSlots().length === 0) {
+            <div class="slots-empty-msg">No available treatment slots found for the selected date and practitioner.</div>
+            } @else {
+            <div class="slots-grid">
+              @for (slot of availableSlots(); track slot.slotId) {
+              <button type="button" class="slot-item-btn" [class.selected]="selectedSlot()?.slotId === slot.slotId"
+                [class.disabled]="!slot.isOpen || slot.remainingSpots <= 0"
+                [disabled]="!slot.isOpen || slot.remainingSpots <= 0" (click)="selectSlot(slot)">
+                <span class="slot-time">{{ formatSlotTime(slot.startTime) }} – {{ formatSlotTime(slot.endTime) }}</span>
+                <span class="slot-status" [class.booked]="!slot.isOpen || slot.remainingSpots <= 0">
+                  @if (slot.isOpen && slot.remainingSpots > 0) {
+                    Available ({{ slot.remainingSpots }} {{ slot.remainingSpots === 1 ? 'spot' : 'spots' }} left)
+                  } @else {
+                    Booked
+                  }
+                </span>
+              </button>
+              }
+            </div>
+            }
+          </div>
+
+          <!-- Fees & Payment Options -->
+          <div class="payment-block">
+            <label class="form-label">Treatment Fee & Payment</label>
+
+            <div class="payment-row">
+              <div class="fee-input-wrap">
+                <span class="currency-tag">₹</span>
+                <input type="number" class="form-input fee-input" [ngModel]="treatmentFee()"
+                  (ngModelChange)="treatmentFee.set(+$event); onFeeChange()" placeholder="600" />
+              </div>
+
+              <div class="pay-choice-pills">
+                <button type="button" class="pay-pill" [class.active]="paymentType() === 'advance'"
+                  (click)="setPaymentType('advance')">
+                  Advance Payment
+                </button>
+                <button type="button" class="pay-pill" [class.active]="paymentType() === 'due'"
+                  (click)="setPaymentType('due')">
+                  Payment Due
+                </button>
+              </div>
+            </div>
+
+            @if (paymentType() === 'advance') {
+            <div class="advance-subform">
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-sublabel">Advance Paid (₹)</label>
+                  <input type="number" class="form-input" [ngModel]="advanceAmount()"
+                    (ngModelChange)="advanceAmount.set(+$event)" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-sublabel">Balance Due (₹)</label>
+                  <div class="readonly-due">₹{{ balanceDue() }}</div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-sublabel">Payment Mode</label>
+                  <select class="form-select" [ngModel]="paymentMode()" (ngModelChange)="paymentMode.set($event)">
+                    <option value="UPI">UPI</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="NetBanking">Net Banking</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            } @else {
+            <div class="due-msg-box">
+              Full treatment fee of <strong>₹{{ treatmentFee() }}</strong> is marked as <strong>Payment Due</strong>.
+            </div>
+            }
+          </div>
+
+          <!-- Submit -->
+          <div class="action-footer">
+            <button type="button" class="btn-primary"
+              [disabled]="isBookingTreatment() || !selectedPatient() || !selectedSlot() || !selectedSlot()?.isOpen"
+              (click)="submitDailyTreatment()">
+              {{ isBookingTreatment() ? 'Scheduling...' : 'Schedule Daily Treatment' }}
+            </button>
+          </div>
+        </div>
+        }
+
+        @if (activeTab() === 'weekly') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Weekly Treatment Scheduling</h4>
+            <span class="card-subheading">View patient's purchased plan, click to expand accordion, and pick dates &
+              slots.</span>
+          </div>
+
+          @if (patientAllPlans().length > 0) {
+          <div class="plans-accordion-list">
+            @for (plan of patientAllPlans(); track plan.id) {
+            <div class="accordion-item" [class.open]="expandedPlanId() === plan.id">
+
+              <!-- ACCORDION HEADER (Click to Expand / Drop Down) -->
+              <div class="accordion-header" (click)="toggleAccordion(plan.id)">
+                <div class="plan-summary">
+                  <span class="plan-code-tag">{{ plan.planCode }}</span>
+                  <strong class="plan-name">{{ plan.title }}</strong>
+                  <span class="plan-freq">{{ plan.frequency }}</span>
+                </div>
+
+                <div class="plan-meta-right">
+                  <span class="plan-count">{{ plan.completedSessions }} / {{ plan.totalSessions }} Sessions</span>
+                  <span class="chevron" [class.rotated]="expandedPlanId() === plan.id">▼</span>
+                </div>
+              </div>
+
+              <!-- ACCORDION BODY -->
+              @if (expandedPlanId() === plan.id) {
+              <div class="accordion-body">
+
+                <div class="body-top">
+                  <span>Diagnosis: <strong>{{ plan.diagnosis }}</strong></span>
+                  <span>Remaining Sessions: <strong>{{ plan.totalSessions - plan.completedSessions }}</strong></span>
+                </div>
+
+                <!-- Multi-Date Weekly Session Rows -->
+                <div class="weekly-rows-container">
+                  <div class="rows-header">
+                    <label class="form-label">Weekly Schedule Dates & Slots</label>
+                    <button type="button" class="btn-secondary-sm" (click)="addWeeklySession()">
+                      + Add Session Date
+                    </button>
+                  </div>
+
+                  <div class="session-rows">
+                    @for (sess of weeklyDraftSessions(); track sess.id; let idx = $index) {
+                    <div class="session-row">
+                      <span class="row-num">Day {{ idx + 1 }}</span>
+
+                      <input type="date" class="form-input date-col" [ngModel]="sess.date" (ngModelChange)="onDraftDateChange(sess, $event)" />
+
+                      <select class="form-select slot-col" [ngModel]="sess.slotId" (ngModelChange)="onDraftSlotChange(sess, $event)">
+                        @if (sess.daySlots && sess.daySlots.length > 0) {
+                          @for (slot of sess.daySlots; track slot.id) {
+                          <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
+                          }
+                        } @else if (slotTemplates().length > 0) {
+                          @for (slot of slotTemplates(); track slot.id) {
+                          <option [value]="slot.id">{{ formatSlotTime(slot.startTime) }} - {{ formatSlotTime(slot.endTime) }}</option>
+                          }
+                        } @else {
+                          <option [ngValue]="null" disabled>No slots configured</option>
+                        }
+                      </select>
+
+                      <select class="form-select doc-col" [(ngModel)]="sess.therapist">
+                        @for (doc of practitioners(); track doc.id) {
+                        <option [value]="doc.name">{{ doc.name }}</option>
+                        }
+                      </select>
+
+                      <button type="button" class="btn-remove" (click)="removeWeeklySession(idx)" title="Remove day">
+                        ✕
+                      </button>
+                    </div>
+                    } @empty {
+                    <div class="empty-rows-hint">
+                      No sessions added for this week yet. Click "+ Add Session Date" above.
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="action-footer">
+                  <button type="button" class="btn-primary" [disabled]="weeklyDraftSessions().length === 0 || isSavingWeeklySchedule()"
+                    (click)="submitWeeklySchedule(plan)">
+                    {{ isSavingWeeklySchedule() ? 'Saving Weekly Schedule...' : ('Save Weekly Schedule (' + weeklyDraftSessions().length + ' Days)') }}
+                  </button>
+                </div>
+
+              </div>
+              }
+
+            </div>
+            }
+          </div>
+          } @else {
+          <div class="empty-state-box">
+            <p>This patient has no active treatment plan purchased.</p>
+            <button type="button" class="btn-primary" (click)="activeTab.set('assign-plan')">
+              + Add Plan to Patient
+            </button>
+          </div>
+          }
+
+        </div>
+        }
+
+        <!-- ====================================================================
+           TAB 3: ASSIGN PLAN TO PATIENT
+           ==================================================================== -->
+        @if (activeTab() === 'assign-plan') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Assign Treatment Plan</h4>
+            <span class="card-subheading">Enroll patient in a treatment package with sessions and payment option.</span>
+          </div>
+
+          <!-- Patient indicator -->
+          @if (selectedPatient(); as pt) {
+          <div class="assign-patient-card mb-3">
+            <div class="ap-avatar">{{ getInitials(pt.fullName) }}</div>
+            <div class="ap-details">
+              <strong class="ap-name">{{ pt.fullName }}</strong>
+              <span class="ap-sub">{{ pt.patientCode }} &bull; {{ pt.phone || pt.mobile }} &bull; {{ pt.gender }}</span>
+            </div>
+            <span class="ap-badge">Selected Patient</span>
+          </div>
+          } @else {
+          <div class="alert alert-warning py-2 px-3 mb-3 small d-flex align-items-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2 flex-shrink-0">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Please search and select a patient in the top search bar first.</span>
+          </div>
+          }
+
+          <!-- Plan selector from catalog -->
+          <div class="form-group mb-3">
+            <label class="form-label">Select Treatment Plan / Package <span class="text-danger">*</span></label>
+            @if (isLoadingPlans()) {
+            <div class="small text-muted py-2">Loading provider subscription plans...</div>
+            } @else {
+            <select class="form-select" [ngModel]="selectedPlanId()" (ngModelChange)="onPlanSelect($event)">
+              <option [ngValue]="null">-- Select a Subscription Plan --</option>
+              @for (p of availablePlans(); track p.id) {
+              <option [value]="p.id">
+                {{ p.planName }} &bull; {{ p.totalSessions }} Sessions &bull; &#8377;{{ p.price }} ({{ p.validityDays }} Days)
+              </option>
+              }
+              <option value="0">+ Custom / New Plan</option>
+            </select>
+            }
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Plan Name / Protocol</label>
+              <input type="text" class="form-input" [ngModel]="newPlanTitle()"
+                (ngModelChange)="newPlanTitle.set($event)" placeholder="e.g. Cervical Spondylosis Care Plan" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Total Sessions</label>
+              <input type="number" class="form-input" [ngModel]="newPlanSessions()"
+                (ngModelChange)="newPlanSessions.set(+$event)" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Duration (Weeks)</label>
+              <input type="number" class="form-input" [ngModel]="newPlanWeeks()"
+                (ngModelChange)="newPlanWeeks.set(+$event)" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Plan Fee (₹)</label>
+              <input type="number" class="form-input" [ngModel]="newPlanPrice()"
+                (ngModelChange)="newPlanPrice.set(+$event)" />
+            </div>
+          </div>
+
+          <!-- Payment Options for Plan -->
+          <div class="payment-block">
+            <label class="form-label">Payment Terms</label>
+
+            <div class="pay-choice-pills">
+              <button type="button" class="pay-pill" [class.active]="newPlanPaymentType() === 'full'"
+                (click)="setNewPlanPaymentType('full')">
+                Full Advance
+              </button>
+              <button type="button" class="pay-pill" [class.active]="newPlanPaymentType() === 'advance'"
+                (click)="setNewPlanPaymentType('advance')">
+                Partial Advance
+              </button>
+              <button type="button" class="pay-pill" [class.active]="newPlanPaymentType() === 'due'"
+                (click)="setNewPlanPaymentType('due')">
+                Payment Due
+              </button>
+            </div>
+
+            <div class="form-grid-3" style="margin-top: 12px;">
+              <div class="form-group">
+                <label class="form-sublabel">Advance Amount (₹)</label>
+                <input type="number" class="form-input"
+                  [disabled]="newPlanPaymentType() === 'full' || newPlanPaymentType() === 'due'"
+                  [ngModel]="newPlanAdvance()" (ngModelChange)="newPlanAdvance.set(+$event)" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-sublabel">Balance Due (₹)</label>
+                <div class="readonly-due">₹{{ assignBalanceDue() }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-sublabel">Payment Mode</label>
+                <select class="form-select" [ngModel]="newPlanPaymentMode()"
+                  (ngModelChange)="newPlanPaymentMode.set($event)">
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="NetBanking">Net Banking</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-footer">
+            <button type="button" class="btn-primary" [disabled]="!selectedPatient() || isAssigningPlan()" (click)="submitAssignPlan()">
+              {{ isAssigningPlan() ? 'Assigning Subscription...' : ('Assign Plan to ' + (selectedPatient()?.fullName || 'Patient')) }}
+            </button>
+          </div>
+
+        </div>
+        }
+
+        <!-- ====================================================================
+           TAB 4: SCHEDULED LIST (TABLE)
+           ==================================================================== -->
+        @if (activeTab() === 'list') {
+        <div class="workspace-card">
+
+          <div class="section-title-bar">
+            <h4 class="card-heading">Scheduled Treatments</h4>
+            <span class="card-subheading">All scheduled therapy sessions and payment statuses.</span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="minimal-table">
+              <thead>
+                <tr>
+                  <th>Booking Code</th>
+                  <th>Patient</th>
+                  <th>Date & Slot</th>
+                  <th>Treatment</th>
+                  <th>Attending Doctor</th>
+                  <th>Fee & Payment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (b of scheduledBookings(); track b.id) {
+                <tr>
+                  <td><strong>{{ b.bookingCode }}</strong></td>
+                  <td>
+                    <div>{{ b.patientName }}</div>
+                    <span class="table-sub">{{ b.phone }}</span>
+                  </td>
+                  <td>
+                    <div>{{ b.date }}</div>
+                    <span class="table-sub">{{ b.timeSlot }}</span>
+                  </td>
+                  <td>{{ b.treatmentName }}</td>
+                  <td>{{ b.therapist }}</td>
+                  <td>
+                    <div>₹{{ b.fee }}</div>
+                    <span class="table-sub" [class.due-text]="b.balanceDue > 0">
+                      {{ b.paymentStatus }} (Paid ₹{{ b.advancePaid }}, Due ₹{{ b.balanceDue }})
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-pill">{{ b.status }}</span>
+                  </td>
+                </tr>
+                } @empty {
+                <tr>
+                  <td colspan="7" class="table-empty">No treatments scheduled yet.</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        }
+
+      </main>
+
+    </div>
+    <div class="schedule-left">
+      <div class="patient-overview-card">
+
+        <!-- Card Title -->
+        <div class="po-card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="po-title-icon">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <h3>Patient Overview</h3>
+        </div>
+
+        @if (selectedPatient(); as pt) {
+        <!-- Patient Info Card -->
+        <div class="po-patient-header">
+          <div class="po-patient-avatar">
+            <span>{{ getInitials(pt.fullName) }}</span>
+          </div>
+          <div class="po-patient-meta">
+            <div class="po-name-row">
+              <strong class="po-patient-name">{{ pt.fullName }}</strong>
+              <span class="po-patient-code">{{ pt.patientCode }}</span>
+            </div>
+            @if (pt.age || pt.gender) {
+            <span class="po-patient-sub">
+              @if (pt.age) { {{ pt.age }} yrs }
+              @if (pt.age && pt.gender) { , }
+              @if (pt.gender) { {{ pt.gender }} }
+            </span>
+            }
+          </div>
+        </div>
+
+        <!-- 3-Col Metric Boxes -->
+        <div class="po-metrics-row">
+          <div class="po-metric-box">
+            <div class="po-metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="po-metric-data">
+              <span class="po-metric-label">Last Visit</span>
+              <strong class="po-metric-val">{{ pt.lastVisit || 'N/A' }}</strong>
+            </div>
+          </div>
+
+          <div class="po-metric-box">
+            <div class="po-metric-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <div class="po-metric-data">
+              <span class="po-metric-label">Total Visits</span>
+              <strong class="po-metric-val">{{ patientBookings().length }}</strong>
+            </div>
+          </div>
+
+          <div class="po-metric-box">
+            <div class="po-metric-icon rupee-icon">
+              <span>&#8377;</span>
+            </div>
+            <div class="po-metric-data">
+              <span class="po-metric-label">Pending</span>
+              <strong class="po-metric-val">&#8377;{{ patientPendingAmount() }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Last Visits Section -->
+        <div class="po-visits-section">
+          <div class="po-visits-header">
+            <div class="po-vh-left">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <h4>Last Visits</h4>
+            </div>
+            <button type="button" class="btn-po-view-all" (click)="activeTab.set('list')">
+              <span>View All</span>
+              <span class="view-all-arrow">&rarr;</span>
+            </button>
+          </div>
+
+          <div class="po-visits-list">
+            @for (visit of patientBookings(); track visit.id; let isFirst = $first) {
+            <div class="po-visit-item" [class.latest]="isFirst">
+              <div class="po-visit-left">
+                <div class="po-date-badge">
+                  <span class="po-date-day">{{ getVisitDay(visit.date) }}</span>
+                  <span class="po-date-month">{{ getVisitMonth(visit.date) }}</span>
+                </div>
+                <div class="po-visit-info">
+                  <strong class="po-visit-title">{{ visit.treatmentName }}</strong>
+                  <span class="po-visit-sub">{{ visit.therapist }}</span>
+                </div>
+              </div>
+              <div class="po-visit-right">
+                <span class="po-visit-fee">&#8377;{{ visit.fee }}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="po-chevron">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
+            } @empty {
+            <div class="po-empty-state">No treatment visits found for this patient yet.</div>
+            }
+          </div>
+        </div>
+        } @else {
+        <div class="po-empty-state">
+          Search and select a patient to view their overview and treatment visits.
+        </div>
+        }
+
+      </div>
+    </div>
+  </div>
+</div>

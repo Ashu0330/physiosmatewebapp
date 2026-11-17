@@ -5,6 +5,7 @@ import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
 import { SharedModule } from '../../shared/shared-module';
 import { BaseComponent } from '../../helper/base-component';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-auth-form',
@@ -54,6 +55,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   // ── Send OTP ────────────────────────────────────────────────────────────────
 
   async sendSignupOtp(): Promise<void> {
+    if (this.isSignupOtpSending() || this.signupOtpCountdown() > 0) return;
     const emailCtrl = this.signupForm.get('email');
     if (!emailCtrl || emailCtrl.invalid) {
       emailCtrl?.markAsTouched();
@@ -140,7 +142,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
           } else if (roleId === 3) {
             this.router.navigate(['/clinics']);
           } else {
-            this.router.navigate(['/user-dashboard']);
+            this.router.navigate(['/user-dashboard/medical-records']);
           }
         }
         return;

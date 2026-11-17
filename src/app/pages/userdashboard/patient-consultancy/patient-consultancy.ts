@@ -1,26 +1,50 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { ConsultancyItem } from '../../../models/usermode';
+import { ConsultancyItem, MyBooking } from '../../../models/usermode';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
-import { inject } from '@angular/core';
+import { Userservice } from '../../../services/userservice';
+import { Authservice } from '../../../services/authservice';
+import { SharedModule } from '../../../shared/shared-module';
+import { ApiService } from '../../../services/api.service';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
   selector: 'app-patient-consultancy',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [SharedModule],
   templateUrl: './patient-consultancy.html',
   styleUrl: './patient-consultancy.css',
 })
-export class PatientConsultancy {
-  @Input() consultancies: ConsultancyItem[] = [];
+export class PatientConsultancy implements OnInit {
 
   private router = inject(Router);
   private sweetAlert = inject(SweetAlertService);
+  private userService = inject(Userservice);
+  private authService = inject(Authservice);
+  private apiService = inject(ApiService);
+
+  isLoading = false;
 
   // Modal state
   selectedConsultancy: ConsultancyItem | null = null;
   showConsultancyModal = false;
+
+  consultancy = signal<ConsultancyItem[]>([]);
+
+  ngOnInit(): void {
+    this.GetAllConsultancy();
+  }
+  async GetAllConsultancy() {
+    var result = await this.apiService.Get<ConsultancyItem[]>(ApiEndPoints.MyBookings);
+    if (result.isSuccess == true) {
+      this.consultancy.set(result.data);
+    }
+    else {
+      this.consultancy.set([]);
+
+    }
+  }
 
   toggleConsultancyAccordion(item: ConsultancyItem): void {
     item.isExpanded = !item.isExpanded;

@@ -1,237 +1,1289 @@
-<div class="patients-panel">
+<div class="patients-master-container">
 
-  <!-- Header -->
-  <div class="patients-header">
-    <div class="header-text">
-      <h3 class="panel-title">Patients Directory</h3>
-      <p class="panel-subtitle">Manage patient records, therapy progress, and clinical evaluations.</p>
+  <!-- =========================================================================
+       VIEW 1: PATIENTS CARDS DIRECTORY (SCREENSHOT 3 INSPIRED - PHYSIOSMATE THEME)
+       ========================================================================= -->
+  @if (viewMode() === 'cards') {
+  <div class="cards-top-bar">
+    <div class="header-titles">
+      <h3 class="overview-title">Clinical Practice Overview</h3>
+      <p class="overview-subtitle">Real-time KPIs, appointment completion rates, and practice performance
+        metrics.</p>
     </div>
-    <button type="button" class="btn-primary-add" (click)="onAddPatientClick()">
-      + Add New Patient
-    </button>
-  </div>
+    <div class="top-bar-right-actions">
+      <button type="button" class="btn-secondary-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Print Label</span>
+      </button>
 
-  <!-- Search & Filter Controls -->
-  <div class="filter-controls-bar">
-    <div class="search-box">
-      <svg class="search-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" class="search-input" placeholder="Search by name, patient code (e.g. PT-1041), phone..."
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-      @if (searchQuery()) {
-      <button type="button" class="btn-clear-search" (click)="searchQuery.set('')">✕</button>
-      }
-    </div>
+      <button type="button" class="btn-secondary-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="18" r="3"></circle>
+          <circle cx="6" cy="6" r="3"></circle>
+          <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+          <line x1="6" y1="9" x2="6" y2="21"></line>
+        </svg>
+        <span>Merge Patients</span>
+      </button>
 
-    <!-- Filter Pills -->
-    <div class="filter-pills">
-      <button type="button" class="filter-pill" [class.active]="selectedStatus() === 'All'" (click)="setFilter('All')">
-        All Patients
-      </button>
-      <button type="button" class="filter-pill" [class.active]="selectedStatus() === 'Active'"
-        (click)="setFilter('Active')">
-        Active
-      </button>
-      <button type="button" class="filter-pill" [class.active]="selectedStatus() === 'Pending'"
-        (click)="setFilter('Pending')">
-        Pending Review
-      </button>
-      <button type="button" class="filter-pill" [class.active]="selectedStatus() === 'Completed'"
-        (click)="setFilter('Completed')">
-        Discharged
+      <button type="button" class="btn-primary-add" (click)="onAddPatientClick()">
+        <span>+ Add New Patient</span>
       </button>
     </div>
   </div>
 
-  <!-- Minimal Patients Table -->
-  <div class="table-container">
-    <table class="minimal-table">
-      <thead>
-        <tr>
-          <th>Patient Details</th>
-          <th>Contact</th>
-          <th>Primary Diagnosis</th>
-          <th>Ongoing Protocol</th>
-          <th>Sessions</th>
-          <th>Status</th>
-          <th class="text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (pt of filteredPatients(); track pt.id) {
-        <tr class="table-row" (click)="openPatientDetails(pt)">
-          <!-- Patient Profile -->
-          <td>
-            <div class="patient-cell">
-              <div class="avatar-circle">
-                {{ getInitials(pt.fullName) }}
-              </div>
-              <div class="patient-meta">
-                <span class="patient-name">{{ pt.fullName }}</span>
-                <span class="patient-code-sub">{{ pt.patientCode }} • {{ pt.age }}y, {{ pt.gender }}</span>
-              </div>
-            </div>
-          </td>
+  <div class="cards-view-panel">
 
-          <!-- Contact -->
-          <td>
-            <div class="contact-meta">
-              <span class="phone-text">{{ pt.phone }}</span>
-              <span class="email-sub">{{ pt.email }}</span>
-            </div>
-          </td>
-
-          <!-- Diagnosis -->
-          <td>
-            <span class="condition-tag">{{ pt.primaryCondition }}</span>
-          </td>
-
-          <!-- Ongoing Protocol -->
-          <td>
-            <span class="protocol-text">{{ pt.currentPlan || 'Physical Therapy Rehab' }}</span>
-          </td>
-
-          <!-- Sessions Ratio -->
-          <td>
-            <div class="session-ratio-box">
-              <span class="ratio-text"><strong>{{ pt.sessionsCompleted }}</strong> / {{ pt.totalSessions }}</span>
-              <div class="ratio-bar-track">
-                <div class="ratio-bar-fill" [style.width.%]="(pt.sessionsCompleted / pt.totalSessions) * 100"></div>
-              </div>
-            </div>
-          </td>
-
-          <!-- Status Pill -->
-          <td>
-            <span class="status-pill" [class.active]="pt.status === 'Active'" [class.pending]="pt.status === 'Pending'"
-              [class.completed]="pt.status === 'Completed'">
-              {{ pt.status }}
-            </span>
-          </td>
-
-          <!-- Actions -->
-          <td class="text-right" (click)="$event.stopPropagation()">
-            <div class="row-actions">
-              <button type="button" class="btn-action-view" (click)="openPatientDetails(pt)">
-                View
-              </button>
-              <button type="button" class="btn-action-plan" (click)="onPlansClick()">
-                Plan
-              </button>
-            </div>
-          </td>
-        </tr>
-        } @empty {
-        <tr>
-          <td colspan="7">
-            <div class="empty-state">
-              <p class="empty-text">No matching patient records found.</p>
-              <button type="button" class="link-action" (click)="searchQuery.set(''); selectedStatus.set('All')">
-                Reset Search
-              </button>
-            </div>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Quick Patient Details Modal -->
-  @if (selectedPatient()) {
-  <div class="modal-backdrop" (click)="closePatientDetails()">
-    <div class="modal-box" (click)="$event.stopPropagation()">
-
-      <div class="modal-top">
-        <div class="modal-title-row">
-          <span class="code-badge">{{ selectedPatient()!.patientCode }}</span>
-          <h4 class="modal-name">{{ selectedPatient()!.fullName }}</h4>
+    <!-- Top Action & Search Bar -->
+    <div class="cards-top-search">
+      <div class="top-bar-left-search">
+        <div class="cards-search-box">
+          <svg class="search-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="cards-search-input" placeholder="Search Patient Name / Id / Phone / Condition..."
+            [ngModel]="cardSearchQuery()" (ngModelChange)="cardSearchQuery.set($event)" />
+          @if (cardSearchQuery()) {
+          <button type="button" class="btn-clear-search" (click)="cardSearchQuery.set('')">&times;</button>
+          }
         </div>
-        <button type="button" class="modal-close" (click)="closePatientDetails()">✕</button>
       </div>
+    </div>
 
-      <div class="modal-content-grid">
-        <div class="detail-item">
-          <span class="lbl">Age & Gender</span>
-          <span class="val">{{ selectedPatient()!.age }} Years, {{ selectedPatient()!.gender }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="lbl">Contact Phone</span>
-          <span class="val">{{ selectedPatient()!.phone }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="lbl">Email</span>
-          <span class="val">{{ selectedPatient()!.email }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="lbl">Status</span>
-          <span class="val">
-            <span class="status-pill active">{{ selectedPatient()!.status }}</span>
-          </span>
-        </div>
-        <div class="detail-item full">
-          <span class="lbl">Primary Diagnosis</span>
-          <span class="val teal-text">{{ selectedPatient()!.primaryCondition }}</span>
-        </div>
-        <div class="detail-item full">
-          <span class="lbl">Assigned Care Protocol</span>
-          <span class="val">{{ selectedPatient()!.currentPlan }}</span>
-        </div>
-        <div class="detail-item full">
-          <span class="lbl">Progress Milestone</span>
-          <div class="progress-bar-wrap">
-            <div class="bar-track">
-              <div class="bar-fill"
-                [style.width.%]="(selectedPatient()!.sessionsCompleted / selectedPatient()!.totalSessions) * 100"></div>
-            </div>
-            <span class="bar-num">{{ selectedPatient()!.sessionsCompleted }} / {{ selectedPatient()!.totalSessions }}
-              Sessions</span>
+    <!-- Main Directory Layout: Left Category Filter + Right Cards Grid -->
+    <div class="cards-layout-body">
+
+      <!-- Left Filter Sidebar -->
+      <aside class="cards-filter-sidebar">
+
+        <!-- Section: Patients -->
+        <div class="filter-group-box">
+          <h4 class="filter-green-header">Patients</h4>
+          <div class="filter-links-list">
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'all'"
+              (click)="setGroupFilter('all')">
+              <span>All Patients</span>
+              <span class="count-badge">{{ allEMRPatients().length }}</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'recent-visited'"
+              (click)="setGroupFilter('recent-visited')">
+              <span>Recently Visited</span>
+              <span class="count-badge">8</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'recent-added'"
+              (click)="setGroupFilter('recent-added')">
+              <span>Recently Added</span>
+              <span class="count-badge">5</span>
+            </button>
           </div>
         </div>
-        @if (selectedPatient()!.relevantMedicalHistory) {
-        <div class="detail-item full">
-          <span class="lbl">Relevant Medical History</span>
-          <span class="val">{{ selectedPatient()!.relevantMedicalHistory }}</span>
+
+        <!-- Section: Clinical Groups -->
+        <div class="filter-group-box">
+          <div class="filter-header-row">
+            <h4 class="filter-green-header">Groups</h4>
+            <button type="button" class="link-manage-blue">Manage</button>
+          </div>
+          <div class="filter-links-list">
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'spine'"
+              (click)="setGroupFilter('spine')">
+              <span>Spine & Posture Care</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'sports'"
+              (click)="setGroupFilter('sports')">
+              <span>Sports Injury & Rehab</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'shoulder'"
+              (click)="setGroupFilter('shoulder')">
+              <span>Shoulder & Joint ROM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Smart Groups -->
+        <div class="filter-group-box">
+          <h4 class="filter-green-header">Smart Groups</h4>
+          <div class="filter-links-list">
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'female'"
+              (click)="setGroupFilter('female')">
+              <span>All Female Patients</span>
+              <span class="count-badge">9</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'male'"
+              (click)="setGroupFilter('male')">
+              <span>All Male Patients</span>
+              <span class="count-badge">6</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'active'"
+              (click)="setGroupFilter('active')">
+              <span>Active Treatment Plans</span>
+              <span class="count-badge">14</span>
+            </button>
+            <button type="button" class="filter-link-btn" [class.active]="selectedGroupFilter() === 'completed'"
+              (click)="setGroupFilter('completed')">
+              <span>Discharged / Completed</span>
+              <span class="count-badge">1</span>
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right: Patient Cards Grid -->
+      <main class="cards-grid-content">
+
+        <div class="cards-summary-strip">
+          <span class="summary-text">
+            Showing <strong>{{ filteredPatientCards().length }}</strong> patient records Click any card to open complete
+            EMR Profile
+          </span>
+          @if (selectedGroupFilter() !== 'all' || cardSearchQuery()) {
+          <button type="button" class="btn-reset-filters"
+            (click)="selectedGroupFilter.set('all'); cardSearchQuery.set('')">
+            Reset Filter
+          </button>
+          }
+        </div>
+
+        <!-- Patient Cards Grid (screenshot layout styled with PhysiosMate theme) -->
+        <div class="patient-cards-grid">
+          @for (pt of filteredPatientCards(); track pt.id) {
+          <div class="patient-card-item" (click)="openPatientEMR(pt)">
+
+            <!-- Left: Silhouette Avatar Placeholder -->
+            <div class="card-avatar-box">
+              <svg class="avatar-silhouette-svg" viewBox="0 0 24 24" fill="#94A3B8">
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+              <span class="avatar-initials-chip">{{ getInitials(pt.fullName) }}</span>
+            </div>
+
+            <!-- Right: Patient Details -->
+            <div class="card-info-box">
+              <div class="card-header-line">
+                <h5 class="card-pt-name">{{ pt.fullName }}</h5>
+                <span class="card-pt-code"># {{ pt.patientCode }}</span>
+              </div>
+
+              <div class="card-demographics">
+                <span class="pt-gender">{{ pt.gender }}</span>
+                <span class="pt-dot"></span>
+                <span class="pt-age">{{ pt.age }} Yrs</span>
+              </div>
+
+              <div class="card-phone-line">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                  </path>
+                </svg>
+                <span>{{ pt.phone }}</span>
+              </div>
+
+              <div class="card-condition-line" [title]="pt.primaryCondition">
+                <span class="condition-badge">{{ pt.primaryCondition }}</span>
+              </div>
+
+              <div class="card-footer-line">
+                <span class="status-indicator-dot" [class.active]="pt.status === 'Active'"
+                  [class.completed]="pt.status === 'Completed'">
+                  {{ pt.status }}
+                </span>
+                <span class="link-open-emr">View EMR &rarr;</span>
+              </div>
+            </div>
+
+          </div>
+          } @empty {
+          <div class="empty-cards-state">
+            <p>No patient cards found matching your search.</p>
+            <button type="button" class="btn-reset-filters"
+              (click)="selectedGroupFilter.set('all'); cardSearchQuery.set('')">
+              Show All Patients
+            </button>
+          </div>
+          }
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+  }
+
+  <!-- =========================================================================
+       VIEW 2: SELECTED PATIENT EMR & PROFILE (WITH "BACK TO ALL PATIENTS" BUTTON)
+       ========================================================================= -->
+  @if (viewMode() === 'emr' && selectedPatient()) {
+  <div class="emr-patient-wrapper">
+
+    <!-- 1. SLIM TOP BAR (Callout 1) -->
+    <div class="patient-slim-bar">
+      <div class="slim-bar-left">
+        <button type="button" class="btn-circle-back" (click)="backToCards()" title="Back to Patients">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <div class="slim-breadcrumbs">
+          <span class="crumb-link" (click)="backToCards()">Patients</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current">{{ selectedPatient()!.fullName }}</span>
+        </div>
+      </div>
+
+      <div class="slim-bar-right">
+        <!-- Switch patient dropdown -->
+        <div class="switch-patient-dropdown">
+          <select class="switch-patient-select" [ngModel]="selectedPatient()!.id"
+            (ngModelChange)="openPatientEMR(allEMRPatients()[$any($event)])">
+            <option value="" disabled selected>Switch patient &#9662;</option>
+            @for (pt of allEMRPatients(); track pt.id) {
+            <option [value]="pt.id">
+              {{ pt.fullName }} ({{ pt.patientCode }})
+            </option>
+            }
+          </select>
+          <div class="switch-patient-btn-visual">
+            <span>Switch patient</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Help button -->
+        <button type="button" class="slim-icon-btn" title="Help & Support">
+          <span class="help-question-mark">?</span>
+        </button>
+
+        <!-- Notifications -->
+        <button type="button" class="slim-icon-btn notification-btn" title="Notifications">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="slim-bell-badge">10</span>
+        </button>
+
+        <!-- Doctor Profile Avatar Circle -->
+        <div class="slim-doctor-avatar" title="Doctor Account">
+          <span>HS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PATIENT HEADER CARD (Callout 2) -->
+    <div class="patient-header-card">
+      <div class="phc-left">
+        <!-- Avatar with photo-change badge -->
+        <div class="phc-avatar-wrap">
+          <div class="phc-avatar">
+            <span>{{ getInitials(selectedPatient()!.fullName) }}</span>
+          </div>
+          <button type="button" class="phc-photo-badge" (click)="showPhotoModal.set(true)" title="Change Photo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Patient Demographics & Contacts -->
+        <div class="phc-info">
+          <div class="phc-name-row">
+            <h2 class="phc-name">{{ selectedPatient()!.fullName }}</h2>
+            <span class="phc-code-pill">{{ selectedPatient()!.patientCode }}</span>
+          </div>
+          <div class="phc-meta-row">
+            <span class="phc-meta-item">{{ selectedPatient()!.gender }} &middot; {{ selectedPatient()!.age }} yrs</span>
+
+            <span class="phc-meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>{{ selectedPatient()!.phone || '+91 95716 70547' }}</span>
+            </span>
+
+            <span class="phc-meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </svg>
+              <span>{{ selectedPatient()!.email || 'himanshu.suman00076@gmail.com' }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Action Buttons -->
+      <div class="phc-actions">
+        <button type="button" class="btn-phc-outline" (click)="showEditModal.set(true)">
+          Edit profile
+        </button>
+        <button type="button" class="btn-phc-outline" (click)="onNewConsultation()">
+          New consultation
+        </button>
+        <button type="button" class="btn-phc-solid" (click)="onScheduleTreatment()">
+          Schedule treatment
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. HORIZONTAL SECTION TABS (Callout 3 & 5) -->
+    <nav class="patient-nav-tabs">
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'profile'"
+        (click)="setSubTab('profile')">
+        <span>Profile</span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'consultations'"
+        (click)="setSubTab('consultations')">
+        <span>Consultations</span>
+        <span class="p-tab-badge" [class.has-count]="patientConsultations().length > 0">
+          {{ patientConsultations().length }}
+        </span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'appointments'"
+        (click)="setSubTab('appointments')">
+        <span>Treatments</span>
+        <span class="p-tab-badge" [class.has-count]="patientAppointments().length > 0"
+          [class.zero-count]="patientAppointments().length === 0">
+          {{ patientAppointments().length }}
+        </span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'treatment-plans'"
+        (click)="setSubTab('treatment-plans')">
+        <span>Treatment plans</span>
+        <span class="p-tab-badge" [class.zero-count]="(selectedPatient()!.counts.treatmentPlans || 0) === 0">
+          {{ selectedPatient()!.counts.treatmentPlans || 0 }}
+        </span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'procedures'"
+        (click)="setSubTab('procedures')">
+        <span>Completed procedures</span>
+        <span class="p-tab-badge" [class.zero-count]="(selectedPatient()!.counts.completedProcedures || 0) === 0">
+          {{ selectedPatient()!.counts.completedProcedures || 0 }}
+        </span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'files'"
+        (click)="setSubTab('files')">
+        <span>Files</span>
+      </button>
+
+      <button type="button" class="p-nav-tab" [class.active]="activeSubTab() === 'payments'"
+        (click)="setSubTab('payments'); GetPayment(selectedPatient()?.patientId)">
+        <span>Payments</span>
+        <span class="p-tab-badge" [class.zero-count]="(selectedPatient()!.counts.payments || 0) === 0">
+          {{ selectedPatient()!.counts.payments || 0 }}
+        </span>
+      </button>
+    </nav>
+
+    <!-- CONTENT BODY (FULL WIDTH) -->
+    <div class="patient-tab-content-area">
+
+      <!-- SUB-TAB 1: PROFILE (Callout 4 & 5) -->
+      @if (activeSubTab() === 'profile') {
+      <div class="patient-profile-grid">
+
+        <!-- Left Column: Personal details & Contact details -->
+        <div class="ppg-col">
+
+          <!-- Card 1: Personal details -->
+          <div class="profile-card">
+            <div class="pc-header">
+              <h3 class="pc-title">Personal details</h3>
+              <button type="button" class="pc-edit-link" (click)="showEditModal.set(true)">Edit</button>
+            </div>
+            <div class="pc-body">
+              <div class="pc-kv-grid">
+                  
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">PATIENT ID</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.patientCode }}</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">FULL NAME</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.fullName }}</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">GENDER</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.gender }}</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">DATE OF BIRTH</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.dob || '30 Oct 1999' }} ({{ selectedPatient()!.age || 27 }} yrs)</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">BLOOD GROUP</span>
+                  @if (selectedPatient()!.bloodGroup) {
+                  <strong class="pc-kv-value">{{ selectedPatient()!.bloodGroup }}</strong>
+                  } @else {
+                  <div class="pc-not-added">
+                    <span>Not added</span>
+                    <button type="button" class="btn-inline-add" (click)="showEditModal.set(true)">+ Add</button>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Contact details -->
+          <div class="profile-card">
+            <div class="pc-header">
+              <h3 class="pc-title">Contact details</h3>
+              <button type="button" class="pc-edit-link" (click)="showEditModal.set(true)">Edit</button>
+            </div>
+            <div class="pc-body">
+              <div class="pc-kv-grid">
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">PRIMARY MOBILE</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.phone || '+91 95716 70547' }}</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">EMAIL</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.email || 'himanshu.suman00076@gmail.com' }}</strong>
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">EMERGENCY CONTACT</span>
+                  @if (selectedPatient()!.emergencyContact) {
+                  <strong class="pc-kv-value">{{ selectedPatient()!.emergencyContact }}</strong>
+                  } @else {
+                  <div class="pc-not-added">
+                    <span>Not added</span>
+                    <button type="button" class="btn-inline-add" (click)="showEditModal.set(true)">+ Add</button>
+                  </div>
+                  }
+                </div>
+
+                <div class="pc-kv-item">
+                  <span class="pc-kv-label">ADDRESS</span>
+                  <strong class="pc-kv-value">{{ selectedPatient()!.address || 'Kherli' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Medical history, Groups, Memberships -->
+        <div class="ppg-col">
+
+          <!-- Card 3: Medical history -->
+          <div class="profile-card">
+            <div class="pc-header">
+              <h3 class="pc-title">Medical history</h3>
+              <button type="button" class="pc-edit-link" (click)="showEditModal.set(true)">Edit</button>
+            </div>
+            <div class="pc-body">
+              @if (selectedPatient()!.medicalHistory && selectedPatient()!.medicalHistory.length > 0) {
+              <ul class="pc-med-list">
+                @for (item of selectedPatient()!.medicalHistory; track item) {
+                <li>{{ item }}</li>
+                }
+              </ul>
+              } @else {
+              <div class="pc-empty-state">
+                <div class="pc-empty-icon-wrap">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </div>
+                <p class="pc-empty-text">No medical history recorded yet</p>
+                <button type="button" class="btn-pc-pill" (click)="showEditModal.set(true)">+ Add history</button>
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Card 4: Groups -->
+          <div class="profile-card">
+            <div class="pc-header">
+              <h3 class="pc-title">Groups</h3>
+              <button type="button" class="pc-edit-link" (click)="showEditModal.set(true)">Manage</button>
+            </div>
+            <div class="pc-body">
+              @if (selectedPatient()!.groups && selectedPatient()!.groups.length > 0) {
+              <div class="pc-chips-row">
+                @for (grp of selectedPatient()!.groups; track grp) {
+                <span class="pc-group-chip">{{ grp }}</span>
+                }
+              </div>
+              } @else {
+              <div class="pc-inline-empty">
+                <span class="pc-inline-empty-text">Not in any group.</span>
+                <button type="button" class="btn-pc-pill" (click)="showEditModal.set(true)">+ Add to group</button>
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Card 5: Memberships -->
+          <div class="profile-card">
+            <div class="pc-header">
+              <h3 class="pc-title">Memberships</h3>
+              <button type="button" class="pc-edit-link" (click)="showEditModal.set(true)">Edit</button>
+            </div>
+            <div class="pc-body">
+              @if (selectedPatient()!.memberships) {
+              <p class="pc-membership-text">{{ selectedPatient()!.memberships }}</p>
+              } @else {
+              <div class="pc-inline-empty">
+                <span class="pc-inline-empty-text">No active membership.</span>
+                <button type="button" class="btn-pc-pill" (click)="showEditModal.set(true)">+ Add membership</button>
+              </div>
+              }
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+      }
+
+      <!-- SUB-TAB: CONSULTATIONS (Added above Appointments) -->
+        @if (activeSubTab() === 'consultations') {
+        <div class="subtab-panel">
+          <div class="subtab-header">
+            <div>
+              <h3 class="subtab-title">Patient Consultations</h3>
+              <p class="subtab-subtitle">Clinical consultation history and encounter evaluations for {{
+                selectedPatient()!.fullName }}</p>
+            </div>
+            <div class="header-action-group">
+              <button type="button" class="btn-table-outline"
+                (click)="loadPatientBookingHistory(selectedPatient()!.patientId ?? 1)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          @if (isLoadingConsultations()) {
+          <div class="empty-subtab-state">
+            <p>Loading patient consultations...</p>
+          </div>
+          } @else if (patientConsultations().length === 0) {
+          <div class="empty-subtab-state">
+            <p>No consultation records found for this patient.</p>
+          </div>
+          } @else {
+          <div class="consultation-cards-container">
+            @for (c of patientConsultations(); track c.consultancyBookingId || c.bookingId || $index) {
+            <div class="consultation-encounter-card">
+              <!-- Top Header Bar -->
+              <div class="c-card-header">
+                <div class="c-header-left">
+                  <div class="c-date-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="c-date-text">{{ c.consultancyDate| date:'dd MMM yyyy' }}</span>
+                    <span class="c-time-text">{{ c.startTime }} &ndash; {{ c.endTime }}</span>
+                  </div>
+
+                  <span class="visit-type-badge">{{ c.visitType || 'Clinic' }}</span>
+
+                  <span class="status-badge" [class.completed]="c.assignmentStatus === 'Completed'"
+                    [class.scheduled]="c.assignmentStatus !== 'Completed'">
+                    {{ c.assignmentStatus || c.status || 'Booked' }}
+                  </span>
+                </div>
+
+                <div class="c-header-right">
+                  <span class="c-booking-chip">Booking #{{ c.consultancyBookingId || c.bookingId }}</span>
+                  <span class="c-amount-chip">&#8377;{{ c.amount || 0 }}</span>
+                </div>
+              </div>
+
+              <!-- Meta Bar: Practitioner & Location -->
+              <div class="c-meta-bar">
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span class="c-meta-label">Doctor:</span>
+                  <strong class="c-meta-val">{{ c.assignedPractitionerName || c.practitionerName }}</strong>
+                </div>
+
+
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                  </svg>
+                  <span class="c-meta-label">Clinic:</span>
+                  <span class="c-meta-val">{{ c.clinicName }}</span>
+                </div>
+
+
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span class="c-meta-label">Address:</span>
+                  <span class="c-meta-val">{{ c.clinicAddress }}</span>
+                </div>
+
+
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                  <span class="c-meta-label">Home Visit:</span>
+                  <span class="c-meta-val">{{ c.homeVisitAddress }}</span>
+                </div>
+
+              </div>
+
+
+              <!-- Vitals Strip -->
+              <div class="c-vitals-strip">
+                <span class="c-vitals-label">Vitals:</span>
+                <div class="c-vitals-items">
+
+                  <span class="c-vital-chip">
+                    <span class="c-vital-name">BP:</span>
+                    <strong>{{ c.bloodPressure }}</strong>
+                  </span>
+
+                  <span class="c-vital-chip">
+                    <span class="c-vital-name">Pulse:</span>
+                    <strong>{{ c.pulse }}</strong>
+                  </span>
+
+                  <span class="severity-badge" [class.mild]="c.painSeverity === 'Mild'"
+                    [class.moderate]="c.painSeverity === 'Moderate'" [class.severe]="c.painSeverity === 'Severe'">
+                    Pain: {{ c.painSeverity }}
+                  </span>
+
+                </div>
+              </div>
+
+
+              <!-- Clinical Encounter Details Grid -->
+              <div class="c-clinical-grid">
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Chief Complaint</div>
+                  <div class="c-block-content">{{ c.chiefComplaint || 'None recorded' }}</div>
+                </div>
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Clinical Findings</div>
+                  <div class="c-block-content">{{ c.clinicalFindings || 'None recorded' }}</div>
+                </div>
+
+                <div class="c-clinical-block highlight-diag-block">
+                  <div class="c-block-tag">Provisional Diagnosis</div>
+                  <div class="c-block-content diagnosis-text">{{ c.provisionalDiagnosis || 'None recorded' }}</div>
+                </div>
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Treatment Given</div>
+                  <div class="c-block-content">{{ c.treatmentGiven || 'None recorded' }}</div>
+                </div>
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Clinical Advice</div>
+                  <div class="c-block-content">{{ c.clinicalAdvice || 'None recorded' }}</div>
+                </div>
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Investigation</div>
+                  <div class="c-block-content">{{ c.investigation || 'None recorded' }}</div>
+                </div>
+
+                <!-- <div class="c-clinical-block c-block-full">
+                  <div class="c-block-tag">Clinical Notes</div>
+                  <div class="c-block-content">{{ c.notes }}</div>
+                </div> -->
+
+              </div>
+            </div>
+            }
+          </div>
+          }
         </div>
         }
-        @if (selectedPatient()!.redFlags) {
-        <div class="detail-item full">
-          <span class="lbl">Red Flags / Contraindications</span>
-          <span class="val text-danger">{{ selectedPatient()!.redFlags }}</span>
+
+        <!-- SUB-TAB 2: APPOINTMENTS -->
+        @if (activeSubTab() === 'appointments') {
+        <div class="subtab-panel">
+          <div class="subtab-header">
+            <div>
+              <h3 class="subtab-title">Patient Treatments</h3>
+              <p class="subtab-subtitle">Treatment schedule and therapy booking history for {{ selectedPatient()!.fullName }}</p>
+            </div>
+            <div class="header-action-group">
+              <div class="view-mode-toggle me-2">
+                <button type="button" class="btn-toggle-view" [class.active]="appointmentViewMode() === 'cards'"
+                  (click)="appointmentViewMode.set('cards')">
+                  Cards
+                </button>
+                <button type="button" class="btn-toggle-view" [class.active]="appointmentViewMode() === 'table'"
+                  (click)="appointmentViewMode.set('table')">
+                  Table
+                </button>
+              </div>
+
+              <button type="button" class="btn-table-outline"
+                (click)="loadPatientAppointmentHistory(selectedPatient()!.patientId ?? 1)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+
+              <button type="button" class="btn-primary-action-sm" routerLink="/doctor-dashboard/schedule-treatment">
+                Schedule Treatment
+              </button>
+            </div>
+          </div>
+
+          @if (isLoadingAppointments()) {
+          <div class="empty-subtab-state">
+            <p>Loading patient treatments...</p>
+          </div>
+          } @else if (patientAppointments().length === 0) {
+          <div class="empty-subtab-state">
+            <p>No treatment records found for this patient.</p>
+          </div>
+          } @else {
+
+          <!-- View Mode: Encounter Cards (Just like Consultancy) -->
+          @if (appointmentViewMode() === 'cards') {
+          <div class="consultation-cards-container">
+            @for (apt of patientAppointments(); track apt.id || $index) {
+            <div class="consultation-encounter-card">
+              <!-- Top Header Bar -->
+              <div class="c-card-header">
+                <div class="c-header-left">
+                  <div class="c-date-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="c-date-text">{{ apt.appointmentDate | date:'dd MMM yyyy' }}</span>
+                    <span class="c-time-text">{{ apt.timeSlot || (apt.startTime ? (apt.startTime + ' – ' + apt.endTime) : (apt.appointmentTime || 'Scheduled')) }}</span>
+                  </div>
+
+                  <span class="visit-type-badge">{{ apt.visitType || 'Clinic' }}</span>
+
+                  <span class="status-badge"
+                    [class.completed]="apt.status === 'Completed'"
+                    [class.in-progress]="apt.status === 'In-Progress'"
+                    [class.scheduled]="apt.status !== 'Completed' && apt.status !== 'In-Progress'">
+                    {{ apt.status || 'Scheduled' }}
+                  </span>
+                </div>
+
+                <div class="c-header-right">
+                  <span class="c-booking-chip">Session #{{ apt.sessionNumber || 1 }}</span>
+                  <span class="c-booking-chip">APT-{{ apt.id }}</span>
+                  <span class="c-amount-chip">&#8377;{{ apt.amount || 0 }}</span>
+                  @if (isBothPaid(apt)) {
+                  <span class="apt-status-pill completed">&#10003; Paid</span>
+                  } @else if (isAddOnDue(apt)) {
+                  <span class="apt-status-pill addon-due-pill">
+                    <span class="addon-due-dot"></span>
+                    Add-on Due: &#8377;{{ apt.addOnFees || 0 }}
+                  </span>
+                  } @else {
+                  <span class="apt-status-pill in-progress">{{ apt.paymentStatus || 'Due' }}</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Meta Bar: Practitioner & Location -->
+              <div class="c-meta-bar">
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span class="c-meta-label">Doctor / Specialist:</span>
+                  <strong class="c-meta-val">{{ apt.assignedPractitionerName || apt.practitionerName || 'Doctor' }}</strong>
+                </div>
+
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                  </svg>
+                  <span class="c-meta-label">Clinic:</span>
+                  <span class="c-meta-val">{{ apt.clinicName || 'Clinic' }}</span>
+                </div>
+
+                @if (apt.homeVisitAddress) {
+                <div class="c-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                  <span class="c-meta-label">Home Visit:</span>
+                  <span class="c-meta-val">{{ apt.homeVisitAddress }}</span>
+                </div>
+                }
+
+                @if (apt.assignmentStatus) {
+                <div class="c-meta-item">
+                  <span class="c-meta-label">Assignment:</span>
+                  <span class="c-meta-val">{{ apt.assignmentStatus }}</span>
+                </div>
+                }
+              </div>
+
+              <!-- Treatment Notes & Billing Grid -->
+              <div class="c-clinical-grid">
+                <div class="c-clinical-block" style="grid-column: span 2;">
+                  <div class="c-block-tag">Treatment Notes &amp; Precautions</div>
+                  <div class="c-block-content">{{ apt.notes || 'None recorded' }}</div>
+                </div>
+
+                @if ((apt.addOns && apt.addOns.length > 0) || apt.hasAddOnTreatment) {
+                <div class="c-clinical-block addon-clinical-block">
+                  <div class="c-block-tag">
+                    Add-on Services @if (apt.addOns && apt.addOns.length > 0) { ({{ apt.addOns.length }}) }
+                  </div>
+                  <div class="c-block-content">
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-chips-list">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <div class="addon-item-chip">
+                        <div class="addon-chip-info">
+                          <span class="addon-chip-name">{{ addon.addOnName }}</span>
+                          <span class="addon-chip-price">&#8377;{{ addon.amount }}</span>
+                        </div>
+                        <span class="addon-chip-status"
+                          [class.paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'"
+                          [class.due]="(addon.paymentStatus || '').toLowerCase() !== 'paid' && (addon.paymentStatus || '').toLowerCase() !== 'success'">
+                          {{ addon.paymentStatus || 'Due' }}
+                        </span>
+                      </div>
+                      }
+                    </div>
+                    } @else {
+                    Fee: <strong>&#8377;{{ apt.addOnFees }}</strong>
+                    &bull; Status: <span [class.text-danger]="apt.addOnPaymentStatus === 'Due'">{{ apt.addOnPaymentStatus || 'Due' }}</span>
+                    }
+                  </div>
+                </div>
+                }
+
+                <div class="c-clinical-block">
+                  <div class="c-block-tag">Financial &amp; Payment</div>
+                  <div class="c-block-content">
+                    Status: <strong>{{ apt.paymentStatus || 'Due' }}</strong>
+                    @if (apt.paymentMethod) { &bull; Method: {{ apt.paymentMethod }} }
+                    &bull; Amount: &#8377;{{ apt.amount || 0 }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+
+          <!-- View Mode: Table (Matching screenshot layout with real data) -->
+          @if (appointmentViewMode() === 'table') {
+          <div class="subtab-table-box">
+            <table class="subtab-table">
+              <thead>
+                <tr>
+                  <th>Date &amp; Time</th>
+                  <th>Therapy / Reason</th>
+                  <th>Assigned Specialist</th>
+                  <th>Facility / Room</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (apt of patientAppointments(); track apt.id || $index) {
+                <tr>
+                  <td>
+                    <strong>{{ apt.appointmentDate | date:'dd MMM yyyy' }}</strong>
+                    <div class="cell-sub">{{ apt.timeSlot || apt.startTime || apt.appointmentTime || 'Scheduled' }}</div>
+                  </td>
+                  <td>
+                    <strong>Session #{{ apt.sessionNumber || 1 }}</strong>
+                    <div class="cell-sub">{{ apt.visitType || 'In-Clinic' }}</div>
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-table-chips">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <span class="addon-table-pill" [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
+                        + {{ addon.addOnName }} <strong class="ms-1">&#8377;{{ addon.amount }}</strong>
+                        <span class="addon-table-status" [class.is-paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'">
+                          {{ addon.paymentStatus || 'Due' }}
+                        </span>
+                      </span>
+                      }
+                    </div>
+                    }
+                    @if (apt.notes) {
+                    <div class="cell-sub text-muted" style="max-width: 220px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                      {{ apt.notes }}
+                    </div>
+                    }
+                  </td>
+                  <td>{{ apt.assignedPractitionerName || apt.practitionerName || 'Doctor' }}</td>
+                  <td>{{ apt.clinicName || 'Clinic' }}</td>
+                  <td>
+                    <strong>&#8377;{{ apt.amount || 0 }}</strong>
+                    @if (apt.addOns && apt.addOns.length > 0) {
+                    <div class="addon-pay-summary">
+                      @for (addon of apt.addOns; track addon.addOnId) {
+                      <div class="addon-pay-line">
+                        <span class="addon-pay-name">+ {{ addon.addOnName }}:</span>
+                        <strong class="addon-pay-amt">&#8377;{{ addon.amount }}</strong>
+                        <span class="addon-pay-stat" [class.paid]="(addon.paymentStatus || '').toLowerCase() === 'paid' || (addon.paymentStatus || '').toLowerCase() === 'success'">
+                          ({{ addon.paymentStatus || 'Due' }})
+                        </span>
+                      </div>
+                      }
+                    </div>
+                    } @else if (apt.hasAddOnTreatment && (apt.addOnFees ?? 0) > 0) {
+                    <div class="cell-sub text-warning">+ Add-on: &#8377;{{ apt.addOnFees }}</div>
+                    }
+                    <div class="mt-1">
+                      @if (isBothPaid(apt)) {
+                      <span class="apt-status-pill completed">&#10003; Paid</span>
+                      } @else if (isAddOnDue(apt)) {
+                      <span class="apt-status-pill addon-due-pill">
+                        <span class="addon-due-dot"></span>
+                        Add-on Due
+                      </span>
+                      } @else {
+                      <span class="apt-status-pill in-progress">{{ apt.paymentStatus || 'Due' }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge"
+                      [class.completed]="apt.status === 'Completed'"
+                      [class.in-progress]="apt.status === 'In-Progress'"
+                      [class.scheduled]="apt.status !== 'Completed' && apt.status !== 'In-Progress'">
+                      {{ apt.status || 'Scheduled' }}
+                    </span>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+
+          }
         </div>
         }
-        @if (selectedPatient()!.precautionNotes && selectedPatient()!.precautionNotes!.length) {
-        <div class="detail-item full">
-          <span class="lbl">Clinical Precautions</span>
-          <div class="modal-chips-row">
-            @for (prec of selectedPatient()!.precautionNotes; track prec) {
-            <span class="modal-prec-chip">{{ prec }}</span>
+
+
+        <!-- SUB-TAB 5: TREATMENT PLANS -->
+        @if (activeSubTab() === 'treatment-plans') {
+        <div class="subtab-panel">
+          <div class="subtab-header">
+            <div>
+              <h3 class="subtab-title">Rehabilitation Protocols & Plans ({{ selectedPatient()!.counts.treatmentPlans }})
+              </h3>
+              <p class="subtab-subtitle">Current physical therapy protocols and prescribed exercise phases</p>
+            </div>
+            <button type="button" class="btn-primary-action-sm" (click)="onPlansClick()">
+              Create Treatment Plan
+            </button>
+          </div>
+
+          <div class="plans-list-grid">
+            @for (plan of dummyTreatmentPlans; track plan.name) {
+            <div class="plan-item-card">
+              <div class="plan-card-top">
+                <div>
+                  <h4 class="plan-card-title">{{ plan.name }}</h4>
+                  <span class="plan-card-sessions">Progress: {{ plan.sessions }} Sessions</span>
+                </div>
+                <span class="status-badge" [class.completed]="plan.status === 'Ongoing'"
+                  [class.scheduled]="plan.status === 'Active'">
+                  {{ plan.status }}
+                </span>
+              </div>
+              <div class="plan-progress-wrap">
+                <div class="plan-bar-track">
+                  <div class="plan-bar-fill" [style.width.%]="plan.progress"></div>
+                </div>
+                <span class="plan-pct">{{ plan.progress }}% Completed</span>
+              </div>
+            </div>
             }
           </div>
         </div>
         }
-        @if (selectedPatient()!.notes) {
-        <div class="detail-item full">
-          <span class="lbl">Doctor Clinical Notes</span>
-          <p class="notes-block">{{ selectedPatient()!.notes }}</p>
+        <!-- SUB-TAB 8: FILES -->
+        @if (activeSubTab() === 'files') {
+        <div class="subtab-panel">
+          <div class="subtab-header">
+            <div>
+              <h3 class="subtab-title">Medical Reports & Files ({{ selectedPatient()!.counts.files }})</h3>
+              <p class="subtab-subtitle">Diagnostic scans, radiological imaging, and clinical evaluation PDFs</p>
+            </div>
+            <button type="button" class="btn-primary-action-sm">Upload File</button>
+          </div>
+
+          <div class="files-grid">
+            @for (file of dummyFiles; track file.title) {
+            <div class="file-item-card">
+              <div class="file-icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <div class="file-details">
+                <h5 class="file-name">{{ file.title }}</h5>
+                <span class="file-meta">{{ file.size }} ΓÇó {{ file.date }} ΓÇó {{ file.doctor }}</span>
+              </div>
+              <button type="button" class="btn-download-file">Download</button>
+            </div>
+            }
+          </div>
         </div>
         }
-      </div>
 
-      <div class="modal-bottom">
-        <button type="button" class="btn-modal-close" (click)="closePatientDetails()">
-          Close
-        </button>
-        <button type="button" class="btn-modal-action" (click)="closePatientDetails(); onPlansClick()">
-          View Care Plan &rarr;
-        </button>
-      </div>
+        <!-- SUB-TAB 9: BILLING & PAYMENTS -->
+        @if ( activeSubTab() === 'payments' ){
+        <div class="subtab-panel">
+          <div class="subtab-header">
+            <div>
+              <h3 class="subtab-title">Billing & Payment Records</h3>
+              <p class="subtab-subtitle">Financial statements, receipt logs, and payment transactions for {{
+                selectedPatient()?.fullName }}</p>
+            </div>
+            <div class="header-action-group">
+              <button type="button" class="btn-table-outline" (click)="GetPayment(selectedPatient()?.patientId)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="me-1">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+              <button type="button" class="btn-primary-action-sm">Generate Invoice</button>
+            </div>
+          </div>
 
+          @if (PatientPayments().length === 0) {
+          <div class="empty-subtab-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <p>No payment records found for this patient.</p>
+          </div>
+          } @else {
+          <div class="payment-date-groups-container">
+            @for (group of PatientPayments(); track group.date || $index) {
+            <div class="payment-date-card">
+              <!-- Date Header -->
+              <div class="payment-date-card-header">
+                <div class="payment-date-left">
+                  <div class="c-date-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="c-date-text">{{group.date| date:'dd MMM yyyy' }}</span>
+                  </div>
+                  <span class="payment-count-badge">
+                    {{ group.totalPayments}} Payments
+                  </span>
+                </div>
+                <div class="payment-date-right">
+                  <span class="subtotal-label">Total Amount:</span>
+                  <span class="payment-total-chip">&#8377;{{ $any(group).totalAmount ?? group.TotalAmount ?? 0 }}</span>
+                </div>
+              </div>
+
+              <!-- Table for this Date's payments -->
+              <div class="subtab-table-box">
+                <table class="subtab-table">
+                  <thead>
+                    <tr>
+                      <th>Payment #</th>
+                      <th>Service Date</th>
+                      <th>Service / Reference</th>
+                      <th>Provider</th>
+                      <th>Amount</th>
+                      <th>Payment Mode</th>
+                      <th>Status</th>
+                      <th class="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (inv of ($any(group).payments || group.Payments || [group]); track inv.id || $index) {
+                    <tr>
+                      <td><strong>#{{ inv.id }}</strong></td>
+                      <td>
+                        <strong>{{ (inv.serviceDate || inv.paidAt || $any(group).date) | date:'dd/MM/yyyy' }}</strong>
+                        @if (inv.paidAt) {
+                        <div class="cell-sub">{{ inv.paidAt | date:'shortTime' }}</div>
+                        }
+                      </td>
+                      <td>
+                        <strong>{{ inv.referenceType || 'Consultancy' }}</strong>
+                        @if ($any(inv).addOnName) {
+                        <div class="cell-sub">{{ $any(inv).addOnName }}</div>
+                        }
+                      </td>
+                      <td>
+                        <span class="provider-type-tag">{{ inv.providerType || 'Practitioner' }}</span>
+                      </td>
+                      <td><strong class="payment-amount">&#8377;{{ inv.amount }}</strong></td>
+                      <td><span class="tag-chip">{{ inv.paymentMethod || 'UPI' }}</span></td>
+                      <td>
+                        <span class="status-badge" [class.completed]="inv.paymentStatus === 'Paid'"
+                          [class.pending]="inv.paymentStatus !== 'Paid'">
+                          {{ inv.paymentStatus || 'Paid' }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <button type="button" class="btn-table-outline">Receipt</button>
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
+
+
+          </div>
+
+  </div>
+  }
+
+  <!-- =========================================================================
+       MODAL: EDIT PATIENT PROFILE
+       ========================================================================= -->
+  @if (showEditModal() && selectedPatient()) {
+  <div class="modal-backdrop" (click)="showEditModal.set(false)">
+    <div class="modal-dialog-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h4>Edit Patient Profile</h4>
+        <button type="button" class="btn-modal-x" (click)="showEditModal.set(false)">&times;</button>
+      </div>
+      <div class="modal-form-content">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" class="modal-input" [(ngModel)]="selectedPatient()!.fullName" />
+          </div>
+          <div class="form-group">
+            <label>Patient ID</label>
+            <input type="text" class="modal-input" [(ngModel)]="selectedPatient()!.patientCode" readonly />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" class="modal-input" [(ngModel)]="selectedPatient()!.age" />
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <input type="text" class="modal-input" [(ngModel)]="selectedPatient()!.gender" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="text" class="modal-input" [(ngModel)]="selectedPatient()!.phone" />
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" class="modal-input" [(ngModel)]="selectedPatient()!.email" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Emergency Contact</label>
+          <input type="text" class="modal-input" [(ngModel)]="selectedPatient()!.emergencyContact" />
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea class="modal-input" rows="2" [(ngModel)]="selectedPatient()!.address"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-modal-cancel" (click)="showEditModal.set(false)">Cancel</button>
+        <button type="button" class="btn-modal-submit" (click)="showEditModal.set(false)">Save Changes</button>
+      </div>
     </div>
   </div>
   }
+
+  <!-- =========================================================================
+       MODAL: CHANGE PHOTO
+       ========================================================================= -->
+  @if (showPhotoModal()) {
+  <div class="modal-backdrop" (click)="showPhotoModal.set(false)">
+    <div class="modal-dialog-box photo-modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h4>Change Patient Photo</h4>
+        <button type="button" class="btn-modal-x" (click)="showPhotoModal.set(false)">&times;</button>
+      </div>
+      <div class="photo-upload-zone">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <p>Drag and drop a new patient photo here, or <strong>browse</strong></p>
+        <span class="subtext">JPG, PNG or WEBP up to 5MB</span>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-modal-cancel" (click)="showPhotoModal.set(false)">Cancel</button>
+        <button type="button" class="btn-modal-submit" (click)="showPhotoModal.set(false)">Update Photo</button>
+      </div>
+    </div>
+  </div>
+  }
+
 
 </div>

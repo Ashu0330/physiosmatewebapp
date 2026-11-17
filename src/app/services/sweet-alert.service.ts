@@ -44,7 +44,7 @@ export class SweetAlertService {
     this.toast('success', title, timer);
   }
 
-  toastError(title: string, timer = 3000): void {
+    toastError(title: string, timer = 3000): void {
     this.toast('error', title, timer);
   }
 

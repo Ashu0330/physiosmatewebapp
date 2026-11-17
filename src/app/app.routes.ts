@@ -12,7 +12,9 @@ import { ConditionDetail } from './pages/specilization-condition/condition-detai
 import { Articles } from './pages/articles/articles';
 import { ArticleDetail } from './pages/articles/article-detail/article-detail';
 import { Settings } from './pages/settings/settings';
-import { PracticeManagement } from './pages/practice-management/practice-management';
+import { PracticeManagement } from './pages/doctor-dashboard/practice-management/practice-management';
+import { ScheduleTreatment } from './pages/doctor-dashboard/schedule-treatment/schedule-treatment';
+import { ConsultancyList } from './pages/doctor-dashboard/consultancy-list/consultancy-list';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -59,6 +61,9 @@ export const routes: Routes = [
       // ─── Global Settings Page ───────────────────────────────────────────────
       { path: 'settings', component: Settings },
       { path: 'practice-management', component: PracticeManagement },
+      // { path: 'practice-management', component: PracticeManagement },
+      { path: 'schedule-treatment', component: ScheduleTreatment },
+      { path: 'consultancy-list', component: ConsultancyList },
     ],
   },
 

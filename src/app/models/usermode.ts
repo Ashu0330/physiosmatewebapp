@@ -45,28 +45,6 @@ export class MedicalReportItem {
     downloadUrl?: string = '';
 }
 
-export class SubscriptionPlanItem {
-    id: string = '';
-    title: string = '';
-    doctorName: string = '';
-    providerType: string = 'Practitioner';
-    iconType: string = 'physio';
-    status: string = 'Approval Pending';
-    statusType: 'pending' | 'in-progress' | 'completed' | string = 'pending';
-    startDate: string = '-';
-    expiryDate: string = '-';
-    totalSessions: number = 0;
-    completedSessions: number = 0;
-    remainingSessions: number = 0;
-    totalAmount: number = 0;
-    totalDue: number = 0;
-    paidAmount: number = 0;
-    outstanding: number = 0;
-    paymentStatus: string = 'Pending';
-    paymentStatusLabel: string = 'Not Paid';
-    progressPercent: number = 0;
-    isExpanded?: boolean = false;
-}
 
 export class ConsultancyItem {
     id: string = '';
@@ -234,3 +212,24 @@ export class ClinicProfileModel {
     practitioners: ClinicPractitionerModel[] = [];
 }
 
+
+export class Expertise {
+    id: number;
+    providerId: number;
+    providerType: string;
+    expertiseName: string;
+    isSystem?: boolean;
+}
+
+export class TreatmentService {
+    id: number = 0;
+    providerId: number = 0;
+    providerType: string = '';
+    serviceName: string = '';
+    amount: number = 0;
+    isActive: boolean = true;
+    createdAt?: string;
+    updatedAt?: string;
+    treatmentAddOnId: number = 0;
+    isSystem?: boolean;
+}

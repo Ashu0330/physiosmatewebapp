@@ -1,0 +1,640 @@
+.grey-bg {
+  background-color: var(--bg-page, #F4F5F8);
+}
+
+.cl-page-wrapper {
+  width: calc(100% - 220px);
+  margin: 0 auto;
+  /* min-height: calc(100vh - 64px); */
+  padding: 24px;
+}
+
+@media (max-width: 991px) {
+  .cl-page-wrapper {
+    width: 100%;
+    margin-left: 0;
+    padding: 16px;
+  }
+}
+
+/* ==========================================================================
+   Consultancy List Styles - Physiosmate Theme
+   ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.consultancy-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── 1. Top Header ──────────────────────────────────────────────────────── */
+.cl-top-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 4px;
+}
+
+.cl-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color, #10A896);
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: color 0.15s ease;
+}
+
+.btn-back-link:hover {
+  color: var(--primary-dark, #087F76);
+  text-decoration: underline;
+}
+
+.cl-heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.cl-subheading {
+  font-size: 12.5px;
+  color: #64748B;
+  margin: 0;
+}
+
+.cl-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+.spin-anim {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--primary-color, #10A896);
+  color: #FFFFFF;
+  border: 1px solid var(--primary-color, #10A896);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background-color: var(--primary-dark, #087F76);
+  border-color: var(--primary-dark, #087F76);
+  color: #FFFFFF;
+}
+
+/* ── 2. KPI Cards Grid ─────────────────────────────────────────────────── */
+.cl-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.cl-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cl-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon-box.teal {
+  background: #E8F8F5;
+  color: #10A896;
+}
+
+.kpi-icon-box.blue {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.kpi-icon-box.green {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.kpi-icon-box.amber {
+  background: #FFFBEB;
+  color: #D97706;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.3px;
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.kpi-sub {
+  font-size: 10.5px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* ── 3. Filters & Controls ─────────────────────────────────────────────── */
+.cl-filter-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.cl-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cl-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 240px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.cl-search-input {
+  width: 100%;
+  padding: 7px 30px 7px 32px;
+  font-size: 12.5px;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  background: #F8FAFC;
+  color: #1E293B;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.cl-search-input:focus {
+  background: #FFFFFF;
+  border-color: var(--primary-color, #10A896);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.12);
+}
+
+.btn-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.cl-date-pills {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  padding: 3px;
+  border-radius: 6px;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.date-pill {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748B;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.date-pill:hover {
+  color: #1E293B;
+}
+
+.date-pill.active {
+  background: #FFFFFF;
+  color: var(--primary-color, #10A896);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.cl-select-wrap {
+  min-width: 130px;
+}
+
+.cl-select {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  background: #F8FAFC;
+  outline: none;
+  cursor: pointer;
+}
+
+.cl-select:focus {
+  border-color: var(--primary-color, #10A896);
+}
+
+.cl-custom-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E8F0;
+  flex-wrap: wrap;
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-lbl {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.cl-date-input {
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  background: #FFFFFF;
+  outline: none;
+}
+
+.btn-apply-date {
+  background: var(--primary-color, #10A896);
+  color: #FFFFFF;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-apply-date:hover {
+  background: var(--primary-dark, #087F76);
+}
+
+/* ── 4. Main Table Card ────────────────────────────────────────────────── */
+.cl-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.cl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.cl-table thead {
+  background-color: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.cl-table th {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.cl-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #1E293B;
+  vertical-align: middle;
+}
+
+.cl-table tbody tr:hover {
+  background-color: #FAFBFD;
+}
+
+.cl-table th.text-right,
+.cl-table td.text-right {
+  text-align: right;
+}
+
+/* Cell Elements */
+.time-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-primary {
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.time-sub {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.patient-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.patient-avatar-ph {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #E8F8F5;
+  color: var(--primary-color, #10A896);
+  font-size: 11.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #CCEEE8;
+}
+
+.patient-cell-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-name-text {
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.patient-id-sub {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.cell-phone {
+  font-size: 12px;
+  color: #475569;
+}
+
+.cell-fees {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.cell-payment-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cell-payment-status.paid {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.cell-payment-status.unpaid {
+  background: #FFFBEB;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.apt-status-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background-color: #F1F5F9;
+  color: #475569;
+}
+
+.apt-status-pill.completed {
+  background-color: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.apt-status-pill.scheduled {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+}
+
+/* Action Buttons */
+.cl-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.btn-action-payment {
+  background-color: #10A896;
+  color: #FFFFFF;
+  border: 1px solid #10A896;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-payment:hover {
+  background: #F8FAFC;
+  border-color: var(--primary-color, #10A896);
+  color: var(--primary-color, #10A896);
+}
+
+/* Empty & Loading States */
+.loading-wrap,
+.empty-state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+}
+
+.text-teal {
+  color: var(--primary-color, #10A896);
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  margin: 6px 0 0 0;
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+}
+
+/* ── 5. Pagination Footer ──────────────────────────────────────────────── */
+.cl-pagination-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background-color: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-page {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+  border-color: var(--primary-color, #10A896);
+  color: var(--primary-color, #10A896);
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-current {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1E293B;
+}

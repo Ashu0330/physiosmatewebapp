@@ -3,14 +3,10 @@
 
     <!-- Top Header Row (Matching Patient Drive Topbar) -->
     <div class="physios-drive-topbar">
-      <div class="topbar-left">
-        <h1 class="drive-heading">Doctor Console</h1>
-      </div>
       <div class="topbar-right">
         <div class="user-profile-header">
-
           <div class="user-details">
-            <span class="user-name">Welcome - {{ doctorName }}</span>
+            <span class="overview-subtitle fw-semibold mb-1">Welcome back, {{ doctorName }}</span>
           </div>
         </div>
       </div>
@@ -86,8 +82,19 @@
                 }
               </div>
 
+              <a routerLink="/doctor-dashboard/schedule-treatment" class="btn-primary-action"
+                style="background-color: #0F766E; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Schedule Treatment
+              </a>
+
               <button type="button" class="btn-primary-action" (click)="selectTab('add-patient')">
-                + Add Patient
+                Add Patient
               </button>
             </div>
           </div>
@@ -101,89 +108,105 @@
               <!-- 1. Total Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Total Appointments</span>
                   <div class="metric-icon-box icon-teal">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="4" width="18" height="17" rx="3" fill="currentColor" fill-opacity="0.12"
+                        stroke="currentColor" stroke-width="1.75" />
+                      <path d="M3 9.5H21" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M8 2.5V5.5M16 2.5V5.5" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" />
+                      <circle cx="8.5" cy="13.5" r="1" fill="currentColor" />
+                      <circle cx="12" cy="13.5" r="1" fill="currentColor" />
+                      <circle cx="15.5" cy="13.5" r="1" fill="currentColor" />
+                      <circle cx="8.5" cy="17" r="1" fill="currentColor" />
+                      <circle cx="12" cy="17" r="1" fill="currentColor" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number">{{ stats.totalAppointments }}</span>
-                  <span class="metric-meta">Total booked & scheduled</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Total Appointments</span>
+                    <span class="metric-number">{{ stats.totalAppointments }}</span>
+                    <span class="metric-meta">Total booked & scheduled</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 2. Completed Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Completed</span>
                   <div class="metric-icon-box icon-green">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.12" stroke="currentColor"
+                        stroke-width="1.75" />
+                      <path d="M8.5 12.2L10.8 14.5L15.8 9.5" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
-                  <span class="metric-meta">Successfully completed</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Completed</span>
+                    <span class="metric-number text-green">{{ stats.completedAppointments }}</span>
+                    <span class="metric-meta">Successfully completed</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 3. Pending Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Pending</span>
                   <div class="metric-icon-box icon-amber">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.12" stroke="currentColor"
+                        stroke-width="1.75" />
+                      <path d="M12 7.5V12L15 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                        stroke-linejoin="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
-                  <span class="metric-meta">Awaiting session</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Pending</span>
+                    <span class="metric-number text-amber">{{ stats.pendingAppointments }}</span>
+                    <span class="metric-meta">Awaiting session</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 4. Cancelled Appointments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Cancelled</span>
-                  <div class="metric-icon-box icon-slate">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="15" y1="9" x2="9" y2="15"></line>
-                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                  <div class="metric-icon-box icon-rose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="4" width="18" height="17" rx="3" fill="currentColor" fill-opacity="0.12"
+                        stroke="currentColor" stroke-width="1.75" />
+                      <path d="M8 2.5V5.5M16 2.5V5.5" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" />
+                      <path d="M9.75 11.25L14.25 15.75M14.25 11.25L9.75 15.75" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
-                  <span class="metric-meta">Rescheduled / void</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Cancelled</span>
+                    <span class="metric-number text-slate">{{ stats.cancelledAppointments }}</span>
+                    <span class="metric-meta">Rescheduled / void</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 5. Completion Rate -->
               <div class="metric-card highlight-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Completion Rate</span>
                   <div class="metric-icon-box icon-cyan">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                      <polyline points="17 6 23 6 23 12"></polyline>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                      <path d="M16 7H21V12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                      <path d="M3 17L9 11L13 15L21 7V20H3V17Z" fill="currentColor" fill-opacity="0.12" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
-                  <div class="kpi-rate-bar">
-                    <div class="kpi-rate-fill" [style.width.%]="stats.completionRate"></div>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Completion Rate</span>
+                    <span class="metric-number text-cyan">{{ stats.completionRate | number:'1.0-1' }}%</span>
+                    <div class="kpi-rate-bar">
+                      <div class="kpi-rate-fill" [style.width.%]="stats.completionRate"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -196,94 +219,104 @@
               <!-- 6. Active Patients -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Active Patients</span>
                   <div class="metric-icon-box icon-blue">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9.5" cy="8" r="3.5" fill="currentColor" fill-opacity="0.12" stroke="currentColor"
+                        stroke-width="1.75" />
+                      <path d="M3.5 19C3.5 15.9624 5.96243 13.5 9 13.5H10C13.0376 13.5 15.5 15.9624 15.5 19"
+                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                      <circle cx="16.5" cy="9" r="2.5" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M17.5 14C19.433 14.38 20.5 16.02 20.5 18.5" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-blue">{{ stats.activePatients }}</span>
-                  <span class="metric-meta">Under rehabilitation</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Active Patients</span>
+                    <span class="metric-number text-blue">{{ stats.activePatients }}</span>
+                    <span class="metric-meta">Under rehabilitation</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 7. New Patients -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">New Patients</span>
                   <div class="metric-icon-box icon-purple">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="8.5" cy="7" r="4"></circle>
-                      <line x1="20" y1="8" x2="20" y2="14"></line>
-                      <line x1="23" y1="11" x2="17" y2="11"></line>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9.5" cy="8" r="3.5" fill="currentColor" fill-opacity="0.12" stroke="currentColor"
+                        stroke-width="1.75" />
+                      <path d="M3.5 19C3.5 15.9624 5.96243 13.5 9 13.5H10C13.0376 13.5 15.5 15.9624 15.5 19"
+                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                      <path d="M18.5 8V13M16 10.5H21" stroke="currentColor" stroke-width="1.75"
+                        stroke-linecap="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-purple">{{ stats.newPatients }}</span>
-                  <span class="metric-meta">First-time consultations</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">New Patients</span>
+                    <span class="metric-number text-purple">{{ stats.newPatients }}</span>
+                    <span class="metric-meta">First-time consultations</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 8. Revenue -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Revenue</span>
                   <div class="metric-icon-box icon-green">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="1" x2="12" y2="23"></line>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="2.5" y="5.5" width="19" height="13" rx="2.5" fill="currentColor" fill-opacity="0.12"
+                        stroke="currentColor" stroke-width="1.75" />
+                      <path d="M9 9H15M9 11.5H15M11.5 9C13 9 13.5 10.2 13.5 11.2C13.5 12.4 12.5 13 11 13H9.5L13.5 16"
+                        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
-                  <span class="metric-meta">Consultations & therapy</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Revenue</span>
+                    <span class="metric-number text-green">&#8377;{{ stats.revenue | number:'1.2-2' }}</span>
+                    <span class="metric-meta">Consultations & therapy</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 9. Pending Payments -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Pending Payments</span>
-                  <div class="metric-icon-box icon-rose">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                      <line x1="1" y1="10" x2="23" y2="10"></line>
+                  <div class="metric-icon-box icon-amber">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="currentColor" fill-opacity="0.12"
+                        stroke="currentColor" stroke-width="1.75" />
+                      <path d="M2.5 9.5H21.5" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M6.5 14.5H10.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
-                    stats.pendingPayments | number:'1.2-2' }}</span>
-                  <span class="metric-meta">{{ stats.pendingPaymentCount }} Pending invoice(s)</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Pending Payments</span>
+                    <span class="metric-number" [class.text-rose]="stats.pendingPayments > 0">&#8377;{{
+                      stats.pendingPayments | number:'1.2-2' }}</span>
+                    <span class="metric-meta">{{ stats.pendingPaymentCount }} Pending invoice(s)</span>
+                  </div>
                 </div>
               </div>
 
               <!-- 10. Average Rating & Reviews -->
               <div class="metric-card">
                 <div class="metric-top">
-                  <span class="metric-card-label">Average Rating</span>
                   <div class="metric-icon-box icon-gold">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon
-                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                      </polygon>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M12 3.2L14.65 8.57L20.58 9.43L16.29 13.61L17.3 19.51L12 16.72L6.7 19.51L7.71 13.61L3.42 9.43L9.35 8.57L12 3.2Z"
+                        fill="currentColor" fill-opacity="0.2" stroke="currentColor" stroke-width="1.75"
+                        stroke-linejoin="round" />
                     </svg>
                   </div>
-                </div>
-                <div class="metric-bottom">
-                  <span class="metric-number text-gold">
-                    {{ stats.averageRating > 0 ? (stats.averageRating | number:'1.1-2') : '4.9' }} <small
-                      class="star-sym">&#9733;</small>
-                  </span>
-                  <span class="metric-meta">{{ stats.totalReviews }} Patient review(s)</span>
+                  <div class="metric-bottom">
+                    <span class="metric-card-label">Average Rating</span>
+                    <span class="metric-number text-gold">
+                      {{ stats.averageRating > 0 ? (stats.averageRating | number:'1.1-2') : '4.9' }} <small
+                        class="star-sym">&#9733;</small>
+                    </span>
+                    <span class="metric-meta">{{ stats.totalReviews }} Patient review(s)</span>
+                  </div>
                 </div>
               </div>
 
@@ -291,15 +324,20 @@
 
           </div>
 
-          <!-- Today's Schedule Section -->
-          <div class="dashboard-section-card">
+          <!-- Today's Consultancy Section -->
+          <div class="dashboard-section-card bg-white">
             <div class="section-card-header">
               <div>
-                <h4 class="section-heading">Today's Appointment Schedule</h4>
-                <span class="section-sub">Real-time consultation & physical therapy sessions</span>
+                <h4 class="section-heading">Today's Consultancy Schedule</h4>
+                <span class="section-sub">Real-time consultation &amp; physical therapy sessions</span>
               </div>
-              <button type="button" class="link-btn-flat" (click)="selectTab('patients')">
-                View All Patients &rarr;
+              <button type="button" class="link-btn-flat" routerLink="/doctor-dashboard/consultancy-list">
+                View All Consultations
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
               </button>
             </div>
 
@@ -307,23 +345,24 @@
               <table class="minimal-table">
                 <thead>
                   <tr>
-                    <th>Time Slot</th>
+                    <th>Date &amp; Time</th>
                     <th>Patient Details</th>
-                    <th>Diagnosis / Condition</th>
-                    <th>Session Milestone</th>
-                    <th>Visit Mode</th>
+                    <th>Mobile</th>
+                    <th>Fees</th>
+                    <th>Payment</th>
                     <th>Status</th>
-                    <th class="text-right">Action</th>
+                    <th>Registered</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (apt of todayAppointments; track apt.id) {
+                  @for (item of Consultancy(); track item.consultancyId ?? item.paymentId ?? $index) {
                   <tr>
-                    <!-- Time -->
+                    <!-- Time / Date -->
                     <td>
                       <div class="time-block">
-                        <span class="time-primary">{{ apt.timeSlot }}</span>
-                        <span class="time-sub">{{ apt.date }}</span>
+                        <span class="time-primary">{{ item.consultancyDate | date:'dd MMM yyyy' }}</span>
+                        <span class="time-sub">{{ item.consultancyDate | date:'hh:mm a' }}</span>
                       </div>
                     </td>
 
@@ -331,62 +370,67 @@
                     <td>
                       <div class="pt-profile-row">
                         <div class="pt-avatar">
-                          {{ getInitials(apt.patientName) }}
+                          {{ getInitials(item.fullName) }}
                         </div>
                         <div class="pt-text">
-                          <span class="pt-name">{{ apt.patientName }}</span>
-                          <span class="pt-code">{{ apt.patientId }}</span>
+                          <span class="pt-name">{{ item.fullName }}</span>
+                          <span class="pt-code">PT-{{ item.patientId }}</span>
                         </div>
                       </div>
                     </td>
 
-                    <!-- Condition -->
+                    <!-- Mobile -->
                     <td>
-                      <span class="condition-name">{{ apt.condition }}</span>
+                      <span class="condition-name">{{ item.mobile || '—' }}</span>
                     </td>
 
-                    <!-- Session Progress -->
+                    <!-- Fees -->
                     <td>
-                      <div class="session-counter-pill">
-                        Session {{ apt.sessionNumber }} of {{ apt.totalSessions }}
-                      </div>
+                      <span class="condition-name font-semibold">&#8377;{{ item.fees }}</span>
                     </td>
 
-                    <!-- Visit Mode -->
+                    <!-- Payment Status -->
                     <td>
-                      <span class="mode-tag" [class.video]="apt.visitType === 'Video Call'">
-                        @if (apt.visitType === 'Video Call') {
-                        Video Call
-                        } @else {
-                        In-Clinic
-                        }
+                      <span class="apt-status-pill"
+                        [class.completed]="item.paymentStatus === 'Paid' || item.paymentStatus === 'Success'"
+                        [class.in-progress]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.scheduled]="item.paymentStatus === 'Refunded'"
+                        [class.failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
+                        {{ item.paymentStatus || '—' }}
                       </span>
                     </td>
 
-                    <!-- Status Badge -->
+                    <!-- Consultancy Status -->
                     <td>
-                      <span class="apt-status-pill" [class.scheduled]="apt.status === 'Scheduled'"
-                        [class.in-progress]="apt.status === 'In-Progress'"
-                        [class.completed]="apt.status === 'Completed'">
-                        {{ apt.status }}
+                      <span class="apt-status-pill"
+                        [class.scheduled]="item.consultancyStatus === 'Scheduled' || item.consultancyStatus === 'Booked'"
+                        [class.in-progress]="item.consultancyStatus === 'In-Progress'"
+                        [class.completed]="item.consultancyStatus === 'Completed'">
+                        {{ item.consultancyStatus || '—' }}
                       </span>
                     </td>
 
-                    <!-- Interactive Action Button -->
-                    <td class="text-right">
-                      @if (apt.status === 'Scheduled') {
-                      <button type="button" class="btn-status-action start"
-                        (click)="updateAppointmentStatus(apt.id, 'In-Progress')">
-                        Start Session
-                      </button>
-                      } @else if (apt.status === 'In-Progress') {
-                      <button type="button" class="btn-status-action complete"
-                        (click)="updateAppointmentStatus(apt.id, 'Completed')">
-                        Mark Done ✓
-                      </button>
+                    <!-- Registered -->
+                    <td>
+                      @if (item.isRegistered) {
+                      <span class="apt-status-pill completed">&#10003; Yes</span>
                       } @else {
-                      <span class="completed-text">✓ Finalized</span>
+                      <span class="apt-status-pill scheduled">No</span>
                       }
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                      <button type="button" class="btn-status-action start" data-bs-toggle="modal"
+                        data-bs-target="#paymentModal" (click)="openPaymentModal(item)">
+                        Payment
+                      </button>
+                    </td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="8" style="padding: 32px 0; text-align: center; color: #94A3B8; font-size: 13px;">
+                      No consultancy records found for today.
                     </td>
                   </tr>
                   }
@@ -395,15 +439,343 @@
             </div>
           </div>
 
+          <!-- Today's Treatments Section -->
+          <div class="dashboard-section-card bg-white">
+            <div class="section-card-header">
+              <div>
+                <h4 class="section-heading">Today's Treatment Schedule</h4>
+                <span class="section-sub">Physical therapy &amp; clinical treatments scheduled for today</span>
+              </div>
+              <button type="button" class="link-btn-flat" routerLink="/doctor-dashboard/appointment-list">
+                View All Treatments
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <div class="schedule-table-container">
+              <table class="minimal-table">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Patient Details</th>
+                    <th>Mobile</th>
+                    <th>Fees</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of todayAppointmentsSchedule(); track item.appointmentId ?? item.paymentId ?? $index) {
+                  <tr>
+                    <!-- Time / Date -->
+                    <td>
+                      <div class="time-block">
+                        <span class="time-primary">{{ item.appointmentDate | date:'dd MMM yyyy' }}</span>
+                        <span class="time-sub">{{ item.appointmentDate | date:'hh:mm a' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Patient Info -->
+                    <td>
+                      <div class="pt-profile-row">
+                        <div class="pt-avatar">
+                          {{ getInitials(item.fullName) }}
+                        </div>
+                        <div class="pt-text">
+                          <span class="pt-name">{{ item.fullName }}</span>
+                          <span class="pt-code">PT-{{ item.patientId }}</span>
+                          @if (item.notes) {
+                          <div class="pt-notes-tag" [title]="item.notes">
+                            <span class="notes-lbl">Notes:</span> {{ item.notes }}
+                          </div>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Mobile -->
+                    <td>
+                      <span class="condition-name">{{ item.mobile || '—' }}</span>
+                    </td>
+
+                    <!-- Fees (with add-on fee breakdown) -->
+                    <td>
+                      <div class="fee-display-stack">
+                        <span class="condition-name font-semibold">&#8377;{{ item.fees }}</span>
+                        @if (item.addOns && item.addOns.length > 0) {
+                        @for (addon of item.addOns; track addon.addOnId) {
+                        <span class="fee-addon-sub"
+                          [title]="addon.addOnName + ' (₹' + addon.amount + ' - ' + addon.paymentStatus + ')'">
+                          + {{ addon.addOnName }}: &#8377;{{ addon.amount }}
+                        </span>
+                        }
+                        } @else if (item.hasAddOnTreatment && (item.addOnFees ?? 0) > 0) {
+                        <span class="fee-addon-sub">+ Add-on: &#8377;{{ item.addOnFees }}</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Payment Status (Highlighting add-on fee due rule) -->
+                    <td>
+                      @if (isBothPaid(item)) {
+                      <span class="apt-status-pill completed">&#10003; Paid</span>
+                      } @else if (isAddOnDue(item)) {
+                      <div class="payment-status-stack">
+                        @if (item.paymentStatus === 'Paid' || item.paymentStatus === 'Success') {
+                        <span class="apt-status-pill completed">&#10003; Fee Paid</span>
+                        } @else {
+                        <span class="apt-status-pill in-progress">Fee: {{ item.paymentStatus || 'Due' }}</span>
+                        }
+                        <span class="apt-status-pill addon-due-pill" title="Add-on treatment fee is due">
+                          <span class="addon-due-dot"></span>
+                          Add-on Due: &#8377;{{ item.addOnFees || 0 }}
+                        </span>
+                      </div>
+                      } @else {
+                      <span class="apt-status-pill"
+                        [class.completed]="item.paymentStatus === 'Paid' || item.paymentStatus === 'Success'"
+                        [class.in-progress]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.scheduled]="item.paymentStatus === 'Refunded'"
+                        [class.failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
+                        {{ item.paymentStatus || 'Due' }}
+                      </span>
+                      }
+                    </td>
+
+                    <!-- Appointment Status -->
+                    <td>
+                      <span class="apt-status-pill"
+                        [class.scheduled]="item.appointmentStatus === 'Scheduled' || item.appointmentStatus === 'Booked'"
+                        [class.in-progress]="item.appointmentStatus === 'In-Progress'"
+                        [class.completed]="item.appointmentStatus === 'Completed'"
+                        [class.failed]="item.appointmentStatus === 'Cancelled'">
+                        {{ item.appointmentStatus || 'Scheduled' }}
+                      </span>
+                    </td>
+
+                    <!-- Registered -->
+                    <td>
+                      @if (item.isRegistered) {
+                      <span class="apt-status-pill completed">&#10003; Yes</span>
+                      } @else {
+                      <span class="apt-status-pill scheduled">No</span>
+                      }
+                    </td>
+
+                    <!-- Action -->
+                    <td>
+                      @if (!isBothPaid(item)) {
+                      <button type="button" class="btn-status-action start" data-bs-toggle="modal"
+                        data-bs-target="#paymentModal" (click)="openAppointmentPaymentModal(item, 'all')">
+                        Pay
+                      </button>
+                      } @else {
+                      <span class="completed-text">&#10003; Paid</span>
+                      }
+                    </td>
+                  </tr>
+                  } @empty {
+                  <tr>
+                    <td colspan="8" style="padding: 32px 0; text-align: center; color: #94A3B8; font-size: 13px;">
+                      No treatment records found for today.
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── Shared Payment Modal (outside @for loop) ───────────────────── -->
+          <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered payment-modal-dialog" role="document">
+              <div class="modal-content payment-modal-content">
+                @if (selectedPaymentRow(); as item) {
+                <form (ngSubmit)="submitPaymentUpdate()">
+                  <!-- Header -->
+                  <div class="modal-header payment-modal-header">
+                    <div class="payment-modal-heading">
+                      <span class="payment-modal-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                          <path d="M3 10h18"></path>
+                          <path d="M7 15h3"></path>
+                        </svg>
+                      </span>
+                      <span>
+                        <h5 class="modal-title" id="paymentModalLabel">Update Payment</h5>
+                        <span class="payment-modal-subtitle">Process &amp; update {{ item.serviceLabel || 'payment'
+                          }}</span>
+                      </span>
+                    </div>
+                    <button type="button" class="btn-close payment-modal-close" data-bs-dismiss="modal"
+                      aria-label="Close"></button>
+                  </div>
+
+                  <!-- Body -->
+                  <div class="modal-body payment-modal-body">
+                    <!-- Patient card -->
+                    <div class="payment-patient-card mb-3">
+                      <span class="payment-patient-avatar">{{ getInitials(item.fullName) }}</span>
+                      <div class="payment-patient-info">
+                        <span class="payment-patient-name">{{ item.fullName }}</span>
+                        <span class="payment-patient-meta">
+                          PT-{{ item.patientId }} &bull; {{ item.mobile || 'No mobile' }}
+                          @if (item.paymentId) { &bull; Payment #{{ item.paymentId }} }
+                          @if (item.serviceLabel) { &bull; <strong style="color: #0F766E;">{{ item.serviceLabel
+                            }}</strong> }
+                        </span>
+                      </div>
+                      <span class="payment-patient-status"
+                        [class.is-due]="item.paymentStatus === 'Due' || item.paymentStatus === 'Pending' || item.paymentStatus === 'PartiallyPaid' || item.paymentStatus === 'Unpaid'"
+                        [class.is-failed]="item.paymentStatus === 'Failed' || item.paymentStatus === 'Cancelled'">
+                        {{ item.paymentStatus || 'Due' }}
+                      </span>
+                    </div>
+
+                    @if (!item.paymentId) {
+                    <div class="alert alert-warning py-2 small">
+                      No linked payment record. Submit will be skipped.
+                    </div>
+                    }
+
+                    <!-- Form fields -->
+                    <div class="payment-details-form">
+                      <!-- Multi-select for Payment Items (Treatment + Add-ons) -->
+                      <!-- Multi-select for Payment Items (Treatment + Add-ons) matching Screenshot 3 -->
+                      @if (paymentItems().length > 1) {
+                      <div class="mb-3 position-relative payment-select-container">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">
+                          SELECT PAYMENT <span class="text-danger">*</span>
+                        </label>
+                        <div class="custom-payment-select" [class.is-open]="isPaymentDropdownOpen()"
+                          (click)="isPaymentDropdownOpen.set(!isPaymentDropdownOpen())">
+                          <span class="custom-select-text text-truncate">
+                            {{ getDropdownTriggerText() }}
+                          </span>
+                          <span class="custom-select-arrow">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                              <path fill-rule="evenodd"
+                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
+                            </svg>
+                          </span>
+                        </div>
+
+                        @if (isPaymentDropdownOpen()) {
+                        <div class="custom-payment-dropdown shadow">
+                          <!-- All Pending Payments option -->
+                          <div class="custom-dropdown-row" [class.is-active]="isAllSelected()"
+                            (click)="toggleSelectAll(!isAllSelected()); $event.stopPropagation()">
+                            <span class="row-icon">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path
+                                  d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z" />
+                              </svg>
+                            </span>
+                            <span class="row-label">All Pending Payments (&#8377;{{ totalUnpaidAmount() | number
+                              }})</span>
+                            <input type="checkbox" class="form-check-input ms-auto" [checked]="isAllSelected()"
+                              (click)="$event.stopPropagation()"
+                              (change)="toggleSelectAll($any($event.target).checked)">
+                          </div>
+
+                          <!-- Individual items -->
+                          @for (pItem of paymentItems(); track pItem.id + '_' + pItem.isTreatment) {
+                          <div class="custom-dropdown-row" [class.is-active]="pItem.selected"
+                            [class.is-disabled]="pItem.isAlreadyPaid"
+                            (click)="!pItem.isAlreadyPaid && toggleItem(pItem); $event.stopPropagation()">
+                            <span class="row-icon">
+                              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path
+                                  d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L4.088 8.42 1.265 9.92a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L13.912 8.42l2.823-1.5a.5.5 0 0 0 0-.882zM2.062 6 8 2.833 13.938 6 8 9.167zM2.062 10.5 8 7.333 13.938 10.5 8 13.667z" />
+                              </svg>
+                            </span>
+                            <span class="row-label">
+                              {{ pItem.name }} &ndash; &#8377;{{ pItem.amount | number }}
+                              <span class="status-tag" [class.is-paid]="pItem.isAlreadyPaid"
+                                [class.is-due]="!pItem.isAlreadyPaid">
+                                ({{ pItem.isAlreadyPaid ? 'Paid' : 'Due' }})
+                              </span>
+                            </span>
+                            <input type="checkbox" class="form-check-input ms-auto" [checked]="pItem.selected"
+                              [disabled]="pItem.isAlreadyPaid" (click)="$event.stopPropagation()"
+                              (change)="toggleItem(pItem)">
+                          </div>
+                          }
+                        </div>
+                        }
+                      </div>
+                      }
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">PAYMENT METHOD</label>
+                        <select class="form-select form-select-sm" [ngModel]="paymentMethod()"
+                          (ngModelChange)="paymentMethod.set($event)" name="paymentMethod">
+                          @for (opt of paymentMethodOptions; track opt.value) {
+                          <option [value]="opt.value">{{ opt.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">PAYMENT STATUS</label>
+                        <select class="form-select form-select-sm" required [ngModel]="paymentStatus()"
+                          (ngModelChange)="paymentStatus.set($event)" name="paymentStatus">
+                          @for (opt of paymentStatusOptions; track opt.value) {
+                          <option [value]="opt.value">{{ opt.label }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">AMOUNT (&#8377;)</label>
+                        <input type="number" class="form-control form-control-sm payment-amount-input" min="0"
+                          step="0.01" [ngModel]="paymentAmount()" (ngModelChange)="onPaymentAmountChange($event)"
+                          name="paymentAmount" placeholder="e.g. 500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Footer -->
+                  <div class="modal-footer payment-modal-footer">
+                    <button type="button" class="payment-close-button" data-bs-dismiss="modal" #paymentModalCloseBtn
+                      [disabled]="isUpdatingPayment()">
+                      Cancel
+                    </button>
+                    <button type="submit" class="payment-submit-button"
+                      [disabled]="isUpdatingPayment() || (paymentItems().length > 1 && selectedCount() === 0) || (paymentItems().length <= 1 && !item.paymentId)">
+                      {{ isUpdatingPayment() ? 'Submitting...' : 'Submit' }}
+                    </button>
+                  </div>
+                </form>
+                }
+              </div>
+            </div>
+          </div>
+          <!-- ── End Payment Modal ───────────────────────────────────────────── -->
+
           <!-- Active Treatment Plans Quick Preview -->
-          <!-- <div class="dashboard-section-card">
+          <div class="dashboard-section-card">
             <div class="section-card-header">
               <div>
                 <h4 class="section-heading">Ongoing Patient Rehabilitation Plans</h4>
                 <span class="section-sub">Current protocols underway and recovery milestones</span>
               </div>
               <button type="button" class="link-btn-flat" (click)="selectTab('treatment-plans')">
-                Manage All Plans &rarr;
+                Manage All Plans
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
               </button>
             </div>
 
@@ -436,7 +808,7 @@
               </div>
               }
             </div>
-          </div> -->
+          </div>
 
         </div>
         }

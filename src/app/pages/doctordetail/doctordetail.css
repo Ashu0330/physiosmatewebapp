@@ -1377,14 +1377,22 @@
 }
 
 .no-slots-msg {
-  font-size: 0.82rem;
+  font-size: 12px;
   color: #64748b;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--primary-color);
   padding: 0px 10px;
   margin: 0;
   display: flex;
   align-items: center;
   border-radius: 5px;
+  height: fit-content;
+  padding: 5px;
+  background-color: white;
+}
+
+.no-slots-msg:hover {
+  background-color: #f0f0f0;
+
 }
 
 /* Slots Group */
@@ -1978,6 +1986,30 @@
   position: absolute;
   right: 0px;
   top: -1px;
+  cursor: pointer;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+  z-index: 5;
+  background: transparent;
+  border: none;
+  padding: 4px;
+}
+
+.saved_icon:hover {
+  transform: scale(1.12);
+  color: #10A896;
+}
+
+.saved_icon.is-saved {
+  color: #10A896;
+}
+
+.saved_icon.is-saving {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .add-review-card {
@@ -2454,3 +2486,18 @@
 }
 
 /* date calender css */
+
+.user_home_addre ss{
+  width: 100%;margin-top: 20px;
+}
+
+.user_home_address textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 10px;
+  min-height: 40px;  
+}

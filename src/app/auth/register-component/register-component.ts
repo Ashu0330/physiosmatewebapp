@@ -668,7 +668,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
           this.authService.clearPendingVerification();
           this.registrationSuccess.emit();
           this.alert.toastSuccess(AppMessage.RegistrationSuccess);
-          this.router.navigate(['/']);
+          this.router.navigate(['/user-dashboard/medical-records']);
         } else {
           if (this.userType() === 'doctor') {
             this.doctorForm.patchValue({ email: b.email });
@@ -680,7 +680,6 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       } else {
-        debugger
         this.alert.toastError(res.message);
       }
     } finally {
@@ -694,7 +693,6 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
-    debugger
     if (this.selectedSpecializations().length === 0) {
       this.alert.toastError('Please select at least one specialization.');
       return;
@@ -730,7 +728,6 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       };
 
       const res = await this.apiService.Post<any>(ApiEndPoints.AddPractitioner, payload);
-      debugger
       if (res.isSuccess) {
         user.practitionerId = res.data;
         localStorage.setItem('user', JSON.stringify(user));
@@ -738,10 +735,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
         this.authService.clearPendingVerification();
         this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
         this.registrationSuccess.emit();
-        this.router.navigate(['/doctor-dashboard']);
+        this.router.navigate(['/doctor-dashboard/dashboard']);
       }
       else {
-        debugger
         this.alert.toastError(res.message);
       }
     } finally {

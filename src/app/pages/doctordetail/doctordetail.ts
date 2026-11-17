@@ -39,6 +39,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   practitionerId: number = 0;
   readonly isClinic = signal<boolean>(false);
   readonly doctorDetail = signal<PractitionerDetailedData | null>(null);
+  readonly isSaved = signal<boolean>(false);
+  readonly isSavingDoctor = signal<boolean>(false);
 
   readonly availabilitySlots = signal<Availability[]>([]);
   readonly isLoadingAvailability = signal<boolean>(false);
@@ -48,7 +50,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   readonly weekOffset = signal<number>(0);
   readonly selectedDayIndex = signal<number>(0);
   readonly selectedSlotTime = signal<string>('');
+  readonly selectedStartTime = signal<string>('');
+  readonly selectedEndTime = signal<string>('');
 
+  bookingForm!: FormGroup;
   reviewForm!: FormGroup;
   readonly isSubmittingReview = signal<boolean>(false);
   readonly Review = signal<providerReview[]>([]);
@@ -61,6 +66,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
   readonly bookingSuccess = signal<boolean>(false);
   readonly bookingMessage = signal<string>('');
+
   readonly bookingConfirmationDetails = signal<{
     doctorName: string;
     doctorSpecialty: string;
@@ -70,7 +76,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     day: string;
     date?: string;
     time: string;
-    fee: number;
+    amount: number;
     bookingRefId: string;
     patientName: string;
   } | null>(null);
@@ -109,8 +115,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       this.router.url.includes('clinic') ||
       (this.route.snapshot.paramMap.get('id')?.startsWith('clinic') ?? false);
     this.isClinic.set(isClinicRoute);
+    this.initForms();
 
     this.createReviewForm();
+
 
     // Fetch initial backend data in parallel
     await Promise.all([
@@ -137,7 +145,20 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         if (params['bookingConfirmed'] === 'true') {
           const pending = this.bookingService.getPendingSlot();
 
-          pending?.bookingId
+          if (pending && this.isLoggedIn) {
+            const dayObj = {
+              date: pending.selectedDate || new Date(),
+              label: pending.selectedDay || 'Selected Day',
+              fullDateStr: typeof pending.selectedDate === 'string' ? pending.selectedDate : ''
+            };
+            this.confirmAppointmentDirectly(
+              dayObj,
+              pending.selectedTime || '',
+              pending.bookingId,
+              pending.startTime,
+              pending.endTime
+            );
+          }
 
           this.router.navigate([], {
             relativeTo: this.route,
@@ -346,11 +367,117 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
   /** API 1: Fetch Doctor or Clinic Profile Details */
   async GetDoctorById(): Promise<void> {
+    const userId = Number(this.authService.getuserid() || 0);
     const endpoint = this.isClinic()
-      ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}`
-      : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}`;
+      ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}&userId=${userId}`
+      : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}&UserId=${userId}`;
     const res = await this.apiService.Get<PractitionerDetailedData>(endpoint);
     this.doctorDetail.set(res?.data ?? null);
+    if (res?.data) {
+      const isSaved = this.isClinic()
+        ? Boolean((res.data as any).savedClinic)
+        : Boolean(res.data.savedPractitioner || (res.data as any).savedDoctor);
+      this.isSaved.set(isSaved);
+    }
+    if (this.bookingForm && res?.data) {
+      this.bookingForm.patchValue({
+        practitionerId: this.practitionerId || res.data.practitionerId || 1,
+        doctorName: res.data.fullName || this.practitioner.name,
+        consultationFee: res.data.consultationFee ?? this.practitioner.consultationFee ?? 500
+      });
+    }
+  }
+
+  /** Bookmark / Save Doctor toggle */
+  async toggleSaveDoctor(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.showError('Please log in to save to your bookmarks.');
+      return;
+    }
+
+    if (this.isSavingDoctor()) return;
+
+    const userId = Number(this.authService.getuserid() || 0);
+    if (!userId) {
+      this.showError('User session expired. Please log in again.');
+      return;
+    }
+
+    const doc = this.doctorDetail();
+    const id = Number(this.practitionerId || doc?.practitionerId || doc?.id || 0);
+    if (!id) {
+      this.showError('Doctor details not loaded.');
+      return;
+    }
+
+    this.isSavingDoctor.set(true);
+
+    try {
+      if (this.isClinic()) {
+        if (this.isSaved()) {
+          const res = await this.apiService.Get<boolean>(
+            `${ApiEndPoints.RemoveSavedClinic}?userId=${userId}&clinicId=${id}`
+          );
+          if (res?.isSuccess) {
+            this.isSaved.set(false);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? ({ ...d, savedClinic: false } as any) : null);
+            }
+            this.showSuccess('Clinic removed from bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to remove saved clinic.');
+          }
+        } else {
+          const res = await this.apiService.Post<boolean>(ApiEndPoints.SaveClinic, {
+            userId,
+            clinicId: id
+          });
+          if (res?.isSuccess) {
+            this.isSaved.set(true);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? ({ ...d, savedClinic: true } as any) : null);
+            }
+            this.showSuccess('Clinic saved to bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to save clinic.');
+          }
+        }
+      } else {
+        if (this.isSaved()) {
+          const res = await this.apiService.Get<boolean>(
+            `${ApiEndPoints.RemoveSavedPractitioner}?practitionerId=${id}`
+          );
+          if (res?.isSuccess) {
+            this.isSaved.set(false);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? { ...d, savedPractitioner: false } : null);
+            }
+            this.showSuccess('Doctor removed from bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to remove saved doctor.');
+          }
+        } else {
+          const res = await this.apiService.Post<boolean>(ApiEndPoints.SavePractitioner, {
+            userId,
+            practitionerId: id
+          });
+          if (res?.isSuccess) {
+            this.isSaved.set(true);
+            if (this.doctorDetail()) {
+              this.doctorDetail.update(d => d ? { ...d, savedPractitioner: true } : null);
+            }
+            this.showSuccess('Doctor saved to bookmarks.');
+          } else {
+            this.showError(res?.message || 'Failed to save doctor.');
+          }
+        }
+      }
+    } catch (e: any) {
+      console.error('Error toggling save status', e);
+      this.showError('An error occurred. Please try again.');
+    } finally {
+      this.isSavingDoctor.set(false);
+    }
   }
 
   /** API 2: Fetch Doctor Availability Slots (Weekly / By Date) */
@@ -359,8 +486,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       const pid = this.practitionerId;
       const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?practitionerId=${pid}`);
       if (res && res.isSuccess) {
-        console.log(res.data)
-        debugger;
         this.availabilitySlots.set(res.data);
       } else {
         this.availabilitySlots.set([]);
@@ -399,6 +524,27 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.selectedDayIndex.set(index);
     this.selectedDay.set(day);
     this.selectedSlotTime.set('');
+    this.selectedStartTime.set('');
+    this.selectedEndTime.set('');
+
+    const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
+      ? day.date
+      : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
+    const formattedDate = DateHelper.formatLocalDate(resolvedDate);
+
+    if (this.bookingForm) {
+      this.bookingForm.patchValue({
+        consultancydate: formattedDate,
+        appointmentDate: formattedDate,
+        slotDate: formattedDate,
+        slotTime: '',
+        startTime: '',
+        endTime: '',
+        starttime: '',
+        endtime: '',
+        slotId: null // dayReset
+      });
+    }
 
     const availability = this.availabilitySlots().find(
       x => x.dayOfWeek === day.dayOfWeek
@@ -441,6 +587,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       if (res.isSuccess) {
         this.showSuccess(res.message || 'Review submitted successfully!');
         this.createReviewForm();
+
         await this.GetAllReview();
       } else {
         this.showError(res.message || 'Failed to submit review.');
@@ -472,8 +619,50 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     // }
   }
 
-  selectSlot(time: string): void {
-    this.selectedSlotTime.set(time);
+  selectSlot(slotOrStart: slots | string, end?: string): void {
+    let sTime = '';
+    let eTime = '';
+    let slotId: number | null = null;
+    let sTimeStr = '';
+
+    if (slotOrStart && typeof slotOrStart === 'object' && 'startTime' in slotOrStart) {
+      const s = slotOrStart as slots; // current
+      /* start real */
+      sTime = s.startTime || '';
+      eTime = s.endTime || '';
+      slotId = s.id || null;
+      sTimeStr = s.startTime && s.endTime ? `${s.startTime}–${s.endTime}` : (s.startTime || '');
+    } else if (typeof slotOrStart === 'string') {
+      if (end) {
+        sTime = slotOrStart;
+        eTime = end;
+        sTimeStr = `${slotOrStart}–${end}`;
+      } else {
+        sTimeStr = slotOrStart;
+        const parts = slotOrStart.split(/[–\-]/).map(x => x.trim());
+        if (parts.length >= 2) {
+          sTime = parts[0];
+          eTime = parts[1];
+        } else {
+          sTime = slotOrStart;
+        }
+      }
+    }
+
+    this.selectedStartTime.set(sTime);
+    this.selectedEndTime.set(eTime);
+    this.selectedSlotTime.set(sTimeStr);
+
+    if (this.bookingForm) {
+      this.bookingForm.patchValue({
+        slotTime: sTimeStr,
+        startTime: sTime,
+        endTime: eTime,
+        starttime: sTime,
+        endtime: eTime,
+        slotId: slotId
+      });
+    }
   }
 
   formatTime(timeStr: string): string {
@@ -515,6 +704,30 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   // ─────────────────────────────────────────────────────────────────────────
   // 5.3 Review Form Helpers
   // ─────────────────────────────────────────────────────────────────────────
+  initForms(): void {
+    const doc = this.doctorDetail();
+    this.bookingForm = this.fb.group({
+      practitionerId: [this.practitionerId || doc?.practitionerId || 1, [Validators.required]],
+      doctorName: [doc?.fullName || this.practitioner.name || ''],
+      visitType: [this.isClinic() ? 'Clinic' : 'Home'],
+      bookingRefId: [''],
+      consultancydate: ['', [Validators.required]],
+      appointmentDate: [''],
+      slotDate: [''],
+      slotTime: ['', [Validators.required]],
+      startTime: ['', [Validators.required]],
+      endTime: ['', [Validators.required]],
+      starttime: [''],
+      endtime: [''],
+      slotId: [null],
+      consultationFee: [doc?.consultationFee ?? this.practitioner.consultationFee ?? 500],
+      mode: [this.isClinic() ? 'In-Clinic' : 'Home'],
+      patientName: [''],
+      homeVisitAddress: [''],
+      address: ['']
+    });
+  }
+
   createReviewForm(): void {
     this.reviewForm = this.fb.group({
       rating: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
@@ -604,15 +817,13 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.reviewForm.patchValue({ [controlName]: items.join(', ') });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5.4 Appointment Booking & Confirmation Methods
-  // ─────────────────────────────────────────────────────────────────────────
   selectDoctorForBooking(doc: any): void {
     this.selectedAssociatedDoctor.set(doc);
     this.scrollToSection('appointment-slots');
   }
 
-  async confirmAppointmentDirectly(day: any, slotTime: string, existingRef?: string): Promise<void> {
+  async confirmAppointmentDirectly(day: any, slotTimeOrForm?: any, existingRef?: string, startTime?: string, endTime?: string): Promise<void> {
+    debugger;
     const user = this.authService.getCurrentUser();
     const doc = this.doctorDetail();
     const ref = existingRef || `PHY - ${Math.floor(100000 + Math.random() * 900000)} `;
@@ -625,21 +836,32 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       : (typeof day.date === 'string' && day.date ? new Date(day.date) : new Date());
     const formattedDate = DateHelper.formatLocalDate(resolvedDate);
 
+    const isFormObj = typeof slotTimeOrForm === 'object' && slotTimeOrForm !== null;
+    const formValues = isFormObj ? slotTimeOrForm : (this.bookingForm ? this.bookingForm.value : {});
+    const slotTime = isFormObj ? (formValues.slotTime || this.selectedSlotTime()) : (slotTimeOrForm || this.selectedSlotTime());
+    const startTimeVal = startTime || formValues.startTime || this.selectedStartTime() || (slotTime ? slotTime.split(/[–\-]/)[0]?.trim() : '');
+    const endTimeVal = endTime || formValues.endTime || this.selectedEndTime() || (slotTime ? slotTime.split(/[–\-]/)[1]?.trim() : '');
+
     // Send booking to backend API
     if (this.isLoggedIn) {
       try {
         const payload = {
-          practitionerId: this.practitionerId || doc?.practitionerId || 1,
+          practitionerId: formValues.practitionerId || this.practitionerId || doc?.practitionerId || 1,
           doctorName,
-          visitType: this.isClinic() ? 'In-Clinic' : 'Home Visit',
+          visitType: this.isClinic() ? 'Clinic' : 'Home',
           bookingRefId: ref,
           consultancydate: formattedDate,
           appointmentDate: formattedDate,
           slotDate: formattedDate,
           slotTime,
-          consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
-          mode: this.isClinic() ? 'In-Clinic' : 'Home Visit',
-          patientName: user?.fullName || this.authService.getUserName() || 'Patient'
+          startTime: startTimeVal,
+          endTime: endTimeVal,
+          starttime: startTimeVal,
+          endtime: endTimeVal,
+          amount: doc?.consultationFee ?? this.practitioner.consultationFee,
+          mode: this.isClinic() ? ' Clinic' : 'Home',
+          patientName: user?.fullName || this.authService.getUserName() || 'Patient',
+          homeVisitAddress: formValues.homeVisitAddress || formValues.address || null,
         };
         await this.BookConsultancyApi(payload);
       } catch (err) {
@@ -656,7 +878,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       day: dateDisplay,
       date: formattedDate,
       time: slotTime,
-      fee: doc?.consultationFee ?? this.practitioner.consultationFee,
+      amount: doc?.consultationFee ?? this.practitioner.consultationFee,
       bookingRefId: ref,
       patientName: user?.fullName || this.authService.getUserName() || 'Patient'
     });
@@ -667,18 +889,30 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookConsultancy(): void {
-    const day = new Date;
-    // this.dayList()[this.selectedDayIndex()];
-    // if (!day || !day.hasSlots) {
-    //   this.showError('Please select a day with available slots.');
-    //   return;
-    // }
+    if (!this.bookingForm) {
+      this.initForms();
+    }
+    if (this.bookingForm.invalid) {
+      this.bookingForm.markAllAsTouched();
+      if (!this.bookingForm.get('consultancydate')?.value) {
+        this.showError('Please select an appointment date.');
+        return;
+      }
+      if (!this.bookingForm.get('slotTime')?.value) {
+        this.showError('Please select a time slot.');
+        return;
+      }
+      this.showError('Please complete all required booking details.');
+      return;
+    }
+    const formVal = this.bookingForm.value;
+    const day = this.selectedDay() || { date: new Date(), label: 'Today', dateStr: 'Today', fullDateStr: '' };
     const doc = this.doctorDetail();
     const paramId = this.route.snapshot.paramMap.get('id') || '1';
     const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitionerId || 1;
-
+    debugger;
     if (this.authService.isLoggedIn()) {
-      this.confirmAppointmentDirectly(day, this.selectedSlotTime());
+      this.confirmAppointmentDirectly(day, formVal);
     } else {
       this.bookingService.savePendingSlot({
         providerId: Number(providerId) || 1,
@@ -688,9 +922,11 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
         clinicName: doc?.clinicName || this.practitioner.clinicName,
         clinicAddress: this.practitioner.clinicAddress,
         consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
-        // selectedDay: day.fullDateStr || `${ day.label } (${ day.dateStr })`,
-        // selectedDate: DateHelper.formatLocalDate(day.date),
-        selectedTime: this.selectedSlotTime()
+        selectedTime: formVal.slotTime || this.selectedSlotTime(),
+        selectedDay: (day as any).label,
+        selectedDate: (day as any).date,
+        startTime: formVal.startTime || this.selectedStartTime(),
+        endTime: formVal.endTime || this.selectedEndTime()
       });
 
       this.router.navigate(['/booking/consultancy', providerId]);
@@ -698,7 +934,6 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   }
 
   bookAppointment(): void {
-    debugger
     this.bookConsultancy();
   }
 

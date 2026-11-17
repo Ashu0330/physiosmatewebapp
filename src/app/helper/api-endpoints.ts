@@ -10,6 +10,10 @@ export const ApiEndPoints = {
     Register: 'Auth/Register',
     VerifyOtp: 'Auth/VerifyOtp',
     ResendOtp: 'Auth/ResendOtp',
+    GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
+    AddUpdateExpertise: 'ProviderCatalog/AddUpdateExpertise',
+    GetAllTreatmentServices: 'ProviderCatalog/GetAllTreatmentServices',
+    AddUpdateTreatmentServices: 'ProviderCatalog/AddUpdateTreatmentServices',
 
     // ── Practitioner (Doctor) Registration ─────────────────────────────────────
     AddPractitioner: 'Practitioner/AddPractitioner',
@@ -25,16 +29,23 @@ export const ApiEndPoints = {
 
     // ── Consultancy / Booking ────────────────────────────────────────────────────
     GetAvailability: 'Consultancy/GetAvailability',
-    AddAvailability: 'Availability/AddAvailability',
+    AddAvailability: 'ProviderCatalog/AddAvailability',
     BookConsultancy: 'Consultancy/BookConsultancy',
     MyBookings: 'Consultancy/MyBookings',
+    MyAppointments: 'Appointment/MyAppointments',
+    FinalizeConsultancy: 'Consultancy/FinalizeConsultancy',
+    PatientConsultancyBookingDetails: 'Consultancy/PatientConsultancyBookingDetails',
 
     // ── User / Patient ────────────────────────────────────────────────────────────
     SavePractitioner: 'User/SavePractitioner',
     GetSavedPractitioners: 'User/SavedPractitioners',
     RemoveSavedPractitioner: 'User/RemoveSavedPractitioner',
+    SaveClinic: 'User/SaveClinic',
+    GetSavedClinics: 'User/SavedClinics',
+    RemoveSavedClinic: 'User/RemoveSavedClinic',
     AddUserSubscription: 'User/AddUserSubscription',
     GetUserSubscription: 'User/GetUserSubscription',
+    GetSubscriptions: 'Subscription/GetSubscriptions',
     GetUserProfile: 'User/GetProfile',
     GetPatientProfile: 'User/GetProfile',
     GetPractitionerProfile: 'Explore/GetPractitionerById',
@@ -45,6 +56,11 @@ export const ApiEndPoints = {
     AddReview: 'Review/AddProviderReview',
     GetAllReviews: 'Review/GetAllReview',
 
+    // ── Patient ───────────────────────────────────────────────────────────────────
+    AddPatient: 'Patient/AddPatient',
+    GetMyPatients: 'Patient/GetMyPatients',
+    // TodayConsultancyPatient: 'Consultancy/TodayConsultancyPatient',
+
     // ── Doctor Dashboard ──────────────────────────────────────────────────────────
     DoctorPatients: 'Doctor/Patients',
     DoctorPatientById: 'Doctor/Patient',
@@ -54,10 +70,28 @@ export const ApiEndPoints = {
     DoctorAppointments: 'Doctor/Appointments',
     DoctorStats: 'Doctor/Stats',
     DoctorUpdateAppointmentStatus: 'Doctor/UpdateAppointmentStatus',
+    ConsultancyPatient: 'Consultancy/ConsultancyPatient',
+    GetPractitionerAppointments: 'Appointment/GetPractitionerAppointments',
+    PatientAppointmentDetails: 'Appointment/PatientAppointmentDetails',
+    BookAppointment: 'Appointment/Book',
+    CreateWeeklyAppointments: 'Appointment/CreateWeeklyAppointments',
+    CompleteAppointment: 'Appointment/CompleteAppointment',
+    GetSubscriptionCurrent: 'Subscription/Current',
+
+    // ── Payment ───────────────────────────────────────────────────────────────────
+    UpdatePayment: 'PaymentJob/UpdatePayment',
+
 
     // ── Provider Catalog ──────────────────────────────────────────────────────────
-    GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
+    // GetAllExpertise: 'ProviderCatalog/GetAllExpertise',
     GetProviderPlans: 'ProviderCatalog/GetProviderPlans',
+    AddProviderPlans: 'ProviderCatalog/AddProviderPlans',
+    AddAddons: 'ProviderCatalog/AddAddons',
+    GetAllAddOns: 'ProviderCatalog/GetAllAddOns',
+    GetAllPayment: 'ProviderCatalog/GetAllPayment',
+    CreateAppointmentSlot: 'ProviderCatalog/CreateAppoimentSlot',
+    GetAppointmentSlots: 'Appointment/GetAppoimentSlot',
+    GetAvailableAppointmentSlots: 'Appointment/GetAvailableSlots',
 
     // ── Master Data ────────────────────────────────────────────────────────────────
     GetAllRoles: 'Master/GetAllRoles',

@@ -2,6 +2,20 @@
  * Professional Header Styles - Physios Premium Design
  * Built with design tokens from variable.css
  * ========================================================= */
+*:focus-visible,
+*:focus,
+.form-select:focus,
+.form-control:focus,
+.btn-close:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #10A896;
+}
+
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+-webkit-appearance: none;
+}
+
 a {
   text-decoration: none;
 }
@@ -1175,7 +1189,8 @@ a {
     flex: 0 1 100%;
     max-width: 100%;
   }
-  .physios-cards-section{
+
+  .physios-cards-section {
     margin: 0 auto 2.5rem;
   }
 
@@ -1198,7 +1213,7 @@ a {
  * Built with design tokens from variable.css
  * ========================================================= */
 
-.physios-site-footer {
+/* .physios-site-footer {
   width: 100%;
   background-color: var(--footer-bg, #1a2b56);
   color: var(--footer-link, #d8e2ed);
@@ -1208,7 +1223,7 @@ a {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
-}
+} */
 
 .physios-footer-container {
   max-width: 1200px;
@@ -2926,4 +2941,119 @@ a {
 .form-select.is-invalid:focus,
 .was-validated .form-select:invalid:focus {
   box-shadow: none;
+}
+
+/* ── 6. Payment Modal Styling ──────────────────────────────────────────── */
+.payment-modal-dialog {
+  max-width: 440px;
+}
+
+.payment-modal-content {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+}
+
+.payment-modal-header {
+  background: linear-gradient(135deg, #E0F7F2 0%, #C8F1E8 50%, #F0FCF9 100%);
+  border-bottom: 1px solid #CCEEE8;
+  padding: 14px 18px;
+}
+
+.payment-modal-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-modal-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10A896 0%, #008F7A 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.payment-modal-header .modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+.payment-modal-subtitle {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.payment-patient-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.payment-patient-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #10A896;
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-patient-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  display: block;
+}
+
+.payment-patient-meta {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.sec-title-row {
+  display: flex;
+  /* align-items: center; */
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.sec-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--primary-subtle, #E6F7F5);
+  color: var(--primary-dark, #087F76);
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.sec-heading {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main, #1F2937);
+  margin: 0;
+}
+
+.sec-sub {
+  font-size: 12px;
+  color: var(--text-muted, #6B7280);
 }
