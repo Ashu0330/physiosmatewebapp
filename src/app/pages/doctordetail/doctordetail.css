@@ -122,7 +122,7 @@
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   position: sticky;
-  top: 0;
+  top: 24px;
 }
 
 .doctor-photo {
@@ -230,13 +230,13 @@
   display: none;
 }
 
-.scroll-nav-list {
+/* .scroll-nav-list {
   display: flex;
   list-style: none;
   padding: 0;
   margin: 0;
   width: 100%;
-}
+} */
 
 .scroll-nav-item {
   flex: 1 1 auto;
@@ -1161,6 +1161,8 @@
 .sticky-booking-widget {
   position: sticky;
   top: 10px;
+  max-width: 380px;
+  width: 100%;
 }
 
 .widget-title {
@@ -1724,62 +1726,6 @@
 .modal-btn-close:hover {
   background: var(--primary-gradient-hover, linear-gradient(135deg, #06655e 0%, #087F76 100%));
   box-shadow: var(--shadow-button-hover, 0 6px 20px rgba(16, 168, 150, 0.38));
-}
-
-/* =========================================================
- * Responsive Breakpoints
- * ========================================================= */
-@media (max-width: 991px) {
-  .physios-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sticky-booking-widget {
-    position: static;
-    margin-top: 2rem;
-  }
-
-  .clinic-info-body {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .full-gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .hero-card-inner {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .doctor-title-row {
-    justify-content: center;
-  }
-
-  .treatments-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .full-gallery-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .treatments-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .treatments-search-box {
-    width: 100%;
-  }
-
-  .slots-chips-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* =========================================================
@@ -2487,8 +2433,9 @@
 
 /* date calender css */
 
-.user_home_addre ss{
-  width: 100%;margin-top: 20px;
+.user_home_addre ss {
+  width: 100%;
+  margin-top: 20px;
 }
 
 .user_home_address textarea {
@@ -2499,5 +2446,79 @@
   font-size: 12px;
   color: #64748b;
   margin-bottom: 10px;
-  min-height: 40px;  
+  min-height: 40px;
+}
+
+.nav-link {
+  color: #64748b;
+}
+
+.nav-link.active {
+  color: #10A896;
+}
+
+.nav-link.active svg {
+  color: #10A896;
+}
+
+/* =========================================================
+ * Responsive Breakpoints
+ * ========================================================= */
+@media (max-width: 991px) {
+  .physios-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-booking-widget {
+    position: static;
+    margin-top: 2rem;
+  }
+
+  .clinic-info-body {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .full-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .doctor-photo-wrap {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-card-inner {
+    flex-direction: column;
+  }
+
+  .doctor-meta-block {
+    text-align: left;
+  }
+
+  /* .doctor-title-row {
+    justify-content: center;
+  } */
+
+  .treatments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .treatments-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .treatments-search-box {
+    width: 100%;
+  }
+
+  .slots-chips-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

@@ -3057,3 +3057,12 @@ a {
   font-size: 12px;
   color: var(--text-muted, #6B7280);
 }
+
+/* accordian css */
+.accordion-button:not(.collapsed){
+  background-color: #fff;
+}
+.accordion-button:focus{
+  box-shadow: none;
+}
+/* accordian css */
