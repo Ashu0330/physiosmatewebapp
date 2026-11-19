@@ -1639,32 +1639,53 @@ a {
   z-index: 50;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #10A896 #E8F8F5;
 }
 
 .physios-scroll-nav-sticky::-webkit-scrollbar {
-  display: none;
+  height: 5px;
+  display: block;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-track {
+  background: #E8F8F5;
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb {
+  background: #10A896;
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb:hover {
+  background: #087F76;
 }
 
 .scroll-nav-list {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .scroll-nav-item {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 .scroll-nav-btn {
   background: transparent;
   border: none;
   outline: none;
-  width: 100%;
+  width: auto;
   padding: 0.85rem 1.15rem;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.86rem;
@@ -1675,6 +1696,7 @@ a {
   transition: all 0.18s ease;
   white-space: nowrap;
   text-align: center;
+  display: block;
 }
 
 .scroll-nav-btn:hover {

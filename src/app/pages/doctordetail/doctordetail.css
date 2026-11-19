@@ -211,6 +211,11 @@
 /* =========================================================
  * 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy)
  * ========================================================= */
+.physios-detail-left-col {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .physios-scroll-nav-sticky {
   position: sticky;
   top: 0px;
@@ -221,32 +226,53 @@
   z-index: 50;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color, #10A896) var(--primary-light, #E8F8F5);
 }
 
 .physios-scroll-nav-sticky::-webkit-scrollbar {
-  display: none;
+  height: 5px;
+  display: block;
 }
 
-/* .scroll-nav-list {
+.physios-scroll-nav-sticky::-webkit-scrollbar-track {
+  background: var(--primary-light, #E8F8F5);
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb {
+  background: var(--primary-color, #10A896);
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark, #087F76);
+}
+
+.scroll-nav-list {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 100%;
-} */
+  width: max-content;
+  min-width: 100%;
+}
 
 .scroll-nav-item {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 .scroll-nav-btn {
   background: transparent;
   border: none;
   outline: none;
-  width: 100%;
+  width: auto;
   padding: 0.85rem 1.15rem;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.86rem;
@@ -257,6 +283,7 @@
   transition: all 0.18s ease;
   white-space: nowrap;
   text-align: center;
+  display: block;
 }
 
 .scroll-nav-btn:hover {
@@ -2520,5 +2547,20 @@
 
   .slots-chips-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .physios-scroll-nav-sticky {
+    margin-bottom: 1rem;
+    scrollbar-width: thin;
+  }
+
+  .physios-scroll-nav-sticky::-webkit-scrollbar {
+    height: 5px;
+    display: block;
+  }
+
+  .scroll-nav-btn {
+    padding: 0.75rem 0.95rem;
+    font-size: 0.82rem;
   }
 }
