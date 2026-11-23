@@ -38,6 +38,9 @@ export const ApiEndPoints = {
 
     // ── User / Patient ────────────────────────────────────────────────────────────
     SavePractitioner: 'User/SavePractitioner',
+    AddHealthReport: 'User/AddHealthReport',
+    GetHealthReport: 'User/GetHealthReport',
+    DeleteHealthReport: 'User/DeleteHealthReport',
     GetSavedPractitioners: 'User/SavedPractitioners',
     RemoveSavedPractitioner: 'User/RemoveSavedPractitioner',
     SaveClinic: 'User/SaveClinic',

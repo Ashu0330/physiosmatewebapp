@@ -45,6 +45,24 @@ export class MedicalReportItem {
     downloadUrl?: string = '';
 }
 
+export interface HealthReportViewModel {
+    id?: number;
+    userId: number;
+    userName?: string;
+    reportName?: string;
+    filePath?: string;
+    file?: File;
+    uploadedAt?: string;
+}
+
+export interface HealthReport {
+    id: number;
+    userId?: number;
+    reportName?: string;
+    filePath?: string;
+    uploadedAt?: string;
+}
+
 
 export class ConsultancyItem {
     id: string = '';
