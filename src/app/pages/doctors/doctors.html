@@ -4,7 +4,10 @@
     <!-- Dual Search Input (Left Aligned with Content) -->
     <app-search-bar
       [(selectedCity)]="selectedCity"
+      (citySelect)="onCityChange($event)"
       [(searchQuery)]="searchQuery"
+      (searchQueryChange)="onSearchQueryChange($event)"
+      (searchSubmit)="onSearchSubmit()"
       [cities]="popularCities"
       [placeholder]="isClinic() ? 'Search clinics by name, specialty, or treatment...' : 'Search doctors, clinics, hospitals, etc.'"
       customClass="doctors-search-bar"
@@ -134,8 +137,12 @@
       } @else {
       <!-- Gender Filter -->
       <div class="physios-filter-dropdown-wrapper">
-        <button #genderBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('gender', genderBtn)">
-          <span>Gender</span>
+        <button #genderBtn type="button" class="physios-filter-btn" [class.has-filter]="selectedGender() !== 'all'" (click)="toggleDropdown('gender', genderBtn)">
+          <span>
+            @if (selectedGender() === 'male') { Male Doctor }
+            @else if (selectedGender() === 'female') { Female Doctor }
+            @else { Gender }
+          </span>
           <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
             <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round" />
@@ -155,8 +162,13 @@
 
       <!-- Experience Filter -->
       <div class="physios-filter-dropdown-wrapper">
-        <button #expBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('exp', expBtn)">
-          <span>Experience</span>
+        <button #expBtn type="button" class="physios-filter-btn" [class.has-filter]="selectedExperience() !== 'all'" (click)="toggleDropdown('exp', expBtn)">
+          <span>
+            @if (selectedExperience() === '5') { 5+ Years Exp }
+            @else if (selectedExperience() === '10') { 10+ Years Exp }
+            @else if (selectedExperience() === '15') { 15+ Years Exp }
+            @else { Experience }
+          </span>
           <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
             <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round" />
@@ -164,14 +176,14 @@
         </button>
         @if (activeDropdown() === 'exp') {
         <div class="physios-filter-menu" [style.top.px]="dropdownPosition()?.top" [style.left.px]="dropdownPosition()?.left">
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('all')">Any
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('5')">5+ Years
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('10')">10+ Years
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('15')">15+ Years
-            Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === 'all'"
+            (click)="setExperienceFilter('all')">Any Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '5'"
+            (click)="setExperienceFilter('5')">5+ Years Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '10'"
+            (click)="setExperienceFilter('10')">10+ Years Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '15'"
+            (click)="setExperienceFilter('15')">15+ Years Experience</button>
         </div>
         }
       </div>
@@ -517,6 +529,11 @@
           </div>
           <h3 class="physios-empty-title">No Practitioners Found</h3>
           <p class="physios-empty-desc">We couldn't find any physiotherapists matching your criteria in {{ selectedCity() }}.</p>
+          @if (hasActiveFilters()) {
+          <button type="button" class="btn_3 mt-3" (click)="resetFilters()">
+            Clear Filters
+          </button>
+          }
         </div>
         }
         }

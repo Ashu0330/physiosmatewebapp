@@ -791,6 +791,12 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const res = await this.apiService.PostForm<any>(ApiEndPoints.AddClinic, formData);
 
       if (res.isSuccess) {
+        if (res.data) {
+          const clinicId = Number(res.data);
+          if (!isNaN(clinicId) && clinicId > 0) {
+            this.authService.setClinicId(clinicId);
+          }
+        }
         this.clearDraft();
         this.authService.clearPendingVerification();
         this.alert.toastSuccess('Clinic registration submitted successfully!');

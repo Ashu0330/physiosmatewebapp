@@ -136,6 +136,18 @@
   background: rgba(255, 255, 255, 0.24);
 }
 
+.physios-filter-btn.has-filter {
+  background: #ffffff;
+  color: #10a896;
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.physios-filter-btn.has-filter:hover {
+  background: #f0fdf4;
+  color: #0d8b7b;
+}
+
 .physios-filter-btn.sort-btn {
   background: transparent;
   border-color: transparent;

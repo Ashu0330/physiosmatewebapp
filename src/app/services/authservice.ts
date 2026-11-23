@@ -133,17 +133,45 @@ export class Authservice {
     if (user) {
       const parsedUser = JSON.parse(user);
       if (roleid === 1) {
-        return parsedUser.Id;
+        return parsedUser.Id || parsedUser.id;
       }
       else if (roleid === 2) {
-        return parsedUser.practitionerId;
+        return parsedUser.practitionerId ?? parsedUser.PractitionerId ?? null;
       }
       else if (roleid === 3) {
-        return parsedUser.clinicId;
+        return parsedUser.clinicId ?? parsedUser.ClinicId ?? null;
       }
     }
     else {
       return null;
+    }
+  }
+
+  getClinicId(): number | null {
+    const user = this.getCurrentUser();
+    return user ? (user.clinicId ?? user.ClinicId ?? null) : null;
+  }
+
+  setClinicId(clinicId: number): void {
+    if (typeof localStorage === 'undefined') return;
+    const user = this.getCurrentUser();
+    if (user) {
+      user.clinicId = clinicId;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }
+
+  getPractitionerId(): number | null {
+    const user = this.getCurrentUser();
+    return user ? (user.practitionerId ?? user.PractitionerId ?? null) : null;
+  }
+
+  setPractitionerId(practitionerId: number): void {
+    if (typeof localStorage === 'undefined') return;
+    const user = this.getCurrentUser();
+    if (user) {
+      user.practitionerId = practitionerId;
+      localStorage.setItem('user', JSON.stringify(user));
     }
   }
 

@@ -1,9 +1,9 @@
-import { Component, signal, computed, OnInit, inject, HostListener } from '@angular/core';
+import { Component, signal, computed, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { BaseComponent } from '../../helper/base-component';
-import { PractitionerModel } from '../../models/practitioner.model';
+import { PractitionerModel, PractitionerFilterViewModel } from '../../models/practitioner.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { SharedModule } from '../../shared/shared-module';
 import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
@@ -38,9 +38,10 @@ export interface ClinicItem {
   templateUrl: './doctors.html',
   styleUrl: './doctors.css',
 })
-export class Doctors extends BaseComponent implements OnInit {
+export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   form: FormGroup;
   private route = inject(ActivatedRoute);
+  private searchDebounceTimer: any = null;
   readonly PractitionerList = signal<PractitionerModel[]>([]);
   readonly isLoading = signal<boolean>(true);
 
@@ -54,9 +55,7 @@ export class Doctors extends BaseComponent implements OnInit {
 
 
   readonly popularCities = [
-    'Gumanpura, Kota',
-    'Talwandi, Kota',
-    'Vigyan Nagar, Kota',
+    'Kota',
     'Jaipur',
     'Mumbai',
     'Delhi NCR',
@@ -272,6 +271,21 @@ export class Doctors extends BaseComponent implements OnInit {
     this.isClinic.set(isClinicRoute);
   }
 
+  readonly hasActiveFilters = computed(() => {
+    return (
+      this.selectedGender() !== 'all' ||
+      this.selectedExperience() !== 'all' ||
+      this.sortBy() !== 'relevance' ||
+      this.searchQuery().trim().length > 0
+    );
+  });
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+  }
+
   toggleCity(): void {
     this.isCityOpen.update(v => !v);
   }
@@ -279,6 +293,37 @@ export class Doctors extends BaseComponent implements OnInit {
   selectCity(city: string): void {
     this.selectedCity.set(city);
     this.isCityOpen.set(false);
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
+  }
+
+  onCityChange(city: string): void {
+    this.selectedCity.set(city);
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
+  }
+
+  onSearchQueryChange(query: string): void {
+    this.searchQuery.set(query);
+    if (!this.isClinic()) {
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+      }
+      this.searchDebounceTimer = setTimeout(() => {
+        this.GetAllDoctors();
+      }, 500);
+    }
+  }
+
+  onSearchSubmit(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
   }
 
   toggleDropdown(name: string, triggerBtn?: HTMLElement): void {
@@ -317,11 +362,17 @@ export class Doctors extends BaseComponent implements OnInit {
   setGenderFilter(val: string): void {
     this.selectedGender.set(val);
     this.closeDropdown();
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
   }
 
   setExperienceFilter(val: string): void {
     this.selectedExperience.set(val);
     this.closeDropdown();
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
   }
 
   setStoriesFilter(val: string): void {
@@ -332,6 +383,19 @@ export class Doctors extends BaseComponent implements OnInit {
   setSortBy(val: string): void {
     this.sortBy.set(val);
     this.closeDropdown();
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
+  }
+
+  resetFilters(): void {
+    this.selectedGender.set('all');
+    this.selectedExperience.set('all');
+    this.sortBy.set('relevance');
+    this.searchQuery.set('');
+    if (!this.isClinic()) {
+      this.GetAllDoctors();
+    }
   }
 
   selectSpecialty(spec: string): void {
@@ -369,21 +433,61 @@ export class Doctors extends BaseComponent implements OnInit {
       this.closeBooking();
     }, 2000);
   }
+
   async GetAllDoctors(): Promise<void> {
-    console.log('GetAllDoctors started');
+    console.log('GetAllDoctors started with filters');
     this.isLoading.set(true);
 
     try {
-      const res = await this.apiService.Post<any[]>(
-        ApiEndPoints.GetPractitioners
+      // 1. SortBy mapping
+      let sortParam = 'Relevance';
+      const sort = this.sortBy();
+      if (sort === 'popularity') sortParam = 'Popularity';
+      else if (sort === 'rating') sortParam = 'RatingHighToLow';
+      else if (sort === 'experience') sortParam = 'ExperienceHighToLow';
+      else if (sort === 'fee' || sort === 'price-low') sortParam = 'FeeLowToHigh';
+
+      // 2. Gender mapping: 'all' -> null, 'male' -> 'Male', 'female' -> 'Female'
+      let genderParam: string | null = null;
+      const g = this.selectedGender().toLowerCase();
+      if (g.includes('male') && !g.includes('female')) genderParam = 'Male';
+      else if (g.includes('female')) genderParam = 'Female';
+
+      // 3. Experience mapping: 'all' -> null, '5' -> 5, '10' -> 10, '15' -> 15
+      let expParam: number | null = null;
+      if (this.selectedExperience() !== 'all') {
+        const parsed = parseInt(this.selectedExperience(), 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          expParam = parsed;
+        }
+      }
+
+      // 4. City & Search
+      const city = this.selectedCity()?.trim() || null;
+      const search = this.searchQuery()?.trim() || null;
+
+      const payload: PractitionerFilterViewModel = {
+        city: city || null,
+        search: search || null,
+        gender: genderParam,
+        minExperience: expParam,
+        sortBy: sortParam,
+        page: 1,
+        pageSize: 50,
+      };
+
+      console.log('GetAllDoctors payload:', payload);
+
+      const res = await this.apiService.Post<any>(
+        ApiEndPoints.GetPractitioners,
+        payload
       );
 
       console.log('GetAllDoctors response:', res);
 
       this.PractitionerList.set(
-        res.isSuccess ? (res.data ?? []) : []
+        res?.isSuccess && Array.isArray(res?.data) ? res.data : []
       );
-
     } catch (error) {
       console.error('GetAllDoctors ERROR:', error);
       this.PractitionerList.set([]);

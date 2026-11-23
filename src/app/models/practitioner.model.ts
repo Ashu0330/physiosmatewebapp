@@ -46,6 +46,19 @@ export interface PractitionerFilter {
   pageSize: number;
 }
 
+export interface PractitionerFilterViewModel {
+  city?: string | null;
+  search?: string | null;
+  gender?: string | null;
+  specializationId?: number | null;
+  minRating?: number | null;
+  maxPrice?: number | null;
+  minExperience?: number | null;
+  sortBy?: string | null;
+  page?: number;
+  pageSize?: number;
+}
+
 export interface PractitionerServiceItem {
   id: number;
   practitionerId?: number | null;

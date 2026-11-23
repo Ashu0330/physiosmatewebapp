@@ -73,9 +73,6 @@ export class Consultations implements OnInit, OnChanges {
   selectCondition(condition: string): void {
     this.selectedCondition.set(condition);
     this.formData.provisionalDiagnosis = condition;
-    if (!this.formData.chiefComplaint) {
-      this.formData.chiefComplaint = `Evaluation and rehabilitation for ${condition}.`;
-    }
   }
 
   addCustomCondition(): void {
@@ -150,24 +147,17 @@ export class Consultations implements OnInit, OnChanges {
     this.syncPrecautionsToAdvice();
   }
 
+  // ─── Slip Printing & Modal State ──────────────────────────────────────────
+  recentConsultations: DoctorConsultationRecord[] = [];
+  selectedConsultationForSlip: DoctorConsultationRecord | null = null;
+  showSlipModal = false;
+
   syncPrecautionsToAdvice(): void {
     const precautions = this.selectedPrecautions();
     if (precautions.length > 0) {
-      const precStr = `Precautions: ${precautions.join('; ')}.`;
-      const baseAdvice = 'Prescribe cryotherapy 15 mins post-session. Maintain neutral spinal alignment.';
-      this.formData.clinicalAdvice = `${baseAdvice} ${precStr}`;
+      this.formData.clinicalAdvice = `Precautions: ${precautions.join('; ')}.`;
     }
   }
-
-  // ─── Care Plan Presets ────────────────────────────────────────────────────
-  planTemplates = [
-    'Spine Decompression & Core Stabilization',
-    'Knee ACL Accelerated Rehab Protocol',
-    'Glenohumeral Joint Mobilization & ROM',
-    'Cervical Postural & Deep Neck Flexor Protocol',
-    'Ankle Stability & Tendinopathy Care',
-    'Custom Physical Therapy Care Plan'
-  ];
 
   // ─── Active Clinical Consultation Form State ──────────────────────────────
   // Field names match FinalizeConsultancyRequest API contract
@@ -193,137 +183,30 @@ export class Consultations implements OnInit, OnChanges {
   } = {
       consultationType: 'Initial Assessment',
       visitMode: 'In-Clinic',
-      fee: 500,
-      paymentStatus: 'Paid',
-      paymentMethod: 'UPI / QR',
+      fee: 0,
+      paymentStatus: 'Pending',
+      paymentMethod: 'Cash',
 
       chiefComplaint: '',
       clinicalFindings: '',
       provisionalDiagnosis: '',
       painSeverity: 'Moderate',
-      bloodPressure: '120/80 mmHg',
-      pulse: '74 bpm',
+      bloodPressure: '',
+      pulse: '',
       investigation: '',
 
       treatmentGiven: '',
-      recommendedPlan: 'Spine Decompression & Core Stabilization',
+      recommendedPlan: '',
       clinicalAdvice: '',
       nextFollowUpDate: ''
     };
 
-  // ─── Recent Consultations Ledger ───────────────────────────────────────────
-  recentConsultations: DoctorConsultationRecord[] = [
-    {
-      id: 'CNS-501',
-      consultationCode: 'CNS-501',
-      patientId: 'PT-1041',
-      patientCode: 'PT-1041',
-      patientName: 'Ananya Iyer',
-      age: 34,
-      gender: 'Female',
-      phone: '+91 98234 56789',
-      email: 'ananya.iyer@example.com',
-      primaryCondition: 'Lumbar Disc Herniation',
-      chiefComplaint: 'Radiating pain into left buttock and calf upon prolonged sitting.',
-      date: 'Today, 05 Sep 2026',
-      time: '09:30 AM',
-      consultationType: 'Initial Assessment',
-      visitMode: 'In-Clinic',
-      fee: 500,
-      paymentStatus: 'Paid',
-      paymentMethod: 'UPI / QR',
-      symptomsNotes: 'Positive straight leg raise (SLR) at 45 degrees on left side.',
-      provisionalDiagnosis: 'L4-L5 Disc Protrusion with L5 Radiculopathy',
-      painSeverity: 'Moderate',
-      bp: '118/76 mmHg',
-      pulse: '72 bpm',
-      romNotes: 'Lumbar flexion restricted to 40%. Extension symptom-relieving.',
-      treatmentGiven: 'Manual lumbar traction, IFT (15 mins), deep core transverse abdominis activation drills.',
-      recommendedPlan: 'Spine Decompression & Core Stabilization',
-      clinicalAdvice: 'Prescribed McKenzie extension press-ups 3x daily. Ergonomic seat cushion recommended.',
-      nextFollowUpDate: '12 Sep 2026'
-    },
-    {
-      id: 'CNS-502',
-      consultationCode: 'CNS-502',
-      patientId: 'PT-1042',
-      patientCode: 'PT-1042',
-      patientName: 'Vikramaditya Rao',
-      age: 28,
-      gender: 'Male',
-      phone: '+91 98450 12345',
-      email: 'vikram.rao@example.com',
-      primaryCondition: 'Right Knee ACL Reconstruction',
-      chiefComplaint: 'Mild anterior knee stiffness during terminal extension.',
-      date: 'Today, 05 Sep 2026',
-      time: '11:15 AM',
-      consultationType: 'Follow-up Visit',
-      visitMode: 'In-Clinic',
-      fee: 500,
-      paymentStatus: 'Paid',
-      paymentMethod: 'Card',
-      symptomsNotes: 'Minimal intra-articular effusion. Stable anterior drawer test.',
-      provisionalDiagnosis: 'Post-Op ACL Reconstruction Week 8 Progression',
-      painSeverity: 'Mild',
-      bp: '124/82 mmHg',
-      pulse: '68 bpm',
-      romNotes: 'Full active extension (0 deg). Flexion at 125 degrees.',
-      treatmentGiven: 'Patellar mobilizations Grade III, closed kinetic chain mini-squats, Hamstring eccentric loading.',
-      recommendedPlan: 'Knee ACL Accelerated Rehab Protocol',
-      clinicalAdvice: 'Initiate closed-kinetic chain squats and single-leg balance drills.',
-      nextFollowUpDate: '15 Sep 2026'
-    },
-    {
-      id: 'CNS-503',
-      consultationCode: 'CNS-503',
-      patientId: 'PT-1043',
-      patientCode: 'PT-1043',
-      patientName: 'Meera Nambiar',
-      age: 52,
-      gender: 'Female',
-      phone: '+91 97112 34567',
-      email: 'meera.nambiar@example.com',
-      primaryCondition: 'Adhesive Capsulitis (Left)',
-      chiefComplaint: 'Inability to fasten dress or reach overhead cupboards.',
-      date: '03 Sep 2026',
-      time: '02:00 PM',
-      consultationType: 'Follow-up Visit',
-      visitMode: 'Video Call',
-      fee: 500,
-      paymentStatus: 'Pending',
-      paymentMethod: 'UPI / QR',
-      symptomsNotes: 'Severe night aching and capsular pattern tightness.',
-      provisionalDiagnosis: 'Stage 2 Adhesive Capsulitis (Freezing Phase)',
-      painSeverity: 'Severe',
-      bp: '130/84 mmHg',
-      pulse: '78 bpm',
-      romNotes: 'Abduction 85 deg, External Rotation 20 deg.',
-      treatmentGiven: 'Tele-rehab guided pendular Codman exercises, wand-assisted elevation within pain-free arc.',
-      recommendedPlan: 'Glenohumeral Joint Mobilization & ROM',
-      clinicalAdvice: 'Pulleys and wand exercises within pain-free arc. Hot fermentation before exercises.',
-      nextFollowUpDate: '10 Sep 2026'
-    }
-  ];
-
-  // ─── Slip Printing & Modal State ──────────────────────────────────────────
-  selectedConsultationForSlip: DoctorConsultationRecord | null = null;
-  showSlipModal = false;
-
   ngOnInit(): void {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    this.formData.nextFollowUpDate = nextWeek.toISOString().split('T')[0];
-
     if (this.preSelectedPatientId) {
       const match = this.patients.find(p => p.id === this.preSelectedPatientId || p.patientCode === this.preSelectedPatientId);
       if (match) {
         this.selectPatient(match);
-        return;
       }
-    }
-
-    if (this.patients.length > 0) {
-      this.selectPatient(this.patients[0]);
     }
   }
 
@@ -473,10 +356,10 @@ export class Consultations implements OnInit, OnChanges {
     this.patientSearchQuery.set('');
     this.patientSearchResults.set([]);
 
-    this.formData.chiefComplaint = patient.initialComplaint || (patient.notes ? patient.notes : `${patient.primaryCondition || 'General'} clinical evaluation`);
+    this.formData.chiefComplaint = patient.initialComplaint || patient.notes || '';
     this.formData.provisionalDiagnosis = patient.primaryCondition || '';
     this.formData.treatmentGiven = '';
-    this.formData.fee = 500;
+    this.formData.fee = 0;
 
     if (patient.primaryCondition) {
       this.selectedCondition.set(patient.primaryCondition);
@@ -503,22 +386,22 @@ export class Consultations implements OnInit, OnChanges {
     this.formData = {
       consultationType: 'Initial Assessment',
       visitMode: 'In-Clinic',
-      fee: 500,
-      paymentStatus: 'Paid',
-      paymentMethod: 'UPI / QR',
+      fee: 0,
+      paymentStatus: 'Pending',
+      paymentMethod: 'Cash',
 
       chiefComplaint: '',
       clinicalFindings: '',
       provisionalDiagnosis: '',
       painSeverity: 'Moderate',
-      bloodPressure: '120/80 mmHg',
-      pulse: '74 bpm',
+      bloodPressure: '',
+      pulse: '',
       investigation: '',
 
       treatmentGiven: '',
-      recommendedPlan: 'Spine Decompression & Core Stabilization',
-      clinicalAdvice: 'Prescribe cryotherapy 15 mins post-session. Maintain neutral spinal alignment during lifting.',
-      nextFollowUpDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+      recommendedPlan: '',
+      clinicalAdvice: '',
+      nextFollowUpDate: ''
     };
   }
 
@@ -563,7 +446,7 @@ export class Consultations implements OnInit, OnChanges {
 
       if (res?.isSuccess) {
         // Build local record for the ledger
-        const newCode = `CNS-${500 + this.recentConsultations.length + 1}`;
+        const newCode = `CNS-${this.recentConsultations.length + 1}`;
         const now = new Date();
         const formattedDate = `Today, ${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
         const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -578,8 +461,8 @@ export class Consultations implements OnInit, OnChanges {
           gender: (pt.gender as 'Male' | 'Female' | 'Other') || 'Male',
           phone: pt.mobile || pt.phone || '',
           email: pt.email,
-          primaryCondition: this.formData.provisionalDiagnosis || pt.primaryCondition || 'General Musculoskeletal Care',
-          chiefComplaint: this.formData.chiefComplaint || `${pt.fullName} clinical evaluation`,
+          primaryCondition: this.formData.provisionalDiagnosis || pt.primaryCondition || '',
+          chiefComplaint: this.formData.chiefComplaint || '',
           date: formattedDate,
           time: formattedTime,
           consultationType: this.formData.consultationType,
@@ -587,8 +470,8 @@ export class Consultations implements OnInit, OnChanges {
           fee: this.formData.fee,
           paymentStatus: this.formData.paymentStatus,
           paymentMethod: this.formData.paymentMethod,
-          symptomsNotes: this.formData.clinicalFindings || 'Clinical examination within expected functional parameters.',
-          provisionalDiagnosis: this.formData.provisionalDiagnosis || pt.primaryCondition || 'Clinical assessment recorded',
+          symptomsNotes: this.formData.clinicalFindings || '',
+          provisionalDiagnosis: this.formData.provisionalDiagnosis || pt.primaryCondition || '',
           painSeverity: this.formData.painSeverity,
           bp: this.formData.bloodPressure,
           pulse: this.formData.pulse,
