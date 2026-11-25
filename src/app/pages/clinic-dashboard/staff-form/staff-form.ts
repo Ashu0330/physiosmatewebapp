@@ -113,7 +113,10 @@ export class StaffFormComponent implements OnInit {
     this.staffModel.update(prev => new AddClinicUserViewModel({
       ...prev,
       practitionerId: pracId,
+      userId: matched?.userId ?? prev.userId,
       fullName: matched?.practitionerName || prev.fullName,
+      email: matched?.userEmail || prev.email,
+      mobile: matched?.userPhone || prev.mobile,
       clinicBranchId: matched?.clinicBranchId ?? prev.clinicBranchId
     }));
   }
@@ -131,7 +134,7 @@ export class StaffFormComponent implements OnInit {
 
   private async loadPractitioners(clinicId: number): Promise<void> {
     try {
-      const res = await this.relationshipService.getClinicPractitioners(clinicId, 'Active');
+      const res = await this.relationshipService.getClinicPractitioners(clinicId, 'All');
       if (res.isSuccess && res.data) {
         this.practitioners.set(res.data);
       }
@@ -202,8 +205,10 @@ export class StaffFormComponent implements OnInit {
         this.alert.toastWarning('Please enter the member full name.');
         return false;
       }
-      if (!model.mobile || model.mobile.trim() === '') {
-        this.alert.toastWarning('Please enter a mobile number to look up or create the user account.');
+      const hasMobile = !!(model.mobile && model.mobile.trim() !== '');
+      const hasEmail = !!(model.email && model.email.trim() !== '');
+      if (!hasMobile && !hasEmail) {
+        this.alert.toastWarning('Please enter a mobile number or email address to look up or create the user account.');
         return false;
       }
     }

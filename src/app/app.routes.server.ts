@@ -11,6 +11,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'complete-solo-profile',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'login',
     renderMode: RenderMode.Client,
   },

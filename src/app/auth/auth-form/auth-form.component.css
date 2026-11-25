@@ -659,6 +659,22 @@ input::-ms-clear {
   color: var(--info);
 }
 
+.workspace-option-card.solo-setup-card {
+  border-style: dashed;
+  border-color: rgba(16, 168, 150, 0.55);
+  background: rgba(16, 168, 150, 0.04);
+}
+
+.workspace-option-icon.solo-setup-icon {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.workspace-role-pill.solo-setup-pill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .workspace-option-sub {
   font-size: 12.5px;
   color: var(--text-muted);

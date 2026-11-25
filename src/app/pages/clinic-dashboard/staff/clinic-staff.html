@@ -78,7 +78,7 @@
     }
 
     <!-- Empty State -->
-    @if (!isLoading() && filteredStaff().length === 0) {
+    @if (!isLoading() && ((!isLeftPractitionersTab() && filteredStaff().length === 0) || (isLeftPractitionersTab() && filteredLeftPractitioners().length === 0))) {
       <div class="empty-state-card">
         <div class="empty-icon-wrap">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -89,14 +89,17 @@
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
         </div>
-        <h3 class="empty-title">No team members found</h3>
+        <h3 class="empty-title">{{ isLeftPractitionersTab() ? 'No left practitioners found' : 'No team members found' }}</h3>
         <p class="empty-subtitle">
-          @if (searchTerm() || activeRoleFilter() !== 'all' || selectedBranchId()) {
-            No staff members match your current search or filter criteria.
+          @if (searchTerm() || selectedBranchId() || (!isLeftPractitionersTab() && activeRoleFilter() !== 'all')) {
+            No {{ isLeftPractitionersTab() ? 'left practitioners' : 'staff members' }} match your current search or filter criteria.
+          } @else if (isLeftPractitionersTab()) {
+            None of your clinic practitioners have left or been deactivated yet.
           } @else {
             You haven't added any managers, receptionists, or staff members yet. Add your team to delegate clinic operations.
           }
         </p>
+        @if (!isLeftPractitionersTab()) {
         <a routerLink="/clinic-dashboard/staff/new" class="btn-add-staff mt-3">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -104,11 +107,12 @@
           </svg>
           Add Staff Member
         </a>
+        }
       </div>
     }
 
-    <!-- Staff Cards Grid -->
-    @if (!isLoading() && filteredStaff().length > 0) {
+    <!-- Active Staff Cards Grid -->
+    @if (!isLoading() && !isLeftPractitionersTab() && filteredStaff().length > 0) {
       <div class="staff-grid">
         @for (member of filteredStaff(); track member.id) {
           <div class="staff-card">
@@ -160,6 +164,68 @@
                 [disabled]="removingId() === member.id"
                 (click)="removeMember(member)">
                 {{ removingId() === member.id ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Left Practitioners Cards Grid -->
+    @if (!isLoading() && isLeftPractitionersTab() && filteredLeftPractitioners().length > 0) {
+      <div class="staff-grid">
+        @for (prac of filteredLeftPractitioners(); track prac.id) {
+          <div class="staff-card left-practitioner-card">
+            <div class="card-header-row">
+              <div class="member-identity">
+                <div class="member-avatar">{{ getInitials(prac.practitionerName) }}</div>
+                <div class="member-title-wrap">
+                  <h3 class="member-name" [title]="prac.practitionerName || 'Practitioner'">
+                    {{ prac.practitionerName || ('Practitioner #' + prac.practitionerId) }}
+                  </h3>
+                  <span class="role-badge role-badge-practitioner">
+                    Practitioner
+                  </span>
+                </div>
+              </div>
+              <span class="status-badge badge-left">
+                {{ prac.status || 'Left' }}
+              </span>
+            </div>
+
+            @if (prac.specialization) {
+              <div class="member-spec-tag">
+                {{ prac.specialization }}@if (prac.experienceYears) { &middot; {{ prac.experienceYears }} yrs exp }
+              </div>
+            }
+
+            <div class="member-branch-tag">
+              {{ prac.branchName || 'All Branches (Clinic-wide)' }}
+            </div>
+
+            <div class="member-detail-text">
+              Phone: {{ prac.userPhone || 'N/A' }}
+            </div>
+            <div class="member-detail-text member-email" [title]="prac.userEmail || 'N/A'">
+              Email: {{ prac.userEmail || 'N/A' }}
+            </div>
+            <div class="member-meta-text">
+              @if (prac.leftAt) {
+                Left on: {{ prac.leftAt | date:'dd MMM yyyy' }}
+              } @else {
+                Joined: {{ prac.requestedAt | date:'dd MMM yyyy' }}
+              }
+            </div>
+
+            <div class="card-divider"></div>
+
+            <div class="card-actions-row">
+              <button
+                type="button"
+                class="action-link action-rejoin"
+                [disabled]="rejoiningId() === prac.practitionerId"
+                (click)="rejoinPractitioner(prac)">
+                {{ rejoiningId() === prac.practitionerId ? 'Reactivating...' : 'Rejoin / Reactivate' }}
               </button>
             </div>
           </div>

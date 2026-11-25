@@ -98,6 +98,7 @@
                     <option [ngValue]="prac.practitionerId">
                       {{ prac.practitionerName || ('Practitioner #' + prac.practitionerId) }}
                       @if (prac.specialization) { - {{ prac.specialization }}}
+                      @if (prac.status === 'Left') { (Previously Left)}
                     </option>
                   }
                 </select>
@@ -134,7 +135,7 @@
             <!-- Mobile -->
             <div class="form-group">
               <label class="form-label">
-                MOBILE NUMBER @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }
+                MOBILE NUMBER
               </label>
               <input
                 type="tel"
@@ -148,7 +149,7 @@
 
             <!-- Email -->
             <div class="form-group">
-              <label class="form-label">EMAIL ADDRESS</label>
+              <label class="form-label">EMAIL ADDRESS @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }</label>
               <input
                 type="email"
                 class="form-input"
@@ -164,7 +165,7 @@
             @if (isEditMode()) {
               Account name and contact belong to the user's profile. Update their role or branch assignment above.
             } @else {
-              If a PhysiosMate account already exists for this mobile or email, it will be linked automatically; otherwise a new user account is created.
+              Provide at least an email address or mobile number. Existing PhysiosMate accounts link automatically; new clinic-created doctors can still set up their Solo Professional Profile when logging in.
             }
           </span>
         </div>

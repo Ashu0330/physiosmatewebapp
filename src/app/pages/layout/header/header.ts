@@ -34,6 +34,17 @@ export class Header extends BaseComponent implements OnInit {
 
   readonly activeWorkspace = this.authService.activeWorkspace;
   readonly availableWorkspaces = this.authService.availableWorkspaces;
+  readonly isProfileCompleted = this.authService.isProfileCompleted;
+
+  get canSetupSoloProfile(): boolean {
+    return this.authService.canSetupSoloProfile();
+  }
+
+  get soloSetupActionLabel(): string {
+    return this.isProfileCompleted()
+      ? 'Enable Solo Practitioner Profile'
+      : 'Create Solo Professional Profile';
+  }
 
   async ngOnInit(): Promise<void> {
     this.destroyRef.onDestroy(() => {
@@ -282,6 +293,27 @@ export class Header extends BaseComponent implements OnInit {
     this.router.navigate([targetRoute]).then(() => {
       this.setParentMenuFromRoute();
     });
+  }
+
+  async openOrEnableSoloProfile(): Promise<void> {
+    this.profileDropdownOpen = false;
+    this.closeMobileMenu();
+    const user = this.authService.getCurrentUser();
+
+    if (this.isProfileCompleted()) {
+      const soloWs = await this.relationshipService.activateExistingSoloWorkspace(user);
+      if (soloWs) {
+        this.selectedParentMenuId.set(null);
+        this.alert.toastSuccess('Switched to Solo Practitioner profile!');
+        this.router.navigate(['/doctor-dashboard/dashboard']).then(() => {
+          this.setParentMenuFromRoute();
+        });
+        return;
+      }
+    }
+
+    this.relationshipService.prepareSoloProfileSetup(user);
+    this.router.navigate(['/complete-solo-profile']);
   }
 
   isActiveWorkspace(ws: UserWorkspaceItemDto): boolean {

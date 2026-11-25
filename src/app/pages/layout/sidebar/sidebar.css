@@ -115,6 +115,45 @@
   line-height: 0;
 }
 
+.sidebar-solo-cta-box {
+  margin: 16px 12px 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--primary-light, #E8F8F5);
+  border: 1px dashed var(--primary-color, #10A896);
+}
+
+.sidebar-solo-cta-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark, #087F76);
+  margin-bottom: 4px;
+}
+
+.sidebar-solo-cta-desc {
+  font-size: 11px;
+  color: var(--text-body, #414146);
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.sidebar-solo-cta-btn {
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-color, #10A896);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-solo-cta-btn:hover {
+  background: var(--primary-dark, #087F76);
+}
+
 /* ==========================================================================
    Responsive — Collapse sidebar on small screens
    ========================================================================== */

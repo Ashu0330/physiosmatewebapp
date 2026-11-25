@@ -1,4 +1,4 @@
-import { Component, input, output, computed, effect, signal } from '@angular/core';
+import { Component, input, output, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { BaseComponent } from '../../../helper/base-component';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { MenusModel } from '../../../models/mastermodel';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,6 +21,7 @@ export class Sidebar extends BaseComponent {
   readonly menulist = signal<MenusModel[]>([]);
   readonly parentMenuId = input<number | null>(null);
 
+  private relationshipService = inject(ClinicRelationshipService);
   private previousParentMenuId: number | null = null;
   private latestMenuRequestToken = 0;
 
@@ -88,6 +90,23 @@ export class Sidebar extends BaseComponent {
 
   readonly activeWorkspaceLabel = computed<string>(() => {
     return this.authService.formatWorkspaceLabel(this.activeWorkspace());
+  });
+
+  readonly showSoloSetupCta = computed<boolean>(() => {
+    this.activeWorkspace();
+    this.authService.availableWorkspaces();
+    const url = this.cleanRoutePath(this.currentUrl());
+    return (
+      this.isClinicPractitionerOnly() &&
+      this.authService.canSetupSoloProfile() &&
+      !url.startsWith('/user-dashboard')
+    );
+  });
+
+  readonly soloCtaLabel = computed<string>(() => {
+    return this.authService.isProfileCompleted()
+      ? 'Enable Solo Profile'
+      : '+ Create Solo Profile';
   });
 
   readonly consoleTitle = computed<string>(() => {
@@ -227,5 +246,19 @@ export class Sidebar extends BaseComponent {
       return !hasMoreSpecificMatch;
     }
     return false;
+  }
+
+  async openOrEnableSoloProfile(): Promise<void> {
+    const user = this.authService.getCurrentUser();
+    if (this.authService.isProfileCompleted()) {
+      const soloWs = await this.relationshipService.activateExistingSoloWorkspace(user);
+      if (soloWs) {
+        this.alert.toastSuccess('Switched to Solo Practitioner profile!');
+        this.router.navigate(['/doctor-dashboard/dashboard']);
+        return;
+      }
+    }
+    this.relationshipService.prepareSoloProfileSetup(user);
+    this.router.navigate(['/complete-solo-profile']);
   }
 }

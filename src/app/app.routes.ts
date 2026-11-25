@@ -74,6 +74,7 @@ export const routes: Routes = [
   { path: 'login', component: AuthPageComponent },
   { path: 'signup', component: AuthPageComponent },
   { path: 'register', component: AuthPageComponent },
+  { path: 'complete-solo-profile', component: AuthPageComponent },
 
   // ─── Booking Route ────────────────────────────────────────────────────────
   { path: 'booking/consultancy/:providerId', component: BookingAuthComponent },

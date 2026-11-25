@@ -116,13 +116,19 @@
             <div class="physios-profile-divider"></div>
             }
 
-            @if (availableWorkspaces().length > 1) {
-            <div class="physios-workspace-switcher-label">Switch Login Profile</div>
+            @if (availableWorkspaces().length > 1 || canSetupSoloProfile) {
+            <div class="physios-workspace-switcher-label">Login Profiles</div>
             @for (ws of availableWorkspaces(); track $index) {
             <button type="button" class="physios-profile-item physios-ws-switch-item"
               [class.active-ws]="isActiveWorkspace(ws)" (click)="switchWorkspace(ws)">
               <span class="physios-ws-dot" [class.active]="isActiveWorkspace(ws)"></span>
               <span class="physios-ws-text">{{ getWorkspaceLabel(ws) }}</span>
+            </button>
+            }
+            @if (canSetupSoloProfile) {
+            <button type="button" class="physios-profile-item physios-ws-setup-solo-item" (click)="openOrEnableSoloProfile()">
+              <span class="physios-ws-plus">+</span>
+              <span class="physios-ws-text">{{ soloSetupActionLabel }}</span>
             </button>
             }
             <div class="physios-profile-divider"></div>
@@ -243,13 +249,19 @@
                   <span>{{ item.menuName }}</span>
                 </a>
                 }
-                @if (availableWorkspaces().length > 1) {
-                <div class="physios-workspace-switcher-label">Switch Login Profile</div>
+                @if (availableWorkspaces().length > 1 || canSetupSoloProfile) {
+                <div class="physios-workspace-switcher-label">Login Profiles</div>
                 @for (ws of availableWorkspaces(); track $index) {
                 <button type="button" class="physios-mobile-sublink physios-ws-switch-item"
                   [class.active-ws]="isActiveWorkspace(ws)" (click)="switchWorkspace(ws)">
                   <span class="physios-ws-dot" [class.active]="isActiveWorkspace(ws)"></span>
                   <span class="physios-ws-text">{{ getWorkspaceLabel(ws) }}</span>
+                </button>
+                }
+                @if (canSetupSoloProfile) {
+                <button type="button" class="physios-mobile-sublink physios-ws-setup-solo-item" (click)="openOrEnableSoloProfile()">
+                  <span class="physios-ws-plus">+</span>
+                  <span class="physios-ws-text">{{ soloSetupActionLabel }}</span>
                 </button>
                 }
                 }

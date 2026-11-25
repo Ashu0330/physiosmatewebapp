@@ -278,6 +278,22 @@
   color: var(--text-muted);
 }
 
+.badge-left {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.member-spec-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.left-practitioner-card {
+  border-color: #fecaca;
+}
+
 .member-branch-tag {
   font-size: 12px;
   font-weight: 600;

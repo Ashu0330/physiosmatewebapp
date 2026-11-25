@@ -42,6 +42,7 @@ export interface WorkspaceResolutionDto {
   fullName?: string | null;
   roleId?: number | null;
   practitionerId?: number | null;
+  isProfileCompleted?: boolean;
   isSoloPracticeEnabled: boolean;
   workspaces: UserWorkspaceItemDto[];
 }
@@ -123,7 +124,10 @@ export interface ClinicPractitionerDto {
   clinicBranchId?: number | null;
   branchName?: string | null;
   practitionerId: number;
+  userId?: number | null;
   practitionerName?: string | null;
+  userEmail?: string | null;
+  userPhone?: string | null;
   specialization?: string | null;
   experienceYears?: number | null;
   consultationFee?: number | null;

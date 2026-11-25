@@ -22,6 +22,8 @@ export class Authservice {
 
   readonly activeWorkspace = signal<UserWorkspaceItemDto | null>(null);
   readonly availableWorkspaces = signal<UserWorkspaceItemDto[]>([]);
+  readonly isSoloPracticeEnabled = signal<boolean>(false);
+  readonly isProfileCompleted = signal<boolean>(false);
 
   private hydrateWorkspaceSignals(): void {
     if (typeof localStorage === 'undefined') return;
@@ -32,7 +34,21 @@ export class Authservice {
       }
       const listRaw = localStorage.getItem(AVAILABLE_WORKSPACES_KEY);
       if (listRaw) {
-        this.availableWorkspaces.set(JSON.parse(listRaw));
+        const list = JSON.parse(listRaw) as UserWorkspaceItemDto[];
+        this.availableWorkspaces.set(list);
+        if (list.some(w => w.workspaceType === 'Solo')) {
+          this.isSoloPracticeEnabled.set(true);
+        }
+      }
+      const userRaw = localStorage.getItem('user');
+      if (userRaw) {
+        const user = JSON.parse(userRaw);
+        if (user?.isSoloPracticeEnabled !== undefined) {
+          this.isSoloPracticeEnabled.set(Boolean(user.isSoloPracticeEnabled));
+        }
+        if (user?.isProfileCompleted !== undefined) {
+          this.isProfileCompleted.set(Boolean(user.isProfileCompleted));
+        }
       }
     } catch {
       this.activeWorkspace.set(null);
@@ -217,7 +233,7 @@ export class Authservice {
     return this.availableWorkspaces();
   }
 
-  buildProfileOptions(resolution: { roleId?: number | null; practitionerId?: number | null; workspaces?: UserWorkspaceItemDto[] }, userData: any): UserWorkspaceItemDto[] {
+  buildProfileOptions(resolution: { roleId?: number | null; practitionerId?: number | null; isProfileCompleted?: boolean; isSoloPracticeEnabled?: boolean; workspaces?: UserWorkspaceItemDto[] }, userData: any): UserWorkspaceItemDto[] {
     const options: UserWorkspaceItemDto[] = [...(resolution?.workspaces ?? [])];
     if (
       (resolution?.roleId === 1 || userData?.roleId === 1) &&
@@ -236,13 +252,53 @@ export class Authservice {
         isPrimary: false,
       });
     }
+    this.syncResolutionState(resolution, userData);
     this.setAvailableWorkspaces(options, resolution?.practitionerId);
     return options;
+  }
+
+  syncResolutionState(resolution?: { practitionerId?: number | null; isProfileCompleted?: boolean; isSoloPracticeEnabled?: boolean } | null, userData?: any): void {
+    const soloEnabled = Boolean(resolution?.isSoloPracticeEnabled ?? userData?.isSoloPracticeEnabled);
+    const profileDone = Boolean(resolution?.isProfileCompleted ?? userData?.isProfileCompleted);
+    this.isSoloPracticeEnabled.set(soloEnabled);
+    this.isProfileCompleted.set(profileDone);
+
+    if (typeof localStorage === 'undefined') return;
+    const stored = this.getCurrentUser() ?? (userData ? { ...userData } : null);
+    if (stored) {
+      stored.isSoloPracticeEnabled = soloEnabled;
+      stored.isProfileCompleted = profileDone;
+      if (resolution?.practitionerId && resolution.practitionerId > 0) {
+        stored.practitionerId = resolution.practitionerId;
+      }
+      localStorage.setItem('user', JSON.stringify(stored));
+    }
+    if (userData && userData !== stored) {
+      userData.isSoloPracticeEnabled = soloEnabled;
+      userData.isProfileCompleted = profileDone;
+      if (resolution?.practitionerId && resolution.practitionerId > 0) {
+        userData.practitionerId = resolution.practitionerId;
+      }
+    }
+  }
+
+  hasSoloWorkspace(): boolean {
+    return this.availableWorkspaces().some(w => w.workspaceType === 'Solo');
+  }
+
+  canSetupSoloProfile(): boolean {
+    if (!this.isLoggedIn()) return false;
+    const roleId = this.getRoleId();
+    const pracId = Number(this.getPractitionerId() ?? 0);
+    return (roleId === 2 || pracId > 0) && !this.hasSoloWorkspace();
   }
 
   setAvailableWorkspaces(workspaces: UserWorkspaceItemDto[], practitionerId?: number | null): void {
     const list = workspaces ?? [];
     this.availableWorkspaces.set(list);
+    if (list.some(w => w.workspaceType === 'Solo')) {
+      this.isSoloPracticeEnabled.set(true);
+    }
     if (practitionerId && practitionerId > 0) {
       this.setPractitionerId(practitionerId);
     }
@@ -353,6 +409,8 @@ export class Authservice {
     localStorage.removeItem(AVAILABLE_WORKSPACES_KEY);
     this.activeWorkspace.set(null);
     this.availableWorkspaces.set([]);
+    this.isSoloPracticeEnabled.set(Boolean(userData?.isSoloPracticeEnabled));
+    this.isProfileCompleted.set(Boolean(userData?.isProfileCompleted));
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
@@ -367,6 +425,8 @@ export class Authservice {
     this.clearPendingUserId();
     this.activeWorkspace.set(null);
     this.availableWorkspaces.set([]);
+    this.isSoloPracticeEnabled.set(false);
+    this.isProfileCompleted.set(false);
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('user');
       localStorage.removeItem('token');

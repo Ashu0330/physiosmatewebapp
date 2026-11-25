@@ -7,7 +7,13 @@
       <span>Profile Selection</span>
     </div>
     <h2 class="auth-title">Choose Your Login Profile</h2>
-    <p class="auth-subtitle">Multiple active profiles were found for <strong>{{ signupForm.value.email }}</strong>. Select which profile you want to open.</p>
+    <p class="auth-subtitle">
+      @if (canOfferSoloSetup()) {
+      Available profiles for <strong>{{ signupForm.value.email }}</strong>. Open your Clinic profile or set up your Solo Professional profile.
+      } @else {
+      Multiple active profiles were found for <strong>{{ signupForm.value.email }}</strong>. Select which profile you want to open.
+      }
+    </p>
     } @else if (bookingContext) {
     <div class="booking-badge">
       <span class="lock-icon">🔒</span>
@@ -45,11 +51,11 @@
     <button
       type="button"
       class="workspace-option-card"
-      [class.selected]="selectedWorkspaceIndex() === $index"
+      [class.selected]="!isSoloSetupSelected() && selectedWorkspaceIndex() === $index"
       (click)="selectWorkspace($index)"
       (dblclick)="confirmWorkspaceSelection()"
       role="radio"
-      [attr.aria-checked]="selectedWorkspaceIndex() === $index">
+      [attr.aria-checked]="!isSoloSetupSelected() && selectedWorkspaceIndex() === $index">
       <div class="workspace-option-icon" [class.clinic-icon]="ws.workspaceType === 'Clinic'">
         @if (ws.workspaceType === 'Clinic') {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -81,10 +87,57 @@
       <span class="workspace-radio-dot"></span>
     </button>
     }
+
+    @if (canOfferSoloSetup()) {
+    <button
+      type="button"
+      class="workspace-option-card solo-setup-card"
+      [class.selected]="isSoloSetupSelected()"
+      (click)="selectSoloSetupOption()"
+      (dblclick)="confirmWorkspaceSelection()"
+      role="radio"
+      [attr.aria-checked]="isSoloSetupSelected()">
+      <div class="workspace-option-icon solo-setup-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="8.5" cy="7" r="4"></circle>
+          <line x1="20" y1="8" x2="20" y2="14"></line>
+          <line x1="23" y1="11" x2="17" y2="11"></line>
+        </svg>
+      </div>
+
+      <div class="workspace-option-body">
+        <div class="workspace-option-top">
+          <span class="workspace-option-title">
+            {{ isSoloProfileAlreadyCompleted() ? 'Enable Solo Practitioner Profile' : 'Create Solo Professional Profile' }}
+          </span>
+          <span class="workspace-role-pill solo-setup-pill">
+            {{ isSoloProfileAlreadyCompleted() ? 'Activate Solo' : 'Setup Solo' }}
+          </span>
+        </div>
+        <span class="workspace-option-sub">
+          @if (isSoloProfileAlreadyCompleted()) {
+          Activate your independent solo doctor workspace alongside your clinic profile.
+          } @else {
+          Complete your professional credentials, specialization &amp; fee to practice independently.
+          }
+        </span>
+      </div>
+
+      <span class="workspace-radio-dot"></span>
+    </button>
+    }
   </div>
 
-  <button type="button" class="submit-btn mt-3" (click)="confirmWorkspaceSelection()">
+  <button type="button" class="submit-btn mt-3" [disabled]="isActivatingSolo()" (click)="confirmWorkspaceSelection()">
+    @if (isActivatingSolo()) {
+    <span class="spinner"></span>
+    <span>Activating Solo Profile...</span>
+    } @else if (isSoloSetupSelected()) {
+    <span>{{ isSoloProfileAlreadyCompleted() ? 'Enable &amp; Open Solo Profile' : 'Create Solo Professional Profile' }} &rarr;</span>
+    } @else {
     <span>Continue as {{ getWorkspaceBadgeLabel(workspaceChoices()[selectedWorkspaceIndex()]) }} &rarr;</span>
+    }
   </button>
 
   <button type="button" class="back-login-link" (click)="backToEmailLogin()">

@@ -7,7 +7,7 @@
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>{{ currentStep() === 1 ? 'Back to Verification' : 'Back to Basic Details' }}</span>
+        <span>{{ currentStep() === 1 ? (isSoloSetup() ? 'Back to Clinic Workspace' : 'Back to Verification') : 'Back to Basic Details' }}</span>
       </button>
 
       <div class="step-pill">
@@ -20,15 +20,21 @@
     </div>
 
     <h2 class="register-title">
-      {{ currentStep() === 1 ? 'Complete Your Account Profile' : (userType() === 'doctor' ? 'Doctor Professional Profile' :
-      'Clinic Facility Information') }}
+      {{ isSoloSetup()
+      ? (currentStep() === 1 ? 'Create Solo Professional Profile' : 'Solo Doctor Credentials & Fee')
+      : (currentStep() === 1 ? 'Complete Your Account Profile' : (userType() === 'doctor' ? 'Doctor Professional Profile' :
+      'Clinic Facility Information')) }}
     </h2>
     <p class="register-subtitle">
-      {{ currentStep() === 1
+      {{ isSoloSetup()
+      ? (currentStep() === 1
+      ? 'Review and complete your personal contact details, then set up your independent practitioner profile.'
+      : 'Add your clinical specialization, qualifications, consultation fee & services for solo patients.')
+      : (currentStep() === 1
       ? 'Enter your details below to set up your PhysiosMate profile.'
       : (userType() === 'doctor'
       ? 'Provide your clinical credentials and expertise for patient consultations.'
-      : 'Register your clinic profile to list services and manage appointments.') }}
+      : 'Register your clinic profile to list services and manage appointments.')) }}
     </p>
 
   </div>
@@ -67,6 +73,7 @@
     </div>
 
     <!-- Account Type -->
+    @if (!isSoloSetup()) {
     <div class="form-group">
       <label class="form-label">Select Account Type <span class="required-star">*</span></label>
       <div class="gender-pills account-type-pills">
@@ -84,6 +91,7 @@
         </button>
       </div>
     </div>
+    }
 
     <!-- Full Name + Mobile -->
     <div class="form-grid">
@@ -115,6 +123,7 @@
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <input id="reg-email" type="email" formControlName="email" placeholder="e.g. name@example.com"
+          [readonly]="isSoloSetup() || !!verifiedEmail"
           class="form-input" [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
       </div>
       @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
@@ -212,7 +221,10 @@
     <!-- Password + Confirm -->
     <div class="form-grid-2">
       <div class="form-group">
-        <label for="reg-password" class="form-label">Create Password <span class="required-star">*</span></label>
+        <label for="reg-password" class="form-label">
+          Create Password
+          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span class="form-label-hint">(Optional)</span> }
+        </label>
         <div class="input-wrapper">
           <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2">
@@ -245,8 +257,10 @@
       </div>
 
       <div class="form-group">
-        <label for="reg-confirm-password" class="form-label">Confirm Password <span
-            class="required-star">*</span></label>
+        <label for="reg-confirm-password" class="form-label">
+          Confirm Password
+          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span class="form-label-hint">(Optional)</span> }
+        </label>
         <div class="input-wrapper">
           <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2">
@@ -309,10 +323,12 @@
       }
     </button>
 
+    @if (!isSoloSetup()) {
     <div class="switch-footer">
       <span>Already have an account?</span>
       <button type="button" class="switch-link" (click)="backToAuth.emit()">Sign In</button>
     </div>
+    }
   </form>
   }
 

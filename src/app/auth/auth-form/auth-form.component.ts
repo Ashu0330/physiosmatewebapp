@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { ClinicRelationshipService } from '../../services/clinic-relationship.service';
-import { UserWorkspaceItemDto } from '../../models/clinic.model';
+import { UserWorkspaceItemDto, WorkspaceResolutionDto } from '../../models/clinic.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
 import { SharedModule } from '../../shared/shared-module';
@@ -41,6 +41,22 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   readonly workspaceChoices = signal<UserWorkspaceItemDto[]>([]);
   readonly selectedWorkspaceIndex = signal<number>(0);
   readonly pendingAuthUser = signal<any>(null);
+  readonly workspaceResolution = signal<WorkspaceResolutionDto | null>(null);
+  readonly isSoloSetupSelected = signal<boolean>(false);
+  readonly isActivatingSolo = signal<boolean>(false);
+
+  readonly canOfferSoloSetup = computed<boolean>(() => {
+    const res = this.workspaceResolution();
+    const user = this.pendingAuthUser();
+    const choices = this.workspaceChoices();
+    return this.shouldOfferSoloSetup(res, user, choices);
+  });
+
+  readonly isSoloProfileAlreadyCompleted = computed<boolean>(() => {
+    const res = this.workspaceResolution();
+    const user = this.pendingAuthUser();
+    return Boolean(res?.isProfileCompleted || user?.isProfileCompleted);
+  });
 
   private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -162,10 +178,13 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
 
       // Discover all authorized workspaces (Solo Practice, Clinic Practitioner, Owner/Manager/Staff/Branches)
       const profileOptions = await this.resolveLoginProfiles(userData);
+      const resolution = this.workspaceResolution();
+      const offerSoloChoice = this.shouldOfferSoloSetup(resolution, userData, profileOptions);
 
-      if (profileOptions.length > 1) {
+      if (profileOptions.length > 1 || (profileOptions.length >= 1 && offerSoloChoice)) {
         const primaryIdx = profileOptions.findIndex(w => w.isPrimary);
         this.selectedWorkspaceIndex.set(primaryIdx >= 0 ? primaryIdx : 0);
+        this.isSoloSetupSelected.set(false);
         this.workspaceChoices.set(profileOptions);
         this.pendingAuthUser.set(userData);
         this.showWorkspaceSelector.set(true);
@@ -182,7 +201,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
         return;
       }
 
-      // Brand-new account with no profile and no clinic/solo workspace -> proceed to registration
+      // Brand-new or incomplete account with no workspace -> proceed to registration
       const email = this.signupForm.value.email;
       this.authService.setPendingVerification({
         email: email,
@@ -197,37 +216,92 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
     }
   }
 
+  private shouldOfferSoloSetup(
+    resolution: WorkspaceResolutionDto | null,
+    userData: any,
+    options: UserWorkspaceItemDto[]
+  ): boolean {
+    const hasSolo = options.some(w => w.workspaceType === 'Solo');
+    if (hasSolo) return false;
+
+    const isPractitioner =
+      resolution?.roleId === 2 ||
+      userData?.roleId === 2 ||
+      (resolution?.practitionerId ?? 0) > 0 ||
+      (userData?.practitionerId ?? 0) > 0 ||
+      options.some(w => w.workspaceType === 'Clinic' && (w.accessLevel || '').toLowerCase() === 'practitioner');
+
+    return isPractitioner;
+  }
+
   private async resolveLoginProfiles(userData: any): Promise<UserWorkspaceItemDto[]> {
     try {
       const wsRes = await this.relationshipService.resolveWorkspaces();
       if (!wsRes.isSuccess || !wsRes.data) {
+        this.workspaceResolution.set(null);
         return [];
       }
 
       const resolution = wsRes.data;
+      this.workspaceResolution.set(resolution);
       if (resolution.practitionerId && resolution.practitionerId > 0) {
         userData.practitionerId = resolution.practitionerId;
       }
       return this.authService.buildProfileOptions(resolution, userData);
     } catch {
+      this.workspaceResolution.set(null);
       return [];
     }
   }
 
   selectWorkspace(index: number): void {
+    this.isSoloSetupSelected.set(false);
     this.selectedWorkspaceIndex.set(index);
   }
 
-  confirmWorkspaceSelection(): void {
+  selectSoloSetupOption(): void {
+    this.isSoloSetupSelected.set(true);
+  }
+
+  async confirmWorkspaceSelection(): Promise<void> {
+    const userData = this.pendingAuthUser();
+    if (this.isSoloSetupSelected()) {
+      await this.proceedToSoloProfile(userData);
+      return;
+    }
+
     const choices = this.workspaceChoices();
     const chosen = choices[this.selectedWorkspaceIndex()] ?? choices[0] ?? null;
-    this.completeLoginWithWorkspace(chosen, this.pendingAuthUser());
+    this.completeLoginWithWorkspace(chosen, userData);
+  }
+
+  private async proceedToSoloProfile(userData: any): Promise<void> {
+    if (this.isSoloProfileAlreadyCompleted()) {
+      this.isActivatingSolo.set(true);
+      try {
+        const soloWs = await this.relationshipService.activateExistingSoloWorkspace(userData);
+        if (soloWs) {
+          this.authService.clearPendingVerification();
+          this.alert.toastSuccess('Solo Practitioner profile enabled!');
+          this.router.navigate(['/doctor-dashboard/dashboard']);
+          return;
+        }
+      } finally {
+        this.isActivatingSolo.set(false);
+      }
+    }
+
+    const email = this.signupForm.value.email || userData?.email || '';
+    this.relationshipService.prepareSoloProfileSetup(userData, email);
+    this.router.navigate(['/complete-solo-profile']);
   }
 
   backToEmailLogin(): void {
     this.authService.logout();
     this.showWorkspaceSelector.set(false);
     this.workspaceChoices.set([]);
+    this.workspaceResolution.set(null);
+    this.isSoloSetupSelected.set(false);
     this.pendingAuthUser.set(null);
     this.signupOtpSent.set(false);
     this.signupForm.patchValue({ otp: '' });

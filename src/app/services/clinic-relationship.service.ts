@@ -11,6 +11,7 @@ import {
   ClinicUserDto,
   RemoveClinicUserViewModel,
   SetBranchStatusViewModel,
+  UserWorkspaceItemDto,
   WorkspaceResolutionDto
 } from '../models/clinic.model';
 
@@ -161,5 +162,63 @@ export class ClinicRelationshipService {
     return await this.apiService.Get<ClinicPractitionerDto[]>(
       `${ApiEndPoints.ClinicPractitioners}?${params.toString()}`
     );
+  }
+
+  /**
+   * Toggles independent Solo Practice mode for the logged-in practitioner.
+   */
+  async toggleSoloPractice(isEnabled: boolean): Promise<ApiResponse<boolean>> {
+    return await this.apiService.Post<boolean>(
+      ApiEndPoints.ToggleSoloPractice,
+      { isEnabled }
+    );
+  }
+
+  /**
+   * Enables solo practice for an already-completed practitioner profile, refreshes workspaces,
+   * and activates the Solo workspace locally.
+   */
+  async activateExistingSoloWorkspace(userData?: any): Promise<UserWorkspaceItemDto | null> {
+    const toggleRes = await this.toggleSoloPractice(true);
+    if (!toggleRes.isSuccess) {
+      return null;
+    }
+
+    const wsRes = await this.resolveWorkspaces();
+    if (!wsRes.isSuccess || !wsRes.data) {
+      return null;
+    }
+
+    const options = this.authService.buildProfileOptions(wsRes.data, userData ?? this.authService.getCurrentUser());
+    const soloWs = options.find(w => w.workspaceType === 'Solo') ?? {
+      workspaceType: 'Solo',
+      accessLevel: 'Solo',
+      clinicId: null,
+      clinicName: null,
+      branchId: null,
+      branchName: null,
+      branchCode: null,
+      city: null,
+      isPrimary: false,
+    };
+    this.authService.setActiveWorkspace(soloWs, userData ?? this.authService.getCurrentUser());
+    return soloWs;
+  }
+
+  /**
+   * Prepares client auth state to enter the Solo Professional Profile setup flow
+   * without losing the user's authenticated token.
+   */
+  prepareSoloProfileSetup(userData?: any, emailOverride?: string): void {
+    const user = userData ?? this.authService.getCurrentUser();
+    const email = emailOverride || user?.email || '';
+    this.authService.setActiveWorkspace(null, user);
+    this.authService.setPendingVerification({
+      email,
+      isOtpVerified: true,
+      isProfileCompleted: false,
+      user,
+      soloSetupMode: true,
+    });
   }
 }

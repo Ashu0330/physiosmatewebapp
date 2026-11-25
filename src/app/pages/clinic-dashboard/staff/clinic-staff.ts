@@ -5,11 +5,15 @@ import { Router, RouterModule } from '@angular/router';
 import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import {
+  AddClinicUserViewModel,
   ClinicBranchDto,
+  ClinicPractitionerDto,
   ClinicUserDto,
   ClinicUserRoles,
   RemoveClinicUserViewModel
 } from '../../../models/clinic.model';
+
+const LEFT_PRACTITIONERS_FILTER = 'left-practitioners';
 
 @Component({
   selector: 'app-clinic-staff',
@@ -26,14 +30,17 @@ export class ClinicStaff implements OnInit {
   readonly clinicId = signal<number>(0);
   readonly clinicName = signal<string>('');
   readonly staffList = signal<ClinicUserDto[]>([]);
+  readonly leftPractitioners = signal<ClinicPractitionerDto[]>([]);
   readonly branches = signal<ClinicBranchDto[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly removingId = signal<number | null>(null);
+  readonly rejoiningId = signal<number | null>(null);
 
   readonly searchTerm = signal<string>('');
   readonly activeRoleFilter = signal<string>('all');
   readonly selectedBranchId = signal<number | null>(null);
 
+  readonly isLeftPractitionersTab = computed(() => this.activeRoleFilter() === LEFT_PRACTITIONERS_FILTER);
   readonly totalCount = computed(() => this.branchScopedStaff().length);
   readonly managerCount = computed(() =>
     this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Manager).length
@@ -47,6 +54,7 @@ export class ClinicStaff implements OnInit {
   readonly staffCount = computed(() =>
     this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Staff).length
   );
+  readonly leftPractitionerCount = computed(() => this.branchScopedLeftPractitioners().length);
 
   readonly roleFilterOptions = computed(() => [
     { value: 'all', label: 'All Team', count: this.totalCount() },
@@ -54,6 +62,7 @@ export class ClinicStaff implements OnInit {
     { value: ClinicUserRoles.Practitioner, label: 'Practitioners', count: this.practitionerCount() },
     { value: ClinicUserRoles.Receptionist, label: 'Receptionists', count: this.receptionistCount() },
     { value: ClinicUserRoles.Staff, label: 'Staff', count: this.staffCount() },
+    { value: LEFT_PRACTITIONERS_FILTER, label: 'Left Practitioners', count: this.leftPractitionerCount() },
   ]);
 
   private readonly branchScopedStaff = computed(() => {
@@ -65,12 +74,21 @@ export class ClinicStaff implements OnInit {
     return list.filter(u => u.clinicBranchId === branchId);
   });
 
+  private readonly branchScopedLeftPractitioners = computed(() => {
+    const branchId = this.selectedBranchId();
+    const list = this.leftPractitioners();
+    if (!branchId || branchId <= 0) {
+      return list;
+    }
+    return list.filter(p => p.clinicBranchId === branchId);
+  });
+
   readonly filteredStaff = computed(() => {
     let list = this.branchScopedStaff();
     const roleFilter = this.activeRoleFilter();
     const term = this.searchTerm().trim().toLowerCase();
 
-    if (roleFilter !== 'all') {
+    if (roleFilter !== 'all' && roleFilter !== LEFT_PRACTITIONERS_FILTER) {
       list = list.filter(u => u.role.toLowerCase() === roleFilter.toLowerCase());
     }
 
@@ -87,12 +105,27 @@ export class ClinicStaff implements OnInit {
     return list;
   });
 
+  readonly filteredLeftPractitioners = computed(() => {
+    let list = this.branchScopedLeftPractitioners();
+    const term = this.searchTerm().trim().toLowerCase();
+    if (term) {
+      list = list.filter(p =>
+        (p.practitionerName && p.practitionerName.toLowerCase().includes(term)) ||
+        (p.userPhone && p.userPhone.toLowerCase().includes(term)) ||
+        (p.userEmail && p.userEmail.toLowerCase().includes(term)) ||
+        (p.specialization && p.specialization.toLowerCase().includes(term)) ||
+        (p.branchName && p.branchName.toLowerCase().includes(term))
+      );
+    }
+    return list;
+  });
+
   async ngOnInit(): Promise<void> {
     const id = await this.relationshipService.resolveCurrentClinicId();
     this.clinicId.set(id);
 
     if (id > 0) {
-      await Promise.all([this.loadStaff(), this.loadBranches()]);
+      await Promise.all([this.loadStaff(), this.loadLeftPractitioners(), this.loadBranches()]);
     } else {
       this.alert.toastWarning('No active clinic detected for this account.');
     }
@@ -119,6 +152,22 @@ export class ClinicStaff implements OnInit {
       this.alert.toastError('Failed to load clinic team & staff.');
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  async loadLeftPractitioners(): Promise<void> {
+    const id = this.clinicId();
+    if (id <= 0) return;
+
+    try {
+      const res = await this.relationshipService.getClinicPractitioners(id, 'Left');
+      if (res.isSuccess) {
+        this.leftPractitioners.set(res.data || []);
+      } else {
+        this.leftPractitioners.set([]);
+      }
+    } catch {
+      this.leftPractitioners.set([]);
     }
   }
 
@@ -170,6 +219,9 @@ export class ClinicStaff implements OnInit {
       const res = await this.relationshipService.removeClinicUser(payload);
       if (res.isSuccess) {
         this.staffList.update(list => list.filter(u => u.id !== member.id));
+        if (member.role === ClinicUserRoles.Practitioner) {
+          await this.loadLeftPractitioners();
+        }
         this.alert.toastSuccess(`${displayName} removed from clinic team.`);
       } else {
         this.alert.toastError(res.message || 'Failed to remove staff member.');
@@ -178,6 +230,44 @@ export class ClinicStaff implements OnInit {
       this.alert.toastError('Failed to remove staff member.');
     } finally {
       this.removingId.set(null);
+    }
+  }
+
+  async rejoinPractitioner(prac: ClinicPractitionerDto): Promise<void> {
+    const displayName = prac.practitionerName || prac.userEmail || prac.userPhone || 'this practitioner';
+    const confirm = await this.alert.confirm(
+      'Rejoin Clinic Team?',
+      `Reactivate ${displayName} as an active Practitioner in your clinic${prac.branchName ? ` (${prac.branchName})` : ''}?`,
+      'Yes, Reactivate',
+      'Cancel'
+    );
+    if (!confirm?.isConfirmed) {
+      return;
+    }
+
+    this.rejoiningId.set(prac.practitionerId);
+    try {
+      const payload = new AddClinicUserViewModel({
+        clinicId: this.clinicId(),
+        clinicBranchId: prac.clinicBranchId ?? null,
+        userId: prac.userId ?? 0,
+        practitionerId: prac.practitionerId,
+        fullName: prac.practitionerName || '',
+        email: prac.userEmail || '',
+        mobile: prac.userPhone || '',
+        role: ClinicUserRoles.Practitioner
+      });
+      const res = await this.relationshipService.addClinicUser(payload);
+      if (res.isSuccess) {
+        this.alert.toastSuccess(`${displayName} is now active in your clinic again.`);
+        await Promise.all([this.loadStaff(), this.loadLeftPractitioners()]);
+      } else {
+        this.alert.toastError(res.message || 'Failed to reactivate practitioner.');
+      }
+    } catch {
+      this.alert.toastError('Failed to reactivate practitioner.');
+    } finally {
+      this.rejoiningId.set(null);
     }
   }
 

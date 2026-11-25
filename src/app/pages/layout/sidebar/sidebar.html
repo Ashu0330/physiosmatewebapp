@@ -18,5 +18,14 @@
     </button>
     }
   </nav>
+  @if (showSoloSetupCta()) {
+  <div class="sidebar-solo-cta-box">
+    <div class="sidebar-solo-cta-title">Independent Practice</div>
+    <p class="sidebar-solo-cta-desc">Want to consult patients on your own?</p>
+    <button type="button" class="sidebar-solo-cta-btn" (click)="openOrEnableSoloProfile()">
+      {{ soloCtaLabel() }}
+    </button>
+  </div>
+  }
 </aside>
 }
