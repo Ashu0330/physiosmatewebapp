@@ -93,8 +93,8 @@
 
             <div class="physios-profile-divider"></div>
 
-            @for (item of menulist; track item.menuId || item.path || $index) {
-            <a [routerLink]="item.path" class="physios-profile-item" role="menuitem" (click)="selectMenuItem(item)">
+            @for (item of menulist(); track item.menuId || item.path || $index) {
+            <a [routerLink]="normalizeRoutePath(item.path) || null" class="physios-profile-item" role="menuitem" (click)="selectMenuItem(item)">
               @if (item.icon && isSvgIcon(item.icon)) {
               <span class="physios-profile-item-svg" [innerHTML]="getSafeIcon(item.icon)"></span>
               } @else if (item.icon) {
@@ -112,7 +112,7 @@
             </a>
             }
 
-            @if (menulist && menulist.length > 0) {
+            @if (menulist().length > 0) {
             <div class="physios-profile-divider"></div>
             }
 
@@ -219,8 +219,8 @@
             <!-- User Menu Items (inside accordion panel) -->
             <div class="physios-mobile-accordion-panel physios-mobile-profile-panel" *ngIf="mobileProfileOpen">
               <div class="physios-mobile-user-nav">
-                @for (item of menulist; track item.menuId || item.path || $index) {
-                <a [routerLink]="item.path" class="physios-mobile-sublink" (click)="selectMenuItem(item)">
+                @for (item of menulist(); track item.menuId || item.path || $index) {
+                <a [routerLink]="normalizeRoutePath(item.path) || null" class="physios-mobile-sublink" (click)="selectMenuItem(item)">
                   @if (item.icon && isSvgIcon(item.icon)) {
                   <span class="physios-profile-item-svg" [innerHTML]="getSafeIcon(item.icon)"></span>
                   } @else if (item.icon) {
@@ -428,4 +428,4 @@
   <!-- Bootstrap Offcanvas Backdrop -->
   <div class="offcanvas-backdrop fade show" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
 </header>
-<app-sidebar class="sidebar-container" [parentMenuId]="selectedParentMenuId"></app-sidebar>
+<app-sidebar class="sidebar-container" [parentMenuId]="selectedParentMenuId()"></app-sidebar>

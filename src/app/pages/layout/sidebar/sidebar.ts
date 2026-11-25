@@ -21,6 +21,7 @@ export class Sidebar extends BaseComponent {
   readonly parentMenuId = input<number | null>(null);
 
   private previousParentMenuId: number | null = null;
+  private latestMenuRequestToken = 0;
 
   private currentUrl = toSignal(
     this.router.events.pipe(
@@ -30,44 +31,54 @@ export class Sidebar extends BaseComponent {
     { initialValue: this.router.url }
   );
 
-  readonly isSidebarActive = computed<boolean>(() => {
-
-    this.currentUrl();
-    const list = this.menulist();
-    if (!list || list.length === 0) {
-      return false;
-    }
-    return list.some(menu => {
-      if (!menu.path) {
-        return false;
-      }
-      return this.router.isActive(menu.path, {
-        paths: 'exact',
-        queryParams: 'ignored',
-        matrixParams: 'ignored',
-        fragment: 'ignored'
-      });
-    });
-  });
-
   readonly consoleTitle = computed<string>(() => {
-    const url = this.currentUrl();
+    const url = this.cleanRoutePath(this.currentUrl());
     const parentId = this.parentMenuId() || this.getStoredParentId();
-    if (parentId === 2 || (url && url.includes('/user-dashboard'))) {
+    if (parentId === 2 || url.startsWith('/user-dashboard')) {
       return 'Patient Dashboard';
     }
+    if (parentId === 22 || url.startsWith('/clinic-dashboard')) {
+      return 'Clinic Console';
+    }
     return 'Doctor Console';
+  });
+
+  readonly isSidebarActive = computed<boolean>(() => {
+    if (!this.authService.isLoggedIn()) {
+      return false;
+    }
+    const url = this.cleanRoutePath(this.currentUrl());
+    const list = this.menulist();
+    if (!list || list.length === 0 || !url) {
+      return false;
+    }
+    const matchesMenu = list.some(menu => {
+      const menuPath = this.cleanRoutePath(menu.path);
+      return !!menuPath && (url === menuPath || url.startsWith(menuPath + '/'));
+    });
+    if (matchesMenu) {
+      return true;
+    }
+    const parentId = this.parentMenuId() ?? this.getStoredParentId();
+    return parentId === 22 && url.startsWith('/doctor-dashboard/') && url !== '/doctor-dashboard/settings';
   });
 
   constructor() {
     super();
     effect(() => {
+      if (!this.authService.isLoggedIn()) {
+        this.previousParentMenuId = null;
+        this.menulist.set([]);
+        return;
+      }
       const parentId = this.parentMenuId();
       if (parentId !== null && parentId !== undefined) {
         // Valid ID received from header — persist it and load menus
-        this.previousParentMenuId = parentId;
-        this.setStoredParentId(parentId);
-        this.GetAllMenu(parentId);
+        if (parentId !== this.previousParentMenuId || this.menulist().length === 0) {
+          this.previousParentMenuId = parentId;
+          this.setStoredParentId(parentId);
+          this.GetAllMenu(parentId);
+        }
       } else {
         const storedId = this.getStoredParentId();
         if (storedId && storedId !== this.previousParentMenuId) {
@@ -101,9 +112,13 @@ export class Sidebar extends BaseComponent {
       this.menulist.set([]);
       return;
     }
+    const token = ++this.latestMenuRequestToken;
     const res = await this.apiService.Get<MenusModel[]>(
       `${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${id}`
     );
+    if (token !== this.latestMenuRequestToken) {
+      return;
+    }
 
     this.menulist.set(res.isSuccess ? (res.data ?? []) : []);
   }
@@ -114,24 +129,34 @@ export class Sidebar extends BaseComponent {
       this.tabChange.emit(itemOrTab);
       return;
     }
-    const tab = itemOrTab.path || itemOrTab.menuName || '';
+    const targetPath = this.normalizeRoutePath(itemOrTab.path);
+    const tab = targetPath || itemOrTab.menuName || '';
     this.activeTab.set(tab);
     this.tabChange.emit(tab);
-    if (itemOrTab.path && itemOrTab.path.startsWith('/')) {
-      this.router.navigateByUrl(itemOrTab.path);
+    if (targetPath) {
+      this.router.navigateByUrl(targetPath);
     }
   }
 
   isTabActive(item: MenusModel): boolean {
-    this.currentUrl();
-    if (item.path) {
-      return this.router.isActive(item.path, {
-        paths: 'exact',
-        queryParams: 'ignored',
-        matrixParams: 'ignored',
-        fragment: 'ignored'
-      });
+    const url = this.cleanRoutePath(this.currentUrl());
+    const itemPath = this.cleanRoutePath(item.path);
+    if (!itemPath) {
+      return this.activeTab() === item.menuName;
     }
-    return this.activeTab() === item.menuName;
+    if (url === itemPath) {
+      return true;
+    }
+    if (url && url.startsWith(itemPath + '/')) {
+      const hasMoreSpecificMatch = this.menulist().some(other => {
+        const otherPath = this.cleanRoutePath(other.path);
+        return (
+          otherPath.length > itemPath.length &&
+          (url === otherPath || url.startsWith(otherPath + '/'))
+        );
+      });
+      return !hasMoreSpecificMatch;
+    }
+    return false;
   }
 }

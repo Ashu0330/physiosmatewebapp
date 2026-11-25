@@ -365,6 +365,29 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     }
   }
 
+  get roleId(): number | null {
+    return this.auth.getRoleId() ?? this.auth.getCurrentUser()?.roleId ?? null;
+  }
+
+  get isClinic(): boolean {
+    const user = this.auth.getCurrentUser();
+    return this.roleId === 3 || (!user?.practitionerId && !!(user?.clinicId || this.auth.getClinicId()));
+  }
+
+  get clinicId(): number {
+    const profId = this.auth.getCurrentProfessionalId();
+    const user = this.auth.getCurrentUser();
+    const id = this.auth.getClinicId() || user?.clinicId || user?.ClinicId || (this.isClinic ? profId : null);
+    return Number(id || 0);
+  }
+
+  get practitionerId(): number {
+    const profId = this.auth.getCurrentProfessionalId();
+    const user = this.auth.getCurrentUser();
+    const id = this.selectedPractitionerId() || this.auth.getPractitionerId() || user?.practitionerId || user?.PractitionerId || (!this.isClinic ? profId : null);
+    return Number(id || 0);
+  }
+
   async loadAvailableSlots(): Promise<void> {
     const seq = ++this.slotsRequestSeq;
     const date = this.treatmentDate();
@@ -377,13 +400,18 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       return;
     }
 
-    const pid = this.selectedPractitionerId();
-
     this.isLoadingSlots.set(true);
     try {
-      const query = pid && pid > 0
-        ? `practitionerId=${pid}&date=${encodeURIComponent(date)}`
-        : `date=${encodeURIComponent(date)}`;
+      let query: string;
+      if (this.isClinic) {
+        const cid = this.clinicId;
+        query = `clinicId=${cid}&date=${encodeURIComponent(date)}`;
+      } else {
+        const pid = this.selectedPractitionerId() || this.practitionerId;
+        query = pid && pid > 0
+          ? `practitionerId=${pid}&date=${encodeURIComponent(date)}`
+          : `date=${encodeURIComponent(date)}`;
+      }
 
       const slots = await this.fetchSlotsByQuery(query);
 
@@ -582,7 +610,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       visitType: visitMode,
       homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
       practitionerId: pid,
-      clinicId: 0,
+      clinicId: this.isClinic ? this.clinicId : 0,
       assignedPractitionerId: pid > 0 ? pid : null,
       bookingType: 'Treatment',
       amount: payloadAmount,

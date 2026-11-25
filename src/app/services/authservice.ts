@@ -178,6 +178,7 @@ export class Authservice {
   saveUserSession(userData: any, token?: string): void {
     if (typeof localStorage === 'undefined') return;
     this.clearPendingUserId();
+    localStorage.removeItem('parentId');
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
@@ -194,6 +195,7 @@ export class Authservice {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('pendingVerification');
+      localStorage.removeItem('parentId');
     }
   }
 }

@@ -18,6 +18,18 @@ export const serverRoutes: ServerRoute[] = [
     path: 'signup',
     renderMode: RenderMode.Client,
   },
+  {
+    path: 'doctor-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'clinic-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'user-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
 
   // ─── Dynamic parameterized routes — Server-rendered on demand ───────────────
   // Articles

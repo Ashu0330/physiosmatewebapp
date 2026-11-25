@@ -1,0 +1,197 @@
+<div class="physios-drive-page">
+  <div class="staff-form-wrapper">
+
+    <!-- Top Header Ribbon -->
+    <div class="form-header-row">
+      <div class="header-titles">
+        <h1 class="form-title">{{ isEditMode() ? 'Edit Team Member' : 'Add Staff Member' }}</h1>
+        <p class="form-subtitle">
+          Assign managers, receptionists, support staff, or practitioners to your clinic and branches.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/clinic-dashboard/staff" class="btn-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Team &amp; Staff
+        </a>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner-border text-teal" role="status">
+          <span class="visually-hidden">Loading member details...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading staff details...</p>
+      </div>
+    }
+
+    <!-- Form Card -->
+    @if (!isLoading()) {
+      <form (ngSubmit)="onSubmit()" class="staff-card-form">
+
+        <!-- Section 1: Role & Branch Assignment -->
+        <div class="form-section">
+          <div class="section-heading">
+            <span class="section-step-badge">1</span>
+            <h2 class="section-title">[1] Role &amp; Branch Assignment</h2>
+          </div>
+
+          <div class="form-row-2">
+            <!-- Staff Role -->
+            <div class="form-group">
+              <label class="form-label">
+                STAFF ROLE <span class="required-asterisk">*</span>
+              </label>
+              <select
+                class="form-input"
+                name="role"
+                [ngModel]="staffModel().role"
+                (ngModelChange)="updateField('role', $event)"
+                required>
+                @for (opt of roleOptions; track opt.value) {
+                  <option [ngValue]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+              @if (selectedRoleDescription()) {
+                <span class="field-hint">{{ selectedRoleDescription() }}</span>
+              }
+            </div>
+
+            <!-- Clinic Branch Assignment -->
+            <div class="form-group">
+              <label class="form-label">ASSIGNED BRANCH</label>
+              <select
+                class="form-input"
+                name="clinicBranchId"
+                [ngModel]="staffModel().clinicBranchId"
+                (ngModelChange)="onBranchChange($event)">
+                <option [ngValue]="null">All Branches (Clinic-wide)</option>
+                @for (branch of branches(); track branch.id) {
+                  <option [ngValue]="branch.id">
+                    {{ branch.branchName }}@if (branch.city) { ({{ branch.city }})}
+                  </option>
+                }
+              </select>
+              <span class="field-hint">
+                Leave as All Branches for clinic-wide access, or scope to a specific branch.
+              </span>
+            </div>
+          </div>
+
+          @if (!isEditMode() && isPractitionerRole() && practitioners().length > 0) {
+            <div class="form-row-1 mt-3">
+              <div class="form-group">
+                <label class="form-label">LINK EXISTING CLINIC PRACTITIONER (OPTIONAL)</label>
+                <select
+                  class="form-input"
+                  name="practitionerId"
+                  [ngModel]="staffModel().practitionerId"
+                  (ngModelChange)="onPractitionerSelect($event)">
+                  <option [ngValue]="null">Create / resolve by contact details below</option>
+                  @for (prac of practitioners(); track prac.id) {
+                    <option [ngValue]="prac.practitionerId">
+                      {{ prac.practitionerName || ('Practitioner #' + prac.practitionerId) }}
+                      @if (prac.specialization) { - {{ prac.specialization }}}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Section 2: Member Identity & Contact -->
+        <div class="form-section">
+          <div class="section-heading">
+            <span class="section-step-badge">2</span>
+            <h2 class="section-title">[2] Member Identity &amp; Contact</h2>
+          </div>
+
+          <div class="form-row-3">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label">
+                FULL NAME @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }
+              </label>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="e.g., Priya Sharma"
+                name="fullName"
+                [readonly]="isEditMode()"
+                [ngModel]="staffModel().fullName"
+                (ngModelChange)="updateField('fullName', $event)" />
+            </div>
+
+            <!-- Mobile -->
+            <div class="form-group">
+              <label class="form-label">
+                MOBILE NUMBER @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }
+              </label>
+              <input
+                type="tel"
+                class="form-input"
+                placeholder="e.g., 9876543210"
+                name="mobile"
+                [readonly]="isEditMode()"
+                [ngModel]="staffModel().mobile"
+                (ngModelChange)="updateField('mobile', $event)" />
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label">EMAIL ADDRESS</label>
+              <input
+                type="email"
+                class="form-input"
+                placeholder="e.g., staff@physiosmate.com"
+                name="email"
+                [readonly]="isEditMode()"
+                [ngModel]="staffModel().email"
+                (ngModelChange)="updateField('email', $event)" />
+            </div>
+          </div>
+
+          <span class="field-hint mt-2">
+            @if (isEditMode()) {
+              Account name and contact belong to the user's profile. Update their role or branch assignment above.
+            } @else {
+              If a PhysiosMate account already exists for this mobile or email, it will be linked automatically; otherwise a new user account is created.
+            }
+          </span>
+        </div>
+
+        <!-- Bottom Actions Bar -->
+        <div class="form-actions-bar">
+          <button type="button" class="btn-clear" (click)="clearForm()" [disabled]="isSaving()">
+            {{ isEditMode() ? 'Reset Changes' : 'Clear Form' }}
+          </button>
+
+          <button type="submit" class="btn-submit" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              Saving...
+            } @else {
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              {{ isEditMode() ? 'Save Changes' : 'Add Staff Member' }}
+            }
+          </button>
+        </div>
+
+      </form>
+    }
+
+  </div>
+</div>

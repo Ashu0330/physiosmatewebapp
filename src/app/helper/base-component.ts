@@ -63,6 +63,18 @@ export abstract class BaseComponent {
     }
 
 
+    normalizeRoutePath(path?: string | null): string {
+        const trimmed = (path || '').trim();
+        if (!trimmed) {
+            return '';
+        }
+        return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    }
+
+    protected cleanRoutePath(path?: string | null): string {
+        return this.normalizeRoutePath(path).split('?')[0].split('#')[0].toLowerCase();
+    }
+
     private callMethod(methodName?: string): void {
         if (methodName && typeof (this as any)[methodName] === 'function') {
             (this as any)[methodName]();

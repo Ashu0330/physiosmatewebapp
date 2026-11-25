@@ -6,6 +6,8 @@ import { PracticeManagement } from './practice-management/practice-management';
 import { ScheduleTreatment } from './schedule-treatment/schedule-treatment';
 import { ConsultancyList } from './consultancy-list/consultancy-list';
 import { Appointmentlist } from './appointmentlist/appointmentlist';
+import { ClinicBranches } from '../clinic-dashboard/branches/clinic-branches';
+import { BranchFormComponent } from '../clinic-dashboard/branch-form/branch-form';
 
 const routes: Routes = [
   { path: '', component: Doctordashboard },
@@ -26,6 +28,9 @@ const routes: Routes = [
   { path: 'practice-management', component: PracticeManagement },
   { path: 'Practice-Management', component: PracticeManagement },
   { path: 'schedule-treatment',component:ScheduleTreatment  },
+  { path: 'branches', component: ClinicBranches },
+  { path: 'branches/new', component: BranchFormComponent },
+  { path: 'branches/edit/:id', component: BranchFormComponent },
 ];
 
 @NgModule({

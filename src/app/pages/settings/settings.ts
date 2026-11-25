@@ -267,8 +267,10 @@ export class Settings extends BaseComponent implements OnInit {
   }
 
   goBack(): void {
-    // Return to doctor dashboard or previous page
-    if (this.currentUser?.roleId === 2 || this.currentUser?.practitionerId) {
+    // Return to role-specific dashboard
+    if (this.currentUser?.roleId === 3 || this.currentUser?.clinicId) {
+      this.router.navigate(['/clinic-dashboard/dashboard']);
+    } else if (this.currentUser?.roleId === 2 || this.currentUser?.practitionerId) {
       this.router.navigate(['/doctor-dashboard']);
     } else {
       this.router.navigate(['/user-dashboard']);

@@ -1,0 +1,163 @@
+<div class="physios-drive-page">
+  <div class="branches-wrapper">
+
+    <!-- Top Header Ribbon -->
+    <div class="branches-header-row">
+      <div class="header-titles">
+        <h1 class="branches-title">Clinic Branches</h1>
+        <p class="branches-subtitle">Manage physical clinic locations, operating status, and branch-level staffing.</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/clinic-dashboard/branches/new" class="btn-add-branch">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add New Branch
+        </a>
+      </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="branches-filter-bar">
+      <!-- Search Input -->
+      <div class="search-input-wrap">
+        <span class="search-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search branch by name, city, or phone..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)" />
+      </div>
+
+      <!-- Filter Buttons Group -->
+      <div class="filter-pills-wrap">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeStatusFilter() === 'all'"
+          (click)="setFilter('all')">
+          All Branches ({{ totalCount() }})
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeStatusFilter() === 'active'"
+          (click)="setFilter('active')">
+          Active ({{ activeCount() }})
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeStatusFilter() === 'inactive'"
+          (click)="setFilter('inactive')">
+          Inactive ({{ inactiveCount() }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner-border text-teal" role="status">
+          <span class="visually-hidden">Loading branches...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading branches...</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!isLoading() && filteredBranches().length === 0) {
+      <div class="empty-state-card">
+        <div class="empty-icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </div>
+        <h3 class="empty-title">No branches found</h3>
+        <p class="empty-subtitle">
+          @if (searchTerm()) {
+            No branch matches your search "{{ searchTerm() }}".
+          } @else {
+            You haven't added any physical branches yet. Create permanent branch records with address and contact info.
+          }
+        </p>
+        <a routerLink="/clinic-dashboard/branches/new" class="btn-add-branch mt-3">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add New Branch
+        </a>
+      </div>
+    }
+
+    <!-- Branches Cards Grid (matching screenshot 2) -->
+    @if (!isLoading() && filteredBranches().length > 0) {
+      <div class="branches-grid">
+        @for (branch of filteredBranches(); track branch.id; let idx = $index) {
+          <div class="branch-card">
+            <!-- Top Row: Branch Name & Status Badge -->
+            <div class="card-header-row">
+              <h3 class="branch-name" [title]="branch.branchName">{{ branch.branchName }}</h3>
+              <span class="branch-badge" [class.badge-active]="branch.isActive" [class.badge-inactive]="!branch.isActive">
+                {{ branch.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <!-- Branch Code -->
+            <div class="branch-code-tag">
+              {{ branch.branchCode || ('BR-0' + (idx + 1)) }}
+            </div>
+
+            <!-- Address -->
+            <div class="branch-detail-text branch-address" [title]="getFormattedAddress(branch)">
+              {{ getFormattedAddress(branch) }}
+            </div>
+
+            <!-- Phone -->
+            <div class="branch-detail-text branch-phone">
+              Phone: {{ branch.phone || 'N/A' }}
+            </div>
+
+            <!-- Staffing Metrics & Active Toggle Switch -->
+            <div class="branch-staff-row">
+              <span class="branch-staff-count">
+                {{ branch.activePractitionersCount }} Practitioners • {{ branch.activeStaffCount }} Staff
+              </span>
+
+              <!-- Active Toggle Switch -->
+              <label class="switch-toggle" [title]="branch.isActive ? 'Click to deactivate' : 'Click to activate'">
+                <input
+                  type="checkbox"
+                  [checked]="branch.isActive"
+                  (change)="toggleStatus(branch, $event)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Card Bottom Divider -->
+            <div class="card-divider"></div>
+
+            <!-- Action Links Row -->
+            <div class="card-actions-row">
+              <a class="action-link" (click)="editBranch(branch.id)">Edit</a>
+              <span class="action-divider">|</span>
+              <a class="action-link" (click)="viewDashboard(branch)">View Dashboard &rarr;</a>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

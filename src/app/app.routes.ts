@@ -58,6 +58,9 @@ export const routes: Routes = [
       // ─── Doctor Dashboard — single entry, routes handled inside DoctorDashboardRoutingModule
       { path: 'doctor-dashboard', loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule) },
 
+      // ─── Clinic Dashboard — single entry, routes handled inside ClinicDashboardRoutingModule
+      { path: 'clinic-dashboard', loadChildren: () => import('./pages/clinic-dashboard/clinic-dashboard-routing-module').then(m => m.ClinicDashboardRoutingModule) },
+
       // ─── Global Settings Page ───────────────────────────────────────────────
       { path: 'settings', component: Settings },
       { path: 'practice-management', component: PracticeManagement },

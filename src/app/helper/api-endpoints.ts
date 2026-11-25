@@ -18,8 +18,22 @@ export const ApiEndPoints = {
     // ── Practitioner (Doctor) Registration ─────────────────────────────────────
     AddPractitioner: 'Practitioner/AddPractitioner',
 
-    // ── Clinic Registration ─────────────────────────────────────────────────────
+    // ── Clinic Registration & Branches ──────────────────────────────────────────
     AddClinic: 'Clinic/AddClinic',
+    SaveClinicBranch: 'ClinicRelationship/SaveClinicBranch',
+    SetBranchStatus: 'ClinicRelationship/SetBranchStatus',
+    ClinicBranches: 'ClinicRelationship/ClinicBranches',
+    BranchById: 'ClinicRelationship/BranchById',
+    ResolveWorkspaces: 'ClinicRelationship/ResolveWorkspaces',
+    ToggleSoloPractice: 'ClinicRelationship/ToggleSoloPractice',
+    ClinicPractitioners: 'ClinicRelationship/ClinicPractitioners',
+    AssignPatient: 'ClinicRelationship/AssignPatient',
+    UnassignPatient: 'ClinicRelationship/UnassignPatient',
+    ClinicPatients: 'ClinicRelationship/ClinicPatients',
+    AddClinicUser: 'ClinicRelationship/AddClinicUser',
+    RemoveClinicUser: 'ClinicRelationship/RemoveClinicUser',
+    ClinicUsers: 'ClinicRelationship/ClinicUsers',
+    MyManagedClinics: 'ClinicRelationship/MyManagedClinics',
 
     // ── Explore / Discovery ─────────────────────────────────────────────────────
     GetPractitioners: 'Explore/GetPractitioners',

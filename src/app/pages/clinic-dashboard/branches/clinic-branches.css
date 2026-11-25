@@ -1,0 +1,397 @@
+/* ==========================================================================
+   Clinic Branches — List View
+   Uses global variables from variable.css (#0F766E, #10A896, #F4F5F8, etc.)
+   ========================================================================== */
+
+.physios-drive-page {
+  width: calc(100% - 220px);
+  margin-left: auto;
+  min-height: calc(100vh - 64px);
+  background-color: var(--bg-page, #F4F5F8);
+  padding: 24px 32px;
+  font-family: var(--font-body, 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif);
+  color: var(--text-body, #414146);
+  box-sizing: border-box;
+}
+
+.branches-wrapper {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* Header Row */
+.branches-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.branches-title {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.branches-subtitle {
+  font-size: 13.5px;
+  color: #4B5563;
+  margin: 0;
+}
+
+.btn-add-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0F766E;
+  color: #FFFFFF !important;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-add-branch:hover {
+  background-color: #0d655e;
+}
+
+/* Search and Filter Bar */
+.branches-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+  min-width: 260px;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px 0 40px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background-color: #FFFFFF;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: #1F2937;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: #0F766E;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.search-input::placeholder {
+  color: #9CA3AF;
+}
+
+.filter-pills-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-pill {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background-color: #FFFFFF;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-pill:hover {
+  background-color: #F9FAFB;
+}
+
+.filter-pill.active {
+  background-color: #0F766E;
+  border-color: #0F766E;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Grid of Cards */
+.branches-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 1200px) {
+  .branches-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .branches-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .branches-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Styling */
+.branch-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.branch-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.branch-name {
+  font-family: var(--font-heading, 'Inter Tight', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.badge-active {
+  background-color: #DEF7EC;
+  color: #03543F;
+}
+
+.badge-inactive {
+  background-color: #F3F4F6;
+  color: #6B7280;
+}
+
+.branch-code-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  margin-bottom: 8px;
+}
+
+.branch-detail-text {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.branch-address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-phone {
+  margin-bottom: 12px;
+}
+
+.branch-staff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.branch-staff-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Custom Toggle Switch */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #CBD5E1;
+  transition: 0.25s ease;
+  border-radius: 22px;
+}
+
+.switch-toggle .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #FFFFFF;
+  transition: 0.25s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.switch-toggle input:checked + .slider {
+  background-color: #0F766E;
+}
+
+.switch-toggle input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* Divider & Actions */
+.card-divider {
+  border-top: 1px solid #F3F4F6;
+  margin: 12px 0 10px 0;
+}
+
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0F766E;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.action-link:hover {
+  color: #0d655e;
+  text-decoration: underline;
+}
+
+.action-divider {
+  color: #D1D5DB;
+  font-size: 12px;
+}
+
+/* Empty State & Loader */
+.empty-state-card {
+  background: #FFFFFF;
+  border: 1px dashed #D1D5DB;
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #F0FDFA;
+  color: #0F766E;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.empty-subtitle {
+  font-size: 13.5px;
+  color: #6B7280;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.text-teal {
+  color: #0F766E !important;
+}
+
+@media (max-width: 768px) {
+  .physios-drive-page {
+    width: 100%;
+    padding: 16px;
+  }
+}

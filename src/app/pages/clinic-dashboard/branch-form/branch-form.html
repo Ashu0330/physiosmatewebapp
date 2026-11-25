@@ -1,0 +1,197 @@
+<div class="physios-drive-page">
+  <div class="branch-form-wrapper">
+
+    <!-- Top Header Ribbon -->
+    <div class="form-header-row">
+      <div class="header-titles">
+        <h1 class="form-title">{{ isEditMode ? 'Edit Branch' : 'Add New Branch' }}</h1>
+        <p class="form-subtitle">Create permanent branch records with address and contact information.</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/clinic-dashboard/branches" class="btn-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Branches
+        </a>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner-border text-teal" role="status">
+        <span class="visually-hidden">Loading branch details...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading branch details...</p>
+    </div>
+    }
+
+    <!-- Form Container -->
+    @if (!isLoading) {
+    <form (ngSubmit)="onSubmit()" class="branch-card-form">
+
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <!-- Section 1: Branch Identity & Contact                         -->
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-heading">
+          <span class="section-step-badge">1</span>
+          <h2 class="section-title">[1] Branch Identity & Contact</h2>
+        </div>
+
+        <div class="form-row-4">
+          <!-- Branch Name -->
+          <div class="form-group">
+            <label class="form-label">
+              BRANCH NAME <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., Kota Main Branch" name="branchName"
+              [(ngModel)]="branch.branchName" required />
+          </div>
+
+          <!-- Branch Code -->
+          <div class="form-group">
+            <label class="form-label">BRANCH CODE</label>
+            <input type="text" class="form-input" placeholder="e.g., KOT-01" name="branchCode"
+              [(ngModel)]="branch.branchCode" />
+          </div>
+
+          <!-- Primary Phone -->
+          <div class="form-group">
+            <label class="form-label">
+              PRIMARY PHONE <span class="required-asterisk">*</span>
+            </label>
+            <input type="tel" class="form-input" placeholder="e.g., +91 98234 56789" name="phone"
+              [(ngModel)]="branch.phone" required />
+          </div>
+
+          <!-- Branch Email -->
+          <div class="form-group">
+            <label class="form-label">BRANCH EMAIL</label>
+            <input type="email" class="form-input" placeholder="e.g., kota@physiosmate.com" name="email"
+              [(ngModel)]="branch.email" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <!-- Section 2: Location & Address                                -->
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-heading">
+          <span class="section-step-badge">2</span>
+          <h2 class="section-title">[2] Location & Address</h2>
+        </div>
+
+        <div class="form-row-4">
+          <!-- Street Address -->
+          <div class="form-group">
+            <label class="form-label">
+              STREET ADDRESS <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., Plot 402, Talwandi, Kota, Rajastha" name="address"
+              [(ngModel)]="branch.address" required />
+          </div>
+
+          <!-- City -->
+          <div class="form-group">
+            <label class="form-label">
+              CITY <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., Kota" name="city" [(ngModel)]="branch.city"
+              required />
+          </div>
+
+          <!-- State -->
+          <div class="form-group">
+            <label class="form-label">
+              STATE <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., Rajasthan" name="stateName"
+              [(ngModel)]="branch.stateName" required />
+          </div>
+
+          <!-- Pincode -->
+          <div class="form-group">
+            <label class="form-label">
+              PINCODE <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., 324005" name="pincode" [(ngModel)]="branch.pincode"
+              required />
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <!-- Section 3: Operational Settings                             -->
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-heading">
+          <span class="section-step-badge">3</span>
+          <h2 class="section-title">[3] — Operational Settings</h2>
+        </div>
+
+        <div class="form-row-3">
+          <!-- Branch Status Toggle -->
+          <div class="form-group">
+            <label class="form-label">BRANCH STATUS</label>
+            <div class="toggle-control-wrap">
+              <label class="switch-toggle">
+                <input type="checkbox" name="isActive" [(ngModel)]="branch.isActive" />
+                <span class="slider"></span>
+              </label>
+              <span class="toggle-label">{{ branch.isActive ? 'Active' : 'Inactive' }}</span>
+            </div>
+          </div>
+
+          <!-- Default Fee -->
+          <div class="form-group">
+            <label class="form-label">DEFAULT CONSULTATION FEE (₹)</label>
+            <input type="number" class="form-input" placeholder="e.g., 500" name="defaultConsultationFee"
+              [(ngModel)]="branch.defaultConsultationFee" />
+          </div>
+
+          <!-- Operating Hours -->
+          <div class="form-group">
+            <label class="form-label">OPERATING HOURS</label>
+            <input type="text" class="form-input" placeholder="e.g., 09:00 AM - 08:00 PM" name="operatingHours"
+              [(ngModel)]="branch.operatingHours" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <!-- Bottom Actions Bar                                            -->
+      <!-- ───────────────────────────────────────────────────────────── -->
+      <div class="form-actions-bar">
+        <button type="button" class="btn-clear" (click)="clearForm()" [disabled]="isSaving">
+          Clear Form
+        </button>
+
+        <button type="submit" class="btn-submit" [disabled]="isSaving">
+          @if (isSaving) {
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          Saving...
+          } @else {
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          {{ isEditMode ? 'Save Changes' : 'Add Branch' }}
+          }
+        </button>
+      </div>
+
+    </form>
+    }
+
+  </div>
+</div>
