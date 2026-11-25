@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
+import { ClinicRelationshipService } from '../../services/clinic-relationship.service';
+import { UserWorkspaceItemDto } from '../../models/clinic.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
 import { SharedModule } from '../../shared/shared-module';
 import { BaseComponent } from '../../helper/base-component';
-import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-auth-form',
@@ -24,6 +25,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   @Output() otpVerified = new EventEmitter<{ email: string }>();
 
   protected override authService = inject(Authservice);
+  private relationshipService = inject(ClinicRelationshipService);
 
   signupForm!: FormGroup;
 
@@ -33,6 +35,12 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   readonly isSignupOtpSending = signal(false);
   readonly signupOtpSent = signal(false);
   readonly signupOtpCountdown = signal(0);
+
+  // ── Workspace / Profile Selection State (post-OTP) ─────────────────────────
+  readonly showWorkspaceSelector = signal(false);
+  readonly workspaceChoices = signal<UserWorkspaceItemDto[]>([]);
+  readonly selectedWorkspaceIndex = signal<number>(0);
+  readonly pendingAuthUser = signal<any>(null);
 
   private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -126,45 +134,144 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       this.authService.clearPendingUserId();
       this.alert.toastSuccess(AppMessage.OtpVerified);
 
-      if (res.data?.isProfileCompleted) {
-        this.authService.saveUserSession(res.data, res.data.token);
-        this.authService.clearPendingVerification();
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem('physios_register_draft');
-        }
+      const userData: any = { ...(res.data ?? {}) };
+      if (userData?.token) {
+        this.authService.saveUserSession(userData, userData.token);
+      }
 
-        if (this.bookingContext) {
-          this.authSuccess.emit();
-        } else {
-          const roleId = res.data?.roleId ?? this.authService.getRoleId();
-          if (roleId === 2) {
-            this.router.navigate(['/doctor-dashboard/dashboard']);
-          } else if (roleId === 3) {
-            this.router.navigate(['/clinics']);
-          } else {
-            this.router.navigate(['/user-dashboard/medical-records']);
+      // Mid-booking context preserves instant redirect back to the booking flow
+      if (this.bookingContext) {
+        if (userData?.isProfileCompleted) {
+          this.authService.clearPendingVerification();
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem('physios_register_draft');
           }
+          this.authSuccess.emit();
+          return;
         }
+        const email = this.signupForm.value.email;
+        this.authService.setPendingVerification({
+          email,
+          isOtpVerified: true,
+          isProfileCompleted: false,
+          user: userData
+        });
+        this.otpVerified.emit({ email });
         return;
       }
 
-      // Profile is NOT completed -> save pending state and proceed to registration
+      // Discover all authorized workspaces (Solo Practice, Clinic Practitioner, Owner/Manager/Staff/Branches)
+      const profileOptions = await this.resolveLoginProfiles(userData);
+
+      if (profileOptions.length > 1) {
+        const primaryIdx = profileOptions.findIndex(w => w.isPrimary);
+        this.selectedWorkspaceIndex.set(primaryIdx >= 0 ? primaryIdx : 0);
+        this.workspaceChoices.set(profileOptions);
+        this.pendingAuthUser.set(userData);
+        this.showWorkspaceSelector.set(true);
+        return;
+      }
+
+      if (profileOptions.length === 1) {
+        this.completeLoginWithWorkspace(profileOptions[0], userData);
+        return;
+      }
+
+      if (userData?.isProfileCompleted) {
+        this.completeLoginWithWorkspace(null, userData);
+        return;
+      }
+
+      // Brand-new account with no profile and no clinic/solo workspace -> proceed to registration
       const email = this.signupForm.value.email;
       this.authService.setPendingVerification({
         email: email,
         isOtpVerified: true,
         isProfileCompleted: false,
-        user: res.data
+        user: userData
       });
-      if (res.data?.token) {
-        this.authService.saveUserSession(res.data, res.data.token);
-      }
-
       this.otpVerified.emit({ email: email });
 
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private async resolveLoginProfiles(userData: any): Promise<UserWorkspaceItemDto[]> {
+    try {
+      const wsRes = await this.relationshipService.resolveWorkspaces();
+      if (!wsRes.isSuccess || !wsRes.data) {
+        return [];
+      }
+
+      const resolution = wsRes.data;
+      if (resolution.practitionerId && resolution.practitionerId > 0) {
+        userData.practitionerId = resolution.practitionerId;
+      }
+      return this.authService.buildProfileOptions(resolution, userData);
+    } catch {
+      return [];
+    }
+  }
+
+  selectWorkspace(index: number): void {
+    this.selectedWorkspaceIndex.set(index);
+  }
+
+  confirmWorkspaceSelection(): void {
+    const choices = this.workspaceChoices();
+    const chosen = choices[this.selectedWorkspaceIndex()] ?? choices[0] ?? null;
+    this.completeLoginWithWorkspace(chosen, this.pendingAuthUser());
+  }
+
+  backToEmailLogin(): void {
+    this.authService.logout();
+    this.showWorkspaceSelector.set(false);
+    this.workspaceChoices.set([]);
+    this.pendingAuthUser.set(null);
+    this.signupOtpSent.set(false);
+    this.signupForm.patchValue({ otp: '' });
+  }
+
+  getWorkspaceTitle(ws: UserWorkspaceItemDto): string {
+    if (ws.workspaceType === 'Solo') {
+      return 'Solo Practitioner';
+    }
+    if (ws.workspaceType === 'Patient') {
+      return 'Patient Account';
+    }
+    return ws.clinicName || 'Clinic Workspace';
+  }
+
+  getWorkspaceSubtitle(ws: UserWorkspaceItemDto): string {
+    if (ws.workspaceType === 'Solo') {
+      return 'Independent practice, personal schedule & patients';
+    }
+    if (ws.workspaceType === 'Patient') {
+      return 'Personal health records, bookings & therapy plans';
+    }
+    const parts = [
+      ws.branchName ? `${ws.branchName}${ws.branchCode ? ` (${ws.branchCode})` : ''}` : 'All Branches',
+      ws.city,
+    ].filter(Boolean);
+    return parts.join(' • ');
+  }
+
+  getWorkspaceBadgeLabel(ws: UserWorkspaceItemDto): string {
+    if (ws.workspaceType === 'Solo') return 'Solo Practice';
+    if (ws.workspaceType === 'Patient') return 'Patient';
+    return `Clinic ${ws.accessLevel || 'Member'}`;
+  }
+
+  private completeLoginWithWorkspace(workspace: UserWorkspaceItemDto | null, userData: any): void {
+    this.authService.setActiveWorkspace(workspace, userData);
+    this.authService.clearPendingVerification();
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('physios_register_draft');
+    }
+
+    const targetRoute = this.authService.getWorkspaceNavigationRoute(workspace, userData?.roleId);
+    this.router.navigate([targetRoute]);
   }
 
   // ── OTP countdown timer ────────────────────────────────────────────────────

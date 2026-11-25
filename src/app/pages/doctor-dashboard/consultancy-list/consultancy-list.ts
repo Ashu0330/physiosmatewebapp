@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { Authservice } from '../../../services/authservice';
 import { PatientConsultancyDetails } from '../../../models/doctor-dashboard.model';
 
 @Component({
@@ -18,6 +19,7 @@ export class ConsultancyList implements OnInit {
   readonly Math = Math;
   private apiService = inject(ApiService);
   private alertService = inject(SweetAlertService);
+  private authService = inject(Authservice);
   private router = inject(Router);
 
   // Events emitted to parent (if hosted inside doctordashboard tabs)
@@ -169,7 +171,10 @@ export class ConsultancyList implements OnInit {
 
   goToDashboard(): void {
     this.backToDashboard.emit();
-    this.router.navigate(['/doctor-dashboard/dashboard']);
+    const target = this.authService.isClinicPractitionerWorkspace()
+      ? '/doctor-dashboard/consultations'
+      : '/doctor-dashboard/dashboard';
+    this.router.navigate([target]);
   }
 
   openPayment(item: PatientConsultancyDetails): void {

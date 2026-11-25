@@ -8,7 +8,9 @@ import { environment } from '../../../environment/environment';
 import { Sidebar } from '../sidebar/sidebar';
 import { BaseComponent } from '../../../helper/base-component';
 import { MenusModel } from '../../../models/mastermodel';
+import { UserWorkspaceItemDto } from '../../../models/clinic.model';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 
 @Component({
   selector: 'app-header',
@@ -28,6 +30,10 @@ export class Header extends BaseComponent implements OnInit {
 
   private sanitizer = inject(DomSanitizer);
   private platformId = inject(PLATFORM_ID);
+  private relationshipService = inject(ClinicRelationshipService);
+
+  readonly activeWorkspace = this.authService.activeWorkspace;
+  readonly availableWorkspaces = this.authService.availableWorkspaces;
 
   async ngOnInit(): Promise<void> {
     this.destroyRef.onDestroy(() => {
@@ -37,6 +43,9 @@ export class Header extends BaseComponent implements OnInit {
     if (this.isLoggedIn) {
       await this.GetAllMenu();
       this.setParentMenuFromRoute();
+      if (this.availableWorkspaces().length === 0) {
+        this.loadAvailableWorkspaces();
+      }
     }
 
     this.router.events
@@ -163,7 +172,24 @@ export class Header extends BaseComponent implements OnInit {
     return this.baseImageUrl + pic;
   }
 
+  getMenuRoutePath(item: MenusModel): string | null {
+    const normalized = this.normalizeRoutePath(item.path);
+    if (!normalized) {
+      return null;
+    }
+    if (
+      this.authService.isClinicPractitionerWorkspace() &&
+      this.cleanRoutePath(normalized) === '/doctor-dashboard/dashboard'
+    ) {
+      return '/doctor-dashboard/consultations';
+    }
+    return normalized;
+  }
+
   get profileRoute(): string {
+    if (this.authService.isClinicPractitionerWorkspace()) {
+      return '/doctor-dashboard/consultations';
+    }
     if (this.currentUser?.roleId === 3 || this.currentUser?.clinicId) {
       return '/clinic-dashboard/dashboard';
     }
@@ -234,6 +260,36 @@ export class Header extends BaseComponent implements OnInit {
     this.menulist.set(res.isSuccess ? (res.data ?? []) : []);
 
     this.setParentMenuFromRoute();
+  }
+
+  private async loadAvailableWorkspaces(): Promise<void> {
+    try {
+      const res = await this.relationshipService.resolveWorkspaces();
+      if (res.isSuccess && res.data) {
+        this.authService.buildProfileOptions(res.data, this.currentUser);
+      }
+    } catch {
+      // Silently keep existing state if workspace discovery fails
+    }
+  }
+
+  switchWorkspace(ws: UserWorkspaceItemDto): void {
+    this.authService.setActiveWorkspace(ws);
+    this.selectedParentMenuId.set(null);
+    this.profileDropdownOpen = false;
+    this.closeMobileMenu();
+    const targetRoute = this.authService.getWorkspaceNavigationRoute(ws);
+    this.router.navigate([targetRoute]).then(() => {
+      this.setParentMenuFromRoute();
+    });
+  }
+
+  isActiveWorkspace(ws: UserWorkspaceItemDto): boolean {
+    return this.authService.isSameWorkspace(this.activeWorkspace(), ws);
+  }
+
+  getWorkspaceLabel(ws: UserWorkspaceItemDto): string {
+    return this.authService.formatWorkspaceLabel(ws);
   }
 
   isSvgIcon(icon?: string): boolean {

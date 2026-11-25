@@ -505,3 +505,45 @@
     border-left: none;
   }
 }
+
+.physios-workspace-switcher-label {
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.physios-ws-switch-item {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.physios-ws-switch-item.active-ws {
+  background-color: var(--primary-subtle);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.physios-ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--border-muted);
+  flex-shrink: 0;
+}
+
+.physios-ws-dot.active {
+  background-color: var(--primary-color);
+}
+
+.physios-ws-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

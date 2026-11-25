@@ -94,7 +94,7 @@
             <div class="physios-profile-divider"></div>
 
             @for (item of menulist(); track item.menuId || item.path || $index) {
-            <a [routerLink]="normalizeRoutePath(item.path) || null" class="physios-profile-item" role="menuitem" (click)="selectMenuItem(item)">
+            <a [routerLink]="getMenuRoutePath(item)" class="physios-profile-item" role="menuitem" (click)="selectMenuItem(item)">
               @if (item.icon && isSvgIcon(item.icon)) {
               <span class="physios-profile-item-svg" [innerHTML]="getSafeIcon(item.icon)"></span>
               } @else if (item.icon) {
@@ -113,6 +113,18 @@
             }
 
             @if (menulist().length > 0) {
+            <div class="physios-profile-divider"></div>
+            }
+
+            @if (availableWorkspaces().length > 1) {
+            <div class="physios-workspace-switcher-label">Switch Login Profile</div>
+            @for (ws of availableWorkspaces(); track $index) {
+            <button type="button" class="physios-profile-item physios-ws-switch-item"
+              [class.active-ws]="isActiveWorkspace(ws)" (click)="switchWorkspace(ws)">
+              <span class="physios-ws-dot" [class.active]="isActiveWorkspace(ws)"></span>
+              <span class="physios-ws-text">{{ getWorkspaceLabel(ws) }}</span>
+            </button>
+            }
             <div class="physios-profile-divider"></div>
             }
 
@@ -220,7 +232,7 @@
             <div class="physios-mobile-accordion-panel physios-mobile-profile-panel" *ngIf="mobileProfileOpen">
               <div class="physios-mobile-user-nav">
                 @for (item of menulist(); track item.menuId || item.path || $index) {
-                <a [routerLink]="normalizeRoutePath(item.path) || null" class="physios-mobile-sublink" (click)="selectMenuItem(item)">
+                <a [routerLink]="getMenuRoutePath(item)" class="physios-mobile-sublink" (click)="selectMenuItem(item)">
                   @if (item.icon && isSvgIcon(item.icon)) {
                   <span class="physios-profile-item-svg" [innerHTML]="getSafeIcon(item.icon)"></span>
                   } @else if (item.icon) {
@@ -230,6 +242,16 @@
                   }
                   <span>{{ item.menuName }}</span>
                 </a>
+                }
+                @if (availableWorkspaces().length > 1) {
+                <div class="physios-workspace-switcher-label">Switch Login Profile</div>
+                @for (ws of availableWorkspaces(); track $index) {
+                <button type="button" class="physios-mobile-sublink physios-ws-switch-item"
+                  [class.active-ws]="isActiveWorkspace(ws)" (click)="switchWorkspace(ws)">
+                  <span class="physios-ws-dot" [class.active]="isActiveWorkspace(ws)"></span>
+                  <span class="physios-ws-text">{{ getWorkspaceLabel(ws) }}</span>
+                </button>
+                }
                 }
                 <a routerLink="/user-dashboard" class="physios-mobile-sublink" (click)="closeMobileMenu()">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

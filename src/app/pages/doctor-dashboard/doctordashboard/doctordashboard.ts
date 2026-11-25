@@ -500,6 +500,17 @@ export class Doctordashboard implements OnInit {
   }
 
   selectTab(tab: DoctorDashboardTab): void {
+    if (
+      this.auth.isClinicPractitionerWorkspace() &&
+      tab !== 'Consultations' &&
+      tab !== 'Appointments' &&
+      tab !== 'consultancy-list'
+    ) {
+      this.activeTab = 'Consultations';
+      this.router.navigate(['/doctor-dashboard/consultations']);
+      window.scrollTo(0, 0);
+      return;
+    }
     this.activeTab = tab;
     const path = this.tabToPath[tab] || '';
     this.router.navigate(['/doctor-dashboard', path]);

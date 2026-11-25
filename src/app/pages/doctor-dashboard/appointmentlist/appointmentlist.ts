@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { Authservice } from '../../../services/authservice';
 import {
   TodayAppointmentScheduleItem,
   AppointmentAddOnItem,
@@ -25,6 +26,7 @@ export class Appointmentlist implements OnInit {
   readonly Math = Math;
   private apiService = inject(ApiService);
   private alertService = inject(SweetAlertService);
+  private authService = inject(Authservice);
   private router = inject(Router);
 
   // Events emitted to parent (if hosted inside tabs)
@@ -266,7 +268,10 @@ export class Appointmentlist implements OnInit {
 
   goToDashboard(): void {
     this.backToDashboard.emit();
-    this.router.navigate(['/doctor-dashboard/dashboard']);
+    const target = this.authService.isClinicPractitionerWorkspace()
+      ? '/doctor-dashboard/appointments'
+      : '/doctor-dashboard/dashboard';
+    this.router.navigate([target]);
   }
 
   toggleSelectAll(checked: boolean): void {

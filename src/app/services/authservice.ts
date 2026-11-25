@@ -1,19 +1,44 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable, signal } from '@angular/core';
 import { authmodel } from '../models/authmodel';
+import { UserWorkspaceItemDto } from '../models/clinic.model';
 import { environment } from '../environment/environment';
 import { ApiResponse } from '../models/apiresponse';
+
+const ACTIVE_WORKSPACE_KEY = 'activeWorkspace';
+const AVAILABLE_WORKSPACES_KEY = 'availableWorkspaces';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Authservice {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    this.hydrateWorkspaceSignals();
+  }
 
   // ── In-memory pending user ID (OTP verification step only) ────────────────
   private pendingUserId: number | string | null = null;
+
+  readonly activeWorkspace = signal<UserWorkspaceItemDto | null>(null);
+  readonly availableWorkspaces = signal<UserWorkspaceItemDto[]>([]);
+
+  private hydrateWorkspaceSignals(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const activeRaw = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
+      if (activeRaw) {
+        this.activeWorkspace.set(JSON.parse(activeRaw));
+      }
+      const listRaw = localStorage.getItem(AVAILABLE_WORKSPACES_KEY);
+      if (listRaw) {
+        this.availableWorkspaces.set(JSON.parse(listRaw));
+      }
+    } catch {
+      this.activeWorkspace.set(null);
+      this.availableWorkspaces.set([]);
+    }
+  }
 
   setPendingUserId(id: number | string | null): void {
     this.pendingUserId = id;
@@ -175,10 +200,159 @@ export class Authservice {
     }
   }
 
+  getBranchId(): number | null {
+    const ws = this.activeWorkspace();
+    if (ws?.branchId !== undefined) {
+      return ws.branchId ?? null;
+    }
+    const user = this.getCurrentUser();
+    return user ? (user.branchId ?? user.clinicBranchId ?? null) : null;
+  }
+
+  getActiveWorkspace(): UserWorkspaceItemDto | null {
+    return this.activeWorkspace();
+  }
+
+  getAvailableWorkspaces(): UserWorkspaceItemDto[] {
+    return this.availableWorkspaces();
+  }
+
+  buildProfileOptions(resolution: { roleId?: number | null; practitionerId?: number | null; workspaces?: UserWorkspaceItemDto[] }, userData: any): UserWorkspaceItemDto[] {
+    const options: UserWorkspaceItemDto[] = [...(resolution?.workspaces ?? [])];
+    if (
+      (resolution?.roleId === 1 || userData?.roleId === 1) &&
+      options.length > 0 &&
+      (userData?.isProfileCompleted || (userData?.patientId ?? 0) > 0)
+    ) {
+      options.unshift({
+        workspaceType: 'Patient',
+        accessLevel: 'Patient',
+        clinicId: null,
+        clinicName: null,
+        branchId: null,
+        branchName: null,
+        branchCode: null,
+        city: null,
+        isPrimary: false,
+      });
+    }
+    this.setAvailableWorkspaces(options, resolution?.practitionerId);
+    return options;
+  }
+
+  setAvailableWorkspaces(workspaces: UserWorkspaceItemDto[], practitionerId?: number | null): void {
+    const list = workspaces ?? [];
+    this.availableWorkspaces.set(list);
+    if (practitionerId && practitionerId > 0) {
+      this.setPractitionerId(practitionerId);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(AVAILABLE_WORKSPACES_KEY, JSON.stringify(list));
+    }
+  }
+
+  setActiveWorkspace(workspace: UserWorkspaceItemDto | null, baseUser?: any): void {
+    this.activeWorkspace.set(workspace);
+    if (typeof localStorage === 'undefined') return;
+
+    localStorage.removeItem('parentId');
+
+    if (workspace) {
+      localStorage.setItem(ACTIVE_WORKSPACE_KEY, JSON.stringify(workspace));
+    } else {
+      localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
+    }
+
+    const user = baseUser ? { ...baseUser } : (this.getCurrentUser() ?? {});
+    if (workspace?.workspaceType === 'Clinic') {
+      user.clinicId = workspace.clinicId ?? 0;
+      user.branchId = workspace.branchId ?? null;
+      user.clinicName = workspace.clinicName ?? null;
+      user.branchName = workspace.branchName ?? null;
+      user.workspaceType = 'Clinic';
+      user.workspaceAccessLevel = workspace.accessLevel;
+    } else if (workspace?.workspaceType === 'Solo') {
+      user.clinicId = 0;
+      user.branchId = null;
+      user.clinicName = null;
+      user.branchName = null;
+      user.workspaceType = 'Solo';
+      user.workspaceAccessLevel = 'Solo';
+    } else if (workspace?.workspaceType === 'Patient') {
+      user.clinicId = 0;
+      user.branchId = null;
+      user.clinicName = null;
+      user.branchName = null;
+      user.workspaceType = 'Patient';
+      user.workspaceAccessLevel = 'Patient';
+    }
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  isSameWorkspace(a?: UserWorkspaceItemDto | null, b?: UserWorkspaceItemDto | null): boolean {
+    if (!a || !b) return false;
+    return (
+      a.workspaceType === b.workspaceType &&
+      a.accessLevel === b.accessLevel &&
+      (a.clinicId ?? null) === (b.clinicId ?? null) &&
+      (a.branchId ?? null) === (b.branchId ?? null)
+    );
+  }
+
+  formatWorkspaceLabel(ws?: UserWorkspaceItemDto | null): string {
+    if (!ws) return '';
+    if (ws.workspaceType === 'Solo') return 'Solo Practitioner';
+    if (ws.workspaceType === 'Patient') return 'Patient Account';
+    const branch = ws.branchName ? ` · ${ws.branchName}` : '';
+    return `${ws.clinicName || 'Clinic'}${branch} (${ws.accessLevel})`;
+  }
+
+  isClinicPractitionerWorkspace(): boolean {
+    const ws = this.activeWorkspace();
+    if (ws) {
+      return (
+        ws.workspaceType === 'Clinic' &&
+        (ws.accessLevel || '').toLowerCase() === 'practitioner'
+      );
+    }
+    const user = this.getCurrentUser();
+    return (
+      user?.workspaceType === 'Clinic' &&
+      (user?.workspaceAccessLevel || '').toLowerCase() === 'practitioner'
+    );
+  }
+
+  getWorkspaceNavigationRoute(workspace?: UserWorkspaceItemDto | null, roleId?: number | null): string {
+    const effectiveRole = roleId ?? this.getRoleId();
+    if (workspace?.workspaceType === 'Solo') {
+      return '/doctor-dashboard/dashboard';
+    }
+    if (workspace?.workspaceType === 'Patient') {
+      return '/user-dashboard/medical-records';
+    }
+    if (workspace?.workspaceType === 'Clinic') {
+      if ((workspace.accessLevel || '').toLowerCase() === 'practitioner') {
+        return effectiveRole === 3 ? '/clinic-dashboard/consultations' : '/doctor-dashboard/consultations';
+      }
+      return effectiveRole === 3 ? '/clinic-dashboard/dashboard' : '/doctor-dashboard/dashboard';
+    }
+    if (effectiveRole === 2) {
+      return '/doctor-dashboard/dashboard';
+    }
+    if (effectiveRole === 3) {
+      return '/clinic-dashboard/dashboard';
+    }
+    return '/user-dashboard/medical-records';
+  }
+
   saveUserSession(userData: any, token?: string): void {
     if (typeof localStorage === 'undefined') return;
     this.clearPendingUserId();
     localStorage.removeItem('parentId');
+    localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
+    localStorage.removeItem(AVAILABLE_WORKSPACES_KEY);
+    this.activeWorkspace.set(null);
+    this.availableWorkspaces.set([]);
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
@@ -191,11 +365,15 @@ export class Authservice {
 
   logout(): void {
     this.clearPendingUserId();
+    this.activeWorkspace.set(null);
+    this.availableWorkspaces.set([]);
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       localStorage.removeItem('pendingVerification');
       localStorage.removeItem('parentId');
+      localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
+      localStorage.removeItem(AVAILABLE_WORKSPACES_KEY);
     }
   }
 }
