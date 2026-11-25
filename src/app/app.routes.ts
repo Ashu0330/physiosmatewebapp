@@ -15,6 +15,7 @@ import { Settings } from './pages/settings/settings';
 import { PracticeManagement } from './pages/doctor-dashboard/practice-management/practice-management';
 import { ScheduleTreatment } from './pages/doctor-dashboard/schedule-treatment/schedule-treatment';
 import { ConsultancyList } from './pages/doctor-dashboard/consultancy-list/consultancy-list';
+import { authChildGuard, authGuard } from './helper/auth.guard';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -53,20 +54,35 @@ export const routes: Routes = [
       { path: 'providers/:id', component: Doctordetail, data: { isClinic: false } },
 
       // ─── Patient Dashboard — single entry, routes handled inside UserdashboardRoutingModule
-      { path: 'user-dashboard', loadChildren: () => import('./pages/userdashboard/userdashboard-routing-module').then(m => m.UserdashboardRoutingModule) },
+      {
+        path: 'user-dashboard',
+        canActivate: [authGuard],
+        canActivateChild: [authChildGuard],
+        loadChildren: () => import('./pages/userdashboard/userdashboard-routing-module').then(m => m.UserdashboardRoutingModule),
+      },
 
       // ─── Doctor Dashboard — single entry, routes handled inside DoctorDashboardRoutingModule
-      { path: 'doctor-dashboard', loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule) },
+      {
+        path: 'doctor-dashboard',
+        canActivate: [authGuard],
+        canActivateChild: [authChildGuard],
+        loadChildren: () => import('./pages/doctor-dashboard/doctor-dashboard-routing-module').then(m => m.DoctorDashboardRoutingModule),
+      },
 
       // ─── Clinic Dashboard — single entry, routes handled inside ClinicDashboardRoutingModule
-      { path: 'clinic-dashboard', loadChildren: () => import('./pages/clinic-dashboard/clinic-dashboard-routing-module').then(m => m.ClinicDashboardRoutingModule) },
+      {
+        path: 'clinic-dashboard',
+        canActivate: [authGuard],
+        canActivateChild: [authChildGuard],
+        loadChildren: () => import('./pages/clinic-dashboard/clinic-dashboard-routing-module').then(m => m.ClinicDashboardRoutingModule),
+      },
 
       // ─── Global Settings Page ───────────────────────────────────────────────
-      { path: 'settings', component: Settings },
-      { path: 'practice-management', component: PracticeManagement },
+      { path: 'settings', component: Settings, canActivate: [authGuard] },
+      { path: 'practice-management', component: PracticeManagement, canActivate: [authGuard] },
       // { path: 'practice-management', component: PracticeManagement },
-      { path: 'schedule-treatment', component: ScheduleTreatment },
-      { path: 'consultancy-list', component: ConsultancyList },
+      { path: 'schedule-treatment', component: ScheduleTreatment, canActivate: [authGuard] },
+      { path: 'consultancy-list', component: ConsultancyList, canActivate: [authGuard] },
     ],
   },
 

@@ -7,6 +7,7 @@ import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SharedModule } from '../../../shared/shared-module';
 import { Authservice } from '../../../services/authservice';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 
 // ─── Slot Models ──────────────────────────────────────────────────────────────
 interface ConsultancySlot {
@@ -40,6 +41,7 @@ export class Addpatient implements OnInit {
   private alert = inject(SweetAlertService);
   private fb = inject(FormBuilder);
   private auth = inject(Authservice);
+  private relationshipService = inject(ClinicRelationshipService);
 
   form!: FormGroup;
   @ViewChild('photoInput') photoInputRef?: ElementRef<HTMLInputElement>;
@@ -74,19 +76,32 @@ export class Addpatient implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadPractitioners();
     this.setupFormSubscriptions();
 
-    const currentPid = this.currentPractitionerId;
-    if (currentPid && !this.form.get('assignedPractitionerId')?.value) {
-      this.form.patchValue({ assignedPractitionerId: currentPid });
+    if (!this.canAssignPractitioner) {
+      const currentPid = this.currentPractitionerId;
+      if (currentPid > 0) {
+        this.form.patchValue({ assignedPractitionerId: currentPid }, { emitEvent: false });
+      }
     }
+    this.loadPractitioners();
+  }
+
+  get canAssignPractitioner(): boolean {
+    return this.auth.canAssignPractitioner();
   }
 
   get currentPractitionerId(): number {
-    const profId = this.auth.getCurrentProfessionalId();
     const user = this.auth.getCurrentUser();
-    return Number(user?.practitionerId || profId || user?.id || 0);
+    const directPid = Number(this.auth.getPractitionerId() || user?.practitionerId || 0);
+    if (directPid > 0) {
+      return directPid;
+    }
+    if (!this.canAssignPractitioner) {
+      const profId = Number(this.auth.getCurrentProfessionalId() || 0);
+      return profId > 0 ? profId : Number(user?.id || 0);
+    }
+    return 0;
   }
 
   setupFormSubscriptions(): void {
@@ -182,30 +197,44 @@ export class Addpatient implements OnInit {
   }
 
   async loadPractitioners(): Promise<void> {
+    const currentPid = this.currentPractitionerId;
+    if (!this.canAssignPractitioner) {
+      this.practitioners = currentPid > 0
+        ? [{ id: currentPid, name: this.auth.getUserName() || 'Assigned Doctor' }]
+        : [];
+      if (currentPid > 0 && !this.form.get('assignedPractitionerId')?.value) {
+        this.form.patchValue({ assignedPractitionerId: currentPid }, { emitEvent: false });
+      }
+      this.isLoadingPractitioners = false;
+      this.triggerSlotLoad();
+      return;
+    }
+
     this.isLoadingPractitioners = true;
     try {
-      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitioners, { page: 1, pageSize: 100 });
-      if (res?.isSuccess && res.data) {
-        const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
-        this.practitioners = list.map((p: any) => ({
-          id: p.id ?? p.practitionerId,
-          name: p.fullName ?? p.name ?? `Dr. ${p.id}`
-        }));
+      const clinicId = await this.relationshipService.resolveCurrentClinicId();
+      const branchId = this.auth.getBranchId();
+      if (clinicId > 0) {
+        const res = await this.relationshipService.getClinicPractitioners(clinicId, 'Active', branchId);
+        if (res?.isSuccess && Array.isArray(res.data)) {
+          this.practitioners = res.data
+            .map((p: any) => ({
+              id: Number(p.practitionerId ?? p.id ?? 0),
+              name: String(p.practitionerName ?? p.fullName ?? `Practitioner #${p.practitionerId ?? p.id}`).trim()
+            }))
+            .filter((p: { id: number; name: string }) => p.id > 0);
+        } else {
+          this.practitioners = [];
+        }
+      } else {
+        this.practitioners = [];
       }
     } catch (e) {
-      console.error('Error loading practitioners', e);
+      console.error('Error loading clinic practitioners', e);
+      this.practitioners = [];
     } finally {
-      const currentPid = this.currentPractitionerId;
-      if (currentPid > 0 && !this.practitioners.some(p => p.id === currentPid)) {
-        const currentName = this.auth.getUserName() || 'Assigned Doctor';
-        this.practitioners = [{ id: currentPid, name: currentName }, ...this.practitioners];
-      }
-
       if (!this.form.get('assignedPractitionerId')?.value && this.practitioners.length > 0) {
-        const defaultId = currentPid > 0 && this.practitioners.some(p => p.id === currentPid)
-          ? currentPid
-          : this.practitioners[0].id;
-        this.form.patchValue({ assignedPractitionerId: defaultId });
+        this.form.patchValue({ assignedPractitionerId: this.practitioners[0].id }, { emitEvent: false });
       }
 
       this.isLoadingPractitioners = false;
@@ -217,7 +246,7 @@ export class Addpatient implements OnInit {
     const visitType = this.form.get('visitType')?.value;
     let practitionerId = this.form.get('assignedPractitionerId')?.value;
 
-    if (!practitionerId && this.currentPractitionerId > 0) {
+    if (!practitionerId && !this.canAssignPractitioner && this.currentPractitionerId > 0) {
       practitionerId = this.currentPractitionerId;
       this.form.patchValue({ assignedPractitionerId: practitionerId }, { emitEvent: false });
     }
@@ -519,9 +548,13 @@ export class Addpatient implements OnInit {
   resetForm(): void {
     this.createform();
     this.setupFormSubscriptions();
-    const currentPid = this.currentPractitionerId;
-    if (currentPid) {
-      this.form.patchValue({ assignedPractitionerId: currentPid });
+    if (!this.canAssignPractitioner) {
+      const currentPid = this.currentPractitionerId;
+      if (currentPid > 0) {
+        this.form.patchValue({ assignedPractitionerId: currentPid }, { emitEvent: false });
+      }
+    } else if (this.practitioners.length > 0) {
+      this.form.patchValue({ assignedPractitionerId: this.practitioners[0].id }, { emitEvent: false });
     }
     this.photoPreview = null;
     this.selectedSlot = undefined;

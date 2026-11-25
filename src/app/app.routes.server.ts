@@ -34,6 +34,22 @@ export const serverRoutes: ServerRoute[] = [
     path: 'user-dashboard/**',
     renderMode: RenderMode.Client,
   },
+  {
+    path: 'settings',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'practice-management',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'schedule-treatment',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'consultancy-list',
+    renderMode: RenderMode.Client,
+  },
 
   // ─── Dynamic parameterized routes — Server-rendered on demand ───────────────
   // Articles

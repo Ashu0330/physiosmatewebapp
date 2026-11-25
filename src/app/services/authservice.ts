@@ -1,9 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { authmodel } from '../models/authmodel';
 import { UserWorkspaceItemDto } from '../models/clinic.model';
 import { environment } from '../environment/environment';
 import { ApiResponse } from '../models/apiresponse';
+import { ApiEndPoints } from '../helper/api-endpoints';
+import {
+  decodeJwtPayload,
+  getJwtUserId,
+  getStoredToken,
+  isJwtTokenValid,
+  normalizeTokenString,
+} from '../helper/jwt.helper';
 
 const ACTIVE_WORKSPACE_KEY = 'activeWorkspace';
 const AVAILABLE_WORKSPACES_KEY = 'availableWorkspaces';
@@ -19,6 +28,8 @@ export class Authservice {
 
   // ── In-memory pending user ID (OTP verification step only) ────────────────
   private pendingUserId: number | string | null = null;
+  private verifiedTokenCache: string | null = null;
+  private inFlightVerifyPromise: Promise<boolean> | null = null;
 
   readonly activeWorkspace = signal<UserWorkspaceItemDto | null>(null);
   readonly availableWorkspaces = signal<UserWorkspaceItemDto[]>([]);
@@ -27,6 +38,14 @@ export class Authservice {
 
   private hydrateWorkspaceSignals(): void {
     if (typeof localStorage === 'undefined') return;
+    if (!this.hasValidToken()) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('parentId');
+      localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
+      localStorage.removeItem(AVAILABLE_WORKSPACES_KEY);
+      return;
+    }
     try {
       const activeRaw = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
       if (activeRaw) {
@@ -150,22 +169,81 @@ export class Authservice {
 
 
 
-  isLoggedIn(): boolean {
+  hasValidToken(): boolean {
     if (typeof localStorage === 'undefined') return false;
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    return !!(token || user);
+    const token = this.getToken();
+    if (!isJwtTokenValid(token)) return false;
+
+    const payload = decodeJwtPayload(token);
+    const tokenUserId = getJwtUserId(payload);
+    const user = this.getCurrentUser();
+    if (user) {
+      const storedId = user.id ?? user.Id;
+      if (storedId !== undefined && storedId !== null && String(storedId) !== tokenUserId) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  isLoggedIn(): boolean {
+    return this.hasValidToken();
   }
 
   getToken(): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage.getItem('token');
+    return getStoredToken();
+  }
+
+  async verifyAuthorizedToken(): Promise<boolean> {
+    if (!this.hasValidToken()) {
+      return false;
+    }
+
+    const token = this.getToken()!;
+    if (this.verifiedTokenCache === token) {
+      return true;
+    }
+
+    if (this.inFlightVerifyPromise) {
+      return this.inFlightVerifyPromise;
+    }
+
+    const verifyPromise = firstValueFrom(
+      this.http.get<ApiResponse<any>>(`${environment.baseUrl}${ApiEndPoints.GetUserProfile}`)
+    )
+      .then(res => {
+        if (res?.isSuccess && res.data) {
+          this.verifiedTokenCache = token;
+          return true;
+        }
+        this.logout();
+        return false;
+      })
+      .catch((err: any) => {
+        const status = Number(err?.status ?? 0);
+        if (status === 401 || status === 403 || status === 404) {
+          this.logout();
+        }
+        return false;
+      });
+
+    this.inFlightVerifyPromise = verifyPromise;
+    return verifyPromise.finally(() => {
+      if (this.inFlightVerifyPromise === verifyPromise) {
+        this.inFlightVerifyPromise = null;
+      }
+    });
   }
 
   getCurrentUser(): any {
     if (typeof localStorage === 'undefined') return null;
     const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
   }
 
   getCurrentProfessionalId(): any {
@@ -378,6 +456,39 @@ export class Authservice {
     );
   }
 
+  /**
+   * Returns true only when the user is operating in a Clinic front-desk/management
+   * context (Clinic Owner, Receptionist, Manager, or Staff) where assigning a
+   * treating practitioner is applicable. Returns false for Solo Practitioners.
+   */
+  canAssignPractitioner(): boolean {
+    const ws = this.activeWorkspace();
+    if (ws) {
+      if (ws.workspaceType !== 'Clinic') {
+        return false;
+      }
+      const level = (ws.accessLevel || '').toLowerCase();
+      return level === 'owner' || level === 'receptionist' || level === 'manager' || level === 'staff';
+    }
+
+    const user = this.getCurrentUser();
+    const wsType = user?.workspaceType;
+    if (wsType) {
+      if (wsType !== 'Clinic') {
+        return false;
+      }
+      const level = (user?.workspaceAccessLevel || '').toLowerCase();
+      return level === 'owner' || level === 'receptionist' || level === 'manager' || level === 'staff';
+    }
+
+    const roleId = Number(this.getRoleId() ?? user?.roleId ?? 0);
+    if (roleId === 3) {
+      return true;
+    }
+
+    return Number(user?.clinicId ?? 0) > 0 && !Number(user?.practitionerId ?? 0);
+  }
+
   getWorkspaceNavigationRoute(workspace?: UserWorkspaceItemDto | null, roleId?: number | null): string {
     const effectiveRole = roleId ?? this.getRoleId();
     if (workspace?.workspaceType === 'Solo') {
@@ -404,6 +515,8 @@ export class Authservice {
   saveUserSession(userData: any, token?: string): void {
     if (typeof localStorage === 'undefined') return;
     this.clearPendingUserId();
+    this.verifiedTokenCache = null;
+    this.inFlightVerifyPromise = null;
     localStorage.removeItem('parentId');
     localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
     localStorage.removeItem(AVAILABLE_WORKSPACES_KEY);
@@ -414,15 +527,21 @@ export class Authservice {
     if (userData) {
       localStorage.setItem('user', JSON.stringify(userData));
     }
-    if (token) {
-      localStorage.setItem('token', token);
-    } else if (userData?.token) {
-      localStorage.setItem('token', userData.token);
+    const resolvedToken = normalizeTokenString(token) ?? normalizeTokenString(userData?.token);
+    if (resolvedToken) {
+      localStorage.setItem('token', resolvedToken);
+      if (isJwtTokenValid(resolvedToken)) {
+        this.verifiedTokenCache = resolvedToken;
+      }
+    } else {
+      localStorage.removeItem('token');
     }
   }
 
   logout(): void {
     this.clearPendingUserId();
+    this.verifiedTokenCache = null;
+    this.inFlightVerifyPromise = null;
     this.activeWorkspace.set(null);
     this.availableWorkspaces.set([]);
     this.isSoloPracticeEnabled.set(false);
