@@ -9,9 +9,9 @@
     <h2 class="auth-title">Choose Your Login Profile</h2>
     <p class="auth-subtitle">
       @if (canOfferSoloSetup()) {
-      Available profiles for <strong>{{ signupForm.value.email }}</strong>. Open your Clinic profile or set up your Solo Professional profile.
+      Available profiles for <strong>{{ signupForm.getRawValue().email }}</strong>. Open your Clinic profile or set up your Solo Professional profile.
       } @else {
-      Multiple active profiles were found for <strong>{{ signupForm.value.email }}</strong>. Select which profile you want to open.
+      Multiple active profiles were found for <strong>{{ signupForm.getRawValue().email }}</strong>. Select which profile you want to open.
       }
     </p>
     } @else if (bookingContext) {
@@ -187,7 +187,7 @@
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        <input id="signup-otp" type="text" formControlName="otp" placeholder="Enter received OTP" maxlength="6"
+        <input id="signup-otp" #otpInput type="text" formControlName="otp" placeholder="Enter received OTP" maxlength="6"
           class="form-input" (keydown.enter)="verifyOtp()" [class.is-invalid]="signupForm.get('otp')?.invalid && signupForm.get('otp')?.touched" />
       </div>
       @if (signupForm.get('otp')?.invalid && signupForm.get('otp')?.touched) {

@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Injector, Input, OnDestroy, OnInit, Output, PLATFORM_ID, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { ClinicRelationshipService } from '../../services/clinic-relationship.service';
@@ -60,6 +61,10 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
 
   private signupOtpTimer: ReturnType<typeof setInterval> | null = null;
 
+  private readonly injector = inject(Injector);
+  private readonly platformId = inject(PLATFORM_ID);
+  readonly otpInput = viewChild<ElementRef<HTMLInputElement>>('otpInput');
+
   ngOnInit(): void {
     this.initForms();
   }
@@ -81,7 +86,8 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
   async sendSignupOtp(): Promise<void> {
     if (this.isSignupOtpSending() || this.signupOtpCountdown() > 0) return;
     const emailCtrl = this.signupForm.get('email');
-    if (!emailCtrl || emailCtrl.invalid) {
+    const email = String(emailCtrl?.value ?? '').trim();
+    if (!emailCtrl || !email || (!emailCtrl.disabled && emailCtrl.invalid)) {
       emailCtrl?.markAsTouched();
       this.alert.toastError('Please enter a valid email address.');
       return;
@@ -91,8 +97,6 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
     this.errorMessage.set('');
 
     try {
-      const email = emailCtrl.value.trim();
-
       const formData = new FormData();
       formData.append('Email', email);
       formData.append('IsLogin', 'true');
@@ -105,6 +109,8 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
         return;
       }
 
+      emailCtrl.setValue(email, { emitEvent: false });
+      emailCtrl.disable({ emitEvent: false });
       this.signupOtpSent.set(true);
 
       if (res.data?.id) {
@@ -113,10 +119,21 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
 
       this.alert.toastSuccess(AppMessage.OtpSent);
       this.startSignupOtpCountdown();
+      this.focusOtpInput();
 
     } finally {
       this.isSignupOtpSending.set(false);
     }
+  }
+
+  private focusOtpInput(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    afterNextRender(() => {
+      const input = this.otpInput()?.nativeElement;
+      if (input && !input.disabled) {
+        input.focus();
+      }
+    }, { injector: this.injector });
   }
 
   // ── Verify OTP ─────────────────────────────────────────────────────────────
@@ -136,7 +153,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       const model = {
         otpCode: this.signupForm.value.otp,
         oTPType: 'Email',
-        email: this.signupForm.value.email,
+        email: String(this.signupForm.getRawValue().email ?? '').trim(),
         userid: this.authService.getPendingUserId() ?? this.authService.getuserid()
       };
 
@@ -165,7 +182,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
           this.authSuccess.emit();
           return;
         }
-        const email = this.signupForm.value.email;
+        const email = String(this.signupForm.getRawValue().email ?? '').trim();
         this.authService.setPendingVerification({
           email,
           isOtpVerified: true,
@@ -202,7 +219,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       }
 
       // Brand-new or incomplete account with no workspace -> proceed to registration
-      const email = this.signupForm.value.email;
+      const email = String(this.signupForm.getRawValue().email ?? '').trim();
       this.authService.setPendingVerification({
         email: email,
         isOtpVerified: true,
@@ -291,7 +308,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
       }
     }
 
-    const email = this.signupForm.value.email || userData?.email || '';
+    const email = String(this.signupForm.getRawValue().email ?? '').trim() || userData?.email || '';
     this.relationshipService.prepareSoloProfileSetup(userData, email);
     this.router.navigate(['/complete-solo-profile']);
   }
@@ -304,6 +321,7 @@ export class AuthFormComponent extends BaseComponent implements OnInit, OnDestro
     this.isSoloSetupSelected.set(false);
     this.pendingAuthUser.set(null);
     this.signupOtpSent.set(false);
+    this.signupForm.get('email')?.enable({ emitEvent: false });
     this.signupForm.patchValue({ otp: '' });
   }
 

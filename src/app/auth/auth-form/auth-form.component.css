@@ -214,6 +214,13 @@
   box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.12);
 }
 
+.form-input:disabled {
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
 .form-input.is-invalid {
   border-color: var(--danger);
   background: var(--danger-light);
