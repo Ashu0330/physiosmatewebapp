@@ -46,7 +46,7 @@ export class ClinicStaff implements OnInit {
     this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Manager).length
   );
   readonly practitionerCount = computed(() =>
-    this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Practitioner).length
+    this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Doctor).length
   );
   readonly receptionistCount = computed(() =>
     this.branchScopedStaff().filter(u => u.role === ClinicUserRoles.Receptionist).length
@@ -59,7 +59,7 @@ export class ClinicStaff implements OnInit {
   readonly roleFilterOptions = computed(() => [
     { value: 'all', label: 'All Team', count: this.totalCount() },
     { value: ClinicUserRoles.Manager, label: 'Managers', count: this.managerCount() },
-    { value: ClinicUserRoles.Practitioner, label: 'Practitioners', count: this.practitionerCount() },
+    { value: ClinicUserRoles.Doctor, label: 'Doctor', count: this.practitionerCount() },
     { value: ClinicUserRoles.Receptionist, label: 'Receptionists', count: this.receptionistCount() },
     { value: ClinicUserRoles.Staff, label: 'Staff', count: this.staffCount() },
     { value: LEFT_PRACTITIONERS_FILTER, label: 'Left Practitioners', count: this.leftPractitionerCount() },
@@ -219,7 +219,7 @@ export class ClinicStaff implements OnInit {
       const res = await this.relationshipService.removeClinicUser(payload);
       if (res.isSuccess) {
         this.staffList.update(list => list.filter(u => u.id !== member.id));
-        if (member.role === ClinicUserRoles.Practitioner) {
+        if (member.role === ClinicUserRoles.Doctor) {
           await this.loadLeftPractitioners();
         }
         this.alert.toastSuccess(`${displayName} removed from clinic team.`);
@@ -255,7 +255,7 @@ export class ClinicStaff implements OnInit {
         fullName: prac.practitionerName || '',
         email: prac.userEmail || '',
         mobile: prac.userPhone || '',
-        role: ClinicUserRoles.Practitioner
+        role: ClinicUserRoles.Doctor
       });
       const res = await this.relationshipService.addClinicUser(payload);
       if (res.isSuccess) {
