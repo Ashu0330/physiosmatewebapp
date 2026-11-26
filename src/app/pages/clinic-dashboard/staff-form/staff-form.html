@@ -33,7 +33,7 @@
 
     <!-- Form Card -->
     @if (!isLoading()) {
-      <form (ngSubmit)="onSubmit()" class="staff-card-form">
+      <form (ngSubmit)="onSubmit()" class="staff-card-form" novalidate>
 
         <!-- Section 1: Role & Branch Assignment -->
         <div class="form-section">
@@ -119,15 +119,12 @@
           <div class="form-row-3">
             <!-- Full Name -->
             <div class="form-group">
-              <label class="form-label">
-                FULL NAME @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }
-              </label>
+              <label class="form-label">FULL NAME</label>
               <input
                 type="text"
                 class="form-input"
                 placeholder="e.g., Priya Sharma"
                 name="fullName"
-                [readonly]="isEditMode()"
                 [ngModel]="staffModel().fullName"
                 (ngModelChange)="updateField('fullName', $event)" />
             </div>
@@ -142,31 +139,25 @@
                 class="form-input"
                 placeholder="e.g., 9876543210"
                 name="mobile"
-                [readonly]="isEditMode()"
                 [ngModel]="staffModel().mobile"
                 (ngModelChange)="updateField('mobile', $event)" />
             </div>
 
             <!-- Email -->
             <div class="form-group">
-              <label class="form-label">EMAIL ADDRESS @if (!isEditMode() && !(staffModel().practitionerId)) { <span class="required-asterisk">*</span> }</label>
+              <label class="form-label">EMAIL ADDRESS</label>
               <input
                 type="email"
                 class="form-input"
                 placeholder="e.g., staff@physiosmate.com"
                 name="email"
-                [readonly]="isEditMode()"
                 [ngModel]="staffModel().email"
                 (ngModelChange)="updateField('email', $event)" />
             </div>
           </div>
 
           <span class="field-hint mt-2">
-            @if (isEditMode()) {
-              Account name and contact belong to the user's profile. Update their role or branch assignment above.
-            } @else {
-              Provide at least an email address or mobile number. Existing PhysiosMate accounts link automatically; new clinic-created doctors can still set up their Solo Professional Profile when logging in.
-            }
+            Provide at least an email address or mobile number. Existing PhysiosMate accounts link automatically; new clinic-created doctors can still set up their Solo Professional Profile when logging in.
           </span>
         </div>
 

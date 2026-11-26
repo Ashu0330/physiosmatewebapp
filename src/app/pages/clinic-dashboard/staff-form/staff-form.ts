@@ -185,40 +185,7 @@ export class StaffFormComponent implements OnInit {
     }));
   }
 
-  private validate(): boolean {
-    const model = this.staffModel();
-    const activeClinicId = this.clinicId();
-
-    if (!activeClinicId || activeClinicId <= 0) {
-      this.alert.toastError('No valid clinic associated with this account.');
-      return false;
-    }
-
-    if (!model.role || model.role.trim() === '') {
-      this.alert.toastWarning('Please select a staff role.');
-      return false;
-    }
-
-    const hasResolvedUser = model.userId > 0 || (model.practitionerId ?? 0) > 0;
-    if (!hasResolvedUser) {
-      if (!model.fullName || model.fullName.trim() === '') {
-        this.alert.toastWarning('Please enter the member full name.');
-        return false;
-      }
-      const hasMobile = !!(model.mobile && model.mobile.trim() !== '');
-      const hasEmail = !!(model.email && model.email.trim() !== '');
-      if (!hasMobile && !hasEmail) {
-        this.alert.toastWarning('Please enter a mobile number or email address to look up or create the user account.');
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   async onSubmit(): Promise<void> {
-    if (!this.validate()) return;
-
     const current = this.staffModel();
     const payload = new AddClinicUserViewModel({
       clinicId: this.clinicId(),

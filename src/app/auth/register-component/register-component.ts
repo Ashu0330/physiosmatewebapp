@@ -2,11 +2,11 @@ import {
   Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges,
   inject, signal, computed, viewChild,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
 import { ClinicRelationshipService } from '../../services/clinic-relationship.service';
 import { mastermodel, qualification, ServiceItem } from '../../models/mastermodel';
-import { role } from '../../helper/utilities';
+import { DateHelper, role } from '../../helper/utilities';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { AppMessage } from '../../helper/app-message';
 import { BaseComponent } from '../../helper/base-component';
@@ -70,6 +70,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   readonly clinicMediaPreviews = signal<{ url: string; name: string }[]>([]);
 
   readonly CLINIC_MEDIA_MAX = 10;
+  readonly maxAgeYears = 100;
+  readonly minDob = (() => {
+    const today = new Date();
+    return DateHelper.formatLocalDate(
+      new Date(today.getFullYear() - 100, today.getMonth(), today.getDate())
+    );
+  })();
+  readonly maxDob = DateHelper.formatLocalDate(new Date());
   private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   private readonly MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
   private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
@@ -389,7 +397,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       email: [defaultEmail, [Validators.required, Validators.email]],
       userType: [defaultUserType, [Validators.required]],
       gender: ['male', [Validators.required]],
-      dob: ['', [Validators.required]],
+      dob: ['', [Validators.required, this.dobAgeValidator()]],
       state: [null, [Validators.required]],
       city: [null, [Validators.required]],
       password: ['', passwordValidators],
@@ -444,8 +452,44 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   onDobChange(event: Event): void {
     const input = event.target as HTMLInputElement;
+    this.basicForm.get('dob')?.markAsTouched();
     if (!input.value) return;
     this.saveDraft();
+  }
+
+  private dobAgeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const raw = String(control.value ?? '').trim();
+      if (!raw) return null;
+
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.slice(0, 10));
+      if (!match) return { invalidDob: true };
+
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      const dobDate = new Date(year, month - 1, day);
+      if (
+        dobDate.getFullYear() !== year ||
+        dobDate.getMonth() !== month - 1 ||
+        dobDate.getDate() !== day
+      ) {
+        return { invalidDob: true };
+      }
+
+      const today = new Date();
+      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if (dobDate > todayDate) {
+        return { futureDate: true };
+      }
+
+      const minAllowedDate = new Date(today.getFullYear() - this.maxAgeYears, today.getMonth(), today.getDate());
+      if (dobDate < minAllowedDate) {
+        return { maxAge: { max: this.maxAgeYears } };
+      }
+
+      return null;
+    };
   }
 
   async loadCitiesForState(stateId: number, target: 'basic' | 'clinic', cityIdToSet?: any): Promise<void> {
@@ -717,6 +761,15 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   onNextOrSubmit(): void {
     if (this.basicForm.invalid) {
       this.basicForm.markAllAsTouched();
+      const dobCtrl = this.basicForm.get('dob');
+      if (dobCtrl?.hasError('maxAge')) {
+        this.alert.toastError(`Age cannot exceed ${this.maxAgeYears} years.`);
+        return;
+      }
+      if (dobCtrl?.hasError('futureDate')) {
+        this.alert.toastError('Date of birth cannot be in the future.');
+        return;
+      }
       this.alert.toastError(AppMessage.InvalidForm);
       return;
     }
