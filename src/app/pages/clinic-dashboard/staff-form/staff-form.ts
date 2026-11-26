@@ -60,10 +60,15 @@ export class StaffFormComponent implements OnInit {
       description: 'General clinic support access scoped to assigned branches.'
     },
     {
-      value: ClinicUserRoles.Practitioner,
-      label: 'Practitioner',
+      value: ClinicUserRoles.Doctor,
+      label: 'Doctor',
       description: 'Doctor / physiotherapist role synced with ClinicPractitioner records.'
-    }
+    },
+    {
+      value: ClinicUserRoles.HR,
+      label: 'HR',
+      description: 'Doctor / physiotherapist role synced with ClinicPractitioner records.'
+    },
   ];
 
   readonly selectedRoleDescription = computed(() => {
@@ -72,7 +77,7 @@ export class StaffFormComponent implements OnInit {
   });
 
   readonly isPractitionerRole = computed(
-    () => (this.staffModel().role || '').toLowerCase() === ClinicUserRoles.Practitioner.toLowerCase()
+    () => (this.staffModel().role || '').toLowerCase() === ClinicUserRoles.Doctor.toLowerCase()
   );
 
   async ngOnInit(): Promise<void> {

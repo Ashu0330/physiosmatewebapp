@@ -65,7 +65,8 @@ export const ClinicUserRoles = {
   Manager: 'Manager',
   Staff: 'Staff',
   Receptionist: 'Receptionist',
-  Practitioner: 'Practitioner',
+  Doctor: 'Doctor',
+  HR: 'HR'
 } as const;
 
 export type ClinicUserRoleType = (typeof ClinicUserRoles)[keyof typeof ClinicUserRoles];
