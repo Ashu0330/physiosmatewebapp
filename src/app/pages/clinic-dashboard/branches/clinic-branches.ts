@@ -27,6 +27,8 @@ export class ClinicBranches implements OnInit {
   searchTerm = signal<string>('');
   activeStatusFilter = signal<'all' | 'active' | 'inactive'>('all');
 
+  readonly isReceptionist = computed(() => this.authService.isReceptionistWorkspace());
+
   totalCount = computed(() => this.branches().length);
   activeCount = computed(() => this.branches().filter(b => b.isActive).length);
   inactiveCount = computed(() => this.branches().filter(b => !b.isActive).length);
@@ -119,9 +121,16 @@ export class ClinicBranches implements OnInit {
     try {
       const res = await this.relationshipService.getClinicBranches(id);
       if (res.isSuccess) {
-        this.branches.set(res.data || []);
-        if (res.data?.length && res.data[0].clinicName) {
-          this.clinicName.set(res.data[0].clinicName);
+        let branchList = res.data || [];
+        if (this.isReceptionist()) {
+          const assignedBranchIds = this.authService.getAssignedBranchIdsForActiveClinic();
+          branchList = branchList.filter((b) =>
+            b.isActive && (assignedBranchIds.length === 0 || assignedBranchIds.includes(b.id))
+          );
+        }
+        this.branches.set(branchList);
+        if (branchList.length && branchList[0].clinicName) {
+          this.clinicName.set(branchList[0].clinicName);
         }
       } else {
         this.alert.toastError(res.message || 'Failed to load clinic branches.');
@@ -140,6 +149,7 @@ export class ClinicBranches implements OnInit {
 
   async toggleStatus(branch: ClinicBranchDto, event: Event): Promise<void> {
     event.stopPropagation();
+    if (this.isReceptionist()) return;
     const newStatus = !branch.isActive;
 
     // Optimistically update signal
@@ -167,11 +177,15 @@ export class ClinicBranches implements OnInit {
   }
 
   editBranch(branchId: number): void {
+    if (this.isReceptionist()) return;
     this.router.navigate(['/clinic-dashboard/branches/edit', branchId]);
   }
 
   viewDashboard(branch: ClinicBranchDto): void {
-    this.router.navigate(['/clinic-dashboard/dashboard'], {
+    const dashboardPath = this.authService.getRoleId() === 3
+      ? '/clinic-dashboard/dashboard'
+      : '/doctor-dashboard/dashboard';
+    this.router.navigate([dashboardPath], {
       queryParams: { branchId: branch.id }
     });
   }

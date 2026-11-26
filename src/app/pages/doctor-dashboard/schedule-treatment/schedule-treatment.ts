@@ -397,6 +397,10 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     return Number(id || 0);
   }
 
+  get clinicBranchId(): number | null {
+    return this.auth.getActiveClinicBranchId(this.route.snapshot.queryParamMap.get('branchId'));
+  }
+
   get practitionerId(): number {
     const selected = this.selectedPractitionerId();
     if (selected && selected > 0) return selected;
@@ -630,6 +634,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
       practitionerId: pid,
       clinicId: this.isClinic ? this.clinicId : 0,
+      clinicBranchId: this.clinicBranchId,
       assignedPractitionerId: pid > 0 ? pid : null,
       bookingType: 'Treatment',
       amount: payloadAmount,
@@ -982,6 +987,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     const payload: CreateWeeklyAppointmentsViewModel = {
       userSubscriptionId: userSubscriptionId,
       patientId: rawPatientId,
+      clinicBranchId: this.clinicBranchId,
       appointments: appointments
     };
 
@@ -1141,7 +1147,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       id: 0,
       userId: (patientItem as any)?.userId ?? 0,
       providerId: plan?.providerId ?? 0,
-      clinicId: 0,
+      clinicId: this.isClinic ? this.clinicId : 0,
+      clinicBranchId: this.clinicBranchId,
       practitionerId: 0,
       providerType: plan?.providerType || 'Practitioner',
       planId: planId,

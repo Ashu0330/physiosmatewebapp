@@ -398,6 +398,7 @@ export interface BookAppointmentRequest {
   visitType?: string | null;
   practitionerId: number;
   clinicId: number;
+  clinicBranchId?: number | null;
   assignedPractitionerId: number | null;
   bookingType?: string | null;
   amount?: number | null;
@@ -504,6 +505,7 @@ export interface UserSubscriptionViewModel {
   userId?: number;
   providerId?: number;
   clinicId?: number;
+  clinicBranchId?: number | null;
   practitionerId?: number;
   providerType?: string;
   planId: number;
@@ -550,6 +552,7 @@ export interface WeeklyAppointmentSelectionViewModel {
 export interface CreateWeeklyAppointmentsViewModel {
   userSubscriptionId: number;
   patientId?: number | null;
+  clinicBranchId?: number | null;
   appointments: WeeklyAppointmentSelectionViewModel[];
 }
 

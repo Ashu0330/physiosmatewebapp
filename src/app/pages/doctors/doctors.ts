@@ -3,32 +3,33 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { BaseComponent } from '../../helper/base-component';
-import { PractitionerModel, PractitionerFilterViewModel } from '../../models/practitioner.model';
+import { PractitionerModel, PractitionerFilterViewModel, ClinicFilter } from '../../models/practitioner.model';
+import { ClinicBranchDto } from '../../models/clinic.model';
 import { ApiEndPoints } from '../../helper/api-endpoints';
 import { SharedModule } from '../../shared/shared-module';
 import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 
 
-export interface ClinicAmenity {
-  icon: 'equipment' | 'parking' | 'accessible' | 'team' | 'home' | 'timing' | 'reports';
-  label: string;
-}
-
 export interface ClinicItem {
-  id: string;
+  id: number;
   name: string;
-  image: string;
+  image: string | null;
+  bannerImage?: string | null;
   rating: number;
   reviewsCount: number;
   location: string; // Strictly without distance / 'km away'
+  city?: string;
+  state?: string;
+  pincode?: string;
   specialties: string[];
-  amenities: ClinicAmenity[];
+  branches: ClinicBranchDto[];
   price: number;
   isVerified: boolean;
   phone?: string;
+  email?: string;
+  description?: string;
   fullAddress?: string;
-  timings?: string;
-  doctorsCount?: number;
+  doctorsCount: number;
 }
 
 @Component({
@@ -55,6 +56,7 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
 
 
   readonly popularCities = [
+    'All Cities',
     'Kota',
     'Jaipur',
     'Mumbai',
@@ -73,7 +75,6 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
 
   // Filter state for ribbon (Clinics)
   readonly selectedSpecialty = signal<string>('all');
-  readonly selectedAmenity = signal<string>('all');
 
   // Shared Sort state
   readonly sortBy = signal<string>('relevance');
@@ -91,139 +92,40 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   readonly selectedSlot = signal<string>('10:00 AM');
   readonly bookingSuccess = signal<boolean>(false);
 
+  // Real Clinic Data loaded from API
+  readonly allClinics = signal<ClinicItem[]>([]);
 
-
-  // Clinic Data
-  readonly allClinics = signal<ClinicItem[]>([
-    {
-      id: 'clinic-1',
-      name: 'MoveWell Physiotherapy Clinic',
-      image: 'assets/images/physio_clinic_near_you.jpg',
-      rating: 4.8,
-      reviewsCount: 124,
-      location: 'Gumanpura, Kota',
-      specialties: ['Orthopedic', 'Sports', 'Neuro', 'Post-Surgical', "Women's Health"],
-      amenities: [
-        { icon: 'equipment', label: 'Modern Equipment' },
-        { icon: 'parking', label: 'Parking Available' },
-        { icon: 'accessible', label: 'Accessible' },
-      ],
-      price: 500,
-      isVerified: true,
-      phone: '+91 744 245 8901',
-      fullAddress: 'Plot 14, Main Road, Gumanpura, Kota, Rajasthan 324007',
-      timings: 'Mon - Sat: 08:00 AM - 08:30 PM | Sun: 09:00 AM - 01:00 PM',
-      doctorsCount: 4,
-    },
-    {
-      id: 'clinic-2',
-      name: 'LifeCare Physio Clinic',
-      image: 'assets/images/physio_find_clinic.jpg',
-      rating: 4.6,
-      reviewsCount: 98,
-      location: 'Gumanpura, Kota',
-      specialties: ['Orthopedic', 'Geriatric', 'Pediatric', 'Sports', 'Pain Management'],
-      amenities: [
-        { icon: 'team', label: 'Experienced Team' },
-        { icon: 'home', label: 'Home Visit Available' },
-        { icon: 'timing', label: 'Flexible Timings' },
-      ],
-      price: 600,
-      isVerified: true,
-      phone: '+91 744 246 1122',
-      fullAddress: '2nd Floor, Apex Commercial Complex, Gumanpura, Kota, Rajasthan 324007',
-      timings: 'Mon - Sat: 09:00 AM - 09:00 PM | Sun: Closed',
-      doctorsCount: 3,
-    },
-    {
-      id: 'clinic-3',
-      name: 'RehabPlus Clinic',
-      image: 'assets/images/physio_rehab_plan.jpg',
-      rating: 4.7,
-      reviewsCount: 76,
-      location: 'Gumanpura, Kota',
-      specialties: ['Neuro', 'Post-Surgical', 'Sports', "Women's Health", 'Pediatric'],
-      amenities: [
-        { icon: 'equipment', label: 'Advanced Equipment' },
-        { icon: 'parking', label: 'Parking Available' },
-        { icon: 'reports', label: 'Online Reports' },
-      ],
-      price: 550,
-      isVerified: true,
-      phone: '+91 744 247 3344',
-      fullAddress: 'Near City Mall Circle, Jhalawar Road, Gumanpura, Kota, Rajasthan 324005',
-      timings: 'Mon - Sun: 08:30 AM - 08:30 PM',
-      doctorsCount: 5,
-    },
-    {
-      id: 'clinic-4',
-      name: 'Physiosmate Sports & Spine Centre',
-      image: 'assets/images/physio_sports_injury.jpg',
-      rating: 4.9,
-      reviewsCount: 154,
-      location: 'Talwandi, Kota',
-      specialties: ['Sports', 'Orthopedic', 'Spine Care', 'Pain Management', 'Post-Surgical'],
-      amenities: [
-        { icon: 'equipment', label: 'Modern Equipment' },
-        { icon: 'team', label: 'Experienced Team' },
-        { icon: 'accessible', label: 'Accessible' },
-      ],
-      price: 500,
-      isVerified: true,
-      phone: '+91 744 240 7788',
-      fullAddress: 'Sector A, Talwandi, Kota, Rajasthan 324005',
-      timings: 'Mon - Sat: 08:00 AM - 08:00 PM',
-      doctorsCount: 6,
-    },
-    {
-      id: 'clinic-5',
-      name: 'ActiveMotion Pediatric & Neuro Rehab',
-      image: 'assets/images/physio_book_consultation.jpg',
-      rating: 4.8,
-      reviewsCount: 88,
-      location: 'Vigyan Nagar, Kota',
-      specialties: ['Pediatric', 'Neuro', 'Geriatric', 'Post-Surgical'],
-      amenities: [
-        { icon: 'accessible', label: 'Wheelchair Accessible' },
-        { icon: 'timing', label: 'Extended Hours' },
-      ],
-      price: 650,
-      isVerified: true,
-      phone: '+91 744 241 2233',
-      fullAddress: 'Road No. 1, Vigyan Nagar, Kota, Rajasthan 324005',
-      timings: 'Mon - Sat: 09:00 AM - 08:00 PM',
-      doctorsCount: 4,
-    },
-  ]);
-
-  readonly specialtiesList = [
-    'All',
-    'Orthopedic',
-    'Sports',
-    'Neuro',
-    'Post-Surgical',
-    "Women's Health",
-    'Pediatric',
-    'Pain Management',
-    'Geriatric',
-  ];
+  readonly clinicSpecialties = computed<string[]>(() => {
+    const unique = new Set<string>();
+    for (const clinic of this.allClinics()) {
+      for (const spec of clinic.specialties) {
+        if (spec) {
+          unique.add(spec);
+        }
+      }
+    }
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  });
 
   // Filtered Clinics computed
   readonly filteredClinics = computed(() => {
     let list = [...this.allClinics()];
 
-    // Search query filter
     const query = this.searchQuery().trim().toLowerCase();
     if (query) {
-      list = list.filter(
-        c =>
-          c.name.toLowerCase().includes(query) ||
-          c.location.toLowerCase().includes(query) ||
-          c.specialties.some(s => s.toLowerCase().includes(query))
+      list = list.filter(c =>
+        c.name.toLowerCase().includes(query) ||
+        c.location.toLowerCase().includes(query) ||
+        (c.description && c.description.toLowerCase().includes(query)) ||
+        c.specialties.some(s => s.toLowerCase().includes(query)) ||
+        c.branches.some(b =>
+          (b.branchName && b.branchName.toLowerCase().includes(query)) ||
+          (b.city && b.city.toLowerCase().includes(query)) ||
+          (b.address && b.address.toLowerCase().includes(query))
+        )
       );
     }
 
-    // Specialty filter
     const spec = this.selectedSpecialty();
     if (spec !== 'all') {
       list = list.filter(c =>
@@ -231,15 +133,6 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Amenity filter
-    const amenity = this.selectedAmenity();
-    if (amenity !== 'all') {
-      list = list.filter(c =>
-        c.amenities.some(a => a.label.toLowerCase().includes(amenity.toLowerCase()))
-      );
-    }
-
-    // Sort order
     const sort = this.sortBy();
     if (sort === 'rating') {
       list.sort((a, b) => b.rating - a.rating);
@@ -247,7 +140,7 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
       list.sort((a, b) => a.price - b.price);
     } else if (sort === 'price-high') {
       list.sort((a, b) => b.price - a.price);
-    } else if (sort === 'reviews') {
+    } else if (sort === 'reviews' || sort === 'popularity') {
       list.sort((a, b) => b.reviewsCount - a.reviewsCount);
     }
 
@@ -256,10 +149,22 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.detectMode();
-    this.GetAllDoctors()
+    if (this.isClinic()) {
+      this.GetAllClinics();
+    } else {
+      this.GetAllDoctors();
+    }
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
+        const wasClinic = this.isClinic();
         this.detectMode();
+        if (wasClinic !== this.isClinic()) {
+          if (this.isClinic()) {
+            this.GetAllClinics();
+          } else {
+            this.GetAllDoctors();
+          }
+        }
       }
     });
   }
@@ -272,6 +177,13 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   }
 
   readonly hasActiveFilters = computed(() => {
+    if (this.isClinic()) {
+      return (
+        this.selectedSpecialty() !== 'all' ||
+        this.sortBy() !== 'relevance' ||
+        this.searchQuery().trim().length > 0
+      );
+    }
     return (
       this.selectedGender() !== 'all' ||
       this.selectedExperience() !== 'all' ||
@@ -293,35 +205,43 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   selectCity(city: string): void {
     this.selectedCity.set(city);
     this.isCityOpen.set(false);
-    if (!this.isClinic()) {
+    if (this.isClinic()) {
+      this.GetAllClinics(false);
+    } else {
       this.GetAllDoctors();
     }
   }
 
   onCityChange(city: string): void {
     this.selectedCity.set(city);
-    if (!this.isClinic()) {
+    if (this.isClinic()) {
+      this.GetAllClinics(false);
+    } else {
       this.GetAllDoctors();
     }
   }
 
   onSearchQueryChange(query: string): void {
     this.searchQuery.set(query);
-    if (!this.isClinic()) {
-      if (this.searchDebounceTimer) {
-        clearTimeout(this.searchDebounceTimer);
-      }
-      this.searchDebounceTimer = setTimeout(() => {
-        this.GetAllDoctors();
-      }, 500);
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
     }
+    this.searchDebounceTimer = setTimeout(() => {
+      if (this.isClinic()) {
+        this.GetAllClinics(false);
+      } else {
+        this.GetAllDoctors();
+      }
+    }, 500);
   }
 
   onSearchSubmit(): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
-    if (!this.isClinic()) {
+    if (this.isClinic()) {
+      this.GetAllClinics(false);
+    } else {
       this.GetAllDoctors();
     }
   }
@@ -383,7 +303,9 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   setSortBy(val: string): void {
     this.sortBy.set(val);
     this.closeDropdown();
-    if (!this.isClinic()) {
+    if (this.isClinic()) {
+      this.GetAllClinics(false);
+    } else {
       this.GetAllDoctors();
     }
   }
@@ -391,9 +313,13 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   resetFilters(): void {
     this.selectedGender.set('all');
     this.selectedExperience.set('all');
+    this.selectedSpecialty.set('all');
     this.sortBy.set('relevance');
     this.searchQuery.set('');
-    if (!this.isClinic()) {
+    if (this.isClinic()) {
+      this.selectedCity.set('All Cities');
+      this.GetAllClinics(false);
+    } else {
       this.GetAllDoctors();
     }
   }
@@ -401,11 +327,20 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
   selectSpecialty(spec: string): void {
     this.selectedSpecialty.set(spec);
     this.closeDropdown();
+    if (this.isClinic()) {
+      this.GetAllClinics(false);
+    }
   }
 
-  selectAmenity(amenity: string): void {
-    this.selectedAmenity.set(amenity);
-    this.closeDropdown();
+  getClinicInitials(name?: string | null): string {
+    if (!name) return 'CL';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   }
 
   sendAppLink(): void {
@@ -432,6 +367,74 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.closeBooking();
     }, 2000);
+  }
+
+  async GetAllClinics(allowAllCitiesFallback = true): Promise<void> {
+    this.isLoading.set(true);
+    try {
+      const rawCity = this.selectedCity()?.trim() || '';
+      const city = !rawCity || rawCity === 'All Cities' ? null : rawCity;
+      const search = this.searchQuery()?.trim() || null;
+      const specialty = this.selectedSpecialty() === 'all' ? null : this.selectedSpecialty();
+
+      const payload: ClinicFilter = {
+        city,
+        search,
+        specialty,
+        sortBy: this.sortBy(),
+        page: 1,
+        pageSize: 50,
+      };
+
+      const res = await this.apiService.Post<any>(ApiEndPoints.GetClinics, payload);
+      const rawList = res?.isSuccess && Array.isArray(res?.data) ? res.data : [];
+
+      if (allowAllCitiesFallback && rawCity === 'Gumanpura, Kota' && !search && rawList.length === 0) {
+        this.selectedCity.set('All Cities');
+        await this.GetAllClinics(false);
+        return;
+      }
+
+      const mapped: ClinicItem[] = rawList
+        .map((c: any) => {
+          const clinicId = Number(c.clinicId ?? c.id ?? 0);
+          const branches: ClinicBranchDto[] = Array.isArray(c.branches) ? c.branches : [];
+          const services: string[] = Array.isArray(c.services) ? c.services : [];
+          const location = [c.address, c.city, c.stateName ?? c.state]
+            .filter((part: any) => !!part && String(part).trim().length > 0)
+            .join(', ');
+
+          return {
+            id: clinicId,
+            name: c.clinicName || 'Physiotherapy Clinic',
+            image: c.logoUrl || c.logo || c.bannerImageUrl || c.bannerImage || null,
+            bannerImage: c.bannerImageUrl || c.bannerImage || null,
+            rating: Number(c.avgRating ?? 0),
+            reviewsCount: Number(c.totalReviews ?? 0),
+            location: location || 'Location not specified',
+            city: c.city ?? undefined,
+            state: c.stateName ?? c.state ?? undefined,
+            pincode: c.pincode ?? undefined,
+            specialties: services,
+            branches,
+            price: Number(c.consultancyFees ?? 0),
+            isVerified: Boolean(c.isApproved),
+            phone: c.phone ?? undefined,
+            email: c.email ?? undefined,
+            description: c.description ?? undefined,
+            fullAddress: c.address ?? undefined,
+            doctorsCount: Number(c.doctorsCount ?? 0),
+          };
+        })
+        .filter((c: ClinicItem) => c.id > 0);
+
+      this.allClinics.set(mapped);
+    } catch (error) {
+      console.error('GetAllClinics ERROR:', error);
+      this.allClinics.set([]);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   async GetAllDoctors(): Promise<void> {
@@ -463,7 +466,8 @@ export class Doctors extends BaseComponent implements OnInit, OnDestroy {
       }
 
       // 4. City & Search
-      const city = this.selectedCity()?.trim() || null;
+      const rawCity = this.selectedCity()?.trim() || '';
+      const city = !rawCity || rawCity === 'All Cities' ? null : rawCity;
       const search = this.searchQuery()?.trim() || null;
 
       const payload: PractitionerFilterViewModel = {

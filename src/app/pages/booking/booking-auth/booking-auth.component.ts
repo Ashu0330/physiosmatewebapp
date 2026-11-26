@@ -82,18 +82,18 @@ export class BookingAuthComponent implements OnInit {
     this.provider = {
       id: id,
       practitionerId: id,
-      fullName: existing?.providerName || 'Dr. Sneha Sharma',
-      name: existing?.providerName || 'Dr. Sneha Sharma',
-      specialization: existing?.providerSpecialty || 'Physiotherapist & Sports Rehab Specialist',
+      fullName: existing?.providerName || 'Healthcare Provider',
+      name: existing?.providerName || 'Healthcare Provider',
+      specialization: existing?.providerSpecialty || 'Physiotherapist',
       specialtyTitle: '(Physiotherapist)',
-      avgRating: 4.8,
-      totalReviews: 52,
-      clinicName: existing?.clinicName || 'Fit N Fly Physiotherapy & Fitness Centre',
-      clinicAddress: existing?.clinicAddress || '4/164, Shipra Path, Mansarovar, Jaipur',
-      city: 'Jaipur',
-      consultationFee: existing?.consultationFee || 500,
-      photoUrl: existing?.providerImage || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80',
-      profileImage: existing?.providerImage || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80'
+      avgRating: 0,
+      totalReviews: 0,
+      clinicName: existing?.clinicName || '',
+      clinicAddress: existing?.clinicAddress || '',
+      city: '',
+      consultationFee: existing?.consultationFee || 0,
+      photoUrl: existing?.providerImage || '',
+      profileImage: existing?.providerImage || ''
     };
     this.bookingService.setProvider(this.provider);
   }

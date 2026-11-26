@@ -4,9 +4,12 @@
     <!-- Top Header Ribbon -->
     <div class="branches-header-row">
       <div class="header-titles">
-        <h1 class="branches-title">Clinic Branches</h1>
-        <p class="branches-subtitle">Manage physical clinic locations, operating status, and branch-level staffing.</p>
+        <h1 class="branches-title">{{ isReceptionist() ? 'Assigned Clinic Branch' : 'Clinic Branches' }}</h1>
+        <p class="branches-subtitle">
+          {{ isReceptionist() ? 'View details for your assigned clinic branch and active staffing.' : 'Manage physical clinic locations, operating status, and branch-level staffing.' }}
+        </p>
       </div>
+      @if (!isReceptionist()) {
       <div class="header-actions">
         <a routerLink="/clinic-dashboard/branches/new" class="btn-add-branch">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -16,6 +19,7 @@
           Add New Branch
         </a>
       </div>
+      }
     </div>
 
     <!-- Search and Filter Bar -->
@@ -37,6 +41,7 @@
       </div>
 
       <!-- Filter Buttons Group -->
+      @if (!isReceptionist()) {
       <div class="filter-pills-wrap">
         <button
           type="button"
@@ -62,6 +67,7 @@
           Inactive ({{ inactiveCount() }})
         </button>
       </div>
+      }
     </div>
 
     <!-- Loading State -->
@@ -83,14 +89,17 @@
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
         </div>
-        <h3 class="empty-title">No branches found</h3>
+        <h3 class="empty-title">{{ isReceptionist() ? 'No assigned branch found' : 'No branches found' }}</h3>
         <p class="empty-subtitle">
           @if (searchTerm()) {
             No branch matches your search "{{ searchTerm() }}".
+          } @else if (isReceptionist()) {
+            No clinic branch is currently assigned to your receptionist account.
           } @else {
             You haven't added any physical branches yet. Create permanent branch records with address and contact info.
           }
         </p>
+        @if (!isReceptionist()) {
         <a routerLink="/clinic-dashboard/branches/new" class="btn-add-branch mt-3">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -98,6 +107,7 @@
           </svg>
           Add New Branch
         </a>
+        }
       </div>
     }
 
@@ -135,6 +145,7 @@
                 {{ branch.activePractitionersCount }} Practitioners • {{ branch.activeStaffCount }} Staff
               </span>
 
+              @if (!isReceptionist()) {
               <!-- Active Toggle Switch -->
               <label class="switch-toggle" [title]="branch.isActive ? 'Click to deactivate' : 'Click to activate'">
                 <input
@@ -143,6 +154,7 @@
                   (change)="toggleStatus(branch, $event)" />
                 <span class="slider"></span>
               </label>
+              }
             </div>
 
             <!-- Card Bottom Divider -->
@@ -150,8 +162,10 @@
 
             <!-- Action Links Row -->
             <div class="card-actions-row">
+              @if (!isReceptionist()) {
               <a class="action-link" (click)="editBranch(branch.id)">Edit</a>
               <span class="action-divider">|</span>
+              }
               <a class="action-link" (click)="viewDashboard(branch)">View Dashboard &rarr;</a>
             </div>
           </div>

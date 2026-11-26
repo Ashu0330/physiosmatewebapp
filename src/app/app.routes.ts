@@ -16,6 +16,7 @@ import { PracticeManagement } from './pages/doctor-dashboard/practice-management
 import { ScheduleTreatment } from './pages/doctor-dashboard/schedule-treatment/schedule-treatment';
 import { ConsultancyList } from './pages/doctor-dashboard/consultancy-list/consultancy-list';
 import { authChildGuard, authGuard } from './helper/auth.guard';
+import { receptionistRestrictedGuard } from './helper/clinic-practitioner.guard';
 
 export const routes: Routes = [
   // ─── Main Layout Routes (With Header & Footer) ───────────────────────────
@@ -78,11 +79,11 @@ export const routes: Routes = [
       },
 
       // ─── Global Settings Page ───────────────────────────────────────────────
-      { path: 'settings', component: Settings, canActivate: [authGuard] },
+      { path: 'settings', component: Settings, canActivate: [authGuard, receptionistRestrictedGuard] },
       { path: 'practice-management', component: PracticeManagement, canActivate: [authGuard] },
       // { path: 'practice-management', component: PracticeManagement },
       { path: 'schedule-treatment', component: ScheduleTreatment, canActivate: [authGuard] },
-      { path: 'consultancy-list', component: ConsultancyList, canActivate: [authGuard] },
+      { path: 'consultancy-list', component: ConsultancyList, canActivate: [authGuard, receptionistRestrictedGuard] },
     ],
   },
 

@@ -780,12 +780,18 @@ export class Doctordashboard implements OnInit {
     const today = new Date();
     const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
     const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+    const branchId = Number(this.auth.getBranchId() || 0);
+    const practitionerId = !this.auth.canAssignPractitioner()
+      ? Number(this.auth.getPractitionerId() || 0)
+      : 0;
 
     const model = {
       page: 1,
       pageSize: 101,
       fromDate,
       toDate,
+      ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+      ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
     };
 
     const res = await this.apiService.Post<PatientConsultancyDetails[]>(
@@ -809,11 +815,17 @@ export class Doctordashboard implements OnInit {
       const today = new Date();
       const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
       const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+      const branchId = Number(this.auth.getBranchId() || 0);
+      const practitionerId = this.auth.isClinicPractitionerWorkspace()
+        ? Number(this.auth.getPractitionerId() || 0)
+        : 0;
       const model = {
         page: 1,
         pageSize: 100,
         fromDate,
         toDate,
+        ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+        ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
       };
 
       const res = await this.apiService.Post<TodayAppointmentScheduleItem[]>(

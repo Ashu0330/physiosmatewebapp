@@ -1,3 +1,5 @@
+import { ClinicBranchDto } from './clinic.model';
+
 export class Availability {
   dayName: string;
   dayOfWeek: number;
@@ -163,7 +165,12 @@ export interface SavedPractitioner {
 }
 
 export interface ClinicFilter {
-  city?: string;
+  city?: string | null;
+  location?: string | null;
+  search?: string | null;
+  specialty?: string | null;
+  sortBy?: string | null;
+  minRating?: number | null;
   page: number;
   pageSize: number;
 }
@@ -173,18 +180,26 @@ export interface ClinicSummary {
   id?: number;
   clinicName: string;
   description: string;
+  consultancyFees?: number;
   address: string;
   city: string;
   state: string;
+  stateName?: string;
+  pincode?: string;
   phone?: string;
   email?: string;
   logo?: string | null;
+  logoUrl?: string | null;
   bannerImage?: string | null;
+  bannerImageUrl?: string | null;
   avgRating?: number | null;
   totalReviews?: number;
   isApproved?: boolean;
   isActive?: boolean;
   createdAt?: string;
+  services?: string[];
+  doctorsCount?: number;
+  branches?: ClinicBranchDto[];
 }
 
 export interface ClinicGalleryItem {
@@ -230,6 +245,8 @@ export interface ClinicDetailedData {
   clinicGallery: ClinicGalleryItem[];
   practitioners: PractitionerSummary[];
   practitionerIds: number[];
+  branches?: ClinicBranchDto[];
+  doctorsCount?: number;
 }
 
 export interface ProviderCatalogRequest {

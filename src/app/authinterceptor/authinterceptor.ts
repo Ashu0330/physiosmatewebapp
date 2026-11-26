@@ -16,12 +16,29 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const token = getStoredToken();
-  const requestToSend = token
-    ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const rawWs = localStorage.getItem('activeWorkspace');
+    if (rawWs) {
+      const ws = JSON.parse(rawWs);
+      if (
+        ws?.workspaceType === 'Clinic' &&
+        Number(ws?.clinicId) > 0 &&
+        (ws?.accessLevel || '').toLowerCase() !== 'practitioner'
+      ) {
+        headers['X-Clinic-Id'] = String(ws.clinicId);
+      }
+    }
+  } catch {
+    // Ignore malformed workspace storage
+  }
+
+  const requestToSend = Object.keys(headers).length > 0
+    ? req.clone({ setHeaders: headers })
     : req;
 
   return next(requestToSend).pipe(

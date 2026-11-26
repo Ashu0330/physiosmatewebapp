@@ -44,12 +44,44 @@ export class Sidebar extends BaseComponent {
     '/clinic-dashboard/appointments',
   ]);
 
+  private readonly receptionistAllowedPaths = new Set<string>([
+    '/doctor-dashboard/dashboard',
+    '/doctor-dashboard/branches',
+    '/doctor-dashboard/add-patient',
+    '/doctor-dashboard/patients',
+    '/doctor-dashboard/practice-management',
+    '/doctor-dashboard/schedule-treatment',
+    '/clinic-dashboard/dashboard',
+    '/clinic-dashboard/branches',
+    '/clinic-dashboard/add-patient',
+    '/clinic-dashboard/patients',
+    '/clinic-dashboard/practice-management',
+    '/clinic-dashboard/schedule-treatment',
+  ]);
+
   readonly isClinicPractitionerOnly = computed<boolean>(() => {
     this.activeWorkspace();
     return this.authService.isClinicPractitionerWorkspace();
   });
 
+  readonly isReceptionist = computed<boolean>(() => {
+    this.activeWorkspace();
+    return this.authService.isReceptionistWorkspace();
+  });
+
   readonly visibleMenulist = computed<MenusModel[]>(() => {
+    if (this.isReceptionist()) {
+      const basePrefix = this.authService.getRoleId() === 3 ? '/clinic-dashboard' : '/doctor-dashboard';
+      return [
+        { menuId: 901, menuName: 'Dashboard', icon: 'layout-dashboard', path: `${basePrefix}/dashboard` },
+        { menuId: 902, menuName: 'Assigned Branch', icon: 'building-2', path: `${basePrefix}/branches` },
+        { menuId: 903, menuName: 'Add Patient', icon: 'user-plus', path: `${basePrefix}/add-patient` },
+        { menuId: 904, menuName: 'Patients', icon: 'users', path: `${basePrefix}/patients` },
+        { menuId: 905, menuName: 'Practice Management', icon: 'briefcase-medical', path: `${basePrefix}/practice-management` },
+        { menuId: 906, menuName: 'Schedule Treatment', icon: 'calendar-check', path: `${basePrefix}/schedule-treatment` },
+      ];
+    }
+
     const list = this.menulist();
     if (!this.isClinicPractitionerOnly()) {
       return list ?? [];
@@ -116,6 +148,9 @@ export class Sidebar extends BaseComponent {
     if (this.isClinicPractitionerOnly() && !url.startsWith('/user-dashboard')) {
       return 'Clinic Practitioner';
     }
+    if (this.isReceptionist() && !url.startsWith('/user-dashboard')) {
+      return 'Clinic Receptionist';
+    }
     if (parentId === 2 || url.startsWith('/user-dashboard')) {
       return 'Patient Dashboard';
     }
@@ -133,6 +168,12 @@ export class Sidebar extends BaseComponent {
       return false;
     }
     const url = this.cleanRoutePath(this.currentUrl());
+    if (url === '/doctor-dashboard/consultancy-list' || url.startsWith('/doctor-dashboard/consultancy-list/')) {
+      return false;
+    }
+    if (this.isReceptionist() && !url.startsWith('/user-dashboard')) {
+      return this.receptionistAllowedPaths.has(url);
+    }
     const list = this.visibleMenulist();
     if (!list || list.length === 0 || !url) {
       return false;

@@ -201,6 +201,12 @@ export class Header extends BaseComponent implements OnInit {
     if (this.authService.isClinicPractitionerWorkspace()) {
       return '/doctor-dashboard/consultations';
     }
+    if (this.authService.isReceptionistWorkspace()) {
+      return this.authService.getWorkspaceNavigationRoute(
+        this.authService.getActiveWorkspace(),
+        this.currentUser?.roleId
+      );
+    }
     if (this.currentUser?.roleId === 3 || this.currentUser?.clinicId) {
       return '/clinic-dashboard/dashboard';
     }

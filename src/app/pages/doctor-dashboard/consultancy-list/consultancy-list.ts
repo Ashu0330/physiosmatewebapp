@@ -128,11 +128,18 @@ export class ConsultancyList implements OnInit {
 
     const now = new Date();
 
+    const branchId = Number(this.authService.getBranchId() || 0);
+    const practitionerId = !this.authService.canAssignPractitioner()
+      ? Number(this.authService.getPractitionerId() || 0)
+      : 0;
+
     const payload = {
       page: 1,
       pageSize: 500, // retrieve list for filtering & sorting
       fromDate,
       toDate,
+      ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+      ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
     };
 
     try {

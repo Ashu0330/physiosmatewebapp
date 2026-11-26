@@ -13,3 +13,20 @@ export const clinicPractitionerRestrictedGuard: CanActivateFn = () => {
   }
   return true;
 };
+
+/**
+ * Blocks Receptionist workspace users from routes outside their allowed set
+ * (Dashboard, Assigned Branch, Add Patient, Patients, Practice Management, Schedule Treatment).
+ */
+export const receptionistRestrictedGuard: CanActivateFn = () => {
+  const auth = inject(Authservice);
+  const router = inject(Router);
+  if (auth.isReceptionistWorkspace()) {
+    const fallback = auth.getWorkspaceNavigationRoute(
+      auth.getActiveWorkspace(),
+      auth.getRoleId()
+    );
+    return router.createUrlTree([fallback]);
+  }
+  return true;
+};

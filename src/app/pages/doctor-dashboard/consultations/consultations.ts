@@ -10,6 +10,7 @@ import {
 } from '../../../models/doctor-dashboard.model';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
+import { Authservice } from '../../../services/authservice';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
@@ -22,6 +23,7 @@ import { ApiEndPoints } from '../../../helper/api-endpoints';
 export class Consultations implements OnInit, OnChanges {
   private alertService = inject(SweetAlertService);
   private apiService = inject(ApiService);
+  private auth = inject(Authservice);
 
   @Input() patients: DoctorPatient[] = [];
   @Input() preSelectedPatientId: string | null = null;
@@ -245,7 +247,15 @@ export class Consultations implements OnInit, OnChanges {
 
     this.isSearchingPatients.set(true);
     try {
-      const res = await this.apiService.Post<any>(ApiEndPoints.ConsultancyPatient, { search: query.trim() });
+      const branchId = Number(this.auth.getBranchId() || 0);
+      const practitionerId = !this.auth.canAssignPractitioner()
+        ? Number(this.auth.getPractitionerId() || 0)
+        : 0;
+      const res = await this.apiService.Post<any>(ApiEndPoints.ConsultancyPatient, {
+        search: query.trim(),
+        ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+        ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
+      });
       if (res?.isSuccess && res.data?.length > 0) {
         this.patientSearchResults.set(res.data as PatientSearchItem[]);
       } else {

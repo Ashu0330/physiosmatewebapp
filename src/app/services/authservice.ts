@@ -303,6 +303,32 @@ export class Authservice {
     return user ? (user.branchId ?? user.clinicBranchId ?? null) : null;
   }
 
+  getActiveClinicBranchId(routeBranchId?: unknown): number | null {
+    const ws = this.activeWorkspace();
+    if (ws && ws.workspaceType !== 'Clinic') {
+      return null;
+    }
+    const user = this.getCurrentUser();
+    if (!ws && !this.canAssignPractitioner() && !this.isReceptionistWorkspace() && user?.workspaceType !== 'Clinic') {
+      return null;
+    }
+    const queryId = Number(routeBranchId || 0);
+    if (queryId > 0) {
+      return queryId;
+    }
+    const direct = Number(this.getBranchId() || 0);
+    if (direct > 0) {
+      return direct;
+    }
+    if (this.isReceptionistWorkspace()) {
+      const assigned = this.getAssignedBranchIdsForActiveClinic();
+      if (assigned.length > 0 && assigned[0] > 0) {
+        return assigned[0];
+      }
+    }
+    return null;
+  }
+
   getActiveWorkspace(): UserWorkspaceItemDto | null {
     return this.activeWorkspace();
   }
@@ -454,6 +480,45 @@ export class Authservice {
       user?.workspaceType === 'Clinic' &&
       (user?.workspaceAccessLevel || '').toLowerCase() === 'practitioner'
     );
+  }
+
+  isReceptionistWorkspace(): boolean {
+    const ws = this.activeWorkspace();
+    if (ws) {
+      return (
+        ws.workspaceType === 'Clinic' &&
+        (ws.accessLevel || '').toLowerCase() === 'receptionist'
+      );
+    }
+    const user = this.getCurrentUser();
+    return (
+      user?.workspaceType === 'Clinic' &&
+      (user?.workspaceAccessLevel || '').toLowerCase() === 'receptionist'
+    );
+  }
+
+  getAssignedBranchIdsForActiveClinic(): number[] {
+    const active = this.activeWorkspace();
+    const targetClinicId = Number(active?.clinicId ?? this.getClinicId() ?? 0);
+    const ids = new Set<number>();
+
+    if (active?.branchId && Number(active.branchId) > 0) {
+      ids.add(Number(active.branchId));
+    }
+
+    for (const ws of this.availableWorkspaces()) {
+      if (
+        ws.workspaceType === 'Clinic' &&
+        (ws.accessLevel || '').toLowerCase() === 'receptionist' &&
+        (targetClinicId <= 0 || Number(ws.clinicId || 0) === targetClinicId) &&
+        ws.branchId &&
+        Number(ws.branchId) > 0
+      ) {
+        ids.add(Number(ws.branchId));
+      }
+    }
+
+    return Array.from(ids);
   }
 
   /**

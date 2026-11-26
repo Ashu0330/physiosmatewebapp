@@ -1,6 +1,7 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { NewPatientFormData, DoctorPatient } from '../../../models/doctor-dashboard.model';
 import { ApiService } from '../../../services/api.service';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
@@ -42,6 +43,8 @@ export class Addpatient implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(Authservice);
   private relationshipService = inject(ClinicRelationshipService);
+  private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
   form!: FormGroup;
   @ViewChild('photoInput') photoInputRef?: ElementRef<HTMLInputElement>;
@@ -53,6 +56,7 @@ export class Addpatient implements OnInit {
   isSavingPatient = false;
   practitioners: { id: number; name: string }[] = [];
   isLoadingPractitioners = false;
+  private resolvedClinicId = 0;
 
   // ─── Dynamic slot state (replaces static list) ────────────────────────────
   consultancySlots = signal<ConsultancySlot[]>([]);
@@ -89,6 +93,26 @@ export class Addpatient implements OnInit {
 
   get canAssignPractitioner(): boolean {
     return this.auth.canAssignPractitioner();
+  }
+
+  get currentClinicId(): number {
+    const id = Number(
+      this.resolvedClinicId ||
+      this.auth.getClinicId() ||
+      this.auth.getActiveWorkspace()?.clinicId ||
+      this.auth.getCurrentUser()?.clinicId ||
+      this.auth.getCurrentUser()?.ClinicId ||
+      0
+    );
+    return id > 0 ? id : 0;
+  }
+
+  get useClinicSlots(): boolean {
+    return (this.auth.isReceptionistWorkspace() || this.canAssignPractitioner) && this.currentClinicId > 0;
+  }
+
+  get currentBranchId(): number | null {
+    return this.auth.getActiveClinicBranchId(this.route.snapshot.queryParamMap.get('branchId'));
   }
 
   get currentPractitionerId(): number {
@@ -179,6 +203,9 @@ export class Addpatient implements OnInit {
   }
 
   onPractitionerChange(): void {
+    if (this.useClinicSlots || this.auth.isReceptionistWorkspace() || this.canAssignPractitioner) {
+      return;
+    }
     this.consultancySlots.set([]);
     this.treatmentSlots.set([]);
     this.form.patchValue({ slotTime: null, startTime: '', endTime: '', appointmentSlotId: null });
@@ -197,6 +224,7 @@ export class Addpatient implements OnInit {
   }
 
   async loadPractitioners(): Promise<void> {
+    debugger;
     const currentPid = this.currentPractitionerId;
     if (!this.canAssignPractitioner) {
       this.practitioners = currentPid > 0
@@ -206,6 +234,7 @@ export class Addpatient implements OnInit {
         this.form.patchValue({ assignedPractitionerId: currentPid }, { emitEvent: false });
       }
       this.isLoadingPractitioners = false;
+      this.cdr.markForCheck();
       this.triggerSlotLoad();
       return;
     }
@@ -213,7 +242,10 @@ export class Addpatient implements OnInit {
     this.isLoadingPractitioners = true;
     try {
       const clinicId = await this.relationshipService.resolveCurrentClinicId();
-      const branchId = this.auth.getBranchId();
+      if (clinicId > 0) {
+        this.resolvedClinicId = clinicId;
+      }
+      const branchId = this.currentBranchId;
       if (clinicId > 0) {
         const res = await this.relationshipService.getClinicPractitioners(clinicId, 'Active', branchId);
         if (res?.isSuccess && Array.isArray(res.data)) {
@@ -238,12 +270,41 @@ export class Addpatient implements OnInit {
       }
 
       this.isLoadingPractitioners = false;
+      this.cdr.markForCheck();
       this.triggerSlotLoad();
     }
   }
 
-  triggerSlotLoad(): void {
+  async triggerSlotLoad(): Promise<void> {
     const visitType = this.form.get('visitType')?.value;
+    if (!visitType || (visitType !== 'Consultancy' && visitType !== 'Treatment')) {
+      return;
+    }
+
+    const date = this.form.get('consultationDate')?.value;
+
+    if (this.auth.isReceptionistWorkspace() || this.canAssignPractitioner) {
+      let clinicId = this.currentClinicId;
+      if (clinicId <= 0) {
+        clinicId = await this.relationshipService.resolveCurrentClinicId();
+        if (clinicId > 0) {
+          this.resolvedClinicId = clinicId;
+        }
+      }
+      if (clinicId > 0) {
+        if (visitType === 'Consultancy') {
+          await this.loadConsultancySlots(0, date, clinicId);
+        } else if (visitType === 'Treatment') {
+          if (date) {
+            await this.loadTreatmentSlots(0, date, clinicId);
+          } else {
+            this.treatmentSlots.set([]);
+          }
+        }
+        return;
+      }
+    }
+
     let practitionerId = this.form.get('assignedPractitionerId')?.value;
 
     if (!practitionerId && !this.canAssignPractitioner && this.currentPractitionerId > 0) {
@@ -255,24 +316,26 @@ export class Addpatient implements OnInit {
       return;
     }
 
-    const date = this.form.get('consultationDate')?.value;
-
     if (visitType === 'Consultancy') {
-      this.loadConsultancySlots(Number(practitionerId), date);
+      await this.loadConsultancySlots(Number(practitionerId), date);
     } else if (visitType === 'Treatment') {
       if (date) {
-        this.loadTreatmentSlots(Number(practitionerId), date);
+        await this.loadTreatmentSlots(Number(practitionerId), date);
       } else {
         this.treatmentSlots.set([]);
       }
     }
   }
 
-  async loadConsultancySlots(practitionerId: number, date?: string): Promise<void> {
+  async loadConsultancySlots(practitionerId: number, date?: string, clinicId?: number): Promise<void> {
     this.isLoadingSlots = true;
+    this.cdr.markForCheck();
     try {
+      const query = clinicId && clinicId > 0
+        ? `ClinicId=${clinicId}`
+        : `practitionerId=${practitionerId}`;
       const res = await this.apiService.Get<any>(
-        `${ApiEndPoints.GetAvailability}?practitionerId=${practitionerId}`
+        `${ApiEndPoints.GetAvailability}?${query}`
       );
       if (res?.isSuccess && res.data) {
         const rawGroups = Array.isArray(res.data) ? res.data : [res.data];
@@ -324,14 +387,19 @@ export class Addpatient implements OnInit {
       this.consultancySlots.set([]);
     } finally {
       this.isLoadingSlots = false;
+      this.cdr.markForCheck();
     }
   }
 
-  async loadTreatmentSlots(practitionerId: number, date: string): Promise<void> {
+  async loadTreatmentSlots(practitionerId: number, date: string, clinicId?: number): Promise<void> {
     this.isLoadingSlots = true;
+    this.cdr.markForCheck();
     try {
+      const query = clinicId && clinicId > 0
+        ? `clinicId=${clinicId}&date=${encodeURIComponent(date)}`
+        : `practitionerId=${practitionerId}&date=${encodeURIComponent(date)}`;
       const res = await this.apiService.Get<any>(
-        `${ApiEndPoints.GetAvailableAppointmentSlots}?practitionerId=${practitionerId}&date=${date}`
+        `${ApiEndPoints.GetAvailableAppointmentSlots}?${query}`
       );
       if (res?.isSuccess && res.data) {
         const raw = Array.isArray(res.data) ? res.data : [res.data];
@@ -354,6 +422,7 @@ export class Addpatient implements OnInit {
       this.treatmentSlots.set([]);
     } finally {
       this.isLoadingSlots = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -464,6 +533,7 @@ export class Addpatient implements OnInit {
       const visitTypeValue = formVal.visitType ?? (
         formVal.visitFor === 'Consultation' ? 'Consultancy' : formVal.visitFor
       );
+      const branchId = this.currentBranchId;
       const params = new URLSearchParams({
         FullName: formVal.fullName.trim(),
         Mobile: formVal.mobile.trim(),
@@ -477,6 +547,8 @@ export class Addpatient implements OnInit {
         ...(formVal.visitMode ? { VisitMode: formVal.visitMode } : {}),
         ...(formVal.assignedPractitionerId != null
           ? { AssignedPractitionerId: String(formVal.assignedPractitionerId) } : {}),
+        ...(branchId != null && branchId > 0
+          ? { ClinicBranchId: String(branchId) } : {}),
         ...(formVal.consultationDate ? {
           ConsultationDate: formVal.consultationDate,
           AppointmentDate: formVal.consultationDate
