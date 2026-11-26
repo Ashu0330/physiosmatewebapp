@@ -1,4 +1,4 @@
-import { Component, input, output, computed, effect, signal } from '@angular/core';
+import { Component, input, output, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { BaseComponent } from '../../../helper/base-component';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { MenusModel } from '../../../models/mastermodel';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,7 +21,9 @@ export class Sidebar extends BaseComponent {
   readonly menulist = signal<MenusModel[]>([]);
   readonly parentMenuId = input<number | null>(null);
 
+  private relationshipService = inject(ClinicRelationshipService);
   private previousParentMenuId: number | null = null;
+  private latestMenuRequestToken = 0;
 
   private currentUrl = toSignal(
     this.router.events.pipe(
@@ -30,44 +33,181 @@ export class Sidebar extends BaseComponent {
     { initialValue: this.router.url }
   );
 
-  readonly isSidebarActive = computed<boolean>(() => {
+  readonly activeWorkspace = this.authService.activeWorkspace;
 
-    this.currentUrl();
-    const list = this.menulist();
-    if (!list || list.length === 0) {
-      return false;
+  private readonly clinicPractitionerAllowedPaths = new Set<string>([
+    '/doctor-dashboard/consultations',
+    '/doctor-dashboard/appointments',
+    '/doctor-dashboard/consultancy-list',
+    '/doctor-dashboard/appointment-list',
+    '/clinic-dashboard/consultations',
+    '/clinic-dashboard/appointments',
+  ]);
+
+  private readonly receptionistAllowedPaths = new Set<string>([
+    '/doctor-dashboard/dashboard',
+    '/doctor-dashboard/branches',
+    '/doctor-dashboard/add-patient',
+    '/doctor-dashboard/patients',
+    '/doctor-dashboard/practice-management',
+    '/doctor-dashboard/schedule-treatment',
+    '/clinic-dashboard/dashboard',
+    '/clinic-dashboard/branches',
+    '/clinic-dashboard/add-patient',
+    '/clinic-dashboard/patients',
+    '/clinic-dashboard/practice-management',
+    '/clinic-dashboard/schedule-treatment',
+  ]);
+
+  readonly isClinicPractitionerOnly = computed<boolean>(() => {
+    this.activeWorkspace();
+    return this.authService.isClinicPractitionerWorkspace();
+  });
+
+  readonly isReceptionist = computed<boolean>(() => {
+    this.activeWorkspace();
+    return this.authService.isReceptionistWorkspace();
+  });
+
+  readonly visibleMenulist = computed<MenusModel[]>(() => {
+    if (this.isReceptionist()) {
+      const basePrefix = this.authService.getRoleId() === 3 ? '/clinic-dashboard' : '/doctor-dashboard';
+      return [
+        { menuId: 901, menuName: 'Dashboard', icon: 'layout-dashboard', path: `${basePrefix}/dashboard` },
+        { menuId: 902, menuName: 'Assigned Branch', icon: 'building-2', path: `${basePrefix}/branches` },
+        { menuId: 903, menuName: 'Add Patient', icon: 'user-plus', path: `${basePrefix}/add-patient` },
+        { menuId: 904, menuName: 'Patients', icon: 'users', path: `${basePrefix}/patients` },
+        { menuId: 905, menuName: 'Practice Management', icon: 'briefcase-medical', path: `${basePrefix}/practice-management` },
+        { menuId: 906, menuName: 'Schedule Treatment', icon: 'calendar-check', path: `${basePrefix}/schedule-treatment` },
+      ];
     }
-    return list.some(menu => {
-      if (!menu.path) {
-        return false;
-      }
-      return this.router.isActive(menu.path, {
-        paths: 'exact',
-        queryParams: 'ignored',
-        matrixParams: 'ignored',
-        fragment: 'ignored'
+
+    const list = this.menulist();
+    if (!this.isClinicPractitionerOnly()) {
+      return list ?? [];
+    }
+
+    const fromDb = (list ?? [])
+      .filter(menu => this.clinicPractitionerAllowedPaths.has(this.cleanRoutePath(menu.path)))
+      .map(menu => {
+        const path = this.cleanRoutePath(menu.path);
+        if (path.endsWith('/appointments') && (menu.menuName || '').toLowerCase() === 'treatment') {
+          return { ...menu, menuName: 'Appointments' };
+        }
+        return menu;
       });
-    });
+
+    if (fromDb.length > 0) {
+      return fromDb;
+    }
+
+    // Fallback when user's base DB RoleId (e.g. RoleId = 1 Patient also assigned as Clinic Practitioner)
+    // does not grant Doctor menu permissions from Master/GetSideMenu
+    const basePrefix = this.authService.getRoleId() === 3 ? '/clinic-dashboard' : '/doctor-dashboard';
+    return [
+      {
+        menuId: 7,
+        menuName: 'Consultations',
+        icon: 'stethoscope',
+        path: `${basePrefix}/consultations`,
+      },
+      {
+        menuId: 8,
+        menuName: 'Appointments',
+        icon: 'calendar-days',
+        path: `${basePrefix}/appointments`,
+      },
+    ];
+  });
+
+  readonly activeWorkspaceLabel = computed<string>(() => {
+    return this.authService.formatWorkspaceLabel(this.activeWorkspace());
+  });
+
+  readonly showSoloSetupCta = computed<boolean>(() => {
+    this.activeWorkspace();
+    this.authService.availableWorkspaces();
+    const url = this.cleanRoutePath(this.currentUrl());
+    return (
+      this.isClinicPractitionerOnly() &&
+      this.authService.canSetupSoloProfile() &&
+      !url.startsWith('/user-dashboard')
+    );
+  });
+
+  readonly soloCtaLabel = computed<string>(() => {
+    return this.authService.isProfileCompleted()
+      ? 'Enable Solo Profile'
+      : '+ Create Solo Profile';
   });
 
   readonly consoleTitle = computed<string>(() => {
-    const url = this.currentUrl();
+    const url = this.cleanRoutePath(this.currentUrl());
     const parentId = this.parentMenuId() || this.getStoredParentId();
-    if (parentId === 2 || (url && url.includes('/user-dashboard'))) {
+    const ws = this.activeWorkspace();
+    if (this.isClinicPractitionerOnly() && !url.startsWith('/user-dashboard')) {
+      return 'Clinic Practitioner';
+    }
+    if (this.isReceptionist() && !url.startsWith('/user-dashboard')) {
+      return 'Clinic Receptionist';
+    }
+    if (parentId === 2 || url.startsWith('/user-dashboard')) {
       return 'Patient Dashboard';
     }
+    if (parentId === 22 || url.startsWith('/clinic-dashboard')) {
+      return 'Clinic Console';
+    }
+    if (ws?.workspaceType === 'Clinic') {
+      return `Clinic ${ws.accessLevel || 'Practitioner'}`;
+    }
     return 'Doctor Console';
+  });
+
+  readonly isSidebarActive = computed<boolean>(() => {
+    if (!this.authService.isLoggedIn()) {
+      return false;
+    }
+    const url = this.cleanRoutePath(this.currentUrl());
+    if (url === '/doctor-dashboard/consultancy-list' || url.startsWith('/doctor-dashboard/consultancy-list/')) {
+      return false;
+    }
+    if (this.isReceptionist() && !url.startsWith('/user-dashboard')) {
+      return this.receptionistAllowedPaths.has(url);
+    }
+    const list = this.visibleMenulist();
+    if (!list || list.length === 0 || !url) {
+      return false;
+    }
+    const matchesMenu = list.some(menu => {
+      const menuPath = this.cleanRoutePath(menu.path);
+      return !!menuPath && (url === menuPath || url.startsWith(menuPath + '/'));
+    });
+    if (matchesMenu) {
+      return true;
+    }
+    if (this.isClinicPractitionerOnly() && this.clinicPractitionerAllowedPaths.has(url)) {
+      return true;
+    }
+    const parentId = this.parentMenuId() ?? this.getStoredParentId();
+    return parentId === 22 && url.startsWith('/doctor-dashboard/') && url !== '/doctor-dashboard/settings';
   });
 
   constructor() {
     super();
     effect(() => {
+      if (!this.authService.isLoggedIn()) {
+        this.previousParentMenuId = null;
+        this.menulist.set([]);
+        return;
+      }
       const parentId = this.parentMenuId();
       if (parentId !== null && parentId !== undefined) {
         // Valid ID received from header — persist it and load menus
-        this.previousParentMenuId = parentId;
-        this.setStoredParentId(parentId);
-        this.GetAllMenu(parentId);
+        if (parentId !== this.previousParentMenuId || this.menulist().length === 0) {
+          this.previousParentMenuId = parentId;
+          this.setStoredParentId(parentId);
+          this.GetAllMenu(parentId);
+        }
       } else {
         const storedId = this.getStoredParentId();
         if (storedId && storedId !== this.previousParentMenuId) {
@@ -101,9 +241,13 @@ export class Sidebar extends BaseComponent {
       this.menulist.set([]);
       return;
     }
+    const token = ++this.latestMenuRequestToken;
     const res = await this.apiService.Get<MenusModel[]>(
       `${ApiEndPoints.GetAllMenu}?Type=Sidebar&parentMenuId=${id}`
     );
+    if (token !== this.latestMenuRequestToken) {
+      return;
+    }
 
     this.menulist.set(res.isSuccess ? (res.data ?? []) : []);
   }
@@ -114,24 +258,48 @@ export class Sidebar extends BaseComponent {
       this.tabChange.emit(itemOrTab);
       return;
     }
-    const tab = itemOrTab.path || itemOrTab.menuName || '';
+    const targetPath = this.normalizeRoutePath(itemOrTab.path);
+    const tab = targetPath || itemOrTab.menuName || '';
     this.activeTab.set(tab);
     this.tabChange.emit(tab);
-    if (itemOrTab.path && itemOrTab.path.startsWith('/')) {
-      this.router.navigateByUrl(itemOrTab.path);
+    if (targetPath) {
+      this.router.navigateByUrl(targetPath);
     }
   }
 
   isTabActive(item: MenusModel): boolean {
-    this.currentUrl();
-    if (item.path) {
-      return this.router.isActive(item.path, {
-        paths: 'exact',
-        queryParams: 'ignored',
-        matrixParams: 'ignored',
-        fragment: 'ignored'
-      });
+    const url = this.cleanRoutePath(this.currentUrl());
+    const itemPath = this.cleanRoutePath(item.path);
+    if (!itemPath) {
+      return this.activeTab() === item.menuName;
     }
-    return this.activeTab() === item.menuName;
+    if (url === itemPath) {
+      return true;
+    }
+    if (url && url.startsWith(itemPath + '/')) {
+      const hasMoreSpecificMatch = this.visibleMenulist().some(other => {
+        const otherPath = this.cleanRoutePath(other.path);
+        return (
+          otherPath.length > itemPath.length &&
+          (url === otherPath || url.startsWith(otherPath + '/'))
+        );
+      });
+      return !hasMoreSpecificMatch;
+    }
+    return false;
+  }
+
+  async openOrEnableSoloProfile(): Promise<void> {
+    const user = this.authService.getCurrentUser();
+    if (this.authService.isProfileCompleted()) {
+      const soloWs = await this.relationshipService.activateExistingSoloWorkspace(user);
+      if (soloWs) {
+        this.alert.toastSuccess('Switched to Solo Practitioner profile!');
+        this.router.navigate(['/doctor-dashboard/dashboard']);
+        return;
+      }
+    }
+    this.relationshipService.prepareSoloProfileSetup(user);
+    this.router.navigate(['/complete-solo-profile']);
   }
 }

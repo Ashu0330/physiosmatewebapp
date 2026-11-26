@@ -4,7 +4,10 @@
     <!-- Dual Search Input (Left Aligned with Content) -->
     <app-search-bar
       [(selectedCity)]="selectedCity"
+      (citySelect)="onCityChange($event)"
       [(searchQuery)]="searchQuery"
+      (searchQueryChange)="onSearchQueryChange($event)"
+      (searchSubmit)="onSearchSubmit()"
       [cities]="popularCities"
       [placeholder]="isClinic() ? 'Search clinics by name, specialty, or treatment...' : 'Search doctors, clinics, hospitals, etc.'"
       customClass="doctors-search-bar"
@@ -27,8 +30,8 @@
       @if (isClinic()) {
       <!-- Specialty Filter -->
       <div class="physios-filter-dropdown-wrapper">
-        <button #specBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('specialty', specBtn)">
-          <span>Specialty</span>
+        <button #specBtn type="button" class="physios-filter-btn" [class.has-filter]="selectedSpecialty() !== 'all'" (click)="toggleDropdown('specialty', specBtn)">
+          <span>{{ selectedSpecialty() === 'all' ? 'Specialty' : selectedSpecialty() }}</span>
           <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
             <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round" />
@@ -40,64 +43,15 @@
             (click)="selectSpecialty('all')">
             All Specialties
           </button>
-          @for (spec of specialtiesList; track spec) {
-          @if (spec !== 'All') {
+          @for (spec of clinicSpecialties(); track spec) {
           <button type="button" class="physios-filter-option" [class.selected]="selectedSpecialty() === spec"
             (click)="selectSpecialty(spec)">
             {{ spec }}
           </button>
           }
-          }
         </div>
         }
       </div>
-
-      <!-- Facilities Filter -->
-      <div class="physios-filter-dropdown-wrapper">
-        <button #facBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('facilities', facBtn)">
-          <span>Facilities</span>
-          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
-            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </button>
-        @if (activeDropdown() === 'facilities') {
-        <div class="physios-filter-menu" [style.top.px]="dropdownPosition()?.top" [style.left.px]="dropdownPosition()?.left">
-          <button type="button" class="physios-filter-option" [class.selected]="selectedAmenity() === 'all'"
-            (click)="selectAmenity('all')">
-            All Facilities
-          </button>
-          <button type="button" class="physios-filter-option"
-            [class.selected]="selectedAmenity() === 'Modern Equipment'" (click)="selectAmenity('Modern Equipment')">
-            Modern Equipment
-          </button>
-          <button type="button" class="physios-filter-option"
-            [class.selected]="selectedAmenity() === 'Parking Available'" (click)="selectAmenity('Parking Available')">
-            Parking Available
-          </button>
-          <button type="button" class="physios-filter-option" [class.selected]="selectedAmenity() === 'Accessible'"
-            (click)="selectAmenity('Accessible')">
-            Accessible
-          </button>
-          <button type="button" class="physios-filter-option"
-            [class.selected]="selectedAmenity() === 'Home Visit Available'"
-            (click)="selectAmenity('Home Visit Available')">
-            Home Visit Available
-          </button>
-        </div>
-        }
-      </div>
-
-      <!-- All Filters -->
-      <!-- <div class="physios-filter-dropdown-wrapper">
-        <button type="button" class="physios-filter-btn" (click)="toggleDropdown('all')">
-          <span>All Filters</span>
-          <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
-            <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </button>
-      </div> -->
 
       <!-- Right: Sort By -->
       <div class="physios-filter-right">
@@ -106,6 +60,7 @@
             <span class="sort-label">Sort By</span>
             <span class="sort-val">
               @if (sortBy() === 'relevance') { Relevance }
+              @else if (sortBy() === 'popularity') { Popularity }
               @else if (sortBy() === 'rating') { Rating (High to Low) }
               @else if (sortBy() === 'price-low') { Consultation Fee (Low to High) }
               @else if (sortBy() === 'price-high') { Consultation Fee (High to Low) }
@@ -118,15 +73,12 @@
           </button>
           @if (activeDropdown() === 'sort') {
           <div class="physios-filter-menu right-aligned" [style.top.px]="dropdownPosition()?.top" [style.left.px]="dropdownPosition()?.left">
-            <button type="button" class="physios-filter-option" (click)="setSortBy('relevance')">Relevance</button>
-            <button type="button" class="physios-filter-option" (click)="setSortBy('popularity')">Popularity</button>
-            <button type="button" class="physios-filter-option" (click)="setSortBy('rating')">Rating (High to
-              Low)</button>
-            <button type="button" class="physios-filter-option" (click)="setSortBy('reviews')">Most Reviewed</button>
-            <button type="button" class="physios-filter-option" (click)="setSortBy('price-low')">Consultation Fee (Low
-              to High)</button>
-            <button type="button" class="physios-filter-option" (click)="setSortBy('price-high')">Consultation Fee (High
-              to Low)</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'relevance'" (click)="setSortBy('relevance')">Relevance</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'popularity'" (click)="setSortBy('popularity')">Popularity</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'rating'" (click)="setSortBy('rating')">Rating (High to Low)</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'reviews'" (click)="setSortBy('reviews')">Most Reviewed</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'price-low'" (click)="setSortBy('price-low')">Consultation Fee (Low to High)</button>
+            <button type="button" class="physios-filter-option" [class.selected]="sortBy() === 'price-high'" (click)="setSortBy('price-high')">Consultation Fee (High to Low)</button>
           </div>
           }
         </div>
@@ -134,8 +86,12 @@
       } @else {
       <!-- Gender Filter -->
       <div class="physios-filter-dropdown-wrapper">
-        <button #genderBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('gender', genderBtn)">
-          <span>Gender</span>
+        <button #genderBtn type="button" class="physios-filter-btn" [class.has-filter]="selectedGender() !== 'all'" (click)="toggleDropdown('gender', genderBtn)">
+          <span>
+            @if (selectedGender() === 'male') { Male Doctor }
+            @else if (selectedGender() === 'female') { Female Doctor }
+            @else { Gender }
+          </span>
           <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
             <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round" />
@@ -155,8 +111,13 @@
 
       <!-- Experience Filter -->
       <div class="physios-filter-dropdown-wrapper">
-        <button #expBtn type="button" class="physios-filter-btn" (click)="toggleDropdown('exp', expBtn)">
-          <span>Experience</span>
+        <button #expBtn type="button" class="physios-filter-btn" [class.has-filter]="selectedExperience() !== 'all'" (click)="toggleDropdown('exp', expBtn)">
+          <span>
+            @if (selectedExperience() === '5') { 5+ Years Exp }
+            @else if (selectedExperience() === '10') { 10+ Years Exp }
+            @else if (selectedExperience() === '15') { 15+ Years Exp }
+            @else { Experience }
+          </span>
           <svg class="physios-arrow-svg" width="9" height="6" viewBox="0 0 9 6" fill="none">
             <path d="M1 1.25L4.5 4.75L8 1.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
               stroke-linejoin="round" />
@@ -164,14 +125,14 @@
         </button>
         @if (activeDropdown() === 'exp') {
         <div class="physios-filter-menu" [style.top.px]="dropdownPosition()?.top" [style.left.px]="dropdownPosition()?.left">
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('all')">Any
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('5')">5+ Years
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('10')">10+ Years
-            Experience</button>
-          <button type="button" class="physios-filter-option" (click)="setExperienceFilter('15')">15+ Years
-            Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === 'all'"
+            (click)="setExperienceFilter('all')">Any Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '5'"
+            (click)="setExperienceFilter('5')">5+ Years Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '10'"
+            (click)="setExperienceFilter('10')">10+ Years Experience</button>
+          <button type="button" class="physios-filter-option" [class.selected]="selectedExperience() === '15'"
+            (click)="setExperienceFilter('15')">15+ Years Experience</button>
         </div>
         }
       </div>
@@ -237,15 +198,22 @@
       <!-- Results Header -->
       <div class="physios-results-header">
         @if (isClinic()) {
-        <h1 class="physios-results-title">{{ filteredClinics().length }} Physiotherapy Clinics available in {{
-          selectedCity() }}</h1>
+        @if (isLoading()) {
+        <h1 class="physios-results-title">
+          <span class="physios-skeleton-count physios-shimmer"></span> Physiotherapy Clinics {{ selectedCity() === 'All Cities' ? 'available' : 'in ' + selectedCity() }}
+        </h1>
+        } @else {
+        <h1 class="physios-results-title">
+          {{ filteredClinics().length }} Physiotherapy {{ filteredClinics().length === 1 ? 'Clinic' : 'Clinics' }} {{ selectedCity() === 'All Cities' ? 'available' : 'available in ' + selectedCity() }}
+        </h1>
+        }
         <div class="physios-verified-subtext">
           <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="9 12 12 15 16 10"></polyline>
           </svg>
-          <span>Verified physiotherapy clinics with experienced specialists &amp; modern facilities</span>
+          <span>Verified physiotherapy clinics with experienced specialists &amp; branches</span>
         </div>
         } @else {
         @if (isLoading()) {
@@ -253,7 +221,7 @@
           <span class="physios-skeleton-count physios-shimmer"></span> {{ currentSpecialty() }} available in {{ selectedCity() }}
         </h1>
         } @else {
-        <h1 class="physios-results-title">{{ PractitionerList().length }} {{ currentSpecialty() }} available in {{ selectedCity() }}</h1>
+        <h1 class="physios-results-title">{{ PractitionerList().length }} {{ currentSpecialty() }} {{ selectedCity() === 'All Cities' ? 'available' : 'available in ' + selectedCity() }}</h1>
         }
         <div class="physios-verified-subtext">
           <svg class="physios-check-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -269,13 +237,40 @@
       <!-- Cards List -->
       <div class="physios-doctor-cards-list">
         @if (isClinic()) {
-        <!-- Clinic Cards (Strictly No Distance / km away) -->
+        @if (isLoading()) {
+        @for (item of [1, 2, 3]; track item) {
+        <article class="physios-doc-card physios-doc-card-skeleton" aria-busy="true" aria-label="Loading clinic details">
+          <div class="physios-doc-avatar-col">
+            <div class="physios-doc-avatar-wrapper physios-skeleton-avatar physios-shimmer"></div>
+          </div>
+          <div class="physios-doc-info-col">
+            <div class="physios-skeleton-name-row">
+              <div class="physios-skeleton-line physios-sk-name physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-spec physios-shimmer"></div>
+            </div>
+            <div class="physios-doc-clinic-row">
+              <div class="physios-skeleton-line physios-sk-location physios-shimmer"></div>
+              <div class="physios-skeleton-line physios-sk-clinic physios-shimmer"></div>
+            </div>
+            <div class="physios-doc-action-col">
+              <div class="physios-skeleton-btn physios-sk-btn-solid physios-shimmer"></div>
+              <div class="physios-skeleton-btn physios-sk-btn-outline physios-shimmer"></div>
+            </div>
+          </div>
+        </article>
+        }
+        } @else {
+        <!-- Real Clinic Cards -->
         @for (clinic of filteredClinics(); track clinic.id) {
         <article class="physios-doc-card" id="clinic-card-{{ clinic.id }}">
           <!-- Col 1: Clinic Image -->
           <div class="physios-doc-avatar-col clinic_list">
             <div class="physios-doc-avatar-wrapper">
+              @if (clinic.image) {
               <img [src]="clinic.image" [alt]="clinic.name" class="physios-clinic-img" />
+              } @else {
+              <div class="physios-clinic-initials">{{ getClinicInitials(clinic.name) }}</div>
+              }
               @if (clinic.isVerified) {
               <div class="physios-clinic-verified-badge" title="Verified Clinic">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff">
@@ -289,7 +284,6 @@
           <div class="list_wrapper">
             <!-- Col 2: Clinic Details -->
             <div class="physios-clinic-info-col">
-              <!-- Clinic Name -->
               <h2 class="physios-clinic-name">
                 <a [routerLink]="['/clinic-detail', clinic.id]">{{ clinic.name }}</a><br>
                 <span class="physios-clinic-tag">Physiotherapy Clinic</span>
@@ -298,12 +292,15 @@
               <!-- Rating & Reviews -->
               <div class="physios-clinic-rating-row">
                 <span class="physios-rating-badge">
-                  ★ {{ clinic.rating }}
+                  ★ {{ clinic.rating > 0 ? clinic.rating : 'New' }}
                 </span>
-                <span class="physios-reviews-count">({{ clinic.reviewsCount }} Patient Stories)</span>
+                <span class="physios-reviews-count">({{ clinic.reviewsCount }} {{ clinic.reviewsCount === 1 ? 'Review' : 'Reviews' }})</span>
+                @if (clinic.doctorsCount > 0) {
+                <span class="physios-clinic-doc-count">• {{ clinic.doctorsCount }} {{ clinic.doctorsCount === 1 ? 'Doctor' : 'Doctors' }}</span>
+                }
               </div>
 
-              <!-- Location (Strictly no distance/km away) -->
+              <!-- Location -->
               <div class="physios-clinic-location-row">
                 <svg class="physios-loc-pin-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -313,44 +310,55 @@
                 <span class="physios-loc-text">{{ clinic.location }}</span>
               </div>
 
+              @if (clinic.description) {
+              <p class="physios-clinic-desc">{{ clinic.description }}</p>
+              }
+
               <!-- Specialties Tags -->
+              @if (clinic.specialties.length > 0) {
               <div class="physios-clinic-specs-row">
                 @for (spec of clinic.specialties; track spec) {
                 <span class="physios-spec-pill">{{ spec }}</span>
                 }
               </div>
+              }
 
-              <!-- Amenities / Highlights -->
-              <div class="physios-clinic-amenities-row">
-                @for (amenity of clinic.amenities; track amenity.label) {
-                <span class="physios-amenity-chip">
-                  <svg class="physios-chip-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span>{{ amenity.label }}</span>
+              <!-- Associated Branches -->
+              @if (clinic.branches.length > 0) {
+              <div class="physios-clinic-branches-box">
+                <span class="physios-branches-label">
+                  Associated {{ clinic.branches.length === 1 ? 'Branch' : 'Branches' }} ({{ clinic.branches.length }}):
                 </span>
-                }
+                <div class="physios-clinic-branches-list">
+                  @for (branch of clinic.branches; track branch.id) {
+                  <span class="physios-branch-chip" [title]="branch.address || branch.city || branch.branchName">
+                    {{ branch.branchName }}@if (branch.city) { ({{ branch.city }}) }
+                  </span>
+                  }
+                </div>
               </div>
+              }
             </div>
 
             <!-- Col 3: Pricing & Action Buttons -->
             <div class="physios-clinic-action-col">
               <div class="physios-clinic-fee-box">
                 <span class="physios-fee-sub">Consultation Fee</span>
-                <span class="physios-fee-price">₹{{ clinic.price }}</span>
+                <span class="physios-fee-price">{{ clinic.price > 0 ? ('₹' + clinic.price) : 'On Request' }}</span>
               </div>
 
               <div class="physios-clinic-cta-group">
-                <a [routerLink]="['/clinic-detail', clinic.id]" class="physios-btn-contact-clinic-solid">
+                @if (clinic.phone) {
+                <a [href]="'tel:' + clinic.phone" class="physios-btn-contact-clinic-solid">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                  </path>
-                </svg>
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                    </path>
+                  </svg>
                   Call Now
                 </a>
+                }
                 <a [routerLink]="['/clinic-detail', clinic.id]" class="btn_3">
                   View Clinic Details
                 </a>
@@ -359,6 +367,24 @@
           </div>
 
         </article>
+        } @empty {
+        <div class="physios-empty-doctors">
+          <div class="physios-empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18" />
+              <path d="M5 21V7l8-4v18" />
+              <path d="M19 21V11l-6-4" />
+            </svg>
+          </div>
+          <h3 class="physios-empty-title">No Clinics Found</h3>
+          <p class="physios-empty-desc">We couldn't find any active physiotherapy clinics matching your criteria{{ selectedCity() !== 'All Cities' ? ' in ' + selectedCity() : '' }}.</p>
+          @if (hasActiveFilters() || selectedCity() !== 'All Cities') {
+          <button type="button" class="btn_3 mt-3" (click)="resetFilters()">
+            Clear Filters
+          </button>
+          }
+        </div>
+        }
         }
         } @else {
         @if (isLoading()) {
@@ -517,6 +543,11 @@
           </div>
           <h3 class="physios-empty-title">No Practitioners Found</h3>
           <p class="physios-empty-desc">We couldn't find any physiotherapists matching your criteria in {{ selectedCity() }}.</p>
+          @if (hasActiveFilters()) {
+          <button type="button" class="btn_3 mt-3" (click)="resetFilters()">
+            Clear Filters
+          </button>
+          }
         </div>
         }
         }

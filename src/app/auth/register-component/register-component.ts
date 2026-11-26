@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Authservice } from '../../services/authservice';
+import { ClinicRelationshipService } from '../../services/clinic-relationship.service';
 import { mastermodel, qualification, ServiceItem } from '../../models/mastermodel';
 import { role } from '../../helper/utilities';
 import { ApiEndPoints } from '../../helper/api-endpoints';
@@ -21,6 +22,7 @@ import { SharedModule } from '../../shared/shared-module';
 export class RegisterComponent extends BaseComponent implements OnInit, OnChanges, OnDestroy {
   @Input() verifiedMobile: string = '';
   @Input() verifiedEmail: string = '';
+  @Input() soloSetupMode: boolean = false;
   @Output() backToAuth = new EventEmitter<void>();
   @Output() registrationSuccess = new EventEmitter<void>();
 
@@ -73,11 +75,14 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   private readonly MAX_BANNER_SIZE_BYTES = 10 * 1024 * 1024;
 
   protected override authService = inject(Authservice);
+  private relationshipService = inject(ClinicRelationshipService);
 
   // ── Flow & Form Signals ───────────────────────────────────────────────────
+  readonly isSoloSetup = signal<boolean>(false);
   readonly currentStep = signal<1 | 2>(1);
   readonly userType = signal<'user' | 'doctor' | 'clinic'>('user');
   readonly registeredUser = signal<any>(null);
+  private basicStepSavedInSession = false;
 
   readonly showPassword = signal<boolean>(false);
   readonly showConfirmPassword = signal<boolean>(false);
@@ -168,12 +173,22 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   async ngOnInit(): Promise<void> {
     const pending = this.authService.getPendingVerification();
-    if (!this.verifiedEmail && pending?.email) {
-      this.verifiedEmail = pending.email;
+    const isSolo = this.soloSetupMode || Boolean(pending?.soloSetupMode);
+    this.isSoloSetup.set(isSolo);
+
+    if (!this.verifiedEmail && (pending?.email || this.authService.getCurrentUser()?.email)) {
+      this.verifiedEmail = pending?.email || this.authService.getCurrentUser()?.email || '';
     }
-    if (pending?.user) {
-      this.registeredUser.set(pending.user);
+    const existingUser = pending?.user || (isSolo ? this.authService.getCurrentUser() : null);
+    if (existingUser) {
+      this.registeredUser.set(existingUser);
+      if (isSolo || existingUser.roleId === role.doctor) {
+        this.userType.set('doctor');
+      }
+    } else if (isSolo) {
+      this.userType.set('doctor');
     }
+
     this.initForms();
     await Promise.all([
       this.GetAllQualification(),
@@ -183,6 +198,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       this.GetAllServices(),
     ]);
     await this.loadDraft();
+    await this.prefillExistingProfile();
   }
 
   saveDraft(): void {
@@ -209,7 +225,12 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const saved = sessionStorage.getItem('physios_register_draft');
       if (!saved) return;
       const draft = JSON.parse(saved);
-      if (draft.userType) {
+      const draftEmail = (draft.basicForm?.email || '').trim().toLowerCase();
+      const targetEmail = (this.verifiedEmail || '').trim().toLowerCase();
+      if (targetEmail && draftEmail && draftEmail !== targetEmail) {
+        return;
+      }
+      if (draft.userType && !this.isSoloSetup()) {
         this.userType.set(draft.userType);
       }
       if (draft.currentStep) {
@@ -237,6 +258,90 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     } catch { }
   }
 
+  private async prefillExistingProfile(): Promise<void> {
+    if (!this.authService.isLoggedIn()) return;
+    const regUser = this.registeredUser() || this.authService.getCurrentUser();
+    if (!this.isSoloSetup() && regUser?.roleId !== role.doctor) return;
+
+    try {
+      const profileRes = await this.apiService.Get<any>(ApiEndPoints.GetUserProfile);
+      if (profileRes.isSuccess && profileRes.data) {
+        const p = profileRes.data;
+        const normalizedMobile = (p.mobile || '').replace(/\D/g, '').slice(-10);
+        const normalizedGender = p.gender ? String(p.gender).toLowerCase() : (this.basicForm.get('gender')?.value || 'male');
+
+        const patch: any = {};
+        if (!this.basicForm.get('fullName')?.value && p.fullName) patch.fullName = p.fullName;
+        if (p.email || this.verifiedEmail) patch.email = p.email || this.verifiedEmail;
+        if (!this.basicForm.get('mobile')?.value && normalizedMobile) patch.mobile = normalizedMobile;
+        if (normalizedGender) patch.gender = normalizedGender;
+        if (!this.basicForm.get('dob')?.value && p.dob) patch.dob = String(p.dob).slice(0, 10);
+
+        if (Object.keys(patch).length > 0) {
+          this.basicForm.patchValue(patch);
+        }
+        if (p.profileImageUrl && !this.profileImagePreview()) {
+          this.profileImagePreview.set(p.profileImageUrl);
+        }
+
+        if (!this.basicForm.get('state')?.value && p.state) {
+          const matchedState = this.stateList().find(
+            (s: any) => (s.name || '').toLowerCase() === String(p.state).toLowerCase()
+          );
+          if (matchedState) {
+            this.basicForm.patchValue({ state: matchedState.id });
+            await this.loadCitiesForState(matchedState.id, 'basic');
+            if (p.city) {
+              const matchedCity = this.cityList().find(
+                (c: any) => (c.name || '').toLowerCase() === String(p.city).toLowerCase()
+              );
+              if (matchedCity) {
+                this.basicForm.patchValue({ city: matchedCity.id });
+              }
+            }
+          }
+        }
+      }
+
+      const pracId = Number(regUser?.practitionerId || this.authService.getPractitionerId() || 0);
+      const userId = Number(regUser?.id || this.authService.getuserid() || 0);
+      if (pracId > 0 && userId > 0) {
+        const pracRes = await this.apiService.Get<any>(
+          `${ApiEndPoints.GetPractitionerProfile}?practitionerId=${pracId}&UserId=${userId}`
+        );
+        if (pracRes.isSuccess && pracRes.data) {
+          const pd = pracRes.data;
+          this.doctorForm.patchValue({
+            specializationId: this.doctorForm.get('specializationId')?.value ?? pd.specializationId ?? null,
+            experienceYears: this.doctorForm.get('experienceYears')?.value || pd.experienceYears || 0,
+            consultationFee: this.doctorForm.get('consultationFee')?.value || pd.consultationFee || 0,
+            about: this.doctorForm.get('about')?.value || pd.about || '',
+          });
+          if (this.selectedSpecializations().length === 0 && pd.specializationId) {
+            this.selectedSpecializations.set([pd.specializationId]);
+          }
+          if (this.selectedQualifications().length === 0 && pd.qualifications?.length) {
+            this.selectedQualifications.set(
+              pd.qualifications.map((q: any) => q.qualificationId).filter((id: any) => id > 0)
+            );
+          }
+          if (this.selectedLanguages().length === 0 && pd.languages?.length) {
+            this.selectedLanguages.set(
+              pd.languages.map((l: any) => l.languageId).filter((id: any) => id > 0)
+            );
+          }
+          if (this.selectedServiceIds().size === 0 && pd.services?.length) {
+            this.selectedServiceIds.set(
+              new Set(pd.services.map((s: any) => s.serviceId).filter((id: any) => id > 0))
+            );
+          }
+        }
+      }
+    } catch {
+      // Allow manual form entry if profile prefill fails
+    }
+  }
+
   clearDraft(): void {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem('physios_register_draft');
@@ -244,6 +349,11 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['soloSetupMode'] && this.soloSetupMode) {
+      this.isSoloSetup.set(true);
+      this.userType.set('doctor');
+      this.basicForm?.patchValue({ userType: 'doctor' });
+    }
     if (changes['verifiedMobile'] && this.basicForm) {
       this.basicForm.patchValue({ mobile: this.verifiedMobile || '' });
     }
@@ -255,27 +365,35 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
   ngOnDestroy(): void {
     const pPrev = this.profileImagePreview();
-    if (pPrev) URL.revokeObjectURL(pPrev);
+    if (pPrev && pPrev.startsWith('blob:')) URL.revokeObjectURL(pPrev);
     const lPrev = this.clinicLogoPreview();
-    if (lPrev) URL.revokeObjectURL(lPrev);
+    if (lPrev && lPrev.startsWith('blob:')) URL.revokeObjectURL(lPrev);
     const bPrev = this.clinicBannerPreview();
-    if (bPrev) URL.revokeObjectURL(bPrev);
-    this.clinicMediaPreviews().forEach(p => URL.revokeObjectURL(p.url));
+    if (bPrev && bPrev.startsWith('blob:')) URL.revokeObjectURL(bPrev);
+    this.clinicMediaPreviews().forEach(p => {
+      if (p.url.startsWith('blob:')) URL.revokeObjectURL(p.url);
+    });
   }
 
   initForms(): void {
     const defaultEmail = this.verifiedEmail || this.authService.getPendingVerification()?.email || '';
+    const defaultUserType = this.isSoloSetup() ? 'doctor' : 'user';
+    const passwordValidators = this.isSoloSetup()
+      ? [Validators.minLength(6)]
+      : [Validators.required, Validators.minLength(6)];
+    const confirmValidators = this.isSoloSetup() ? [] : [Validators.required];
+
     this.basicForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       mobile: [this.verifiedMobile || '', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: [defaultEmail, [Validators.required, Validators.email]],
-      userType: ['user', [Validators.required]],
+      userType: [defaultUserType, [Validators.required]],
       gender: ['male', [Validators.required]],
       dob: ['', [Validators.required]],
       state: [null, [Validators.required]],
       city: [null, [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
+      password: ['', passwordValidators],
+      confirmPassword: ['', confirmValidators],
       termsAccepted: [false, [Validators.requiredTrue]],
     });
 
@@ -307,9 +425,15 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
   }
 
   setUserType(type: 'user' | 'doctor' | 'clinic'): void {
+    if (this.isSoloSetup() && type !== 'doctor') {
+      return;
+    }
     this.userType.set(type);
     this.basicForm.patchValue({ userType: type });
-    this.registeredUser.set(null);
+    this.basicStepSavedInSession = false;
+    if (!this.authService.isLoggedIn() && !this.authService.getPendingVerification()?.user) {
+      this.registeredUser.set(null);
+    }
     this.saveDraft();
   }
 
@@ -597,13 +721,13 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       return;
     }
     const bVal = this.basicForm.value;
-    if (bVal.password !== bVal.confirmPassword) {
+    if ((bVal.password || bVal.confirmPassword) && bVal.password !== bVal.confirmPassword) {
       this.alert.toastError('Passwords do not match! Please check your password confirmation.');
       return;
     }
 
     const regUser = this.registeredUser();
-    if (regUser) {
+    if (this.basicStepSavedInSession && regUser) {
       if (this.userType() === 'user' || regUser?.roleId === role.patient) {
         this.registrationSuccess.emit();
         this.alert.toastSuccess(AppMessage.RegistrationSuccess);
@@ -638,11 +762,17 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const form = new FormData();
       const cityname = this.cityList().find((c: any) => c.id === Number(b.city))?.name;
       const statename = this.stateList().find((c: any) => c.id === Number(b.state))?.name;
+      const existingId = Number(this.registeredUser()?.id || this.authService.getuserid() || 0);
 
+      if (existingId > 0) {
+        form.append('id', existingId.toString());
+      }
       form.append('fullName', b.fullName);
       form.append('email', b.email);
       form.append('mobile', b.mobile);
-      form.append('password', b.password);
+      if (b.password) {
+        form.append('passwordHash', b.password);
+      }
       form.append('dob', b.dob);
       form.append('gender', b.gender);
       form.append('state', statename || '');
@@ -659,7 +789,9 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const res = await this.apiService.PostForm<any>(ApiEndPoints.Register, form);
 
       if (res.isSuccess) {
-        const user = res.data;
+        const prevUser = this.registeredUser() || this.authService.getCurrentUser();
+        const user = { ...(prevUser || {}), ...(res.data || {}) };
+        this.basicStepSavedInSession = true;
         this.registeredUser.set(user);
         this.authService.saveUserSession(user, user?.token);
 
@@ -707,10 +839,12 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
     try {
       const d = this.doctorForm.value;
-      const user = this.registeredUser() || this.authService.getCurrentUser();
+      const user = this.registeredUser() || this.authService.getCurrentUser() || {};
       const userId = user?.id || this.authService.getuserid();
+      const existingPracId = Number(user?.practitionerId || this.authService.getPractitionerId() || 0);
 
       const payload = {
+        practitionerId: existingPracId,
         userId,
         specializationId: this.selectedSpecializations()[0] || null,
         services: [...this.selectedServiceIds()].map(id => ({ serviceId: id })),
@@ -725,16 +859,54 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
         })),
         about: d.about,
         registrationNumber: d.registrationNumber,
+        isSoloPracticeEnabled: true,
       };
 
       const res = await this.apiService.Post<any>(ApiEndPoints.AddPractitioner, payload);
       if (res.isSuccess) {
-        user.practitionerId = res.data;
-        localStorage.setItem('user', JSON.stringify(user));
+        const updatedUser = {
+          ...user,
+          practitionerId: res.data || existingPracId,
+          isProfileCompleted: true,
+          isSoloPracticeEnabled: true,
+        };
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+
+        // Refresh workspaces so Solo and any Clinic affiliations are immediately available
+        let soloWs: any = null;
+        try {
+          const wsRes = await this.relationshipService.resolveWorkspaces();
+          if (wsRes.isSuccess && wsRes.data) {
+            const options = this.authService.buildProfileOptions(wsRes.data, updatedUser);
+            soloWs = options.find(w => w.workspaceType === 'Solo') ?? null;
+          }
+        } catch {
+          // Fall back to explicit Solo workspace locally
+        }
+
+        this.authService.setActiveWorkspace(
+          soloWs ?? {
+            workspaceType: 'Solo',
+            accessLevel: 'Solo',
+            clinicId: null,
+            clinicName: null,
+            branchId: null,
+            branchName: null,
+            branchCode: null,
+            city: null,
+            isPrimary: false,
+          },
+          updatedUser
+        );
         this.clearDraft();
         this.authService.clearPendingVerification();
-        this.alert.toastSuccess('Doctor registration complete! Welcome to PhysiosMate.');
-        this.registrationSuccess.emit();
+        this.alert.toastSuccess(
+          this.isSoloSetup()
+            ? 'Solo Professional Profile created! Welcome to your Doctor Dashboard.'
+            : 'Doctor registration complete! Welcome to PhysiosMate.'
+        );
         this.router.navigate(['/doctor-dashboard/dashboard']);
       }
       else {
@@ -791,6 +963,12 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
       const res = await this.apiService.PostForm<any>(ApiEndPoints.AddClinic, formData);
 
       if (res.isSuccess) {
+        if (res.data) {
+          const clinicId = Number(res.data);
+          if (!isNaN(clinicId) && clinicId > 0) {
+            this.authService.setClinicId(clinicId);
+          }
+        }
         this.clearDraft();
         this.authService.clearPendingVerification();
         this.alert.toastSuccess('Clinic registration submitted successfully!');

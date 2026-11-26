@@ -19,23 +19,43 @@ export class AuthPageComponent extends BaseComponent implements OnInit {
   returnUrl: string = '/';
 
   isOtpVerified = false;
+  isSoloSetupMode = false;
   verifiedEmail = '';
 
   ngOnInit(): void {
     const isBrowser = typeof window !== 'undefined';
     const currentPath = isBrowser ? window.location.pathname : this.router.url;
     const isRegisterRoute = currentPath.includes('/register') || this.route.snapshot.routeConfig?.path === 'register';
+    const isSoloRoute =
+      currentPath.includes('/complete-solo-profile') ||
+      this.route.snapshot.routeConfig?.path === 'complete-solo-profile' ||
+      this.route.snapshot.queryParamMap.get('mode') === 'solo';
     const pending = this.authService.getPendingVerification();
 
-    if (pending?.isOtpVerified && pending?.email) {
+    if (isSoloRoute && (this.authService.isLoggedIn() || pending?.isOtpVerified)) {
+      const currentUser = this.authService.getCurrentUser();
+      this.isSoloSetupMode = true;
+      this.isOtpVerified = true;
+      this.verifiedEmail = pending?.email || currentUser?.email || '';
+      if (!pending?.email && this.verifiedEmail) {
+        this.authService.setPendingVerification({
+          email: this.verifiedEmail,
+          isOtpVerified: true,
+          isProfileCompleted: false,
+          user: currentUser,
+          soloSetupMode: true,
+        });
+      }
+    } else if (pending?.isOtpVerified && pending?.email) {
+      this.isSoloSetupMode = Boolean(pending?.soloSetupMode);
       this.isOtpVerified = true;
       this.verifiedEmail = pending.email;
-      if (!isRegisterRoute) {
+      if (!isRegisterRoute && !isSoloRoute) {
         this.router.navigate(['/register'], { replaceUrl: true });
       }
     } else {
-      if (isRegisterRoute) {
-        // Direct access to /register without verified OTP -> redirect to login
+      if (isRegisterRoute || isSoloRoute) {
+        // Direct access without verified session -> redirect to login
         this.router.navigate(['/login'], { replaceUrl: true });
         return;
       }
@@ -55,16 +75,23 @@ export class AuthPageComponent extends BaseComponent implements OnInit {
   onModeChange(mode: 'login' | 'signup'): void {
     this.authMode = mode;
     this.isOtpVerified = false;
+    this.isSoloSetupMode = false;
     this.authService.clearPendingVerification();
   }
 
   onOtpVerified(data: { email: string }): void {
     this.verifiedEmail = data.email;
     this.isOtpVerified = true;
-    this.authService.setPendingVerification({ email: data.email, isOtpVerified: true });
+    const pending = this.authService.getPendingVerification();
+    this.isSoloSetupMode = Boolean(pending?.soloSetupMode);
+    this.authService.setPendingVerification({
+      ...pending,
+      email: data.email,
+      isOtpVerified: true,
+    });
     const isBrowser = typeof window !== 'undefined';
     const currentPath = isBrowser ? window.location.pathname : this.router.url;
-    if (!currentPath.includes('/register')) {
+    if (!currentPath.includes('/register') && !currentPath.includes('/complete-solo-profile')) {
       this.router.navigate(['/register'], { replaceUrl: true });
     }
   }
@@ -72,7 +99,17 @@ export class AuthPageComponent extends BaseComponent implements OnInit {
   onBackToAuth(): void {
     this.isOtpVerified = false;
     this.verifiedEmail = '';
+    const wasSolo = this.isSoloSetupMode;
+    this.isSoloSetupMode = false;
     this.authService.clearPendingVerification();
+    if (wasSolo && this.authService.isLoggedIn()) {
+      const fallbackRoute = this.authService.getWorkspaceNavigationRoute(
+        this.authService.getActiveWorkspace(),
+        this.authService.getRoleId()
+      );
+      this.router.navigate([fallbackRoute]);
+      return;
+    }
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 

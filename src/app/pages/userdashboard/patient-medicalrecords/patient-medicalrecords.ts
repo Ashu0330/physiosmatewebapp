@@ -1,21 +1,26 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { inject } from '@angular/core';
-import { MedicalReportItem } from '../../../models/usermode';
+import { Component, Input, OnInit, inject } from '@angular/core';
+import { MedicalReportItem, HealthReport, HealthReportViewModel } from '../../../models/usermode';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
-import { FormsModule } from '@angular/forms';
+import { SharedModule } from '../../../shared/shared-module';
+import { ApiService } from '../../../services/api.service';
+import { Authservice } from '../../../services/authservice';
+import { ApiEndPoints } from '../../../helper/api-endpoints';
 
 @Component({
   selector: 'app-patient-medicalrecords',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [SharedModule],
   templateUrl: './patient-medicalrecords.html',
   styleUrl: './patient-medicalrecords.css',
 })
-export class PatientMedicalrecords {
+export class PatientMedicalrecords implements OnInit {
   @Input() currentUser: any = null;
-
+  private apiService = inject(ApiService);
+  private authService = inject(Authservice);
   private sweetAlert = inject(SweetAlertService);
+
+  isLoading = false;
+  isUploading = false;
 
   // Modal state
   showUploadModal = false;
@@ -26,19 +31,54 @@ export class PatientMedicalrecords {
   newReport = {
     title: '',
     category: 'Assessment' as MedicalReportItem['category'],
-    doctorName: '',
     date: new Date().toISOString().split('T')[0],
   };
 
-  medicalReports: MedicalReportItem[] = [
-    { id: 'REP-101', title: 'Lumbar Spine Comprehensive Biomechanical Assessment', category: 'Assessment', doctorName: 'Dr. Sarah Jenkins', date: '28 Aug 2026', fileSize: '1.8 MB', fileType: 'pdf' },
-    { id: 'REP-102', title: 'MRI Lumbo-Sacral Spine (L4-L5 Disc Bulge Scan)', category: 'X-Ray / MRI', doctorName: 'City Imaging & Diagnostics', date: '14 Aug 2026', fileSize: '4.2 MB', fileType: 'pdf' },
-    { id: 'REP-103', title: 'Rehabilitation Protocol & Pain Management Prescription', category: 'Prescription', doctorName: 'Dr. Rajesh Mehta', date: '02 Aug 2026', fileSize: '640 KB', fileType: 'pdf' },
-    { id: 'REP-104', title: 'Initial Muscle Strength & Range-of-Motion Evaluation', category: 'Assessment', doctorName: 'Apex Physio Clinic', date: '18 Jul 2026', fileSize: '950 KB', fileType: 'pdf' }
-  ];
+  medicalReports: MedicalReportItem[] = [];
+
+  ngOnInit(): void {
+    this.loadMedicalReports();
+  }
+
+  async loadMedicalReports(): Promise<void> {
+    const userId = Number(this.authService.getuserid() || this.currentUser?.id || 0);
+    if (!userId || userId <= 0) return;
+
+    this.isLoading = true;
+    try {
+      const res = await this.apiService.Post<HealthReport[]>(`${ApiEndPoints.GetHealthReport}?userId=${userId}`);
+      if (res?.isSuccess && Array.isArray(res.data) && res.data.length > 0) {
+        this.medicalReports = res.data.map(r => {
+          const dateStr = r.uploadedAt
+            ? new Date(r.uploadedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            : 'N/A';
+          const ext = r.filePath?.split('.').pop()?.toLowerCase() || 'pdf';
+          const isImg = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+
+          return {
+            id: `REP-${r.id}`,
+            title: r.reportName || 'Medical Report',
+            category: 'Assessment',
+            doctorName: 'Self Uploaded',
+            date: dateStr,
+            fileSize: isImg ? 'Image' : 'PDF Document',
+            fileType: isImg ? 'image' : 'pdf',
+            downloadUrl: r.filePath || ''
+          };
+        });
+      } else {
+        this.medicalReports = [];
+      }
+    } catch (e) {
+      console.error('Error loading health reports', e);
+      this.medicalReports = [];
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
   openUploadModal(): void {
-    this.newReport = { title: '', category: 'Assessment', doctorName: '', date: new Date().toISOString().split('T')[0] };
+    this.newReport = { title: '', category: 'Assessment', date: new Date().toISOString().split('T')[0] };
     this.selectedUploadFile = null;
     this.showUploadModal = true;
   }
@@ -58,28 +98,11 @@ export class PatientMedicalrecords {
     }
   }
 
-  saveReport(): void {
-    if (!this.newReport.title.trim()) return;
-    const size = this.selectedUploadFile
-      ? (this.selectedUploadFile.size > 1024 * 1024
-        ? (this.selectedUploadFile.size / (1024 * 1024)).toFixed(1) + ' MB'
-        : Math.round(this.selectedUploadFile.size / 1024) + ' KB')
-      : '1.4 MB';
-    const newDoc: MedicalReportItem = {
-      id: 'REP-' + Math.floor(100 + Math.random() * 900),
-      title: this.newReport.title,
-      category: this.newReport.category,
-      doctorName: this.newReport.doctorName || 'Self Uploaded',
-      date: new Date(this.newReport.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      fileSize: size,
-      fileType: 'pdf'
-    };
-    this.medicalReports.unshift(newDoc);
-    this.sweetAlert.toastSuccess('Report uploaded successfully');
-    this.closeUploadModal();
-  }
-
   viewReport(report: MedicalReportItem): void {
+    if (report.downloadUrl) {
+      window.open(report.downloadUrl, '_blank');
+      return;
+    }
     this.selectedReport = report;
     this.showReportViewerModal = true;
   }
@@ -90,10 +113,60 @@ export class PatientMedicalrecords {
   }
 
   downloadReport(report: MedicalReportItem): void {
-    this.sweetAlert.toastSuccess(`Downloading ${report.title}...`);
+    if (report.downloadUrl) {
+      const a = document.createElement('a');
+      a.href = report.downloadUrl;
+      a.target = '_blank';
+      a.download = report.title || 'report';
+      a.click();
+    } else {
+      this.sweetAlert.toastSuccess(`Downloading ${report.title}...`);
+    }
   }
 
   printReport(): void {
     window.print();
+  }
+
+  async AddMedicalRecord(): Promise<void> {
+    if (!this.selectedUploadFile) {
+      this.sweetAlert.warning('File Required', 'Please select a document or scan to upload.');
+      return;
+    }
+
+    const title = this.newReport.title?.trim();
+    if (!title) {
+      this.sweetAlert.warning('Title Required', 'Please enter a document title.');
+      return;
+    }
+
+    const userId = Number(this.authService.getuserid() || this.currentUser?.id || 0);
+    if (!userId || userId <= 0) {
+      this.sweetAlert.error('Authentication Error', 'Please log in to upload medical records.');
+      return;
+    }
+
+    // Prepare model payload matching backend HealthReportViewModel
+    const formData = new FormData();
+    formData.append('UserId', userId.toString());
+    formData.append('ReportName', title || this.selectedUploadFile.name);
+    formData.append('File', this.selectedUploadFile, this.selectedUploadFile.name);
+
+    this.isUploading = true;
+    try {
+      const result = await this.apiService.PostForm<boolean>(ApiEndPoints.AddHealthReport, formData);
+      if (result.isSuccess) {
+        this.sweetAlert.toastSuccess(result.message || 'Report uploaded successfully');
+        this.closeUploadModal();
+        await this.loadMedicalReports();
+      } else {
+        this.sweetAlert.error(result.message || 'Failed to upload report');
+      }
+    } catch (err: any) {
+      console.error('Upload health report error', err);
+      this.sweetAlert.error(err?.message || 'Unable to upload report. Please try again.');
+    } finally {
+      this.isUploading = false;
+    }
   }
 }

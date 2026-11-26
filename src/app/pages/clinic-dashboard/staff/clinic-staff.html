@@ -1,0 +1,237 @@
+<div class="physios-drive-page">
+  <div class="staff-wrapper">
+
+    <!-- Top Header Ribbon -->
+    <div class="staff-header-row">
+      <div class="header-titles">
+        <h1 class="staff-title">Team &amp; Staff</h1>
+        <p class="staff-subtitle">
+          Manage clinic managers, receptionists, support staff, and branch-level assignments.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/clinic-dashboard/staff/new" class="btn-add-staff">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Staff Member
+        </a>
+      </div>
+    </div>
+
+    <!-- Search, Branch Dropdown & Role Filter Pills -->
+    <div class="staff-filter-bar">
+      <div class="filter-controls-left">
+        <div class="search-input-wrap">
+          <span class="search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by name, phone, email, or branch..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)" />
+        </div>
+
+        @if (branches().length > 0) {
+          <select
+            class="branch-filter-select"
+            [ngModel]="selectedBranchId()"
+            (ngModelChange)="onBranchFilterChange($event)"
+            aria-label="Filter team by branch">
+            <option [ngValue]="null">All Branches</option>
+            @for (branch of branches(); track branch.id) {
+              <option [ngValue]="branch.id">{{ branch.branchName }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="filter-pills-wrap">
+        @for (opt of roleFilterOptions(); track opt.value) {
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeRoleFilter() === opt.value"
+            (click)="setRoleFilter(opt.value)">
+            {{ opt.label }} ({{ opt.count }})
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner-border text-teal" role="status">
+          <span class="visually-hidden">Loading team members...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading team &amp; staff...</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!isLoading() && ((!isLeftPractitionersTab() && filteredStaff().length === 0) || (isLeftPractitionersTab() && filteredLeftPractitioners().length === 0))) {
+      <div class="empty-state-card">
+        <div class="empty-icon-wrap">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <h3 class="empty-title">{{ isLeftPractitionersTab() ? 'No left practitioners found' : 'No team members found' }}</h3>
+        <p class="empty-subtitle">
+          @if (searchTerm() || selectedBranchId() || (!isLeftPractitionersTab() && activeRoleFilter() !== 'all')) {
+            No {{ isLeftPractitionersTab() ? 'left practitioners' : 'staff members' }} match your current search or filter criteria.
+          } @else if (isLeftPractitionersTab()) {
+            None of your clinic practitioners have left or been deactivated yet.
+          } @else {
+            You haven't added any managers, receptionists, or staff members yet. Add your team to delegate clinic operations.
+          }
+        </p>
+        @if (!isLeftPractitionersTab()) {
+        <a routerLink="/clinic-dashboard/staff/new" class="btn-add-staff mt-3">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Staff Member
+        </a>
+        }
+      </div>
+    }
+
+    <!-- Active Staff Cards Grid -->
+    @if (!isLoading() && !isLeftPractitionersTab() && filteredStaff().length > 0) {
+      <div class="staff-grid">
+        @for (member of filteredStaff(); track member.id) {
+          <div class="staff-card">
+            <!-- Header: Avatar + Name + Role Badge -->
+            <div class="card-header-row">
+              <div class="member-identity">
+                <div class="member-avatar">{{ getInitials(member.userName) }}</div>
+                <div class="member-title-wrap">
+                  <h3 class="member-name" [title]="member.userName || 'Staff Member'">
+                    {{ member.userName || 'Staff Member' }}
+                  </h3>
+                  <span class="role-badge" [ngClass]="getRoleBadgeClass(member.role)">
+                    {{ member.role }}
+                  </span>
+                </div>
+              </div>
+              <span class="status-badge" [class.badge-active]="member.isActive" [class.badge-inactive]="!member.isActive">
+                {{ member.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <!-- Branch Assignment -->
+            <div class="member-branch-tag">
+              {{ member.branchName || 'All Branches (Clinic-wide)' }}
+            </div>
+
+            <!-- Contact Info -->
+            <div class="member-detail-text">
+              Phone: {{ member.userPhone || 'N/A' }}
+            </div>
+            <div class="member-detail-text member-email" [title]="member.userEmail || 'N/A'">
+              Email: {{ member.userEmail || 'N/A' }}
+            </div>
+            <div class="member-meta-text">
+              Added: {{ member.createdAt | date:'dd MMM yyyy' }}
+            </div>
+
+            <div class="card-divider"></div>
+
+            <!-- Action Links -->
+            <div class="card-actions-row">
+              <button type="button" class="action-link" (click)="editMember(member)">
+                Edit Role / Branch
+              </button>
+              <span class="action-divider">|</span>
+              <button
+                type="button"
+                class="action-link action-danger"
+                [disabled]="removingId() === member.id"
+                (click)="removeMember(member)">
+                {{ removingId() === member.id ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Left Practitioners Cards Grid -->
+    @if (!isLoading() && isLeftPractitionersTab() && filteredLeftPractitioners().length > 0) {
+      <div class="staff-grid">
+        @for (prac of filteredLeftPractitioners(); track prac.id) {
+          <div class="staff-card left-practitioner-card">
+            <div class="card-header-row">
+              <div class="member-identity">
+                <div class="member-avatar">{{ getInitials(prac.practitionerName) }}</div>
+                <div class="member-title-wrap">
+                  <h3 class="member-name" [title]="prac.practitionerName || 'Practitioner'">
+                    {{ prac.practitionerName || ('Practitioner #' + prac.practitionerId) }}
+                  </h3>
+                  <span class="role-badge role-badge-practitioner">
+                    Practitioner
+                  </span>
+                </div>
+              </div>
+              <span class="status-badge badge-left">
+                {{ prac.status || 'Left' }}
+              </span>
+            </div>
+
+            @if (prac.specialization) {
+              <div class="member-spec-tag">
+                {{ prac.specialization }}@if (prac.experienceYears) { &middot; {{ prac.experienceYears }} yrs exp }
+              </div>
+            }
+
+            <div class="member-branch-tag">
+              {{ prac.branchName || 'All Branches (Clinic-wide)' }}
+            </div>
+
+            <div class="member-detail-text">
+              Phone: {{ prac.userPhone || 'N/A' }}
+            </div>
+            <div class="member-detail-text member-email" [title]="prac.userEmail || 'N/A'">
+              Email: {{ prac.userEmail || 'N/A' }}
+            </div>
+            <div class="member-meta-text">
+              @if (prac.leftAt) {
+                Left on: {{ prac.leftAt | date:'dd MMM yyyy' }}
+              } @else {
+                Joined: {{ prac.requestedAt | date:'dd MMM yyyy' }}
+              }
+            </div>
+
+            <div class="card-divider"></div>
+
+            <div class="card-actions-row">
+              <button
+                type="button"
+                class="action-link action-rejoin"
+                [disabled]="rejoiningId() === prac.practitionerId"
+                (click)="rejoinPractitioner(prac)">
+                {{ rejoiningId() === prac.practitionerId ? 'Reactivating...' : 'Rejoin / Reactivate' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

@@ -3,15 +3,29 @@
 @if (isSidebarActive()) {
 <!-- <div class="top-grey-div"></div> -->
 <aside class="physios-sidebar">
-  <button class="physios-nav-btn">
-    <h1 class="drive-heading">{{ consoleTitle() }}</h1>
+  <button class="physios-nav-btn sidebar-console-header" type="button">
+    <span class="sidebar-console-titles">
+      <h1 class="drive-heading">{{ consoleTitle() }}</h1>
+      @if (activeWorkspaceLabel()) {
+      <span class="sidebar-workspace-pill">{{ activeWorkspaceLabel() }}</span>
+      }
+    </span>
   </button>
   <nav class="physios-nav">
-    @for (item of menulist(); track item.menuId || item.path || $index) {
+    @for (item of visibleMenulist(); track item.menuId || item.path || $index) {
     <button type="button" class="physios-nav-btn" [class.active]="isTabActive(item)" (click)="selectTab(item)">
       <span>{{ item.menuName }}</span>
     </button>
     }
   </nav>
+  @if (showSoloSetupCta()) {
+  <div class="sidebar-solo-cta-box">
+    <div class="sidebar-solo-cta-title">Independent Practice</div>
+    <p class="sidebar-solo-cta-desc">Want to consult patients on your own?</p>
+    <button type="button" class="sidebar-solo-cta-btn" (click)="openOrEnableSoloProfile()">
+      {{ soloCtaLabel() }}
+    </button>
+  </div>
+  }
 </aside>
 }

@@ -185,7 +185,9 @@
 
           <div class="section-title-bar">
             <h4 class="card-heading">Schedule Daily Treatment</h4>
-            <span class="card-subheading">Select booking date, assigned practitioner, visit mode, available slot, and payment details.</span>
+            <span class="card-subheading">
+              {{ canAssignPractitioner ? 'Select booking date, assigned practitioner, visit mode, available slot, and payment details.' : 'Select booking date, visit mode, available slot, and payment details.' }}
+            </span>
           </div>
 
           <div class="form-grid-2">
@@ -196,6 +198,7 @@
                 (ngModelChange)="onTreatmentDateChange($event)" />
             </div>
 
+            @if (canAssignPractitioner) {
             <!-- Assigned Practitioner -->
             <div class="form-group">
               <label class="form-label">Assigned Practitioner</label>
@@ -207,12 +210,14 @@
                 @for (doc of practitioners(); track doc.id) {
                 <option [ngValue]="doc.id">{{ doc.name }}</option>
                 }
+                @if (!isLoadingPractitioners() && practitioners().length === 0) {
+                <option disabled>No active clinic practitioners found</option>
+                }
               </select>
             </div>
-          </div>
+            }
 
-          <!-- Visit Mode & Conditional Home Visit Address -->
-          <div class="form-grid-2">
+            <!-- Visit Mode -->
             <div class="form-group">
               <label class="form-label">Visit Mode</label>
               <select class="form-select" [ngModel]="visitType()" (ngModelChange)="onVisitTypeChange($event)">
@@ -240,7 +245,9 @@
             @if (isLoadingSlots()) {
             <div class="slots-loading-msg">Loading available slots...</div>
             } @else if (availableSlots().length === 0) {
-            <div class="slots-empty-msg">No available treatment slots found for the selected date and practitioner.</div>
+            <div class="slots-empty-msg">
+              {{ canAssignPractitioner ? 'No available treatment slots found for the selected date and practitioner.' : 'No available treatment slots found for the selected date.' }}
+            </div>
             } @else {
             <div class="slots-grid">
               @for (slot of availableSlots(); track slot.slotId) {
@@ -375,7 +382,7 @@
 
                   <div class="session-rows">
                     @for (sess of weeklyDraftSessions(); track sess.id; let idx = $index) {
-                    <div class="session-row">
+                    <div class="session-row" [class.no-doctor]="!canAssignPractitioner">
                       <span class="row-num">Day {{ idx + 1 }}</span>
 
                       <input type="date" class="form-input date-col" [ngModel]="sess.date" (ngModelChange)="onDraftDateChange(sess, $event)" />
@@ -394,11 +401,13 @@
                         }
                       </select>
 
+                      @if (canAssignPractitioner) {
                       <select class="form-select doc-col" [(ngModel)]="sess.therapist">
                         @for (doc of practitioners(); track doc.id) {
                         <option [value]="doc.name">{{ doc.name }}</option>
                         }
                       </select>
+                      }
 
                       <button type="button" class="btn-remove" (click)="removeWeeklySession(idx)" title="Remove day">
                         ✕

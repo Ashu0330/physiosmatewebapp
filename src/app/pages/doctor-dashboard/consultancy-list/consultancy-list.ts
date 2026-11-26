@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SweetAlertService } from '../../../services/sweet-alert.service';
+import { Authservice } from '../../../services/authservice';
 import { PatientConsultancyDetails } from '../../../models/doctor-dashboard.model';
 
 @Component({
@@ -18,6 +19,7 @@ export class ConsultancyList implements OnInit {
   readonly Math = Math;
   private apiService = inject(ApiService);
   private alertService = inject(SweetAlertService);
+  private authService = inject(Authservice);
   private router = inject(Router);
 
   // Events emitted to parent (if hosted inside doctordashboard tabs)
@@ -126,11 +128,18 @@ export class ConsultancyList implements OnInit {
 
     const now = new Date();
 
+    const branchId = Number(this.authService.getBranchId() || 0);
+    const practitionerId = !this.authService.canAssignPractitioner()
+      ? Number(this.authService.getPractitionerId() || 0)
+      : 0;
+
     const payload = {
       page: 1,
       pageSize: 500, // retrieve list for filtering & sorting
       fromDate,
       toDate,
+      ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+      ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
     };
 
     try {
@@ -169,7 +178,10 @@ export class ConsultancyList implements OnInit {
 
   goToDashboard(): void {
     this.backToDashboard.emit();
-    this.router.navigate(['/doctor-dashboard/dashboard']);
+    const target = this.authService.isClinicPractitionerWorkspace()
+      ? '/doctor-dashboard/consultations'
+      : '/doctor-dashboard/dashboard';
+    this.router.navigate([target]);
   }
 
   openPayment(item: PatientConsultancyDetails): void {

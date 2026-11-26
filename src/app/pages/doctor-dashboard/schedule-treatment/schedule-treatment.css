@@ -967,8 +967,13 @@
   align-items: center;
 }
 
+.session-row.no-doctor {
+  grid-template-columns: 50px 140px 1fr 32px;
+}
+
 @media (max-width: 768px) {
-  .session-row {
+  .session-row,
+  .session-row.no-doctor {
     grid-template-columns: 1fr;
   }
 }

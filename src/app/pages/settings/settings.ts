@@ -267,8 +267,10 @@ export class Settings extends BaseComponent implements OnInit {
   }
 
   goBack(): void {
-    // Return to doctor dashboard or previous page
-    if (this.currentUser?.roleId === 2 || this.currentUser?.practitionerId) {
+    // Return to role-specific dashboard
+    if (this.currentUser?.roleId === 3 || this.currentUser?.clinicId) {
+      this.router.navigate(['/clinic-dashboard/dashboard']);
+    } else if (this.currentUser?.roleId === 2 || this.currentUser?.practitionerId) {
       this.router.navigate(['/doctor-dashboard']);
     } else {
       this.router.navigate(['/user-dashboard']);
@@ -365,16 +367,47 @@ export class Settings extends BaseComponent implements OnInit {
           this.alert.toastError(res.message || 'Failed to update professional details.');
         }
       } else if (this.roleId === 3) {
-        const payload = {
-          clinicId: this.form.get('clinicId')?.value || this.authService.getCurrentProfessionalId(),
-          clinicName: this.form.get('clinicName')?.value,
-          about: this.form.get('about')?.value,
-          phone: this.form.get('phone')?.value,
-          address: this.form.get('address')?.value,
-          services,
-        };
-        const res = await this.apiService.Post<boolean>(ApiEndPoints.UpdateClinic, payload);
+        const clinicId =
+          this.form.get('clinicId')?.value ||
+          this.form.get('id')?.value ||
+          this.authService.getCurrentProfessionalId() ||
+          0;
+
+        const formData = new FormData();
+        formData.append('Id', clinicId ? clinicId.toString() : '0');
+        formData.append('ClinicName', this.form.get('clinicName')?.value || '');
+        formData.append('Description', this.form.get('about')?.value || '');
+        formData.append('Phone', this.form.get('phone')?.value || '');
+        formData.append('Email', this.form.get('email')?.value || '');
+        formData.append('Address', this.form.get('address')?.value || '');
+        formData.append('City', this.form.get('city')?.value || '');
+        formData.append('StateName', this.form.get('state')?.value || '');
+
+        const ownerUserId = this.authService.getuserid();
+        if (ownerUserId) {
+          formData.append('OwnerUserId', ownerUserId.toString());
+        }
+
+        if (this.photoFile) {
+          formData.append('LogoFile', this.photoFile);
+        }
+
+        // Services mapping: Services[0].ServiceId
+        [...this.selectedServiceIds()].forEach((serviceId, index) => {
+          formData.append(`Services[${index}].ServiceId`, serviceId.toString());
+        });
+
+        const res = await this.apiService.PostForm<any>(ApiEndPoints.UpdateClinic, formData);
         if (res.isSuccess) {
+          const returnedClinicId = res.data ? Number(res.data) : null;
+          if (returnedClinicId && !isNaN(returnedClinicId) && returnedClinicId > 0) {
+            this.authService.setClinicId(returnedClinicId);
+            this.form.patchValue({
+              clinicId: returnedClinicId,
+              id: returnedClinicId
+            });
+          }
+          this.photoFile = null;
           this.doctorName.set(this.form.get('clinicName')?.value || this.doctorName());
           this.alert.toastSuccess('Clinic details updated successfully!');
         } else {
@@ -644,26 +677,40 @@ export class Settings extends BaseComponent implements OnInit {
     if (res.data.profileImage) this.photoPreview.set(res.data.profileImage);
   }
 
-  /** Loads clinic professional data — called AFTER GetPatientProfile for role 3 */
+  /** Loads clinic professional data via GetClinicById SP — called AFTER GetPatientProfile for role 3 */
   async GetClinicProfile(): Promise<void> {
-    const res = await this.apiService.Get<ClinicProfileModel>(ApiEndPoints.GetClinicProfile);
+    debugger
+    const clinicId = this.authService.getCurrentProfessionalId();
+    const userId = this.authService.getuserid() ?? 0;
+    if (!clinicId) return;
+
+    const res = await this.apiService.Get<any>(
+      `${ApiEndPoints.GetClinicById}?clinicId=${clinicId}&userId=${userId}`
+    );
     if (!res.isSuccess || !res.data) return;
+
+    const d = res.data;
     this.form.patchValue({
-      clinicName: res.data.clinicName,
-      logoUrl: res.data.logoUrl,
-      bannerImageUrl: res.data.bannerImageUrl,
-      about: res.data.about,
-      address: res.data.address,
-      phone: res.data.phone,
-      isVerified: res.data.isVerified,
-      isActive: res.data.isActive,
+      clinicId: d.id,
+      id: d.id,
+      clinicName: d.clinicName,
+      logoUrl: d.logoUrl,
+      bannerImageUrl: d.bannerImageUrl,
+      about: d.description,                              // ClinicViewModel.Description
+      address: d.address,
+      city: d.city ?? this.form.get('city')?.value,
+      state: d.stateName ?? this.form.get('state')?.value,  // ClinicViewModel.StateName
+      phone: d.phone,
+      email: d.email ?? this.form.get('email')?.value,
+      isVerified: d.isApproved,                          // ClinicViewModel.IsApproved
+      isActive: d.isActive,
     });
     // Pre-select already saved services
     this.selectedServiceIds.set(new Set(
-      (res.data.services ?? []).map(s => s.serviceId!).filter(id => id != null)
+      (d.services ?? []).map((s: any) => s.serviceId).filter((id: any) => id != null)
     ));
-    this.doctorName.set(res.data.clinicName ?? this.doctorName());
-    if (res.data.logoUrl) this.photoPreview.set(res.data.logoUrl);
+    this.doctorName.set(d.clinicName ?? this.doctorName());
+    if (d.logoUrl) this.photoPreview.set(d.logoUrl);
   }
 
   /** Fetches the master list of all available services */

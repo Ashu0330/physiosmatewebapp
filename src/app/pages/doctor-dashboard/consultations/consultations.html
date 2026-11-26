@@ -107,6 +107,7 @@
           Use the top search bar to find any registered patient by name or mobile number to begin
           recording this clinical encounter.
         </p>
+        @if (patients && patients.length > 0) {
         <div class="no-pt-quick-grid">
           @for (p of patients.slice(0, 4); track p.id) {
           <button type="button" class="no-pt-card-btn" (click)="selectPatient(p)">
@@ -118,6 +119,7 @@
           </button>
           }
         </div>
+        }
       </div>
       } @else {
       <form class="consultancy-form-card" (ngSubmit)="onSaveConsultation()">

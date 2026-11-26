@@ -505,3 +505,75 @@
     border-left: none;
   }
 }
+
+.physios-workspace-switcher-label {
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.physios-ws-switch-item {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.physios-ws-switch-item.active-ws {
+  background-color: var(--primary-subtle);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.physios-ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--border-muted);
+  flex-shrink: 0;
+}
+
+.physios-ws-dot.active {
+  background-color: var(--primary-color);
+}
+
+.physios-ws-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.physios-ws-setup-solo-item {
+  width: 100%;
+  background: rgba(16, 168, 150, 0.07);
+  border: 1px dashed rgba(16, 168, 150, 0.45);
+  border-radius: 8px;
+  color: var(--primary-dark, #087F76);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.physios-ws-setup-solo-item:hover {
+  background: rgba(16, 168, 150, 0.14);
+}
+
+.physios-ws-plus {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary-color, #10A896);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

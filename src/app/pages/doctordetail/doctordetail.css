@@ -122,7 +122,7 @@
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   position: sticky;
-  top: 0;
+  top: 24px;
 }
 
 .doctor-photo {
@@ -211,6 +211,11 @@
 /* =========================================================
  * 2. Sticky Sub-Nav Ribbon (Single-Page ScrollSpy)
  * ========================================================= */
+.physios-detail-left-col {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .physios-scroll-nav-sticky {
   position: sticky;
   top: 0px;
@@ -221,32 +226,53 @@
   z-index: 50;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color, #10A896) var(--primary-light, #E8F8F5);
 }
 
 .physios-scroll-nav-sticky::-webkit-scrollbar {
-  display: none;
+  height: 5px;
+  display: block;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-track {
+  background: var(--primary-light, #E8F8F5);
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb {
+  background: var(--primary-color, #10A896);
+  border-radius: 4px;
+}
+
+.physios-scroll-nav-sticky::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark, #087F76);
 }
 
 .scroll-nav-list {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .scroll-nav-item {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 .scroll-nav-btn {
   background: transparent;
   border: none;
   outline: none;
-  width: 100%;
+  width: auto;
   padding: 0.85rem 1.15rem;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.86rem;
@@ -257,6 +283,7 @@
   transition: all 0.18s ease;
   white-space: nowrap;
   text-align: center;
+  display: block;
 }
 
 .scroll-nav-btn:hover {
@@ -1161,6 +1188,8 @@
 .sticky-booking-widget {
   position: sticky;
   top: 10px;
+  max-width: 380px;
+  width: 100%;
 }
 
 .widget-title {
@@ -1724,62 +1753,6 @@
 .modal-btn-close:hover {
   background: var(--primary-gradient-hover, linear-gradient(135deg, #06655e 0%, #087F76 100%));
   box-shadow: var(--shadow-button-hover, 0 6px 20px rgba(16, 168, 150, 0.38));
-}
-
-/* =========================================================
- * Responsive Breakpoints
- * ========================================================= */
-@media (max-width: 991px) {
-  .physios-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sticky-booking-widget {
-    position: static;
-    margin-top: 2rem;
-  }
-
-  .clinic-info-body {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .full-gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .hero-card-inner {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .doctor-title-row {
-    justify-content: center;
-  }
-
-  .treatments-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .full-gallery-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .treatments-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .treatments-search-box {
-    width: 100%;
-  }
-
-  .slots-chips-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* =========================================================
@@ -2487,8 +2460,9 @@
 
 /* date calender css */
 
-.user_home_addre ss{
-  width: 100%;margin-top: 20px;
+.user_home_addre ss {
+  width: 100%;
+  margin-top: 20px;
 }
 
 .user_home_address textarea {
@@ -2499,5 +2473,213 @@
   font-size: 12px;
   color: #64748b;
   margin-bottom: 10px;
-  min-height: 40px;  
+  min-height: 40px;
+}
+
+.nav-link {
+  color: #64748b;
+}
+
+.nav-link.active {
+  color: #10A896;
+}
+
+.nav-link.active svg {
+  color: #10A896;
+}
+
+/* =========================================================
+ * Responsive Breakpoints
+ * ========================================================= */
+@media (max-width: 991px) {
+  .physios-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-booking-widget {
+    position: static;
+    margin-top: 2rem;
+  }
+
+  .clinic-info-body {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .full-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .doctor-photo-wrap {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-card-inner {
+    flex-direction: column;
+  }
+
+  .doctor-meta-block {
+    text-align: left;
+  }
+
+  /* .doctor-title-row {
+    justify-content: center;
+  } */
+
+  .treatments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .treatments-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .treatments-search-box {
+    width: 100%;
+  }
+
+  .slots-chips-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .physios-scroll-nav-sticky {
+    margin-bottom: 1rem;
+    scrollbar-width: thin;
+  }
+
+  .physios-scroll-nav-sticky::-webkit-scrollbar {
+    height: 5px;
+    display: block;
+  }
+
+  .scroll-nav-btn {
+    padding: 0.75rem 0.95rem;
+    font-size: 0.82rem;
+  }
+}
+
+.doctor-photo-placeholder,
+.associated-doc-initials {
+  width: 100%;
+  height: 100%;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d9488 0%, #087f76 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: inherit;
+}
+
+.doctor-photo-placeholder {
+  font-size: 2rem;
+}
+
+.associated-doc-initials {
+  font-size: 1.25rem;
+  min-height: 72px;
+}
+
+.clinic-branches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.clinic-branch-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.clinic-branch-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.clinic-branch-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.clinic-branch-code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #087f76;
+  background: #e6fffa;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.clinic-branch-meta {
+  font-size: 0.85rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.clinic-branch-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.branch-count-pill {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.empty-section-note {
+  padding: 1.25rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.associated-doc-actions {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.btn-doc-view-profile {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #087f76;
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid #087f76;
+  border-radius: 6px;
+}
+
+.btn-doc-view-profile:hover {
+  background: #f0fdfa;
 }

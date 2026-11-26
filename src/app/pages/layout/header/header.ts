@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, HostListener, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NavigationEnd } from '@angular/router';
@@ -8,7 +8,9 @@ import { environment } from '../../../environment/environment';
 import { Sidebar } from '../sidebar/sidebar';
 import { BaseComponent } from '../../../helper/base-component';
 import { MenusModel } from '../../../models/mastermodel';
+import { UserWorkspaceItemDto } from '../../../models/clinic.model';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 
 @Component({
   selector: 'app-header',
@@ -17,8 +19,8 @@ import { ApiEndPoints } from '../../../helper/api-endpoints';
   styleUrl: './header.css',
 })
 export class Header extends BaseComponent implements OnInit {
-  menulist: MenusModel[] = [];
-  selectedParentMenuId: number | null = null;
+  readonly menulist = signal<MenusModel[]>([]);
+  readonly selectedParentMenuId = signal<number | null>(null);
   profileDropdownOpen = false;
   mobileMenuOpen = false;
   mobileProvidersOpen = false;
@@ -28,6 +30,21 @@ export class Header extends BaseComponent implements OnInit {
 
   private sanitizer = inject(DomSanitizer);
   private platformId = inject(PLATFORM_ID);
+  private relationshipService = inject(ClinicRelationshipService);
+
+  readonly activeWorkspace = this.authService.activeWorkspace;
+  readonly availableWorkspaces = this.authService.availableWorkspaces;
+  readonly isProfileCompleted = this.authService.isProfileCompleted;
+
+  get canSetupSoloProfile(): boolean {
+    return this.authService.canSetupSoloProfile();
+  }
+
+  get soloSetupActionLabel(): string {
+    return this.isProfileCompleted()
+      ? 'Enable Solo Practitioner Profile'
+      : 'Create Solo Professional Profile';
+  }
 
   async ngOnInit(): Promise<void> {
     this.destroyRef.onDestroy(() => {
@@ -37,8 +54,11 @@ export class Header extends BaseComponent implements OnInit {
     if (this.isLoggedIn) {
       await this.GetAllMenu();
       this.setParentMenuFromRoute();
+      if (this.availableWorkspaces().length === 0) {
+        this.loadAvailableWorkspaces();
+      }
     }
-
+    this.loadAvailableWorkspaces();
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
@@ -101,20 +121,49 @@ export class Header extends BaseComponent implements OnInit {
   }
 
   private setParentMenuFromRoute(): void {
-    const currentUrl = this.router.url.split('?')[0];
+    const currentUrl = this.cleanRoutePath(this.router.url);
+    const menus = this.menulist();
+    if (!menus.length || !currentUrl) {
+      return;
+    }
 
-    const currentMenu = this.menulist.find((menu) => {
-      if (!menu.path) {
-        return false;
+    const normalizedMenus = menus.map(menu => ({
+      menu,
+      path: this.cleanRoutePath(menu.path),
+    }));
+
+    // 1. Exact or child-prefix match (e.g. /doctor-dashboard/settings or /user-dashboard/appointments)
+    let currentMenu = normalizedMenus.find(
+      ({ path }) => !!path && (currentUrl === path || currentUrl.startsWith(path + '/'))
+    )?.menu;
+
+    // 2. Root-segment match only against dashboard entries (never let /doctor-dashboard/settings hijack shared /doctor-dashboard/* routes)
+    if (!currentMenu) {
+      const currentRoot = currentUrl.split('/').filter(Boolean)[0];
+      if (currentRoot) {
+        currentMenu = normalizedMenus.find(({ menu, path }) => {
+          if (!path || path.endsWith('/settings') || (menu.menuName || '').toLowerCase().includes('setting')) {
+            return false;
+          }
+          const menuRoot = path.split('/').filter(Boolean)[0];
+          return !!menuRoot && menuRoot === currentRoot;
+        })?.menu;
       }
+    }
 
-      const menuPath = menu.path.split('?')[0];
-
-      return currentUrl === menuPath || currentUrl.startsWith(menuPath + '/');
-    });
+    // 3. Shared /doctor-dashboard/* routes accessed by Clinic role (RoleId = 3) keep/resolve Clinic Dashboard
+    if (!currentMenu && currentUrl.startsWith('/doctor-dashboard/') && this.authService.getRoleId() === 3) {
+      const currentSelected = this.selectedParentMenuId();
+      if (currentSelected && currentSelected !== 12) {
+        return;
+      }
+      currentMenu = normalizedMenus.find(
+        ({ menu, path }) => menu.menuId === 22 || path.startsWith('/clinic-dashboard')
+      )?.menu;
+    }
 
     if (currentMenu) {
-      this.selectedParentMenuId = currentMenu.menuId ?? null;
+      this.selectedParentMenuId.set(currentMenu.menuId ?? null);
     }
   }
 
@@ -134,7 +183,33 @@ export class Header extends BaseComponent implements OnInit {
     return this.baseImageUrl + pic;
   }
 
+  getMenuRoutePath(item: MenusModel): string | null {
+    const normalized = this.normalizeRoutePath(item.path);
+    if (!normalized) {
+      return null;
+    }
+    if (
+      this.authService.isClinicPractitionerWorkspace() &&
+      this.cleanRoutePath(normalized) === '/doctor-dashboard/dashboard'
+    ) {
+      return '/doctor-dashboard/consultations';
+    }
+    return normalized;
+  }
+
   get profileRoute(): string {
+    if (this.authService.isClinicPractitionerWorkspace()) {
+      return '/doctor-dashboard/consultations';
+    }
+    if (this.authService.isReceptionistWorkspace()) {
+      return this.authService.getWorkspaceNavigationRoute(
+        this.authService.getActiveWorkspace(),
+        this.currentUser?.roleId
+      );
+    }
+    if (this.currentUser?.roleId === 3 || this.currentUser?.clinicId) {
+      return '/clinic-dashboard/dashboard';
+    }
     if (this.currentUser?.practitionerId || this.currentUser?.roleId === 2) {
       return '/doctor-dashboard';
     }
@@ -150,7 +225,7 @@ export class Header extends BaseComponent implements OnInit {
     if (
       this.profileDropdownOpen &&
       this.isLoggedIn &&
-      (!this.menulist || this.menulist.length === 0)
+      this.menulist().length === 0
     ) {
       await this.GetAllMenu();
     }
@@ -169,11 +244,10 @@ export class Header extends BaseComponent implements OnInit {
 
   selectMenuItem(item: MenusModel): void {
     if (item.menuName == 'Logout') {
-
       this.logout();
       return;
     }
-    this.selectedParentMenuId = item.menuId ?? null;
+    this.selectedParentMenuId.set(item.menuId ?? null);
     this.profileDropdownOpen = false;
     this.closeMobileMenu();
   }
@@ -185,7 +259,8 @@ export class Header extends BaseComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.menulist = [];
+    this.menulist.set([]);
+    this.selectedParentMenuId.set(null);
     this.profileDropdownOpen = false;
     this.closeMobileMenu();
     this.router.navigate(['/']);
@@ -199,9 +274,60 @@ export class Header extends BaseComponent implements OnInit {
       `${ApiEndPoints.GetAllMenu}?Type=Profile`,
     );
 
-    this.menulist = res.isSuccess ? (res.data ?? []) : [];
+    this.menulist.set(res.isSuccess ? (res.data ?? []) : []);
 
     this.setParentMenuFromRoute();
+  }
+
+  private async loadAvailableWorkspaces(): Promise<void> {
+    try {
+      const res = await this.relationshipService.resolveWorkspaces();
+      if (res.isSuccess && res.data) {
+        this.authService.buildProfileOptions(res.data, this.currentUser);
+      }
+    } catch {
+      // Silently keep existing state if workspace discovery fails
+    }
+  }
+
+  switchWorkspace(ws: UserWorkspaceItemDto): void {
+    this.authService.setActiveWorkspace(ws);
+    this.selectedParentMenuId.set(null);
+    this.profileDropdownOpen = false;
+    this.closeMobileMenu();
+    const targetRoute = this.authService.getWorkspaceNavigationRoute(ws);
+    this.router.navigate([targetRoute]).then(() => {
+      this.setParentMenuFromRoute();
+    });
+  }
+
+  async openOrEnableSoloProfile(): Promise<void> {
+    this.profileDropdownOpen = false;
+    this.closeMobileMenu();
+    const user = this.authService.getCurrentUser();
+
+    if (this.isProfileCompleted()) {
+      const soloWs = await this.relationshipService.activateExistingSoloWorkspace(user);
+      if (soloWs) {
+        this.selectedParentMenuId.set(null);
+        this.alert.toastSuccess('Switched to Solo Practitioner profile!');
+        this.router.navigate(['/doctor-dashboard/dashboard']).then(() => {
+          this.setParentMenuFromRoute();
+        });
+        return;
+      }
+    }
+
+    this.relationshipService.prepareSoloProfileSetup(user);
+    this.router.navigate(['/complete-solo-profile']);
+  }
+
+  isActiveWorkspace(ws: UserWorkspaceItemDto): boolean {
+    return this.authService.isSameWorkspace(this.activeWorkspace(), ws);
+  }
+
+  getWorkspaceLabel(ws: UserWorkspaceItemDto): string {
+    return this.authService.formatWorkspaceLabel(ws);
   }
 
   isSvgIcon(icon?: string): boolean {

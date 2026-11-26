@@ -159,6 +159,7 @@
           </select>
         </div>
 
+        @if (canAssignPractitioner) {
         <!-- Assigned Practitioner -->
         <div class="form-group">
           <label class="form-label" for="assigned-practitioner">Assigned Practitioner</label>
@@ -171,10 +172,11 @@
             <option [ngValue]="p.id">{{ p.name }}</option>
             }
             @if (!isLoadingPractitioners && practitioners.length === 0) {
-            <option disabled>No practitioners found</option>
+            <option disabled>No active clinic practitioners found</option>
             }
           </select>
         </div>
+        }
 
         <!-- Consultation Date -->
         <div class="form-group">
@@ -209,8 +211,7 @@
           <!-- Consultancy: show provider availability slots -->
           <select id="slot-time" formControlName="slotTime" class="form-select" (change)="onSlotSelected()">
             <option [ngValue]="null" disabled>
-              {{ isLoadingSlots ? 'Loading slots...' : (consultancySlots().length === 0 ? 'No slots — select
-              practitioner first' : 'Select time slot') }}
+              {{ isLoadingSlots ? 'Loading slots...' : (consultancySlots().length === 0 ? (!useClinicSlots && canAssignPractitioner && !form.get('assignedPractitionerId')?.value ? 'No slots — select practitioner first' : 'No slots configured') : 'Select time slot') }}
             </option>
             @for (s of consultancySlots(); track s.id) {
             <option [ngValue]="s.id">

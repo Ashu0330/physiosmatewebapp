@@ -11,11 +11,43 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'complete-solo-profile',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'login',
     renderMode: RenderMode.Client,
   },
   {
     path: 'signup',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'doctor-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'clinic-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'user-dashboard/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'settings',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'practice-management',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'schedule-treatment',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'consultancy-list',
     renderMode: RenderMode.Client,
   },
 

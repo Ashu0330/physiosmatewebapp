@@ -9,7 +9,8 @@ import { ExploreService } from '../../services/explore.service';
 import { BookingService } from '../booking/booking.service';
 import { BaseComponent } from '../../helper/base-component';
 import { ApiEndPoints } from '../../helper/api-endpoints';
-import { Availability, CarouselDay, PractitionerDetailedData, providerReview, slots } from '../../models/practitioner.model';
+import { Availability, CarouselDay, ClinicDetailedData, PractitionerDetailedData, providerReview, slots } from '../../models/practitioner.model';
+import { ClinicBranchDto } from '../../models/clinic.model';
 import { SharedModule } from '../../shared/shared-module';
 import { DateHelper } from '../../helper/utilities';
 
@@ -38,7 +39,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
   practitionerId: number = 0;
   readonly isClinic = signal<boolean>(false);
-  readonly doctorDetail = signal<PractitionerDetailedData | null>(null);
+  readonly doctorDetail = signal<any | null>(null);
   readonly isSaved = signal<boolean>(false);
   readonly isSavingDoctor = signal<boolean>(false);
 
@@ -82,28 +83,111 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   } | null>(null);
 
   readonly selectedAssociatedDoctor = signal<any | null>(null);
+  readonly associatedBranches = signal<ClinicBranchDto[]>([]);
 
   readonly activeSection = signal<string>('info');
-  readonly selectedCity = signal<string>('Jaipur');
+  readonly selectedCity = signal<string>('');
   readonly searchQuery = signal<string>('Physiotherapist');
   readonly isCityOpen = signal<boolean>(false);
 
+  readonly displayName = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.clinicName || d?.fullName || '';
+  });
+
+  readonly displayPhoto = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.logoUrl || d?.bannerImageUrl || d?.profileImage || '';
+  });
+
+  readonly displaySpec = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.specialization || (this.isClinic() ? 'Physiotherapy Clinic' : '');
+  });
+
+  readonly displayAbout = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.description || d?.about || '';
+  });
+
+  readonly displayAddress = computed<string>(() => {
+    const d = this.doctorDetail();
+    if (!d) return '';
+    return [d.address, d.city, d.stateName || d.state, d.pincode]
+      .filter((v: any) => !!v && String(v).trim().length > 0)
+      .join(', ');
+  });
+
+  readonly displayCity = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.city || this.selectedCity();
+  });
+
+  readonly displayPhone = computed<string>(() => {
+    const d = this.doctorDetail();
+    return d?.phone || '';
+  });
+
+  readonly displayFee = computed<number>(() => {
+    const d = this.doctorDetail();
+    return Number(d?.consultancyFees ?? d?.consultationFee ?? 0);
+  });
+
+  readonly displayRating = computed<number>(() => {
+    const d = this.doctorDetail();
+    return Number(d?.avgRating ?? 0);
+  });
+
+  readonly displayReviewsCount = computed<number>(() => {
+    const d = this.doctorDetail();
+    return Number(d?.totalReviews ?? this.Review().length ?? 0);
+  });
+
+  readonly displayInitials = computed<string>(() => {
+    const name = this.displayName();
+    if (!name) return this.isClinic() ? 'CL' : 'DR';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  });
 
   readonly navTabs = computed(() => {
     const list = [
       { id: 'info', label: 'Info' },
-      { id: 'stories', label: 'Stories (2)' },
+      { id: 'stories', label: `Stories (${this.Review().length || this.displayReviewsCount()})` },
     ];
     if (this.isClinic()) {
       list.push({ id: 'doctors', label: `Associated Doctors (${this.associatedDoctors().length})` });
+      list.push({ id: 'branches', label: `Branches (${this.associatedBranches().length})` });
     }
     list.push(
-      { id: 'treatments', label: 'Surgeries & Treatments' },
+      { id: 'treatments', label: 'Services & Treatments' },
       { id: 'photos', label: 'Photos & Videos' },
       { id: 'qa', label: 'Consult Q&A' }
     );
     return list;
   });
+
+  getDocInitials(name?: string | null): string {
+    if (!name) return 'DR';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  formatBranchAddress(branch: ClinicBranchDto): string {
+    return [branch.address, branch.city, branch.stateName, branch.pincode]
+      .filter((v): v is string => !!v && v.trim().length > 0)
+      .join(', ');
+  }
 
   async ngOnInit(): Promise<void> {
     this.GetDate();
@@ -252,90 +336,9 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
 
 
-  readonly practitioner = {
-    id: 1,
-    name: 'Dr. Sneha Sharma',
-    specialtyTitle: '(Physiotherapist)',
-    degree: 'BPTh/BPT, MPT/MPTh - Sports Medicine',
-    roleBadge: 'Therapist',
-    specializations: 'Physiotherapist, Sports and Musculoskeletal Physiotherapist',
-    experienceOverall: 12,
-    experienceSpecialist: 6,
-    ratingScorePercent: 91,
-    patientStoriesCount: 46,
-    consultationFee: 500,
-    photoUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80',
-    clinicName: 'Fit N Fly Physiotherapy & Fitness Centre',
-    clinicRating: 4.5,
-    clinicExcellenceScore: '4.865/5',
-    clinicAddress: '4/164, Shipra Path, Landmark: Near B2Bypass Chauraha, Mansarovar, Jaipur',
-    landmark: 'Near B2Bypass Chauraha, Jaipur',
-    headline: 'Dr. Sneha Sharma – Expert in Sports & Orthopedic Physiotherapy and Post Operative Rehabilitation at Fit N Fly.',
-    bioParagraphs: [
-      'Dr. Sneha Sharma is a renowned Sports Physiotherapist with a Master\'s degree in Sports, Musculoskeletal, and Orthopedic Physiotherapy.',
-      'At Fit n Fly, Dr. Sharma delivers personalized physiotherapy care, focusing on restoring movement and relieving pain.',
-      'Combining evidence-based practice with modern therapeutic techniques, Dr. Sharma ensures each patient receives a customized treatment plan.'
-    ]
-  };
-
-  // Associated Doctors list when in Clinic mode
-  readonly associatedDoctors = signal([
-    {
-      id: 'doc-s1',
-      name: 'Dr. Sneha Sharma',
-      degree: 'BPTh/BPT, MPT - Sports Physiotherapy',
-      specialist: 'Sports & Musculoskeletal Physiotherapist',
-      experienceYears: 12,
-      ratingPercent: 98,
-      patientStoriesCount: 142,
-      availableText: 'Available Today',
-      consultationFee: 500,
-      photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
-      gender: 'female',
-      prime: true,
-      isVerified: true,
-      specialties: ['Sports Rehab', 'Joint Mobilization', 'Dry Needling', 'Post-Op Knee'],
-    },
-    {
-      id: 'doc-s2',
-      name: 'Dr. Rajesh Sharma',
-      degree: 'BPT, MPT - Sports Rehabilitation',
-      specialist: 'Senior Physiotherapist',
-      experienceYears: 15,
-      ratingPercent: 99,
-      patientStoriesCount: 220,
-      availableText: 'Available Tomorrow',
-      consultationFee: 500,
-      photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80',
-      gender: 'male',
-      prime: true,
-      isVerified: true,
-      specialties: ['Spine Rehabilitation', 'Sciatica Care', 'Ergonomics', 'Neuro Rehab'],
-    },
-    {
-      id: 'doc-s3',
-      name: 'Dr. Ananya Verma',
-      degree: 'BPT, Certification in Manual Therapy',
-      specialist: 'Consultant Physiotherapist',
-      experienceYears: 8,
-      ratingPercent: 95,
-      patientStoriesCount: 88,
-      availableText: 'Available Today',
-      consultationFee: 450,
-      photo: 'https://images.unsplash.com/photo-1594824813753-48b4d88e0031?auto=format&fit=crop&w=400&q=80',
-      gender: 'female',
-      prime: false,
-      isVerified: true,
-      specialties: ['Post-Fracture Rehab', 'Pediatric Therapy', 'Geriatric Balance Care'],
-    },
-  ]);
-
-  // Clinic gallery images
-  readonly clinicPhotos = [
-    { url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=80', caption: 'Clinic Reception' },
-    { url: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=400&q=80', caption: 'Physiotherapy Room' },
-    { url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=400&q=80', caption: 'Rehab Equipment' }
-  ];
+  // Associated Doctors list & Branches & Gallery when in Clinic mode (populated from API)
+  readonly associatedDoctors = signal<any[]>([]);
+  readonly clinicPhotos = signal<{ url: string; caption: string }[]>([]);
 
   // Predefined Visit Reasons for Review
   readonly predefinedVisitReasons = [
@@ -371,19 +374,70 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     const endpoint = this.isClinic()
       ? `${ApiEndPoints.GetClinicById}?clinicId=${this.practitionerId}&userId=${userId}`
       : `${ApiEndPoints.GetPractitionerById}?PractitionerId=${this.practitionerId}&UserId=${userId}`;
-    const res = await this.apiService.Get<PractitionerDetailedData>(endpoint);
-    this.doctorDetail.set(res?.data ?? null);
-    if (res?.data) {
+    const res = await this.apiService.Get<any>(endpoint);
+    const data = res?.data ?? null;
+    this.doctorDetail.set(data);
+
+    if (data) {
       const isSaved = this.isClinic()
-        ? Boolean((res.data as any).savedClinic)
-        : Boolean(res.data.savedPractitioner || (res.data as any).savedDoctor);
+        ? Boolean(data.savedClinic)
+        : Boolean(data.savedPractitioner || data.savedDoctor);
       this.isSaved.set(isSaved);
+
+      if (data.city) {
+        this.selectedCity.set(data.city);
+      }
+
+      if (this.isClinic()) {
+        const rawPracs = Array.isArray(data.practitioners) ? data.practitioners : [];
+        const feeFallback = Number(data.consultancyFees ?? data.consultationFee ?? 0);
+        this.associatedDoctors.set(
+          rawPracs.map((p: any) => ({
+            id: p.practitionerId ?? p.id,
+            practitionerId: p.practitionerId ?? p.id,
+            name: p.fullName || p.practitionerName || 'Practitioner',
+            degree: p.specialization || '',
+            specialist: p.specialization || 'Physiotherapist',
+            experienceYears: Number(p.experienceYears ?? 0),
+            ratingPercent: Number(p.avgRating ?? 0),
+            patientStoriesCount: Number(p.totalReviews ?? 0),
+            consultationFee: Number(p.consultationFee ?? feeFallback),
+            photo: p.profileImage || '',
+            isVerified: Boolean(p.isVerified),
+            specialties: p.specialization ? [p.specialization] : [],
+          }))
+        );
+
+        const rawBranches = Array.isArray(data.branches) ? data.branches : [];
+        this.associatedBranches.set(rawBranches);
+
+        const rawGallery = Array.isArray(data.clinicGallery) ? data.clinicGallery : [];
+        this.clinicPhotos.set(
+          rawGallery
+            .filter((g: any) => !!g?.imageUrl)
+            .map((g: any, idx: number) => ({
+              url: g.imageUrl,
+              caption: `${data.clinicName || 'Clinic'} Photo ${idx + 1}`,
+            }))
+        );
+      } else {
+        this.associatedDoctors.set([]);
+        this.associatedBranches.set([]);
+        this.clinicPhotos.set([]);
+      }
+    } else {
+      this.associatedDoctors.set([]);
+      this.associatedBranches.set([]);
+      this.clinicPhotos.set([]);
     }
-    if (this.bookingForm && res?.data) {
+
+    if (this.bookingForm && data) {
+      const resolvedName = data.clinicName || data.fullName || '';
+      const resolvedFee = Number(data.consultancyFees ?? data.consultationFee ?? 0);
       this.bookingForm.patchValue({
-        practitionerId: this.practitionerId || res.data.practitionerId || 1,
-        doctorName: res.data.fullName || this.practitioner.name,
-        consultationFee: res.data.consultationFee ?? this.practitioner.consultationFee ?? 500
+        practitionerId: this.practitionerId || data.practitionerId || data.id || 0,
+        doctorName: resolvedName,
+        consultationFee: resolvedFee,
       });
     }
   }
@@ -480,13 +534,16 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     }
   }
 
-  /** API 2: Fetch Doctor Availability Slots (Weekly / By Date) */
-  async loadAvailability(): Promise<void> {
+  /** API 2: Fetch Doctor or Clinic Availability Slots (Weekly / By Date) */
+  async loadAvailability(overridePractitionerId?: number): Promise<void> {
     try {
-      const pid = this.practitionerId;
-      const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?practitionerId=${pid}`);
+      const targetId = overridePractitionerId || this.practitionerId;
+      const query = !overridePractitionerId && this.isClinic()
+        ? `clinicId=${targetId}`
+        : `practitionerId=${targetId}`;
+      const res = await this.apiService.Get<any>(`${ApiEndPoints.GetAvailability}?${query}`);
       if (res && res.isSuccess) {
-        this.availabilitySlots.set(res.data);
+        this.availabilitySlots.set(res.data ?? []);
       } else {
         this.availabilitySlots.set([]);
       }
@@ -553,9 +610,10 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.selectedSlots.set(slots.filter(s => s.isActive !== false));
   }
   async GetAllReview(): Promise<void> {
-    const res = await this.apiService.Post<providerReview[]>(ApiEndPoints.GetAllReviews, {
-      PractitionerId: this.practitionerId
-    });
+    const payload = this.isClinic()
+      ? { ClinicId: this.practitionerId }
+      : { PractitionerId: this.practitionerId };
+    const res = await this.apiService.Post<providerReview[]>(ApiEndPoints.GetAllReviews, payload);
     this.Review.set(res.isSuccess ? (res.data ?? []) : []);
   }
 
@@ -577,7 +635,9 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       const payload = {
         rating: formVal.rating,
         review: formVal.review,
-        practitionerId: this.practitionerId,
+        ...(this.isClinic()
+          ? { clinicid: this.practitionerId }
+          : { practitionerId: this.practitionerId }),
         review1: formVal.review,
         isRecommended: !!formVal.isRecommended,
         visitedFor: formVal.visitedFor?.trim() || null,
@@ -706,9 +766,11 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   // ─────────────────────────────────────────────────────────────────────────
   initForms(): void {
     const doc = this.doctorDetail();
+    const resolvedName = doc?.clinicName || doc?.fullName || '';
+    const resolvedFee = Number(doc?.consultancyFees ?? doc?.consultationFee ?? 0);
     this.bookingForm = this.fb.group({
-      practitionerId: [this.practitionerId || doc?.practitionerId || 1, [Validators.required]],
-      doctorName: [doc?.fullName || this.practitioner.name || ''],
+      practitionerId: [this.practitionerId || doc?.practitionerId || doc?.id || 0, [Validators.required]],
+      doctorName: [resolvedName],
       visitType: [this.isClinic() ? 'Clinic' : 'Home'],
       bookingRefId: [''],
       consultancydate: ['', [Validators.required]],
@@ -720,7 +782,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
       starttime: [''],
       endtime: [''],
       slotId: [null],
-      consultationFee: [doc?.consultationFee ?? this.practitioner.consultationFee ?? 500],
+      consultationFee: [resolvedFee],
       mode: [this.isClinic() ? 'In-Clinic' : 'Home'],
       patientName: [''],
       homeVisitAddress: [''],
@@ -817,18 +879,26 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     this.reviewForm.patchValue({ [controlName]: items.join(', ') });
   }
 
-  selectDoctorForBooking(doc: any): void {
+  async selectDoctorForBooking(doc: any): Promise<void> {
     this.selectedAssociatedDoctor.set(doc);
-    this.scrollToSection('appointment-slots');
+    if (this.bookingForm && doc?.practitionerId) {
+      this.bookingForm.patchValue({
+        practitionerId: doc.practitionerId,
+        doctorName: doc.name,
+        consultationFee: doc.consultationFee ?? this.displayFee(),
+      });
+      await this.loadAvailability(Number(doc.practitionerId));
+      this.autoSelectAvailableDay();
+    }
+    this.scrollToSection('info');
   }
 
   async confirmAppointmentDirectly(day: any, slotTimeOrForm?: any, existingRef?: string, startTime?: string, endTime?: string): Promise<void> {
-    debugger;
     const user = this.authService.getCurrentUser();
     const doc = this.doctorDetail();
     const ref = existingRef || `PHY - ${Math.floor(100000 + Math.random() * 900000)} `;
     const dateDisplay = day.fullDateStr || (day.dateStr ? `${day.label} (${day.dateStr})` : day.label);
-    const doctorName = doc?.fullName || this.practitioner.name;
+    const doctorName = this.selectedAssociatedDoctor()?.name || this.displayName() || 'Healthcare Provider';
 
     // Resolve date to Date instance and YYYY-MM-DD date format
     const resolvedDate: Date = (day.date instanceof Date && !isNaN(day.date.getTime()))
@@ -841,12 +911,15 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     const slotTime = isFormObj ? (formValues.slotTime || this.selectedSlotTime()) : (slotTimeOrForm || this.selectedSlotTime());
     const startTimeVal = startTime || formValues.startTime || this.selectedStartTime() || (slotTime ? slotTime.split(/[–\-]/)[0]?.trim() : '');
     const endTimeVal = endTime || formValues.endTime || this.selectedEndTime() || (slotTime ? slotTime.split(/[–\-]/)[1]?.trim() : '');
+    const resolvedAmount = Number(this.selectedAssociatedDoctor()?.consultationFee ?? this.displayFee() ?? 0);
 
     // Send booking to backend API
     if (this.isLoggedIn) {
       try {
+        const selectedPracId = this.selectedAssociatedDoctor()?.practitionerId;
         const payload = {
-          practitionerId: formValues.practitionerId || this.practitionerId || doc?.practitionerId || 1,
+          practitionerId: selectedPracId || (!this.isClinic() ? (formValues.practitionerId || this.practitionerId || doc?.practitionerId) : undefined),
+          clinicId: this.isClinic() ? (this.practitionerId || doc?.clinicId || doc?.id) : (doc?.clinicId || undefined),
           doctorName,
           visitType: this.isClinic() ? 'Clinic' : 'Home',
           bookingRefId: ref,
@@ -858,8 +931,8 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
           endTime: endTimeVal,
           starttime: startTimeVal,
           endtime: endTimeVal,
-          amount: doc?.consultationFee ?? this.practitioner.consultationFee,
-          mode: this.isClinic() ? ' Clinic' : 'Home',
+          amount: resolvedAmount,
+          mode: this.isClinic() ? 'Clinic' : 'Home',
           patientName: user?.fullName || this.authService.getUserName() || 'Patient',
           homeVisitAddress: formValues.homeVisitAddress || formValues.address || null,
         };
@@ -871,14 +944,14 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
 
     this.bookingConfirmationDetails.set({
       doctorName,
-      doctorSpecialty: doc?.specialization || this.practitioner.specializations || 'Physiotherapist',
-      doctorPhoto: doc?.profileImage || this.practitioner.photoUrl,
-      clinicName: doc?.clinicName || this.practitioner.clinicName,
-      clinicAddress: this.practitioner.clinicAddress,
+      doctorSpecialty: this.selectedAssociatedDoctor()?.specialist || this.displaySpec() || 'Physiotherapist',
+      doctorPhoto: this.selectedAssociatedDoctor()?.photo || this.displayPhoto(),
+      clinicName: doc?.clinicName || this.displayName(),
+      clinicAddress: this.displayAddress(),
       day: dateDisplay,
       date: formattedDate,
       time: slotTime,
-      amount: doc?.consultationFee ?? this.practitioner.consultationFee,
+      amount: resolvedAmount,
       bookingRefId: ref,
       patientName: user?.fullName || this.authService.getUserName() || 'Patient'
     });
@@ -910,18 +983,17 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
     const doc = this.doctorDetail();
     const paramId = this.route.snapshot.paramMap.get('id') || '1';
     const providerId = ExploreService.extractIdFromSlug(paramId) || paramId || this.practitionerId || 1;
-    debugger;
     if (this.authService.isLoggedIn()) {
       this.confirmAppointmentDirectly(day, formVal);
     } else {
       this.bookingService.savePendingSlot({
         providerId: Number(providerId) || 1,
-        providerName: doc?.fullName || this.practitioner.name,
-        providerSpecialty: doc?.specialization || this.practitioner.specializations || 'Physiotherapist',
-        providerImage: doc?.profileImage || this.practitioner.photoUrl,
-        clinicName: doc?.clinicName || this.practitioner.clinicName,
-        clinicAddress: this.practitioner.clinicAddress,
-        consultationFee: doc?.consultationFee ?? this.practitioner.consultationFee,
+        providerName: this.selectedAssociatedDoctor()?.name || this.displayName(),
+        providerSpecialty: this.selectedAssociatedDoctor()?.specialist || this.displaySpec() || 'Physiotherapist',
+        providerImage: this.selectedAssociatedDoctor()?.photo || this.displayPhoto(),
+        clinicName: doc?.clinicName || this.displayName(),
+        clinicAddress: this.displayAddress(),
+        consultationFee: Number(this.selectedAssociatedDoctor()?.consultationFee ?? this.displayFee() ?? 0),
         selectedTime: formVal.slotTime || this.selectedSlotTime(),
         selectedDay: (day as any).label,
         selectedDate: (day as any).date,
@@ -964,7 +1036,7 @@ export class Doctordetail extends BaseComponent implements OnInit, AfterViewInit
   private updateActiveSectionFromScroll(): void {
     if (typeof window === 'undefined') return;
     const sectionIds = this.isClinic()
-      ? ['info', 'availability', 'stories', 'doctors', 'treatments', 'photos', 'qa']
+      ? ['info', 'availability', 'stories', 'doctors', 'branches', 'treatments', 'photos', 'qa']
       : ['info', 'availability', 'stories', 'treatments', 'photos', 'qa'];
     const scrollPosition = window.pageYOffset + 200;
 

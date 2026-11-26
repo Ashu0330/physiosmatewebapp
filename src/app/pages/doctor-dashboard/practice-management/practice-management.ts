@@ -120,10 +120,24 @@ export class PracticeManagement extends BaseComponent implements OnInit {
   isLoading: boolean = false;
   isSaving: boolean = false;
 
-  get practitionerId(): number {
-    const user = this.currentUser;
+  get roleId(): number | null {
+    return this.authService.getRoleId() ?? this.currentUser?.roleId ?? null;
+  }
+
+  get isClinic(): boolean {
+    return this.roleId === 3 || (!this.currentUser?.practitionerId && !!(this.currentUser?.clinicId || this.authService.getClinicId()));
+  }
+
+  get clinicId(): number {
     const profId = this.authService.getCurrentProfessionalId();
-    return Number(user?.practitionerId || profId || user?.id || 1);
+    const id = this.authService.getClinicId() || this.currentUser?.clinicId || this.currentUser?.ClinicId || (this.isClinic ? profId : null);
+    return Number(id || 0);
+  }
+
+  get practitionerId(): number {
+    const profId = this.authService.getCurrentProfessionalId();
+    const id = this.authService.getPractitionerId() || this.currentUser?.practitionerId || this.currentUser?.PractitionerId || (!this.isClinic ? profId : null);
+    return Number(id || 0);
   }
 
   ngOnInit(): void {
@@ -138,9 +152,12 @@ export class PracticeManagement extends BaseComponent implements OnInit {
   async loadAvailability(): Promise<void> {
     this.isLoading = true;
     try {
-      const pid = this.practitionerId;
+      const queryParam = this.isClinic
+        ? `clinicId=${this.clinicId}`
+        : `practitionerId=${this.practitionerId}`;
+
       const res = await this.apiService.Get<any>(
-        `${ApiEndPoints.GetAvailability}?practitionerId=${pid}`
+        `${ApiEndPoints.GetAvailability}?${queryParam}`
       );
       if (res && res.isSuccess) {
         const raw = res.data;
@@ -189,13 +206,15 @@ export class PracticeManagement extends BaseComponent implements OnInit {
     }
     this.isSaving = true;
     try {
-      const payload = {
-        practitionerId: this.practitionerId,
+      const payload: any = {
         id: Number(this.editingSlotId || 0),
         dayOfWeek: Number(this.selectedDay),
         startTime: this.startTime,
         endTime: this.endTime,
-        isActive: this.isActive
+        isActive: this.isActive,
+        providerType: this.isClinic ? 'Clinic' : 'Practitioner',
+        providerId: this.isClinic ? this.clinicId : this.practitionerId,
+        ...(this.isClinic ? { clinicId: this.clinicId } : { practitionerId: this.practitionerId })
       };
       const res = await this.apiService.Post<any>(ApiEndPoints.AddAvailability, payload);
       if (res && (res.isSuccess || res.data)) {
@@ -270,9 +289,13 @@ export class PracticeManagement extends BaseComponent implements OnInit {
   async loadAppointmentSlots(): Promise<void> {
     this.isLoadingAppointmentSlots = true;
     try {
-      const pid = this.practitionerId;
+      const pid = this.isClinic ? this.clinicId : this.practitionerId;
+      const pType = this.isClinic ? 'Clinic' : 'Practitioner';
+      const queryParam = this.isClinic
+        ? `clinicId=${this.clinicId}&providerId=${pid}&providerType=${pType}`
+        : `practitionerId=${this.practitionerId}&providerId=${pid}&providerType=${pType}`;
       const res = await this.apiService.Get<any>(
-        `${ApiEndPoints.GetAppointmentSlots}?providerId=${pid}&providerType=Practitioner`
+        `${ApiEndPoints.GetAppointmentSlots}?${queryParam}`
       );
       if (res && res.isSuccess && Array.isArray(res.data)) {
         this.appointmentSlots.set(res.data);
@@ -331,8 +354,9 @@ export class PracticeManagement extends BaseComponent implements OnInit {
         isActive: this.apptSlotIsActive,
         createdAt: now,
         updatedAt: now,
-        providerType: 'Practitioner',
-        providerId: this.practitionerId
+        providerType: this.isClinic ? 'Clinic' : 'Practitioner',
+        providerId: this.isClinic ? this.clinicId : this.practitionerId,
+        ...(this.isClinic ? { clinicId: this.clinicId } : { practitionerId: this.practitionerId })
       };
       const res = await this.apiService.Post<any>(ApiEndPoints.CreateAppointmentSlot, payload);
       if (res && res.isSuccess) {

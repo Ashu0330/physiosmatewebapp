@@ -136,6 +136,18 @@
   background: rgba(255, 255, 255, 0.24);
 }
 
+.physios-filter-btn.has-filter {
+  background: #ffffff;
+  color: #10a896;
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.physios-filter-btn.has-filter:hover {
+  background: #f0fdf4;
+  color: #0d8b7b;
+}
+
 .physios-filter-btn.sort-btn {
   background: transparent;
   border-color: transparent;
@@ -327,6 +339,7 @@
   border-radius: 10px;
   overflow: hidden;
   max-height: 170px;
+  width: 100%;
 }
 
 .physios-doc-img {
@@ -1328,4 +1341,67 @@
     align-items: flex-start;
     flex: auto;
   }
+}
+
+.physios-clinic-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d9488 0%, #087f76 100%);
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.physios-clinic-doc-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #087f76;
+}
+
+.physios-clinic-desc {
+  margin: 4px 0 2px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.physios-clinic-branches-box {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.physios-branches-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.physios-clinic-branches-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.physios-branch-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 11.5px;
+  font-weight: 500;
 }

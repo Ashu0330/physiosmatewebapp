@@ -571,3 +571,153 @@ input::-ms-reveal,
 input::-ms-clear {
   display: none !important;
 }
+
+/* Workspace / Profile Selector */
+.workspace-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workspace-option-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.workspace-option-card:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-subtle);
+}
+
+.workspace-option-card.selected {
+  background: var(--selected-background);
+  border-color: var(--selected-border);
+  box-shadow: 0 0 0 3px rgba(16, 168, 150, 0.12);
+}
+
+.workspace-option-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.workspace-option-icon.clinic-icon {
+  background: var(--info-light);
+  color: var(--info);
+}
+
+.workspace-option-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workspace-option-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace-option-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.workspace-role-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.workspace-role-pill.clinic-pill {
+  background: var(--info-light);
+  color: var(--info);
+}
+
+.workspace-option-card.solo-setup-card {
+  border-style: dashed;
+  border-color: rgba(16, 168, 150, 0.55);
+  background: rgba(16, 168, 150, 0.04);
+}
+
+.workspace-option-icon.solo-setup-icon {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.workspace-role-pill.solo-setup-pill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.workspace-option-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.workspace-radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-muted);
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.workspace-option-card.selected .workspace-radio-dot {
+  border-color: var(--primary-color);
+}
+
+.workspace-option-card.selected .workspace-radio-dot::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--primary-color);
+}
+
+.back-login-link {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  padding: 6px;
+}
+
+.back-login-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}

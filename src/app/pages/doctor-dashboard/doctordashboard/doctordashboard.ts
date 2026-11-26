@@ -117,97 +117,7 @@ export class Doctordashboard implements OnInit {
   Consultancy = signal<PatientConsultancyDetails[]>([]);
   todayAppointmentsSchedule = signal<TodayAppointmentScheduleItem[]>([]);
   isLoadingTodayAppointments = signal<boolean>(false);
-  patients: DoctorPatient[] = [
-    {
-      id: 'PT-1041',
-      patientCode: 'PT-1041',
-      fullName: 'Ananya Iyer',
-      age: 34,
-      gender: 'Female',
-      phone: '+91 98234 56789',
-      email: 'ananya.iyer@example.com',
-      primaryCondition: 'Lumbar Disc Herniation & Sciatica',
-      status: 'Active',
-      currentPlan: 'Spine Decompression & Core Stabilization',
-      sessionsCompleted: 6,
-      totalSessions: 12,
-      lastVisit: '04 Sep 2026',
-      nextAppointment: 'Today, 09:30 AM',
-      emergencyContact: 'Rajesh Iyer (+91 98234 56780)',
-      notes: 'Significant reduction in radiating leg pain. Continue neutral spine core activation.'
-    },
-    {
-      id: 'PT-1042',
-      patientCode: 'PT-1042',
-      fullName: 'Vikramaditya Rao',
-      age: 28,
-      gender: 'Male',
-      phone: '+91 98450 12345',
-      email: 'vikram.rao@example.com',
-      primaryCondition: 'Right Knee ACL Reconstruction (Post-Op Wk 8)',
-      status: 'Active',
-      currentPlan: 'Knee ACL Accelerated Rehab Protocol',
-      sessionsCompleted: 10,
-      totalSessions: 16,
-      lastVisit: '03 Sep 2026',
-      nextAppointment: 'Today, 11:15 AM',
-      emergencyContact: 'Sneha Rao (+91 98450 12340)',
-      notes: 'Full active extension achieved. Concentrating on eccentric quadriceps strength.'
-    },
-    {
-      id: 'PT-1043',
-      patientCode: 'PT-1043',
-      fullName: 'Meera Nambiar',
-      age: 52,
-      gender: 'Female',
-      phone: '+91 97112 34567',
-      email: 'meera.nambiar@example.com',
-      primaryCondition: 'Adhesive Capsulitis (Frozen Shoulder - Left)',
-      status: 'Active',
-      currentPlan: 'Glenohumeral Joint Mobilization & ROM',
-      sessionsCompleted: 4,
-      totalSessions: 10,
-      lastVisit: '02 Sep 2026',
-      nextAppointment: 'Today, 02:00 PM',
-      emergencyContact: 'K. Nambiar (+91 97112 34560)',
-      notes: 'Grade II mobilization tolerated well. Passive abduction improved by 15 degrees.'
-    },
-    {
-      id: 'PT-1044',
-      patientCode: 'PT-1044',
-      fullName: 'Rohan Deshmukh',
-      age: 41,
-      gender: 'Male',
-      phone: '+91 99201 87654',
-      email: 'rohan.deshmukh@example.com',
-      primaryCondition: 'Cervical Radiculopathy & Postural Kyphosis',
-      status: 'Pending',
-      currentPlan: 'Cervical Postural & Deep Neck Flexor Protocol',
-      sessionsCompleted: 2,
-      totalSessions: 8,
-      lastVisit: '01 Sep 2026',
-      nextAppointment: 'Today, 04:30 PM',
-      emergencyContact: 'Pooja Deshmukh (+91 99201 87650)',
-      notes: 'Ergonomic workstation review conducted. Scapular retractors prescribed.'
-    },
-    {
-      id: 'PT-1045',
-      patientCode: 'PT-1045',
-      fullName: 'Siddharth Verma',
-      age: 23,
-      gender: 'Male',
-      phone: '+91 96500 43210',
-      email: 'siddharth.v@example.com',
-      primaryCondition: 'Lateral Ankle Sprain (Grade II ATFL)',
-      status: 'Completed',
-      currentPlan: 'Ankle Stability & Tendinopathy Care',
-      sessionsCompleted: 8,
-      totalSessions: 8,
-      lastVisit: '28 Aug 2026',
-      emergencyContact: 'Sunil Verma (+91 96500 43219)',
-      notes: 'Discharged with home balance board maintenance exercises. Full proprioception restored.'
-    }
-  ];
+  patients: DoctorPatient[] = [];
 
   treatmentPlans: DoctorTreatmentPlan[] = [
     {
@@ -590,6 +500,17 @@ export class Doctordashboard implements OnInit {
   }
 
   selectTab(tab: DoctorDashboardTab): void {
+    if (
+      this.auth.isClinicPractitionerWorkspace() &&
+      tab !== 'Consultations' &&
+      tab !== 'Appointments' &&
+      tab !== 'consultancy-list'
+    ) {
+      this.activeTab = 'Consultations';
+      this.router.navigate(['/doctor-dashboard/consultations']);
+      window.scrollTo(0, 0);
+      return;
+    }
     this.activeTab = tab;
     const path = this.tabToPath[tab] || '';
     this.router.navigate(['/doctor-dashboard', path]);
@@ -859,12 +780,18 @@ export class Doctordashboard implements OnInit {
     const today = new Date();
     const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
     const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+    const branchId = Number(this.auth.getBranchId() || 0);
+    const practitionerId = !this.auth.canAssignPractitioner()
+      ? Number(this.auth.getPractitionerId() || 0)
+      : 0;
 
     const model = {
       page: 1,
       pageSize: 101,
       fromDate,
       toDate,
+      ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+      ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
     };
 
     const res = await this.apiService.Post<PatientConsultancyDetails[]>(
@@ -888,11 +815,17 @@ export class Doctordashboard implements OnInit {
       const today = new Date();
       const fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
       const toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+      const branchId = Number(this.auth.getBranchId() || 0);
+      const practitionerId = this.auth.isClinicPractitionerWorkspace()
+        ? Number(this.auth.getPractitionerId() || 0)
+        : 0;
       const model = {
         page: 1,
         pageSize: 100,
         fromDate,
         toDate,
+        ...(branchId > 0 ? { clinicBranchId: branchId, branchId } : {}),
+        ...(practitionerId > 0 ? { assignedPractitionerId: practitionerId, practitionerId } : {}),
       };
 
       const res = await this.apiService.Post<TodayAppointmentScheduleItem[]>(

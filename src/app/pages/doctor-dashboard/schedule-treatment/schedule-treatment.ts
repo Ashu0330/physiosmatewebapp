@@ -24,6 +24,7 @@ import {
 import { SweetAlertService } from '../../../services/sweet-alert.service';
 import { ApiService } from '../../../services/api.service';
 import { Authservice } from '../../../services/authservice';
+import { ClinicRelationshipService } from '../../../services/clinic-relationship.service';
 import { ApiEndPoints } from '../../../helper/api-endpoints';
 import { SharedModule } from '../../../shared/shared-module';
 
@@ -38,6 +39,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   private alertService = inject(SweetAlertService);
   private apiService = inject(ApiService);
   private auth = inject(Authservice);
+  private relationshipService = inject(ClinicRelationshipService);
   private route = inject(ActivatedRoute);
   private elRef = inject(ElementRef);
   private platformId = inject(PLATFORM_ID);
@@ -335,24 +337,34 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
   // ─── Daily Treatment Methods (Practitioners, Slots & Book API) ────────────
 
   async loadPractitioners(): Promise<void> {
+    if (!this.canAssignPractitioner) {
+      const selfId = this.practitionerId;
+      const selfName = this.auth.getUserName() || 'Assigned Doctor';
+      this.practitioners.set(selfId > 0 ? [{ id: selfId, name: selfName }] : []);
+      this.selectedPractitionerId.set(selfId > 0 ? selfId : null);
+      this.isLoadingPractitioners.set(false);
+      await this.loadAvailableSlots();
+      return;
+    }
+
     this.isLoadingPractitioners.set(true);
     let loaded: PractitionerOption[] = [];
     try {
-      const res = await this.apiService.Post<any>(ApiEndPoints.GetPractitioners, {
-        page: 1,
-        pageSize: 100
-      });
-      if (res?.isSuccess && res.data) {
-        const list = Array.isArray(res.data) ? res.data : (res.data.items ?? []);
-        loaded = list
-          .map((p: any) => ({
-            id: Number(p.id ?? p.practitionerId ?? 0),
-            name: String(p.fullName ?? p.name ?? `Dr. ${p.id}`).trim()
-          }))
-          .filter((p: PractitionerOption) => p.id > 0);
+      const clinicId = await this.relationshipService.resolveCurrentClinicId();
+      const branchId = this.auth.getBranchId();
+      if (clinicId > 0) {
+        const res = await this.relationshipService.getClinicPractitioners(clinicId, 'Active', branchId);
+        if (res?.isSuccess && Array.isArray(res.data)) {
+          loaded = res.data
+            .map((p: any) => ({
+              id: Number(p.practitionerId ?? p.id ?? 0),
+              name: String(p.practitionerName ?? p.fullName ?? `Practitioner #${p.practitionerId ?? p.id}`).trim()
+            }))
+            .filter((p: PractitionerOption) => p.id > 0);
+        }
       }
     } catch (e) {
-      console.error('Error loading practitioners', e);
+      console.error('Error loading clinic practitioners', e);
     } finally {
       this.practitioners.set(loaded);
 
@@ -363,6 +375,40 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       this.isLoadingPractitioners.set(false);
       await this.loadAvailableSlots();
     }
+  }
+
+  get roleId(): number | null {
+    return this.auth.getRoleId() ?? this.auth.getCurrentUser()?.roleId ?? null;
+  }
+
+  get canAssignPractitioner(): boolean {
+    return this.auth.canAssignPractitioner();
+  }
+
+  get isClinic(): boolean {
+    return this.canAssignPractitioner;
+  }
+
+  get clinicId(): number {
+    const wsClinicId = this.auth.activeWorkspace()?.clinicId;
+    const profId = this.auth.getCurrentProfessionalId();
+    const user = this.auth.getCurrentUser();
+    const id = wsClinicId || this.auth.getClinicId() || user?.clinicId || user?.ClinicId || (this.isClinic ? profId : null);
+    return Number(id || 0);
+  }
+
+  get clinicBranchId(): number | null {
+    return this.auth.getActiveClinicBranchId(this.route.snapshot.queryParamMap.get('branchId'));
+  }
+
+  get practitionerId(): number {
+    const selected = this.selectedPractitionerId();
+    if (selected && selected > 0) return selected;
+    if (this.isClinic) return 0;
+    const profId = this.auth.getCurrentProfessionalId();
+    const user = this.auth.getCurrentUser();
+    const id = this.auth.getPractitionerId() || user?.practitionerId || user?.PractitionerId || profId;
+    return Number(id || 0);
   }
 
   async loadAvailableSlots(): Promise<void> {
@@ -377,13 +423,18 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       return;
     }
 
-    const pid = this.selectedPractitionerId();
-
     this.isLoadingSlots.set(true);
     try {
-      const query = pid && pid > 0
-        ? `practitionerId=${pid}&date=${encodeURIComponent(date)}`
-        : `date=${encodeURIComponent(date)}`;
+      let query: string;
+      if (this.isClinic) {
+        const cid = this.clinicId;
+        query = `clinicId=${cid}&date=${encodeURIComponent(date)}`;
+      } else {
+        const pid = this.selectedPractitionerId() || this.practitionerId;
+        query = pid && pid > 0
+          ? `practitionerId=${pid}&date=${encodeURIComponent(date)}`
+          : `date=${encodeURIComponent(date)}`;
+      }
 
       const slots = await this.fetchSlotsByQuery(query);
 
@@ -518,8 +569,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       return;
     }
 
-    const practitionerId = this.selectedPractitionerId();
-    if (!practitionerId && this.practitioners().length > 0) {
+    const practitionerId = this.selectedPractitionerId() || (!this.canAssignPractitioner ? this.practitionerId : null);
+    if (this.canAssignPractitioner && !practitionerId && this.practitioners().length > 0) {
       this.alertService.toastError('Please select an assigned practitioner.');
       return;
     }
@@ -582,7 +633,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       visitType: visitMode,
       homeVisitAddress: visitMode === 'Home' ? trimmedAddress : null,
       practitionerId: pid,
-      clinicId: 0,
+      clinicId: this.isClinic ? this.clinicId : 0,
+      clinicBranchId: this.clinicBranchId,
       assignedPractitionerId: pid > 0 ? pid : null,
       bookingType: 'Treatment',
       amount: payloadAmount,
@@ -935,6 +987,7 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
     const payload: CreateWeeklyAppointmentsViewModel = {
       userSubscriptionId: userSubscriptionId,
       patientId: rawPatientId,
+      clinicBranchId: this.clinicBranchId,
       appointments: appointments
     };
 
@@ -1094,7 +1147,8 @@ export class ScheduleTreatment implements OnInit, OnDestroy {
       id: 0,
       userId: (patientItem as any)?.userId ?? 0,
       providerId: plan?.providerId ?? 0,
-      clinicId: 0,
+      clinicId: this.isClinic ? this.clinicId : 0,
+      clinicBranchId: this.clinicBranchId,
       practitionerId: 0,
       providerType: plan?.providerType || 'Practitioner',
       planId: planId,
