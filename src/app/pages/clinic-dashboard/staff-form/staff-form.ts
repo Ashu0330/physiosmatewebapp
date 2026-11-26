@@ -45,10 +45,16 @@ export class StaffFormComponent implements OnInit {
 
   readonly roleOptions: RoleOption[] = [
     {
-      value: ClinicUserRoles.Manager,
-      label: 'Manager',
-      description: 'Can manage clinic operations, branches, staff, and schedules.'
+      value: ClinicUserRoles.HR,
+      label: 'HR',
+      description: 'HR role synced with ClinicPractitioner records.'
     },
+    {
+      value: ClinicUserRoles.Doctor,
+      label: 'Doctor',
+      description: 'Doctor / physiotherapist role synced with ClinicPractitioner records.'
+    },
+
     {
       value: ClinicUserRoles.Receptionist,
       label: 'Receptionist',
@@ -59,16 +65,7 @@ export class StaffFormComponent implements OnInit {
       label: 'Staff',
       description: 'General clinic support access scoped to assigned branches.'
     },
-    {
-      value: ClinicUserRoles.Doctor,
-      label: 'Doctor',
-      description: 'Doctor / physiotherapist role synced with ClinicPractitioner records.'
-    },
-    {
-      value: ClinicUserRoles.HR,
-      label: 'HR',
-      description: 'HR role synced with ClinicPractitioner records.'
-    }
+
   ];
 
   readonly selectedRoleDescription = computed(() => {

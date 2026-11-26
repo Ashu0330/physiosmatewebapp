@@ -407,9 +407,8 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
 
     this.doctorForm = this.fb.group({
       specializationId: [null],
-      registrationNumber: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9\-\/]+$/)]],
-      experienceYears: [0, [Validators.required, Validators.min(0)]],
-      consultationFee: [0, [Validators.required, Validators.min(0)]],
+      experienceYears: [null, [Validators.required, Validators.min(0)]],
+      consultationFee: [null, [Validators.required, Validators.min(0)]],
       institute: ['', [Validators.required]],
       about: [''],
     });
@@ -417,7 +416,7 @@ export class RegisterComponent extends BaseComponent implements OnInit, OnChange
     this.clinicForm = this.fb.group({
       clinicName: ['', [Validators.required, Validators.minLength(2)]],
       establishedYear: [null, [Validators.required, Validators.min(1900), Validators.max(new Date().getFullYear())]],
-      consultancyFees: [0, [Validators.required, Validators.min(0)]],
+      consultancyFees: [null, [Validators.required, Validators.min(0)]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       email: [defaultEmail, [Validators.required, Validators.email]],
       state: [null, [Validators.required]],
