@@ -67,8 +67,8 @@ export class StaffFormComponent implements OnInit {
     {
       value: ClinicUserRoles.HR,
       label: 'HR',
-      description: 'Doctor / physiotherapist role synced with ClinicPractitioner records.'
-    },
+      description: 'HR role synced with ClinicPractitioner records.'
+    }
   ];
 
   readonly selectedRoleDescription = computed(() => {
