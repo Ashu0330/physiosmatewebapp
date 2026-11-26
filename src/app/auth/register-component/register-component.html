@@ -7,7 +7,8 @@
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        <span>{{ currentStep() === 1 ? (isSoloSetup() ? 'Back to Clinic Workspace' : 'Back to Verification') : 'Back to Basic Details' }}</span>
+        <span>{{ currentStep() === 1 ? (isSoloSetup() ? 'Back to Clinic Workspace' : 'Back to Verification') : 'Back to
+          Basic Details' }}</span>
       </button>
 
       <div class="step-pill">
@@ -22,7 +23,8 @@
     <h2 class="register-title">
       {{ isSoloSetup()
       ? (currentStep() === 1 ? 'Create Solo Professional Profile' : 'Solo Doctor Credentials & Fee')
-      : (currentStep() === 1 ? 'Complete Your Account Profile' : (userType() === 'doctor' ? 'Doctor Professional Profile' :
+      : (currentStep() === 1 ? 'Complete Your Account Profile' : (userType() === 'doctor' ? 'Doctor Professional
+      Profile' :
       'Clinic Facility Information')) }}
     </h2>
     <p class="register-subtitle">
@@ -123,8 +125,8 @@
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <input id="reg-email" type="email" formControlName="email" placeholder="e.g. name@example.com"
-          [readonly]="isSoloSetup() || !!verifiedEmail"
-          class="form-input" [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
+          [readonly]="isSoloSetup() || !!verifiedEmail" class="form-input"
+          [class.is-invalid]="basicForm.get('email')?.invalid && basicForm.get('email')?.touched" />
       </div>
       @if (basicForm.get('email')?.invalid && basicForm.get('email')?.touched) {
       <span class="field-error">Please enter a valid email address</span>
@@ -163,10 +165,21 @@
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
           <input id="reg-dob" type="date" formControlName="dob" (change)="onDobChange($event)" class="form-input"
+            [min]="minDob" [max]="maxDob"
             [class.is-invalid]="basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched" />
         </div>
         @if (basicForm.get('dob')?.invalid && basicForm.get('dob')?.touched) {
-        <span class="field-error">Please select your date of birth</span>
+        <span class="field-error">
+          @if (basicForm.get('dob')?.hasError('maxAge')) {
+          Age cannot exceed {{ maxAgeYears }} years
+          } @else if (basicForm.get('dob')?.hasError('futureDate')) {
+          Date of birth cannot be in the future
+          } @else if (basicForm.get('dob')?.hasError('invalidDob')) {
+          Please enter a valid date of birth
+          } @else {
+          Please select your date of birth
+          }
+        </span>
         }
       </div>
       <div class="form-group">
@@ -175,8 +188,8 @@
         </div>
         <div class="input-wrapper phone-wrapper">
           <span class="phone-prefix">+91</span>
-          <input id="reg-mobile" type="tel" formControlName="mobile" placeholder="10-digit mobile number" maxlength="10"
-            class="form-input"
+          <input id="reg-mobile" type="number" formControlName="mobile" placeholder="10-digit mobile number"
+            maxlength="10" class="form-input"
             [class.is-invalid]="basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched" />
         </div>
         @if (basicForm.get('mobile')?.invalid && basicForm.get('mobile')?.touched) {
@@ -223,7 +236,8 @@
       <div class="form-group">
         <label for="reg-password" class="form-label">
           Create Password
-          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span class="form-label-hint">(Optional)</span> }
+          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span
+            class="form-label-hint">(Optional)</span> }
         </label>
         <div class="input-wrapper">
           <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -259,7 +273,8 @@
       <div class="form-group">
         <label for="reg-confirm-password" class="form-label">
           Confirm Password
-          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span class="form-label-hint">(Optional)</span> }
+          @if (!isSoloSetup()) { <span class="required-star">*</span> } @else { <span
+            class="form-label-hint">(Optional)</span> }
         </label>
         <div class="input-wrapper">
           <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -317,7 +332,8 @@
       <span>Creating Account...</span>
       } @else {
       <span>
-        {{ userType() === 'user' ? 'Complete User Registration ✓' : (userType() === 'doctor' ? 'Next: Doctor Profile Details
+        {{ userType() === 'user' ? 'Complete User Registration ✓' : (userType() === 'doctor' ? 'Next: Doctor Profile
+        Details
         →' : 'Next: Clinic Details →') }}
       </span>
       }
@@ -376,9 +392,9 @@
         <div class="dropdown-search-wrap">
           <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
           <input type="text" placeholder="Search specializations..." class="dropdown-search-input"
             [value]="specializationSearch()" (input)="specializationSearch.set($any($event.target).value)" />
           @if (specializationSearch()) {
