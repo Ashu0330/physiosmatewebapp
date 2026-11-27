@@ -163,12 +163,18 @@ export class Sidebar extends BaseComponent {
     return 'Doctor Console';
   });
 
+  private readonly sidebarHiddenPrefixes = [
+    '/doctor-dashboard/consultancy-list',
+    '/doctor-dashboard/appointment-list',
+    '/doctor-dashboard/appointmentlist',
+  ];
+
   readonly isSidebarActive = computed<boolean>(() => {
     if (!this.authService.isLoggedIn()) {
       return false;
     }
     const url = this.cleanRoutePath(this.currentUrl());
-    if (url === '/doctor-dashboard/consultancy-list' || url.startsWith('/doctor-dashboard/consultancy-list/')) {
+    if (this.sidebarHiddenPrefixes.some(prefix => url === prefix || url.startsWith(`${prefix}/`))) {
       return false;
     }
     if (this.isReceptionist() && !url.startsWith('/user-dashboard')) {

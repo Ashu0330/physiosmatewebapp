@@ -130,7 +130,6 @@ export class StaffFormComponent implements OnInit {
         this.branches.set(res.data.filter(b => b.isActive));
       }
     } catch {
-      // Leave branch dropdown empty if fetch fails
     }
   }
 

@@ -93,12 +93,16 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server,
   },
   {
+    path: 'doctor-detail',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'doctor-detail/:id',
-    renderMode: RenderMode.Server,
+    renderMode: RenderMode.Client,
   },
   {
     path: 'doctor/:id',
-    renderMode: RenderMode.Server,
+    renderMode: RenderMode.Client,
   },
   {
     path: 'find-doctors',
@@ -106,7 +110,7 @@ export const serverRoutes: ServerRoute[] = [
   },
   {
     path: 'providers/:id',
-    renderMode: RenderMode.Server,
+    renderMode: RenderMode.Client,
   },
 
   // ─── All other static routes — prerendered at build time ───────────────────

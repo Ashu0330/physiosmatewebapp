@@ -58,7 +58,6 @@ export class Header extends BaseComponent implements OnInit {
         this.loadAvailableWorkspaces();
       }
     }
-    this.loadAvailableWorkspaces();
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {

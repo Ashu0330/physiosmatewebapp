@@ -4,13 +4,14 @@
     <nav class="physios-breadcrumbs" aria-label="Breadcrumb">
       <a routerLink="/" class="breadcrumb-link">Home</a>
       <span class="breadcrumb-separator">&gt;</span>
-      <a [routerLink]="isClinic() ? '/find-clinics' : '/doctors'" class="breadcrumb-link">{{ displayCity() || (isClinic() ? 'Clinics' : 'Doctors') }}</a>
-      @if (displaySpec()) {
+      <a routerLink="/doctors" class="breadcrumb-link">{{ selectedCity() }}</a>
       <span class="breadcrumb-separator">&gt;</span>
-      <span class="breadcrumb-link">{{ displaySpec() }}</span>
-      }
+      <a routerLink="/doctors/physiotherapist" class="breadcrumb-link">{{ doctorDetail()?.specialization
+        }}</a>
       <span class="breadcrumb-separator">&gt;</span>
-      <span class="breadcrumb-current">{{ displayName() }}</span>
+      <span class="breadcrumb-link">Mansarovar</span>
+      <span class="breadcrumb-separator">&gt;</span>
+      <span class="breadcrumb-current">{{ doctorDetail()?.fullName }}</span>
     </nav>
   </div>
 </div>
@@ -22,38 +23,28 @@
     <!-- LEFT MAIN COLUMN -->
     <div class="physios-detail-left-col">
 
-      <!-- 1. Doctor / Clinic Profile Hero Card -->
+      <!-- 1. Doctor Profile Hero Card -->
       <section class="physios-doctor-hero-card">
         <div class="hero-card-inner">
-          <!-- Photo -->
+          <!-- Doctor Photo -->
           <div class="doctor-photo-wrap">
-            @if (displayPhoto()) {
-            <img [src]="displayPhoto()" [alt]="displayName()" class="doctor-photo" />
-            } @else {
-            <div class="doctor-photo-placeholder">{{ displayInitials() }}</div>
-            }
+            <img [src]="doctorDetail()?.profileImage" [alt]="doctorDetail()?.fullName" class="doctor-photo" />
           </div>
 
-          <!-- Meta Info -->
+          <!-- Doctor Meta Info -->
           <div class="doctor-meta-block">
             <div class="doctor-title-row">
               <h1 class="doctor-name">
-                {{ displayName() }}
-                @if (displaySpec()) {
-                <span class="doctor-spec-title">{{ displaySpec() }}</span>
-                }
+                {{ doctorDetail()?.fullName }} <span class="doctor-spec-title">{{ doctorDetail()?.specialization
+                  }}</span>
               </h1>
             </div>
-
-            @if (!isClinic() && doctorDetail()?.qualifications?.length) {
             <div class="doctor-degree">
               @for (item of doctorDetail()?.qualifications; track $index) {
               <p class="mb-0">{{ item.qualificationName }}</p>
               }
             </div>
-            }
 
-            @if (!isClinic() && doctorDetail()?.specialization) {
             <p class="doctor-specialization">
               <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"
                 role="img" width="20" height="20" viewBox="0 0 24 24"
@@ -65,34 +56,33 @@
               {{ doctorDetail()?.specialization }}
             </p>
             <p class="doctor-experience">
-              {{ doctorDetail()?.experienceYears }} Years Experience Overall
+              {{ doctorDetail()?.experienceYears }} Years Experience Overall ({{ doctorDetail()?.specialization
+              }}
+              years as specialist)
             </p>
-            } @else if (isClinic()) {
-            @if (displayAddress()) {
-            <p class="doctor-specialization">{{ displayAddress() }}</p>
-            }
-            <p class="doctor-experience">
-              @if (doctorDetail()?.establishedYear) { Est. {{ doctorDetail()?.establishedYear }} • }
-              {{ associatedDoctors().length }} {{ associatedDoctors().length === 1 ? 'Practitioner' : 'Practitioners' }} •
-              {{ associatedBranches().length }} {{ associatedBranches().length === 1 ? 'Branch' : 'Branches' }}
-            </p>
-            }
 
             <!-- Thumbs up rating badge -->
             <div class="doctor-rating-pill">
               <span class="thumbs-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" width="20" height="20" viewBox="0 0 24 24" style="color: rgb(16, 168, 150); opacity: 1; transform: rotate(0deg);"><path fill="currentColor" d="M18 21H8V8l7-7l1.25 1.25q.175.175.288.475t.112.575v.35L15.55 8H21q.8 0 1.4.6T23 10v2q0 .175-.037.375t-.113.375l-3 7.05q-.225.5-.75.85T18 21M6 8v13H2V8z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"
+                  role="img" width="20" height="20" viewBox="0 0 24 24"
+                  style="color: rgb(16, 168, 150); opacity: 1; transform: rotate(0deg);">
+                  <path fill="currentColor"
+                    d="M18 21H8V8l7-7l1.25 1.25q.175.175.288.475t.112.575v.35L15.55 8H21q.8 0 1.4.6T23 10v2q0 .175-.037.375t-.113.375l-3 7.05q-.225.5-.75.85T18 21M6 8v13H2V8z">
+                  </path>
+                </svg>
               </span>
-              <span class="rating-pct">{{ displayRating() > 0 ? displayRating() : 'New' }}</span>
-              <span class="patients-count">({{ displayReviewsCount() }} reviews)</span>
+              <span class="rating-pct">{{ doctorDetail()?.avgRating }}%</span>
+              <span class="patients-count">({{ doctorDetail()?.totalReviews }} patients)</span>
             </div>
 
-            <!-- Bio / Clinic Description -->
-            @if (displayAbout()) {
+            <!-- Doctor Intro Headline -->
+            <!-- <h2 class="doctor-headline">{{ doctorDetail()?.about }}</h2> -->
+
+            <!-- Detailed Doctor Bio Paragraphs -->
             <div class="doctor-bio-content">
-              {{ displayAbout() }}
+              {{ doctorDetail()?.about }}
             </div>
-            }
           </div>
         </div>
         <a href="javascript:void(0)" class="saved_icon" [class.is-saved]="isSaved()"
@@ -137,7 +127,8 @@
       <section id="stories" class="physios-detail-section">
         <div class="section-card reviews-card">
           <h3 class="section-header-title">
-            {{ displayReviewsCount() }} Patient Stories for {{ displayName() }}
+            {{ doctorDetail()?.totalReviews }} Patient Stories for {{ doctorDetail()?.fullName }} {{
+            doctorDetail()?.specialization }}
           </h3>
 
           <!-- Add Review Section -->
@@ -152,7 +143,8 @@
                     {{ (isLoggedIn && currentUser?.fullName) ? currentUser.fullName : 'Share Your Experience' }}
                   </h4>
                   <p>
-                    {{ isLoggedIn ? 'Verified Patient Review' : 'Consulted ' + (displayName() || 'this provider') + '? Leave a review below.' }}
+                    {{ isLoggedIn ? 'Verified Patient Review' : 'Consulted Dr. ' + (doctorDetail()?.fullName ||
+                    practitioner.name) + '? Leave a review below.' }}
                   </p>
                 </div>
               </div>
@@ -404,7 +396,8 @@
               <div class="clinic-reply-bubble">
                 <span class="reply-arrow">↳</span>
                 <div class="reply-content">
-                  <strong class="reply-author">{{ displayName() }} replied:</strong>
+                  <strong class="reply-author">{{ practitioner.clinicName || doctorDetail()?.fullName }}
+                    replied:</strong>
                   <p class="reply-text">{{ rev.clinicReply || rev.providerReply }}</p>
                 </div>
               </div>
@@ -424,7 +417,8 @@
                 Associated Doctors &amp; Therapists ({{ associatedDoctors().length }})
               </h3>
               <p class="associated-subtitle">
-                Physiotherapists practicing at {{ displayName() || 'this clinic' }}.
+                Certified physiotherapists practicing at {{ practitioner.clinicName }}. Choose a doctor for in-clinic
+                consultation.
               </p>
             </div>
           </div>
@@ -434,11 +428,8 @@
             <article class="associated-doctor-item" id="doc-card-{{ doc.id }}">
               <!-- Col 1: Doctor Photo -->
               <div class="associated-doc-avatar-wrap">
-                @if (doc.photo) {
                 <img [src]="doc.photo" [alt]="doc.name" class="associated-doc-photo" />
-                } @else {
-                <div class="associated-doc-initials">{{ getDocInitials(doc.name) }}</div>
-                }
+
               </div>
 
               <!-- Col 2: Doctor Meta Info -->
@@ -455,101 +446,32 @@
                   }
                 </div>
 
-                @if (doc.degree) {
                 <p class="associated-doc-degree">{{ doc.degree }}</p>
-                }
                 <p class="associated-doc-spec">{{ doc.specialist }}</p>
-                @if (doc.experienceYears > 0) {
                 <p class="associated-doc-exp">{{ doc.experienceYears }} Years Experience Overall</p>
-                }
 
                 <!-- Rating & Stories -->
                 <div class="associated-doc-metrics">
-                  @if (doc.ratingPercent > 0) {
                   <span class="doc-metric-pill">
                     <span class="thumbs-icon">👍</span>
                     <strong>{{ doc.ratingPercent }}%</strong>
                   </span>
-                  }
                   <span class="doc-stories-count">{{ doc.patientStoriesCount }} patient reviews</span>
-                  @if (doc.consultationFee > 0) {
-                  <span class="doc-stories-count">• ₹{{ doc.consultationFee }} fee</span>
-                  }
                 </div>
 
-                @if (doc.specialties?.length) {
+                <!-- Specialties Tags -->
                 <div class="associated-doc-tags">
                   @for (tag of doc.specialties; track tag) {
                   <span class="doc-tag-pill">{{ tag }}</span>
                   }
                 </div>
-                }
               </div>
 
-              <!-- Col 3: Action -->
-              <div class="associated-doc-actions">
-                <a [routerLink]="['/doctor-detail', doc.practitionerId]" class="btn-doc-view-profile">
-                  View Profile
-                </a>
-              </div>
+              <!-- Col 3: Availability, Fee & Action -->
+
             </article>
-            } @empty {
-            <div class="empty-section-note">
-              No active doctors are currently linked to this clinic.
-            </div>
             }
           </div>
-        </div>
-      </section>
-
-      <!-- Associated Branches Section -->
-      <section id="branches" class="physios-detail-section my-3">
-        <div class="section-card associated-doctors-card">
-          <div class="associated-header-block">
-            <div class="associated-title-wrap">
-              <h3 class="section-header-title">
-                Associated Branches ({{ associatedBranches().length }})
-              </h3>
-              <p class="associated-subtitle">
-                Active clinic branch locations under {{ displayName() || 'this clinic' }}.
-              </p>
-            </div>
-          </div>
-
-          @if (associatedBranches().length > 0) {
-          <div class="clinic-branches-grid">
-            @for (branch of associatedBranches(); track branch.id) {
-            <div class="clinic-branch-card">
-              <div class="clinic-branch-top">
-                <h4 class="clinic-branch-name">{{ branch.branchName }}</h4>
-                @if (branch.branchCode) {
-                <span class="clinic-branch-code">{{ branch.branchCode }}</span>
-                }
-              </div>
-              @if (branch.address || branch.city || branch.stateName || branch.pincode) {
-              <p class="clinic-branch-meta">
-                {{ formatBranchAddress(branch) }}
-              </p>
-              }
-              @if (branch.phone || branch.email) {
-              <p class="clinic-branch-meta">
-                @if (branch.phone) { Tel: {{ branch.phone }} }
-                @if (branch.phone && branch.email) { • }
-                @if (branch.email) { {{ branch.email }} }
-              </p>
-              }
-              <div class="clinic-branch-counts">
-                <span class="branch-count-pill">{{ branch.activePractitionersCount }} Practitioners</span>
-                <span class="branch-count-pill">{{ branch.activeStaffCount }} Staff</span>
-              </div>
-            </div>
-            }
-          </div>
-          } @else {
-          <div class="empty-section-note">
-            No additional branches configured for this clinic yet.
-          </div>
-          }
         </div>
       </section>
       }
@@ -558,11 +480,10 @@
       <section id="treatments" class="physios-detail-section my-3">
         <div class="section-card treatments-card">
           <div class="treatments-header-row">
-            <h3 class="section-header-title">{{ doctorDetail()?.services?.length || 0 }} Services &amp; Treatments</h3>
+            <h3 class="section-header-title">{{ doctorDetail()?.services?.length }} Services &amp; Treatments</h3>
 
           </div>
 
-          @if (doctorDetail()?.services?.length) {
           <div class="treatments-grid">
             @for (t of doctorDetail()?.services; track t.id) {
             <div class="treatment-item-card">
@@ -581,21 +502,15 @@
             </div>
             }
           </div>
-          } @else {
-          <div class="empty-section-note">
-            No services listed yet.
-          </div>
-          }
         </div>
       </section>
 
       <!-- 7. Section: Photos & Videos (#photos) -->
       <section id="photos" class="physios-detail-section my-3">
         <div class="section-card photos-card">
-          <h3 class="section-header-title">Photos &amp; Facility Gallery</h3>
-          @if (clinicPhotos().length > 0) {
+          <h3 class="section-header-title">Clinic Photos &amp; Facility Videos</h3>
           <div class="full-gallery-grid">
-            @for (photo of clinicPhotos(); track photo.url) {
+            @for (photo of clinicPhotos; track photo.url) {
             <div class="gallery-photo-card">
               <a [href]="photo.url" data-fancybox="clinic-gallery" [attr.data-caption]="photo.caption"
                 class="gallery-photo-link">
@@ -605,11 +520,6 @@
             </div>
             }
           </div>
-          } @else {
-          <div class="empty-section-note">
-            No gallery photos uploaded yet.
-          </div>
-          }
         </div>
       </section>
 
@@ -623,13 +533,14 @@
               <h2 class="accordion-header" id="headingFaqOne">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseFaqOne" aria-expanded="true" aria-controls="collapseFaqOne">
-                  What conditions does {{ displayName() || 'this provider' }} treat?
+                  What conditions does Dr. Sneha Sharma treat?
                 </button>
               </h2>
               <div id="collapseFaqOne" class="accordion-collapse collapse show" aria-labelledby="headingFaqOne"
                 data-bs-parent="#faqAccordion">
                 <div class="accordion-body">
-                  {{ displayAbout() || ((displayName() || 'This physiotherapy provider') + ' offers physiotherapy consultations, rehabilitation, and pain-management treatments tailored to your recovery goals.') }}
+                  Dr. Sneha Sharma specializes in sports injuries, knee pain, chronic back pain, cervical spondylosis,
+                  post-operative joint rehabilitation, and musculoskeletal disorders.
                 </div>
               </div>
             </div>
@@ -639,13 +550,14 @@
               <h2 class="accordion-header" id="headingFaqTwo">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseFaqTwo" aria-expanded="false" aria-controls="collapseFaqTwo">
-                  How do I book an appointment with {{ displayName() || 'this provider' }}?
+                  How can I book a 10-Session Rehab Plan?
                 </button>
               </h2>
               <div id="collapseFaqTwo" class="accordion-collapse collapse" aria-labelledby="headingFaqTwo"
                 data-bs-parent="#faqAccordion">
                 <div class="accordion-body">
-                  Pick a date and available time slot in the booking panel on the right to schedule your consultation directly.
+                  You can select the 10-Session Rehab Plan above to save on multi-session care. Your session chart and
+                  weekly progress assessments will be managed directly with Dr. Sharma.
                 </div>
               </div>
             </div>
@@ -681,17 +593,16 @@
                   <rect x="4" y="2" width="16" height="20" rx="2" />
                 </svg>
               </span>
-              <span class="type-text">{{ isClinic() ? 'Clinic Consultancy' : 'Consultation' }}</span>
+              <span class="type-text">{{isClinic()===true?'Clinic Consultancy':'Home'}}</span>
             </div>
-            <span class="appointment-fee">{{ displayFee() > 0 ? ('₹' + displayFee() + ' fee') : 'On Request' }}</span>
+            <span class="appointment-fee">₹{{isClinic()===true?
+              doctorDetail()?.consultationFee:doctorDetail()?.consultationFee}} fee</span>
           </div>
 
-          <!-- Clinic / Provider Mini Details -->
+          <!-- Clinic Mini Details -->
           <div class="booking-clinic-meta">
-            <h4 class="booking-clinic-name">{{ selectedAssociatedDoctor()?.name || displayName() }}</h4>
-            @if (displayCity()) {
-            <span class="clinic-loc">{{ displayCity() }}</span>
-            }
+            <h4 class="booking-clinic-name">{{doctorDetail()?.fullName}}</h4>
+            <!-- <span class="clinic-loc">{{doctorDetail()?.city}}</span> -->
           </div>
 
           <!-- Day Navigation Carousel Strip -->
@@ -745,8 +656,7 @@
             }
 
             <!-- Call Now Action Button -->
-            @if (displayPhone()) {
-            <a [href]="'tel:' + displayPhone()" class="btn-call-now">
+            <a href="tel:+911412345678" class="btn-call-now">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path
@@ -755,7 +665,6 @@
               </svg>
               Call Now
             </a>
-            }
           </div>
         </div>
       </div>
@@ -777,8 +686,8 @@
 
     <h3 class="modal-title">Consultation Confirmed!</h3>
     <p class="modal-desc">
-      Your consultation has been successfully booked with
-      <strong>{{ bookingConfirmationDetails()?.doctorName || displayName() }}</strong>.
+      Your in-clinic consultation has been successfully booked with
+      <strong>{{ bookingConfirmationDetails()?.doctorName || practitioner.name }}</strong>.
     </p>
 
     <!-- Reference ID Badge -->
@@ -804,10 +713,8 @@
         <span class="si-icon">🏥</span>
         <div class="si-content">
           <span class="si-label">Clinic</span>
-          <strong class="si-val">{{ bookingConfirmationDetails()?.clinicName || displayName() }}</strong>
-          @if (bookingConfirmationDetails()?.clinicAddress || displayAddress()) {
-          <small class="si-sub">{{ bookingConfirmationDetails()?.clinicAddress || displayAddress() }}</small>
-          }
+          <strong class="si-val">{{ bookingConfirmationDetails()?.clinicName || practitioner.clinicName }}</strong>
+          <small class="si-sub">{{ bookingConfirmationDetails()?.clinicAddress || practitioner.clinicAddress }}</small>
         </div>
       </div>
 
@@ -815,7 +722,7 @@
         <span class="si-icon">💰</span>
         <div class="si-content">
           <span class="si-label">Consultation Fee</span>
-          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.amount ?? displayFee() }} (Pay at
+          <strong class="si-fee">₹{{ bookingConfirmationDetails()?.amount || practitioner.consultationFee }} (Pay at
             Clinic)</strong>
         </div>
       </div>
